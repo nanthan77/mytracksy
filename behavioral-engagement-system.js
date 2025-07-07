@@ -650,8 +650,8 @@ behavioralEngagementStyle.textContent = `
 `;
 document.head.appendChild(behavioralEngagementStyle);
 
-// Initialize the system when DOM is ready
-document.addEventListener('DOMContentLoaded', function() {
-    const behavioralSystem = new BehavioralEngagementSystem();
-    window.behavioralEngagementSystem = behavioralSystem;
-});
+// Initialize the system when DOM is ready - TEMPORARILY DISABLED
+// document.addEventListener('DOMContentLoaded', function() {
+//     const behavioralSystem = new BehavioralEngagementSystem();
+//     window.behavioralEngagementSystem = behavioralSystem;
+// });
