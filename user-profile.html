@@ -3276,11 +3276,15 @@
         }
 
         function calculatePersonalIncomeTax() {
+            console.log('🧮 calculatePersonalIncomeTax() called');
+            
             // Get income values
             const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value) || 0;
             const businessIncome = parseFloat(document.getElementById('businessIncome')?.value) || 0;
             const otherIncome = parseFloat(document.getElementById('otherIncome')?.value) || 0;
             const investmentIncome = parseFloat(document.getElementById('investmentIncome')?.value) || 0;
+            
+            console.log('💰 Income values:', { employmentIncome, businessIncome, otherIncome, investmentIncome });
 
             // Get deduction values
             const epfContributions = parseFloat(document.getElementById('epfContributions')?.value) || 0;
@@ -3374,30 +3378,54 @@
 
         // Add real-time calculation when inputs change
         function setupRealTimeCalculation() {
-            const taxInputs = document.querySelectorAll('.tax-input');
+            console.log('🔧 Setting up real-time calculation...');
             
-            taxInputs.forEach(input => {
+            // Get all tax input fields
+            const taxInputs = document.querySelectorAll('.tax-input');
+            console.log(`📊 Found ${taxInputs.length} tax input fields`);
+            
+            if (taxInputs.length === 0) {
+                console.error('❌ No tax input fields found!');
+                return;
+            }
+            
+            taxInputs.forEach((input, index) => {
+                console.log(`🎯 Adding listeners to input ${index + 1}: ${input.id}`);
+                
                 // Add event listeners for real-time calculation
                 input.addEventListener('input', function() {
-                    // Debounce the calculation to avoid too many calls
-                    clearTimeout(this.calculationTimer);
-                    this.calculationTimer = setTimeout(() => {
-                        calculatePersonalIncomeTax();
-                    }, 300); // Wait 300ms after user stops typing
+                    console.log(`📝 Input event on ${this.id}: ${this.value}`);
+                    calculatePersonalIncomeTax();
                 });
 
                 input.addEventListener('keyup', function() {
-                    // Also calculate on keyup for immediate feedback
-                    clearTimeout(this.calculationTimer);
-                    this.calculationTimer = setTimeout(() => {
-                        calculatePersonalIncomeTax();
-                    }, 300);
+                    console.log(`⌨️ Keyup event on ${this.id}: ${this.value}`);
+                    calculatePersonalIncomeTax();
                 });
 
                 input.addEventListener('change', function() {
-                    // Calculate immediately when field loses focus
+                    console.log(`🔄 Change event on ${this.id}: ${this.value}`);
                     calculatePersonalIncomeTax();
                 });
+            });
+            
+            console.log('✅ Real-time calculation setup complete!');
+            
+            // Also add listeners by ID as backup
+            const inputIds = ['employmentIncome', 'businessIncome', 'otherIncome', 'investmentIncome', 
+                            'epfContributions', 'insurancePremiums', 'donations', 'medicalExpenses'];
+            
+            inputIds.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    console.log(`🆔 Adding backup listener to ${id}`);
+                    element.addEventListener('input', function() {
+                        console.log(`📊 Direct input on ${id}: ${this.value}`);
+                        calculatePersonalIncomeTax();
+                    });
+                } else {
+                    console.warn(`⚠️ Element with ID '${id}' not found`);
+                }
             });
         }
 
@@ -3405,7 +3433,9 @@
         let comprehensiveCalculator;
 
         // Initialize real-time calculation when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        function initializeTaxCalculator() {
+            console.log('🚀 Initializing Tax Calculator...');
+            
             // Initialize comprehensive calculator
             if (typeof ComprehensiveIncomeTaxCalculator !== 'undefined') {
                 comprehensiveCalculator = new ComprehensiveIncomeTaxCalculator();
@@ -3414,12 +3444,25 @@
                 console.log('⚠️ Using fallback tax calculation method');
             }
 
+            // Set up real-time calculation
             setupRealTimeCalculation();
             
-            // Also calculate with default/placeholder values
-            setTimeout(() => {
-                calculatePersonalIncomeTax();
-            }, 500);
+            // Initial calculation with default values
+            console.log('🧮 Running initial calculation...');
+            calculatePersonalIncomeTax();
+            
+            console.log('🎉 Tax Calculator initialization complete!');
+        }
+
+        // Try multiple initialization approaches
+        document.addEventListener('DOMContentLoaded', initializeTaxCalculator);
+        
+        // Backup initialization after a short delay
+        setTimeout(initializeTaxCalculator, 1000);
+        
+        // Also initialize when window loads (fallback)
+        window.addEventListener('load', function() {
+            setTimeout(initializeTaxCalculator, 500);
         });
 
         function checkVATRegistrationEligibility() {
