@@ -203,4 +203,4 @@ This application was built with the assistance of Claude, Anthropic's AI assista
 
 ---
 
-*MyTracksy - Empowering Sri Lankan businesses with intelligent financial management* 🇱🇰
+*MyTracksy - Empowering Sri Lankan businesses with intelligent financial management* 🇱🇰<!-- Last updated: Mon Jul  7 21:23:29 +0530 2025 -->
