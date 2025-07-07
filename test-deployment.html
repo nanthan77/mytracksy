@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Deployment Test - Current Time: July 7, 2025 6:55 PM</title>
+</head>
+<body>
+    <h1>Deployment Test</h1>
+    <p>If you can see this, deployment is working. Time: July 7, 2025 6:55 PM</p>
+    
+    <h2>Tax Calculator Test</h2>
+    <input type="number" id="testIncome" placeholder="Enter income" oninput="testCalc()">
+    <div id="testResult">Result will appear here</div>
+    
+    <script>
+        window.testCalc = function() {
+            const income = document.getElementById('testIncome').value;
+            const result = `Income: ${income} - Tax: ${income * 0.1}`;
+            document.getElementById('testResult').innerText = result;
+            console.log('Test calculation working:', result);
+        };
+        
+        console.log('Test page loaded successfully');
+    </script>
+</body>
+</html>
