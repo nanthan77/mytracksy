@@ -17,14 +17,6 @@ jobs:
     - name: 🚀 Checkout code
       uses: actions/checkout@v4
       
-    - name: 🔧 Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
-    - name: 📦 Install Firebase CLI
-      run: npm install -g firebase-tools
-      
     - name: 🔍 Validate Firebase configuration
       run: |
         echo "✅ Validating firebase.json..."
@@ -44,19 +36,13 @@ jobs:
           exit 1
         fi
         
-    - name: 🚀 Deploy to Firebase using Token
-      env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-      run: |
-        if [ -z "$FIREBASE_TOKEN" ]; then
-          echo "❌ FIREBASE_TOKEN secret not found"
-          echo "📝 Please set up FIREBASE_TOKEN secret in GitHub repository settings"
-          echo "🔧 Get token by running: firebase login:ci"
-          exit 1
-        fi
-        
-        echo "🚀 Deploying to Firebase..."
-        firebase deploy --project $FIREBASE_PROJECT_ID --token "$FIREBASE_TOKEN" --non-interactive
+    - name: 🚀 Deploy to Firebase using Official Action
+      uses: FirebaseExtended/action-hosting-deploy@v0
+      with:
+        repoToken: '${{ secrets.GITHUB_TOKEN }}'
+        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
+        projectId: '${{ env.FIREBASE_PROJECT_ID }}'
+        channelId: live
         
     - name: 📊 Deployment Summary
       run: |

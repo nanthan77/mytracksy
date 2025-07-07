@@ -5,9 +5,30 @@
 ### Current Issue
 The GitHub Actions workflow failed because it was missing the required Firebase authentication token.
 
-### ✅ Solution Steps
+### ✅ Solution Steps (Choose One Method)
 
-#### 1. Generate Firebase CI Token
+#### Method 1: Firebase Service Account (Recommended)
+
+**Step 1: Generate Service Account Key**
+1. Go to [Firebase Console](https://console.firebase.google.com/)
+2. Select your project: `tracksy-8e30c`
+3. Click Settings ⚙️ → Project Settings
+4. Go to **Service Accounts** tab
+5. Click **Generate new private key**
+6. Download the JSON file
+
+**Step 2: Add GitHub Secret**
+1. Go to your GitHub repository: `https://github.com/nanthan77/mytracksy`
+2. Click **Settings** tab
+3. Click **Secrets and variables** → **Actions**
+4. Click **New repository secret**
+5. Name: `FIREBASE_SERVICE_ACCOUNT`
+6. Value: Copy and paste the entire content of the JSON file
+7. Click **Add secret**
+
+#### Method 2: Firebase CI Token (Alternative)
+
+**Step 1: Generate Firebase CI Token**
 Run this command locally to generate a CI token:
 
 ```bash
@@ -20,7 +41,7 @@ firebase login:ci
 
 This will output a token like: `1//XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX`
 
-#### 2. Add GitHub Secret
+**Step 2: Add GitHub Secret**
 1. Go to your GitHub repository: `https://github.com/nanthan77/mytracksy`
 2. Click **Settings** tab
 3. Click **Secrets and variables** → **Actions**
