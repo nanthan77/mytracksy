@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="sri-lanka-tax-engine.js"></script>
     <script src="behavioral-engagement-system.js"></script>
+    
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --primary-color: #667eea;
@@ -3374,15 +3377,408 @@
 
         function generateTaxFilingReport() {
             const taxData = calculatePersonalIncomeTax();
-            showTaxModal(
-                'Pre-filled Tax Return',
-                `Your pre-filled tax return is ready! Total Income: LKR ${taxData.totalIncome.toLocaleString()}, Tax Payable: LKR ${taxData.incomeTax.toLocaleString()}`,
-                'Download PDF',
-                () => {
-                    showPersonalTaxNotification('Pre-filled tax return generated and downloaded!', 'success');
-                }
-            );
+            const userData = getCurrentUserData();
+            showEnhancedTaxReturnModal(taxData, userData);
         }
+
+        function getCurrentUserData() {
+            // Get user data from various sources
+            const profileName = document.getElementById('userFullName')?.textContent || 'John Doe';
+            const profileEmail = document.getElementById('userEmail')?.textContent || 'user@example.com';
+            const profileTIN = document.getElementById('userTIN')?.textContent || '123456789V';
+            const profileNIC = document.getElementById('userNIC')?.textContent || '123456789V';
+            
+            return {
+                fullName: profileName,
+                email: profileEmail,
+                tin: profileTIN,
+                nic: profileNIC,
+                address: '123 Main Street, Colombo 01, Sri Lanka',
+                phone: '+94 11 234 5678'
+            };
+        }
+
+        function showEnhancedTaxReturnModal(taxData, userData) {
+            // Create modal overlay with enhanced styling
+            const modal = document.createElement('div');
+            modal.className = 'enhanced-tax-modal-overlay';
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.6);
+                backdrop-filter: blur(10px);
+                z-index: 3000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                animation: fadeIn 0.3s ease-out;
+                overflow-y: auto;
+                padding: 20px;
+            `;
+
+            modal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                    border-radius: 20px;
+                    padding: 0;
+                    max-width: 700px;
+                    width: 100%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+                    border: 1px solid rgba(255, 255, 255, 0.2);
+                    animation: slideInUp 0.4s ease-out;
+                ">
+                    <!-- Header -->
+                    <div style="
+                        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                        color: white;
+                        padding: 2rem;
+                        border-radius: 20px 20px 0 0;
+                        text-align: center;
+                        position: relative;
+                    ">
+                        <button onclick="closeTaxReturnModal()" style="
+                            position: absolute;
+                            top: 1rem;
+                            right: 1rem;
+                            background: rgba(255, 255, 255, 0.2);
+                            border: none;
+                            color: white;
+                            width: 40px;
+                            height: 40px;
+                            border-radius: 50%;
+                            cursor: pointer;
+                            font-size: 1.2rem;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            transition: all 0.3s ease;
+                        " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                            ×
+                        </button>
+                        <i class="fas fa-file-invoice-dollar" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.9;"></i>
+                        <h2 style="margin: 0; font-size: 1.8rem; font-weight: 700;">🇱🇰 Pre-filled Tax Return</h2>
+                        <p style="margin: 0.5rem 0 0 0; opacity: 0.9; font-size: 1.1rem;">Income Tax Assessment Year 2024/2025</p>
+                    </div>
+
+                    <!-- Content -->
+                    <div style="padding: 2rem;">
+                        <!-- User Information -->
+                        <div style="
+                            background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+                            border-radius: 12px;
+                            padding: 1.5rem;
+                            margin-bottom: 1.5rem;
+                            border-left: 4px solid #667eea;
+                        ">
+                            <h3 style="color: #667eea; margin: 0 0 1rem 0; font-size: 1.2rem;">
+                                <i class="fas fa-user-circle"></i> Taxpayer Information
+                            </h3>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; font-size: 0.95rem;">
+                                <div><strong>Full Name:</strong> ${userData.fullName}</div>
+                                <div><strong>NIC:</strong> ${userData.nic}</div>
+                                <div><strong>TIN:</strong> ${userData.tin}</div>
+                                <div><strong>Email:</strong> ${userData.email}</div>
+                            </div>
+                        </div>
+
+                        <!-- Tax Summary -->
+                        <div style="
+                            background: linear-gradient(135deg, #e8f5e8 0%, #f0fff4 100%);
+                            border-radius: 12px;
+                            padding: 1.5rem;
+                            margin-bottom: 1.5rem;
+                            border-left: 4px solid #00c851;
+                        ">
+                            <h3 style="color: #00c851; margin: 0 0 1rem 0; font-size: 1.2rem;">
+                                <i class="fas fa-calculator"></i> Tax Assessment Summary
+                            </h3>
+                            <div style="display: grid; gap: 0.8rem;">
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(0,200,81,0.2);">
+                                    <span>Total Annual Income:</span>
+                                    <strong style="color: #00c851;">LKR ${taxData.totalIncome.toLocaleString()}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(0,200,81,0.2);">
+                                    <span>Personal Relief:</span>
+                                    <strong style="color: #00c851;">LKR 3,000,000</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid rgba(0,200,81,0.2);">
+                                    <span>Taxable Income:</span>
+                                    <strong style="color: #667eea;">LKR ${Math.max(0, taxData.totalIncome - 3000000).toLocaleString()}</strong>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; font-size: 1.1rem;">
+                                    <span style="font-weight: 600;">Income Tax Payable:</span>
+                                    <strong style="color: #ff4444; font-size: 1.2rem;">LKR ${taxData.incomeTax.toLocaleString()}</strong>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tax Tips -->
+                        <div style="
+                            background: linear-gradient(135deg, #fff3cd 0%, #fefefe 100%);
+                            border-radius: 12px;
+                            padding: 1.5rem;
+                            margin-bottom: 1.5rem;
+                            border-left: 4px solid #ffbb33;
+                        ">
+                            <h3 style="color: #ffbb33; margin: 0 0 1rem 0; font-size: 1.2rem;">
+                                <i class="fas fa-lightbulb"></i> Tax Filing Tips & Hints
+                            </h3>
+                            <ul style="margin: 0; padding-left: 1.2rem; color: #7c7c7c; line-height: 1.6;">
+                                <li>💡 <strong>Personal Relief:</strong> LKR 3,000,000 is automatically deducted from your total income</li>
+                                <li>📅 <strong>Filing Deadline:</strong> Submit your return by March 31, 2025</li>
+                                <li>💰 <strong>Payment Schedule:</strong> Pay in 4 installments if tax > LKR 5,000</li>
+                                <li>📋 <strong>Required Documents:</strong> Salary certificates, bank statements, receipt</li>
+                                <li>🏛️ <strong>Government Portal:</strong> File directly through IRD online system</li>
+                            </ul>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                            <button onclick="closeTaxReturnModal()" style="
+                                flex: 1;
+                                min-width: 120px;
+                                background: #6c757d;
+                                color: white;
+                                border: none;
+                                padding: 1rem 1.5rem;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                                font-size: 1rem;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.background='#5a6268'" onmouseout="this.style.background='#6c757d'">
+                                <i class="fas fa-times"></i> Cancel
+                            </button>
+                            <button onclick="downloadTaxReturnPDF()" style="
+                                flex: 2;
+                                min-width: 180px;
+                                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                                color: white;
+                                border: none;
+                                padding: 1rem 1.5rem;
+                                border-radius: 8px;
+                                cursor: pointer;
+                                font-weight: 600;
+                                font-size: 1rem;
+                                transition: all 0.3s ease;
+                                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                            " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)'">
+                                <i class="fas fa-download"></i> Download Beautiful PDF
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add click outside to close
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeTaxReturnModal();
+                }
+            });
+
+            document.body.appendChild(modal);
+
+            // Store data for PDF generation
+            window.currentTaxData = taxData;
+            window.currentUserData = userData;
+        }
+
+        function closeTaxReturnModal() {
+            const modal = document.querySelector('.enhanced-tax-modal-overlay');
+            if (modal) {
+                modal.style.animation = 'fadeOut 0.3s ease-out forwards';
+                setTimeout(() => {
+                    modal.remove();
+                }, 300);
+            }
+        }
+
+        function downloadTaxReturnPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const taxData = window.currentTaxData;
+            const userData = window.currentUserData;
+
+            // Set up PDF styling
+            const primaryColor = [102, 126, 234];
+            const secondaryColor = [118, 75, 162];
+            const textColor = [44, 62, 80];
+            const lightGray = [248, 250, 252];
+
+            // Header with gradient effect (simulated with rectangles)
+            doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.rect(0, 0, 210, 35, 'F');
+            doc.setFillColor(secondaryColor[0], secondaryColor[1], secondaryColor[2]);
+            doc.rect(0, 20, 210, 15, 'F');
+
+            // Title
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(24);
+            doc.setFont('helvetica', 'bold');
+            doc.text('🇱🇰 MyTracksy - Tax Return', 20, 22);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text('Income Tax Assessment Year 2024/2025', 20, 30);
+
+            // Reset text color
+            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+            
+            // Taxpayer Information Section
+            let yPos = 50;
+            doc.setFillColor(lightGray[0], lightGray[1], lightGray[2]);
+            doc.rect(15, yPos - 5, 180, 35, 'F');
+            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.setLineWidth(1);
+            doc.rect(15, yPos - 5, 180, 35);
+
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.text('👤 Taxpayer Information', 20, yPos + 5);
+
+            doc.setFontSize(11);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+            doc.text(`Full Name: ${userData.fullName}`, 20, yPos + 15);
+            doc.text(`NIC: ${userData.nic}`, 120, yPos + 15);
+            doc.text(`TIN: ${userData.tin}`, 20, yPos + 22);
+            doc.text(`Email: ${userData.email}`, 120, yPos + 22);
+
+            // Tax Assessment Section
+            yPos += 50;
+            doc.setFillColor(232, 245, 232);
+            doc.rect(15, yPos - 5, 180, 55, 'F');
+            doc.setDrawColor(0, 200, 81);
+            doc.rect(15, yPos - 5, 180, 55);
+
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(0, 200, 81);
+            doc.text('🧮 Tax Assessment Summary', 20, yPos + 5);
+
+            doc.setFontSize(12);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+            
+            // Tax details
+            const taxDetails = [
+                ['Total Annual Income:', `LKR ${taxData.totalIncome.toLocaleString()}`],
+                ['Personal Relief (Automatic):', 'LKR 3,000,000'],
+                ['Taxable Income:', `LKR ${Math.max(0, taxData.totalIncome - 3000000).toLocaleString()}`],
+                ['Income Tax Payable:', `LKR ${taxData.incomeTax.toLocaleString()}`]
+            ];
+
+            taxDetails.forEach((detail, index) => {
+                doc.text(detail[0], 20, yPos + 15 + (index * 8));
+                doc.setFont('helvetica', 'bold');
+                if (index === 3) doc.setTextColor(255, 68, 68); // Red for tax payable
+                doc.text(detail[1], 120, yPos + 15 + (index * 8));
+                doc.setFont('helvetica', 'normal');
+                doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+            });
+
+            // Tax Brackets Breakdown
+            yPos += 70;
+            doc.setFillColor(255, 243, 205);
+            doc.rect(15, yPos - 5, 180, 45, 'F');
+            doc.setDrawColor(255, 187, 51);
+            doc.rect(15, yPos - 5, 180, 45);
+
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(255, 187, 51);
+            doc.text('📊 Progressive Tax Brackets (Sri Lanka)', 20, yPos + 5);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+            const brackets = [
+                'First LKR 500,000: 6%',
+                'Next LKR 500,000: 12%',
+                'Next LKR 500,000: 18%',
+                'Next LKR 500,000: 24%',
+                'Next LKR 500,000: 30%',
+                'Above LKR 2,500,000: 36%'
+            ];
+
+            brackets.forEach((bracket, index) => {
+                const xPos = index < 3 ? 20 : 120;
+                const yOffset = index < 3 ? index : index - 3;
+                doc.text(`• ${bracket}`, xPos, yPos + 15 + (yOffset * 7));
+            });
+
+            // Important Notes
+            yPos += 60;
+            doc.setFillColor(227, 242, 253);
+            doc.rect(15, yPos - 5, 180, 50, 'F');
+            doc.setDrawColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.rect(15, yPos - 5, 180, 50);
+
+            doc.setFontSize(16);
+            doc.setFont('helvetica', 'bold');
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.text('💡 Important Filing Information', 20, yPos + 5);
+
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+            const notes = [
+                '• Filing Deadline: March 31, 2025',
+                '• Payment can be made in 4 installments if tax > LKR 5,000',
+                '• File online through IRD official portal',
+                '• Keep all receipts and certificates for verification',
+                '• This document is generated by MyTracksy for reference only'
+            ];
+
+            notes.forEach((note, index) => {
+                doc.text(note, 20, yPos + 15 + (index * 7));
+            });
+
+            // Footer
+            doc.setFontSize(8);
+            doc.setTextColor(100, 100, 100);
+            doc.text('Generated by MyTracksy - Sri Lankan Financial Intelligence Platform', 20, 280);
+            doc.text(`Generated on: ${new Date().toLocaleDateString('en-LK')} at ${new Date().toLocaleTimeString('en-LK')}`, 20, 285);
+            doc.text('🌐 https://tracksy-8e30c.web.app', 150, 285);
+
+            // Save the PDF
+            const fileName = `MyTracksy_Tax_Return_${userData.fullName.replace(/\s+/g, '_')}_${new Date().getFullYear()}.pdf`;
+            doc.save(fileName);
+
+            // Show success message and close modal
+            showPersonalTaxNotification('Beautiful tax return PDF downloaded successfully! 📄✨', 'success');
+            closeTaxReturnModal();
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
+            @keyframes fadeOut {
+                from { opacity: 1; }
+                to { opacity: 0; }
+            }
+            @keyframes slideInUp {
+                from { 
+                    opacity: 0; 
+                    transform: translateY(50px) scale(0.95); 
+                }
+                to { 
+                    opacity: 1; 
+                    transform: translateY(0) scale(1); 
+                }
+            }
+        `;
+        document.head.appendChild(style);
 
         function saveChecklistProgress() {
             const checkboxes = document.querySelectorAll('.personal-tax-section input[type="checkbox"]');
