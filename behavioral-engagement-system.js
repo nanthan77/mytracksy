@@ -15,6 +15,34 @@ class BehavioralEngagementSystem {
         this.trackUserBehaviorPatterns();
     }
 
+    // Track user behavior patterns for intelligent engagement
+    trackUserBehaviorPatterns() {
+        this.trackBehavioralEvent('system_initialized');
+        this.monitorUserInteractionPatterns();
+        this.analyzeEngagementTrends();
+    }
+
+    monitorUserInteractionPatterns() {
+        // Track various user interactions
+        document.addEventListener('click', (e) => {
+            this.trackBehavioralEvent('user_click', { target: e.target.tagName });
+        });
+
+        document.addEventListener('input', (e) => {
+            this.trackBehavioralEvent('user_input', { inputType: e.target.type });
+        });
+    }
+
+    analyzeEngagementTrends() {
+        // Analyze user engagement patterns periodically
+        setInterval(() => {
+            const events = this.getBehavioralEvents();
+            if (events.length > 0) {
+                this.updateEngagementMetrics(events);
+            }
+        }, 60000); // Every minute
+    }
+
     // Smart Timing System for Engagement Prompts
     setupSmartTimingSystem() {
         // Track user activity patterns
@@ -524,6 +552,23 @@ class BehavioralEngagementSystem {
         this.trackVoiceAchievements();
         this.trackProfessionalAchievements();
         this.trackConsistencyAchievements();
+    }
+
+    // Get behavioral events from localStorage
+    getBehavioralEvents() {
+        return JSON.parse(localStorage.getItem('myTracksyBehavioralEvents') || '[]');
+    }
+
+    // Update engagement metrics based on events
+    updateEngagementMetrics(events) {
+        const metrics = {
+            totalEvents: events.length,
+            clickEvents: events.filter(e => e.type === 'user_click').length,
+            inputEvents: events.filter(e => e.type === 'user_input').length,
+            lastActivity: events.length > 0 ? events[events.length - 1].timestamp : null
+        };
+        
+        localStorage.setItem('myTracksyEngagementMetrics', JSON.stringify(metrics));
     }
 }
 
