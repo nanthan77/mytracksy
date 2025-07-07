@@ -9,6 +9,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="sri-lanka-tax-engine.js"></script>
     <script src="behavioral-engagement-system.js"></script>
+    <script src="tax-management-system.js"></script>
+    <script src="comprehensive-income-tax-calculator.js"></script>
+    <script src="test-tax-calculations.js"></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
     <style>
         :root {
             --primary-color: #7c3aed;
@@ -166,10 +174,250 @@
             font-weight: 700;
             color: var(--primary-color);
         }
+
+        /* Tax Management Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideInUp 0.3s ease-out;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .modal-header h3 {
+            color: var(--dark-color);
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #6b7280;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s;
+        }
+
+        .close-btn:hover {
+            background: #f3f4f6;
+            color: #374151;
+        }
+
+        .modal-body {
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .tax-results,
+        .vat-results,
+        .wht-results {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 12px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .result-item span:first-child {
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .result-item span:last-child {
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .status-success {
+            color: #059669 !important;
+        }
+
+        .status-warning {
+            color: #dc2626 !important;
+        }
+
+        .recommendation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            border-radius: 8px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from { 
+                opacity: 0; 
+                transform: translateY(50px) scale(0.95); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="dashboard">
+    <!-- Navigation Bar -->
+    <nav style="
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        z-index: 1000;
+        padding: 1rem 0;
+    ">
+        <div style="
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        ">
+            <a href="index.html" style="
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                text-decoration: none;
+                color: var(--primary-color);
+                font-size: 1.5rem;
+                font-weight: 700;
+            ">
+                <i class="fas fa-chart-line"></i>
+                MyTracksy
+            </a>
+            
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <a href="dashboard.html" style="
+                    background: var(--primary-color);
+                    color: white;
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                " onmouseover="this.style.background='var(--secondary-color)'" onmouseout="this.style.background='var(--primary-color)'">
+                    <i class="fas fa-arrow-left"></i>
+                    Back to Dashboard
+                </a>
+                
+                <a href="user-profile.html" style="
+                    background: transparent;
+                    color: var(--primary-color);
+                    border: 2px solid var(--primary-color);
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                " onmouseover="this.style.background='var(--primary-color)'; this.style.color='white'" onmouseout="this.style.background='transparent'; this.style.color='var(--primary-color)'">
+                    <i class="fas fa-user-cog"></i>
+                    Profile
+                </a>
+                
+                <a href="index.html" style="
+                    background: transparent;
+                    color: var(--gray-600);
+                    padding: 0.75rem;
+                    border-radius: 8px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    transition: all 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                " onmouseover="this.style.color='var(--primary-color)'" onmouseout="this.style.color='var(--gray-600)'">
+                    <i class="fas fa-home"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="dashboard" style="margin-top: 80px; margin-bottom: 2rem;">
         <div class="header">
             <h1>👨‍👩‍👧‍👦 Individual & Family Finance Dashboard</h1>
             <p>Comprehensive personal finance management for individuals and Sri Lankan families</p>
@@ -219,72 +467,57 @@
                 Sri Lankan Tax Compliance Dashboard
             </h2>
             
-            <div class="stats-grid" style="margin-bottom: 2rem;">
-                <div class="stat-card" style="border-left: 4px solid #10b981;">
-                    <div class="stat-value" id="annualIncome" style="color: #10b981;">LKR 0</div>
-                    <div>Annual Income</div>
-                    <small style="color: var(--gray-500);"><i class="fas fa-money-bill"></i> Income tax calculation</small>
-                </div>
-                <div class="stat-card" style="border-left: 4px solid #f59e0b;">
-                    <div class="stat-value" id="taxLiability" style="color: #f59e0b;">LKR 0</div>
-                    <div>Tax Liability</div>
-                    <small style="color: var(--gray-500);"><i class="fas fa-calculator"></i> Sri Lankan tax rates</small>
-                </div>
-                <div class="stat-card" style="border-left: 4px solid #ef4444;">
-                    <div class="stat-value" id="vatStatus" style="color: #ef4444;">Not Required</div>
-                    <div>VAT Registration</div>
-                    <small style="color: var(--gray-500);"><i class="fas fa-building"></i> LKR 12M threshold</small>
-                </div>
-                <div class="stat-card" style="border-left: 4px solid #7c3aed;">
-                    <div class="stat-value" id="nextFiling" style="color: #7c3aed;">Mar 31</div>
-                    <div>Next Tax Filing</div>
-                    <small style="color: var(--gray-500);"><i class="fas fa-calendar"></i> IRD deadlines</small>
-                </div>
-            </div>
-
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-                <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <h3 style="margin-bottom: 1rem; color: var(--dark-color);"><i class="fas fa-calculator"></i> Income Tax Calculator</h3>
-                    <div style="margin-bottom: 1rem;">
-                        <label>Annual Income (LKR):</label>
-                        <input type="number" id="taxIncomeInput" placeholder="Enter annual income" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; margin-top: 0.5rem;">
+            <!-- Personal Income Tax Management -->
+            <div style="background: white; border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+                <h3 style="margin-bottom: 1.5rem; color: var(--dark-color); display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-calculator"></i>
+                    Personal Income Tax Management
+                </h3>
+                <p style="color: var(--gray-600); margin-bottom: 2rem;">Sri Lankan personal income tax calculator and compliance tools</p>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+                    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: #059669; margin-bottom: 0.5rem;">Income Tax Status</h4>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #059669;" id="incomeTaxStatus">Not Registered</div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">TIN: <span id="userTIN">Not Set</span></div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">Tax Year: <span id="taxYear">2024/2025</span></div>
+                        <button onclick="openTaxCalculator()" style="background: #059669; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; margin-top: 1rem; cursor: pointer; font-size: 0.9rem;">
+                            <i class="fas fa-calculator"></i> Calculate Tax
+                        </button>
                     </div>
-                    <button class="btn" onclick="calculatePersonalIncomeTax()" style="width: 100%;">
-                        <i class="fas fa-calculator"></i> Calculate Tax
-                    </button>
-                    <div id="taxBreakdown" style="margin-top: 1rem; font-size: 0.9rem;"></div>
-                </div>
-
-                <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                    <h3 style="margin-bottom: 1rem; color: var(--dark-color);"><i class="fas fa-percent"></i> VAT Calculator</h3>
-                    <div style="margin-bottom: 1rem;">
-                        <label>Amount (LKR):</label>
-                        <input type="number" id="vatAmountInput" placeholder="Enter amount" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px; margin-top: 0.5rem;">
+                    
+                    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: #dc2626; margin-bottom: 0.5rem;">VAT Registration</h4>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #dc2626;" id="vatStatus">Check Required</div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">Threshold: <span id="vatThreshold">LKR 12M annually</span></div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">Current Revenue: <span id="currentRevenue">LKR 0</span></div>
+                        <button onclick="openVATChecker()" style="background: #dc2626; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; margin-top: 1rem; cursor: pointer; font-size: 0.9rem;">
+                            <i class="fas fa-check"></i> Check Eligibility
+                        </button>
                     </div>
-                    <button class="btn btn-accent" onclick="calculateVATForIndividual()" style="width: 100%;">
-                        <i class="fas fa-percent"></i> Calculate VAT (18%)
-                    </button>
-                    <div id="vatBreakdown" style="margin-top: 1rem; font-size: 0.9rem;"></div>
-                </div>
-            </div>
-
-            <div style="background: white; border-radius: 12px; padding: 1.5rem; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 2rem;">
-                <h3 style="margin-bottom: 1rem; color: var(--dark-color);"><i class="fas fa-calendar-alt"></i> Tax Filing Reminders</h3>
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
-                    <div style="padding: 1rem; background: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-                        <div style="font-weight: 600; color: #92400e;">Income Tax Return</div>
-                        <div style="font-size: 0.9rem; color: #92400e;">Due: March 31, 2025</div>
+                    
+                    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: #7c2d12; margin-bottom: 0.5rem;">Withholding Tax</h4>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #7c2d12;" id="whtStatus">Tracked</div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">YTD WHT: <span id="whtYTD">LKR 0</span></div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">Rate: 5% - 15%</div>
+                        <button onclick="openWHTTracker()" style="background: #7c2d12; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; margin-top: 1rem; cursor: pointer; font-size: 0.9rem;">
+                            <i class="fas fa-chart-line"></i> View Report
+                        </button>
                     </div>
-                    <div style="padding: 1rem; background: #dbeafe; border-radius: 8px; border-left: 4px solid #3b82f6;">
-                        <div style="font-weight: 600; color: #1e40af;">Quarterly APIT</div>
-                        <div style="font-size: 0.9rem; color: #1e40af;">Next: February 15</div>
-                    </div>
-                    <div style="padding: 1rem; background: #dcfce7; border-radius: 8px; border-left: 4px solid #16a34a;">
-                        <div style="font-weight: 600; color: #15803d;">EPF Statement</div>
-                        <div style="font-size: 0.9rem; color: #15803d;">Annual review</div>
+                    
+                    <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem;">
+                        <h4 style="color: #7c3aed; margin-bottom: 0.5rem;">Filing Reminders</h4>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #7c3aed;" id="filingStatus">Due Soon</div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">Next Filing: March 31, 2025</div>
+                        <div style="font-size: 0.9rem; color: #6b7280;">Days Left: <span id="daysLeft">Loading...</span></div>
+                        <button onclick="openFilingReminders()" style="background: #7c3aed; color: white; border: none; padding: 0.5rem 1rem; border-radius: 6px; margin-top: 1rem; cursor: pointer; font-size: 0.9rem;">
+                            <i class="fas fa-bell"></i> Set Reminders
+                        </button>
                     </div>
                 </div>
             </div>
+
         </div>
 
         <div class="budget-section">
@@ -612,13 +845,31 @@
                         
                         <div style="margin-bottom: 1rem;">
                             <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Description</label>
-                            <input type="text" id="expenseDescription" required style="
-                                width: 100%;
-                                padding: 0.75rem;
-                                border: 2px solid var(--gray-300);
-                                border-radius: 8px;
-                                font-size: 1rem;
-                            " placeholder="What did you spend on?">
+                            <div style="display: flex; gap: 0.5rem;">
+                                <input type="text" id="expenseDescription" required style="
+                                    flex: 1;
+                                    padding: 0.75rem;
+                                    border: 2px solid var(--gray-300);
+                                    border-radius: 8px;
+                                    font-size: 1rem;
+                                " placeholder="What did you spend on?">
+                                <button type="button" onclick="startVoiceInput()" style="
+                                    background: var(--accent-color);
+                                    color: white;
+                                    border: none;
+                                    padding: 0.75rem;
+                                    border-radius: 8px;
+                                    cursor: pointer;
+                                    min-width: 50px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    transition: all 0.3s ease;
+                                " id="voiceInputBtn" title="Voice Input">
+                                    <i class="fas fa-microphone"></i>
+                                </button>
+                            </div>
+                            <div id="voiceStatus" style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--gray-600);"></div>
                         </div>
                         
                         <div style="margin-bottom: 1.5rem;">
@@ -1163,6 +1414,136 @@
             trackBehavioralEvent('tip_dismissed_' + tipType);
         }
 
+        // Voice Input Functionality
+        let recognition;
+        let isListening = false;
+
+        function startVoiceInput() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert('Voice input is not supported in your browser. Please use Chrome, Safari, or Edge.');
+                return;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.lang = 'en-US';
+            recognition.interimResults = true;
+            recognition.maxAlternatives = 1;
+
+            const voiceBtn = document.getElementById('voiceInputBtn');
+            const voiceStatus = document.getElementById('voiceStatus');
+            const descriptionInput = document.getElementById('expenseDescription');
+
+            if (isListening) {
+                // Stop listening
+                recognition.stop();
+                isListening = false;
+                voiceBtn.style.background = 'var(--accent-color)';
+                voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+                voiceStatus.textContent = '';
+                return;
+            }
+
+            // Start listening
+            isListening = true;
+            voiceBtn.style.background = '#ef4444';
+            voiceBtn.innerHTML = '<i class="fas fa-stop"></i>';
+            voiceStatus.textContent = '🎤 Listening... Speak now!';
+            voiceStatus.style.color = '#ef4444';
+
+            recognition.onstart = function() {
+                console.log('Voice recognition started');
+            };
+
+            recognition.onresult = function(event) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const transcript = event.results[i][0].transcript;
+                    if (event.results[i].isFinal) {
+                        finalTranscript += transcript;
+                    } else {
+                        interimTranscript += transcript;
+                    }
+                }
+
+                // Show real-time transcription
+                if (interimTranscript) {
+                    voiceStatus.textContent = '🎤 ' + interimTranscript;
+                    descriptionInput.value = finalTranscript + interimTranscript;
+                }
+
+                if (finalTranscript) {
+                    descriptionInput.value = finalTranscript;
+                    processVoiceInput(finalTranscript);
+                }
+            };
+
+            recognition.onerror = function(event) {
+                console.error('Voice recognition error:', event.error);
+                voiceStatus.textContent = '❌ Error: ' + event.error;
+                voiceStatus.style.color = '#ef4444';
+                resetVoiceButton();
+            };
+
+            recognition.onend = function() {
+                resetVoiceButton();
+            };
+
+            recognition.start();
+        }
+
+        function resetVoiceButton() {
+            isListening = false;
+            const voiceBtn = document.getElementById('voiceInputBtn');
+            const voiceStatus = document.getElementById('voiceStatus');
+            
+            voiceBtn.style.background = 'var(--accent-color)';
+            voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+            voiceStatus.textContent = '';
+        }
+
+        function processVoiceInput(transcript) {
+            const voiceStatus = document.getElementById('voiceStatus');
+            const amountInput = document.getElementById('expenseAmount');
+            const categorySelect = document.getElementById('expenseCategory');
+            
+            // Parse amount from speech
+            const amountMatch = transcript.match(/(\d+(?:\.\d{2})?)\s*(?:rupees?|lkr|dollars?)/i);
+            if (amountMatch) {
+                amountInput.value = amountMatch[1];
+                voiceStatus.innerHTML = '✅ Amount detected: LKR ' + amountMatch[1];
+                voiceStatus.style.color = '#10b981';
+            }
+
+            // Auto-detect category based on keywords
+            const categories = {
+                'Food & Groceries': ['food', 'grocery', 'groceries', 'lunch', 'dinner', 'breakfast', 'restaurant', 'cafe', 'market', 'supermarket'],
+                'Transportation': ['transport', 'taxi', 'bus', 'train', 'uber', 'grab', 'fuel', 'petrol', 'diesel', 'parking'],
+                'Entertainment': ['movie', 'cinema', 'game', 'entertainment', 'party', 'concert', 'music', 'netflix'],
+                'Healthcare': ['doctor', 'hospital', 'medicine', 'pharmacy', 'medical', 'health', 'clinic', 'treatment'],
+                'Utilities': ['electricity', 'water', 'internet', 'phone', 'mobile', 'wifi', 'utility', 'bill'],
+                'Education': ['education', 'school', 'course', 'book', 'study', 'training', 'tuition', 'class']
+            };
+
+            const lowerTranscript = transcript.toLowerCase();
+            for (const [category, keywords] of Object.entries(categories)) {
+                if (keywords.some(keyword => lowerTranscript.includes(keyword))) {
+                    categorySelect.value = category;
+                    voiceStatus.innerHTML += '<br>📂 Category: ' + category;
+                    break;
+                }
+            }
+
+            // Show success message
+            setTimeout(() => {
+                voiceStatus.innerHTML = '✅ Voice input complete! Review and submit.';
+                voiceStatus.style.color = '#10b981';
+            }, 2000);
+        }
+
         // Add CSS animations
         const style = document.createElement('style');
         style.textContent = `
@@ -1185,6 +1566,11 @@
             @keyframes backdropFadeIn {
                 from { opacity: 0; }
                 to { opacity: 1; }
+            }
+
+            #voiceInputBtn:hover {
+                transform: scale(1.05);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             }
         `;
         document.head.appendChild(style);
