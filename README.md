@@ -1,10 +1,15 @@
 # 🇱🇰 MyTracksy - Sri Lankan Financial Intelligence Platform
 
+[![Deploy to Firebase](https://github.com/YOUR_USERNAME/mytracksy/actions/workflows/firebase-deploy.yml/badge.svg)](https://github.com/YOUR_USERNAME/mytracksy/actions/workflows/firebase-deploy.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Firebase](https://img.shields.io/badge/Firebase-FF8800?logo=firebase&logoColor=white)](https://firebase.google.com/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)](https://javascript.info/)
+
 ## 🚀 Live Application
 **🌐 Access the live application**: [https://tracksy-8e30c.web.app](https://tracksy-8e30c.web.app)
 
 ## 📋 Overview
-MyTracksy is a comprehensive financial intelligence platform specifically designed for Sri Lankan businesses and individuals. It provides complete tax compliance, government portal integration, and advanced analytics for optimal financial management.
+MyTracksy is a comprehensive financial intelligence platform specifically designed for Sri Lankan businesses and individuals. It provides complete tax compliance, government portal integration, voice input capabilities, and AI-powered financial insights for optimal financial management.
 
 ## ✨ Key Features
 
@@ -32,6 +37,18 @@ MyTracksy is a comprehensive financial intelligence platform specifically design
 - **Mobile-First Design**: Optimized for smartphones and tablets
 - **Real-time Sync**: Automatic data synchronization
 - **Push Notifications**: Tax deadline and payment reminders
+
+### 🎙️ Voice Input System
+- **Speech Recognition**: Voice-to-text for expense descriptions
+- **Automatic Categorization**: AI-powered expense classification
+- **Real-time Transcription**: Instant voice processing
+- **Multi-language Support**: English and Sinhala recognition
+
+### 🧮 Advanced Tax Calculations
+- **Personal Relief**: LKR 3,000,000 automatic deduction
+- **Progressive Brackets**: 6%-36% tax rates with accurate computation
+- **Comprehensive Deductions**: EPF, insurance, medical, charitable donations
+- **Real-time Updates**: Instant tax calculations as you type
 
 ## 🛠️ Technology Stack
 
@@ -92,14 +109,57 @@ MyTracksy is a comprehensive financial intelligence platform specifically design
 - **Legal**: Professional service fee management
 - **Transportation**: Vehicle and fuel expense tracking
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-### For Individuals
+### For End Users
 1. Visit [https://tracksy-8e30c.web.app](https://tracksy-8e30c.web.app)
 2. Create your personal account
 3. Set up your tax profile (TIN, VAT registration)
 4. Start tracking expenses and income
 5. Generate tax reports and file returns
+
+### For Developers
+
+#### Prerequisites
+- Node.js 18+ installed
+- Firebase CLI: `npm install -g firebase-tools`
+- Git for version control
+
+#### Installation
+```bash
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/mytracksy.git
+cd mytracksy
+
+# Install dependencies
+npm install
+
+# Configure Firebase
+firebase login
+firebase init
+
+# Start development server
+firebase serve --port 5000
+```
+
+#### Project Structure
+```
+mytracksy/
+├── .github/workflows/          # GitHub Actions CI/CD
+├── deployment/                 # Production deployment scripts
+├── docs/                      # Documentation
+├── public/                    # Web application files
+│   ├── index.html            # Landing page
+│   ├── dashboard.html        # Main dashboard
+│   ├── individual-dashboard.html  # Personal finance
+│   ├── tax-management-system.js   # Tax calculation engine
+│   ├── comprehensive-income-tax-calculator.js
+│   └── test-tax-calculations.js    # Tax testing suite
+├── firestore.rules           # Database security rules
+├── firebase.json             # Firebase configuration
+├── COMPLETE_WORKFLOW.md      # Detailed development workflow
+└── README.md                 # This file
+```
 
 ### For Businesses
 1. Create a company profile
@@ -107,6 +167,74 @@ MyTracksy is a comprehensive financial intelligence platform specifically design
 3. Configure tax settings (VAT, EPF, ETF)
 4. Import existing financial data
 5. Set up automated government filing
+
+## 🧪 Testing
+
+### Tax Calculation Tests
+The platform includes comprehensive tax calculation tests to ensure accuracy:
+
+```javascript
+// Test income below personal relief threshold
+testCase1: {
+    income: 2,500,000,
+    deductions: 280,000,
+    expectedTax: 0  // Below 3M personal relief threshold
+}
+
+// Test progressive tax brackets
+testCase2: {
+    income: 8,800,000,
+    deductions: 880,000,
+    expectedTax: 1,321,200  // Progressive bracket calculation
+}
+```
+
+### Running Tests
+```bash
+# Open browser console and run
+testTaxCalculations();
+
+# View comprehensive test results
+console.log(window.taxTestResults);
+```
+
+### User Acceptance Testing Checklist
+- [ ] User registration and authentication
+- [ ] Income tax calculations with personal relief
+- [ ] Progressive tax bracket accuracy
+- [ ] VAT registration threshold checking
+- [ ] Voice input functionality
+- [ ] Company profile management
+- [ ] Multi-user collaboration features
+- [ ] Data persistence and synchronization
+
+## 🚀 Deployment
+
+### Automatic Deployment
+Push to the `main` branch to trigger automatic deployment via GitHub Actions:
+
+```bash
+git add .
+git commit -m "Your changes"
+git push origin main
+```
+
+### Manual Deployment
+```bash
+# Deploy to Firebase
+firebase deploy --project tracksy-8e30c
+
+# Verify deployment
+curl -I https://tracksy-8e30c.web.app
+```
+
+### Production Environment Setup
+1. Configure Firebase project settings
+2. Set up Firebase Authentication providers
+3. Configure Firestore security rules
+4. Set up GitHub Actions secrets:
+   - `FIREBASE_SERVICE_ACCOUNT`
+5. Configure custom domain (optional)
 
 ## 📈 Benefits
 
@@ -195,12 +323,59 @@ MyTracksy is a comprehensive financial intelligence platform specifically design
 
 ---
 
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Commit your changes: `git commit -m 'Add amazing feature'`
+4. Push to the branch: `git push origin feature/amazing-feature`
+5. Open a Pull Request
+
+### Development Guidelines
+- Follow existing code style and patterns
+- Add comprehensive tests for new features
+- Update documentation for any changes
+- Ensure all tax calculations are accurate
+- Test with real Sri Lankan tax scenarios
+
+## 📚 Documentation
+
+### Quick Links
+- [📋 Complete Workflow Documentation](COMPLETE_WORKFLOW.md)
+- [🚀 Development Setup Guide](docs/DEVELOPMENT.md)
+- [🔧 Deployment Instructions](docs/DEPLOYMENT.md)
+- [🔐 Security Guidelines](docs/SECURITY.md)
+- [📊 API Documentation](docs/API.md)
+
+### Key Components Documentation
+- **Tax Management System**: Complete Sri Lankan tax compliance engine
+- **Voice Input System**: Speech-to-text expense entry functionality
+- **Firebase Integration**: Real-time database and authentication
+- **Progressive Tax Calculator**: Accurate tax calculations with personal relief
+- **Government Portal Integration**: Direct filing capabilities
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
 ## 🤖 Powered by AI
 
-This application was built with the assistance of Claude, Anthropic's AI assistant, demonstrating the power of AI-human collaboration in creating sophisticated financial technology solutions.
+This application was built with the assistance of Claude, Anthropic's AI assistant, demonstrating the power of AI-human collaboration in creating sophisticated financial technology solutions for Sri Lankan businesses and individuals.
 
 **🔗 Live Application**: [https://tracksy-8e30c.web.app](https://tracksy-8e30c.web.app)
 
 ---
 
-*MyTracksy - Empowering Sri Lankan businesses with intelligent financial management* 🇱🇰<!-- Last updated: Mon Jul  7 21:23:29 +0530 2025 -->
+## 🎯 Quick Links
+
+- [🌐 Live Application](https://tracksy-8e30c.web.app)
+- [📚 Complete Documentation](COMPLETE_WORKFLOW.md)
+- [🚀 GitHub Actions Workflow](.github/workflows/firebase-deploy.yml)
+- [🧪 Tax Calculation Tests](test-tax-calculations.js)
+- [🔧 Tax Management System](tax-management-system.js)
+
+---
+
+*MyTracksy - Empowering Sri Lankan businesses with intelligent financial management* 🇱🇰
+
+**Made with ❤️ for Sri Lankan businesses and individuals**
