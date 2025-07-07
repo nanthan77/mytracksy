@@ -570,6 +570,20 @@ class BehavioralEngagementSystem {
         
         localStorage.setItem('myTracksyEngagementMetrics', JSON.stringify(metrics));
     }
+
+    // Check if scroll engagement has been shown recently
+    hasShownScrollEngagement() {
+        const lastShown = localStorage.getItem('myTracksyLastScrollEngagement');
+        if (!lastShown) return false;
+        
+        const timeDiff = Date.now() - parseInt(lastShown);
+        return timeDiff < 300000; // 5 minutes
+    }
+
+    // Mark scroll engagement as shown
+    markScrollEngagementShown() {
+        localStorage.setItem('myTracksyLastScrollEngagement', Date.now().toString());
+    }
 }
 
 // Global functions for popup interactions
@@ -602,8 +616,8 @@ window.dismissEngagement = function(type) {
 };
 
 // CSS Animations
-const engagementStyle = document.createElement('style');
-engagementStyle.textContent = `
+const behavioralEngagementStyle = document.createElement('style');
+behavioralEngagementStyle.textContent = `
     @keyframes achievementBounce {
         0% { 
             opacity: 0; 
@@ -634,7 +648,7 @@ engagementStyle.textContent = `
         }
     }
 `;
-document.head.appendChild(engagementStyle);
+document.head.appendChild(behavioralEngagementStyle);
 
 // Initialize the system when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {

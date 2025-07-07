@@ -1418,8 +1418,8 @@
     </main>
 
     <script>
-        // Global tax calculation function - accessible to inline event handlers
-        function calculateTaxNow() {
+        // CRITICAL: Define calculateTaxNow function IMMEDIATELY - accessible to inline event handlers
+        window.calculateTaxNow = function calculateTaxNow() {
             console.log('🧮 calculateTaxNow() called - DIRECT CALCULATION');
             
             try {
@@ -1521,8 +1521,7 @@
             }
         }
 
-        // Explicitly make function globally accessible
-        window.calculateTaxNow = calculateTaxNow;
+        // Function already assigned to window above
 
         // Test function on page load
         document.addEventListener('DOMContentLoaded', function() {
