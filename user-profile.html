@@ -1093,19 +1093,19 @@
                         <h4>Income Details</h4>
                         <div class="input-group">
                             <label>Annual Employment Income (LKR)</label>
-                            <input type="number" id="employmentIncome" placeholder="1,200,000" class="tax-input">
+                            <input type="number" id="employmentIncome" placeholder="1,200,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                         <div class="input-group">
                             <label>Business/Professional Income (LKR)</label>
-                            <input type="number" id="businessIncome" placeholder="500,000" class="tax-input">
+                            <input type="number" id="businessIncome" placeholder="500,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                         <div class="input-group">
                             <label>Other Income (LKR)</label>
-                            <input type="number" id="otherIncome" placeholder="100,000" class="tax-input">
+                            <input type="number" id="otherIncome" placeholder="100,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                         <div class="input-group">
                             <label>Investment Income (LKR)</label>
-                            <input type="number" id="investmentIncome" placeholder="75,000" class="tax-input">
+                            <input type="number" id="investmentIncome" placeholder="75,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                     </div>
 
@@ -1113,19 +1113,19 @@
                         <h4>Deductions & Reliefs</h4>
                         <div class="input-group">
                             <label>EPF Contributions (LKR)</label>
-                            <input type="number" id="epfContributions" placeholder="120,000" class="tax-input">
+                            <input type="number" id="epfContributions" placeholder="120,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                         <div class="input-group">
                             <label>Life Insurance Premiums (LKR)</label>
-                            <input type="number" id="insurancePremiums" placeholder="50,000" class="tax-input">
+                            <input type="number" id="insurancePremiums" placeholder="50,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                         <div class="input-group">
                             <label>Donations to Approved Charities (LKR)</label>
-                            <input type="number" id="donations" placeholder="25,000" class="tax-input">
+                            <input type="number" id="donations" placeholder="25,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                         <div class="input-group">
                             <label>Medical Expenses (LKR)</label>
-                            <input type="number" id="medicalExpenses" placeholder="30,000" class="tax-input">
+                            <input type="number" id="medicalExpenses" placeholder="30,000" class="tax-input" oninput="calculateTaxNow()" onkeyup="calculateTaxNow()" onchange="calculateTaxNow()">
                         </div>
                     </div>
 
@@ -3275,195 +3275,119 @@
             });
         }
 
-        function calculatePersonalIncomeTax() {
-            console.log('🧮 calculatePersonalIncomeTax() called');
+        // Simple, direct tax calculation function
+        function calculateTaxNow() {
+            console.log('🧮 calculateTaxNow() called - DIRECT CALCULATION');
             
-            // Get income values
-            const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value) || 0;
-            const businessIncome = parseFloat(document.getElementById('businessIncome')?.value) || 0;
-            const otherIncome = parseFloat(document.getElementById('otherIncome')?.value) || 0;
-            const investmentIncome = parseFloat(document.getElementById('investmentIncome')?.value) || 0;
-            
-            console.log('💰 Income values:', { employmentIncome, businessIncome, otherIncome, investmentIncome });
-
-            // Get deduction values
-            const epfContributions = parseFloat(document.getElementById('epfContributions')?.value) || 0;
-            const insurancePremiums = parseFloat(document.getElementById('insurancePremiums')?.value) || 0;
-            const donations = parseFloat(document.getElementById('donations')?.value) || 0;
-            const medicalExpenses = parseFloat(document.getElementById('medicalExpenses')?.value) || 0;
-
-            // Use comprehensive tax calculator
-            if (typeof comprehensiveCalculator !== 'undefined') {
-                const incomeDetails = {
-                    employmentIncome: employmentIncome,
-                    businessIncome: businessIncome,
-                    otherIncome: otherIncome,
-                    investmentIncome: investmentIncome
-                };
-
-                const deductionDetails = {
-                    epfContributions: epfContributions,
-                    lifeInsurance: insurancePremiums,
-                    charitableDonations: donations,
-                    medicalExpenses: medicalExpenses
-                };
-
-                const result = comprehensiveCalculator.calculateComprehensiveIncomeTax(incomeDetails, deductionDetails);
+            try {
+                // Get income values
+                const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value) || 0;
+                const businessIncome = parseFloat(document.getElementById('businessIncome')?.value) || 0;
+                const otherIncome = parseFloat(document.getElementById('otherIncome')?.value) || 0;
+                const investmentIncome = parseFloat(document.getElementById('investmentIncome')?.value) || 0;
                 
-                // Update display with comprehensive results
-                updateTaxCalculationDisplay(result);
-                return result;
-            } else {
-                // Fallback calculation with personal relief
+                // Get deduction values
+                const epfContributions = parseFloat(document.getElementById('epfContributions')?.value) || 0;
+                const insurancePremiums = parseFloat(document.getElementById('insurancePremiums')?.value) || 0;
+                const donations = parseFloat(document.getElementById('donations')?.value) || 0;
+                const medicalExpenses = parseFloat(document.getElementById('medicalExpenses')?.value) || 0;
+                
+                // Calculate totals
                 const totalIncome = employmentIncome + businessIncome + otherIncome + investmentIncome;
                 const totalDeductions = epfContributions + insurancePremiums + donations + medicalExpenses;
-                const personalRelief = 3000000; // LKR 3 million personal relief
+                const personalRelief = 3000000; // LKR 3 million
                 const taxableIncome = Math.max(0, totalIncome - totalDeductions - personalRelief);
-
-                // Calculate using correct 2024/2025 progressive brackets
-                let incomeTax = 0;
                 
-                // Progressive tax brackets for 2024/2025
-                const brackets = [
-                    { min: 0, max: 500000, rate: 0.06 },       // 6% on first 500K
-                    { min: 500000, max: 1000000, rate: 0.12 }, // 12% on next 500K
-                    { min: 1000000, max: 1500000, rate: 0.18 }, // 18% on next 500K
-                    { min: 1500000, max: 2000000, rate: 0.24 }, // 24% on next 500K
-                    { min: 2000000, max: 2500000, rate: 0.30 }, // 30% on next 500K
-                    { min: 2500000, max: Infinity, rate: 0.36 } // 36% on balance
-                ];
-
+                console.log(`💰 Total Income: ${totalIncome}, Deductions: ${totalDeductions}, Taxable: ${taxableIncome}`);
+                
+                // Calculate tax using 2024/2025 brackets
+                let incomeTax = 0;
                 let remainingIncome = taxableIncome;
                 
-                for (let bracket of brackets) {
-                    if (remainingIncome <= 0) break;
-                    
-                    const bracketSize = bracket.max === Infinity ? remainingIncome : (bracket.max - bracket.min);
-                    const taxableInBracket = Math.min(remainingIncome, bracketSize);
-                    const taxInBracket = taxableInBracket * bracket.rate;
-                    
-                    incomeTax += taxInBracket;
-                    remainingIncome -= taxableInBracket;
+                // Progressive brackets
+                if (remainingIncome > 0) {
+                    // First 500K at 6%
+                    const bracket1 = Math.min(remainingIncome, 500000);
+                    incomeTax += bracket1 * 0.06;
+                    remainingIncome -= bracket1;
                 }
-
-                const monthlyTax = incomeTax / 12;
-
-                // Update display
-                document.getElementById('totalIncome').textContent = `LKR ${totalIncome.toLocaleString()}`;
-                document.getElementById('totalDeductions').textContent = `LKR ${totalDeductions.toLocaleString()}`;
-                document.getElementById('taxableIncome').textContent = `LKR ${taxableIncome.toLocaleString()}`;
-                document.getElementById('incomeTaxPayable').textContent = `LKR ${incomeTax.toLocaleString()}`;
-                document.getElementById('monthlyTax').textContent = `LKR ${monthlyTax.toLocaleString()}`;
-
-                return {
-                    totalIncome,
-                    totalDeductions,
-                    taxableIncome,
-                    incomeTax,
-                    monthlyTax
-                };
-            }
-        }
-
-        function updateTaxCalculationDisplay(result) {
-            // Update display using comprehensive calculator results
-            if (result && result.incomeBreakdown && result.taxCalculation) {
-                document.getElementById('totalIncome').textContent = `LKR ${result.incomeBreakdown.totalIncome.toLocaleString()}`;
-                document.getElementById('totalDeductions').textContent = `LKR ${result.deductionBreakdown.total.toLocaleString()}`;
-                document.getElementById('taxableIncome').textContent = `LKR ${result.taxCalculation.taxableIncome.toLocaleString()}`;
-                document.getElementById('incomeTaxPayable').textContent = `LKR ${result.taxCalculation.totalTax.toLocaleString()}`;
-                document.getElementById('monthlyTax').textContent = `LKR ${Math.round(result.taxCalculation.totalTax / 12).toLocaleString()}`;
-            }
-        }
-
-        // Add real-time calculation when inputs change
-        function setupRealTimeCalculation() {
-            console.log('🔧 Setting up real-time calculation...');
-            
-            // Get all tax input fields
-            const taxInputs = document.querySelectorAll('.tax-input');
-            console.log(`📊 Found ${taxInputs.length} tax input fields`);
-            
-            if (taxInputs.length === 0) {
-                console.error('❌ No tax input fields found!');
-                return;
-            }
-            
-            taxInputs.forEach((input, index) => {
-                console.log(`🎯 Adding listeners to input ${index + 1}: ${input.id}`);
                 
-                // Add event listeners for real-time calculation
-                input.addEventListener('input', function() {
-                    console.log(`📝 Input event on ${this.id}: ${this.value}`);
-                    calculatePersonalIncomeTax();
-                });
-
-                input.addEventListener('keyup', function() {
-                    console.log(`⌨️ Keyup event on ${this.id}: ${this.value}`);
-                    calculatePersonalIncomeTax();
-                });
-
-                input.addEventListener('change', function() {
-                    console.log(`🔄 Change event on ${this.id}: ${this.value}`);
-                    calculatePersonalIncomeTax();
-                });
-            });
-            
-            console.log('✅ Real-time calculation setup complete!');
-            
-            // Also add listeners by ID as backup
-            const inputIds = ['employmentIncome', 'businessIncome', 'otherIncome', 'investmentIncome', 
-                            'epfContributions', 'insurancePremiums', 'donations', 'medicalExpenses'];
-            
-            inputIds.forEach(id => {
-                const element = document.getElementById(id);
-                if (element) {
-                    console.log(`🆔 Adding backup listener to ${id}`);
-                    element.addEventListener('input', function() {
-                        console.log(`📊 Direct input on ${id}: ${this.value}`);
-                        calculatePersonalIncomeTax();
-                    });
-                } else {
-                    console.warn(`⚠️ Element with ID '${id}' not found`);
+                if (remainingIncome > 0) {
+                    // Next 500K at 12%
+                    const bracket2 = Math.min(remainingIncome, 500000);
+                    incomeTax += bracket2 * 0.12;
+                    remainingIncome -= bracket2;
                 }
-            });
-        }
-
-        // Initialize comprehensive calculator
-        let comprehensiveCalculator;
-
-        // Initialize real-time calculation when page loads
-        function initializeTaxCalculator() {
-            console.log('🚀 Initializing Tax Calculator...');
-            
-            // Initialize comprehensive calculator
-            if (typeof ComprehensiveIncomeTaxCalculator !== 'undefined') {
-                comprehensiveCalculator = new ComprehensiveIncomeTaxCalculator();
-                console.log('✅ Comprehensive Tax Calculator initialized');
-            } else {
-                console.log('⚠️ Using fallback tax calculation method');
+                
+                if (remainingIncome > 0) {
+                    // Next 500K at 18%
+                    const bracket3 = Math.min(remainingIncome, 500000);
+                    incomeTax += bracket3 * 0.18;
+                    remainingIncome -= bracket3;
+                }
+                
+                if (remainingIncome > 0) {
+                    // Next 500K at 24%
+                    const bracket4 = Math.min(remainingIncome, 500000);
+                    incomeTax += bracket4 * 0.24;
+                    remainingIncome -= bracket4;
+                }
+                
+                if (remainingIncome > 0) {
+                    // Next 500K at 30%
+                    const bracket5 = Math.min(remainingIncome, 500000);
+                    incomeTax += bracket5 * 0.30;
+                    remainingIncome -= bracket5;
+                }
+                
+                if (remainingIncome > 0) {
+                    // Above 2.5M at 36%
+                    incomeTax += remainingIncome * 0.36;
+                }
+                
+                const monthlyTax = incomeTax / 12;
+                
+                console.log(`🎯 Tax calculated: ${incomeTax}, Monthly: ${monthlyTax}`);
+                
+                // Update display immediately
+                updateTaxDisplay(totalIncome, totalDeductions, taxableIncome, incomeTax, monthlyTax);
+                
+            } catch (error) {
+                console.error('❌ Error in calculateTaxNow:', error);
             }
-
-            // Set up real-time calculation
-            setupRealTimeCalculation();
-            
-            // Initial calculation with default values
-            console.log('🧮 Running initial calculation...');
-            calculatePersonalIncomeTax();
-            
-            console.log('🎉 Tax Calculator initialization complete!');
+        }
+        
+        // Simple display update function
+        function updateTaxDisplay(totalIncome, totalDeductions, taxableIncome, incomeTax, monthlyTax) {
+            try {
+                const totalIncomeEl = document.getElementById('totalIncome');
+                const totalDeductionsEl = document.getElementById('totalDeductions');
+                const taxableIncomeEl = document.getElementById('taxableIncome');
+                const incomeTaxPayableEl = document.getElementById('incomeTaxPayable');
+                const monthlyTaxEl = document.getElementById('monthlyTax');
+                
+                if (totalIncomeEl) totalIncomeEl.textContent = `LKR ${totalIncome.toLocaleString()}`;
+                if (totalDeductionsEl) totalDeductionsEl.textContent = `LKR ${totalDeductions.toLocaleString()}`;
+                if (taxableIncomeEl) taxableIncomeEl.textContent = `LKR ${taxableIncome.toLocaleString()}`;
+                if (incomeTaxPayableEl) incomeTaxPayableEl.textContent = `LKR ${Math.round(incomeTax).toLocaleString()}`;
+                if (monthlyTaxEl) monthlyTaxEl.textContent = `LKR ${Math.round(monthlyTax).toLocaleString()}`;
+                
+                console.log('✅ Display updated successfully');
+            } catch (error) {
+                console.error('❌ Error updating display:', error);
+            }
         }
 
-        // Try multiple initialization approaches
-        document.addEventListener('DOMContentLoaded', initializeTaxCalculator);
-        
-        // Backup initialization after a short delay
-        setTimeout(initializeTaxCalculator, 1000);
-        
-        // Also initialize when window loads (fallback)
-        window.addEventListener('load', function() {
-            setTimeout(initializeTaxCalculator, 500);
-        });
+        function calculatePersonalIncomeTax() {
+            console.log('🧮 calculatePersonalIncomeTax() called - REDIRECTING TO calculateTaxNow()');
+            calculateTaxNow();
+        }
+
+        // Simple initialization - run calculation once when page loads
+        setTimeout(function() {
+            console.log('🚀 Simple tax calculator initialization...');
+            calculateTaxNow();
+        }, 1000);
 
         function checkVATRegistrationEligibility() {
             showTaxModal(
