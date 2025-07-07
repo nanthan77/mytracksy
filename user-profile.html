@@ -1521,6 +1521,43 @@
             }
         }
 
+        // Explicitly make function globally accessible
+        window.calculateTaxNow = calculateTaxNow;
+
+        // Test function on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🔧 Testing calculateTaxNow function accessibility...');
+            
+            // Test if function is accessible
+            if (typeof window.calculateTaxNow === 'function') {
+                console.log('✅ calculateTaxNow is globally accessible');
+            } else {
+                console.error('❌ calculateTaxNow is NOT accessible');
+            }
+            
+            // Test if all required elements exist
+            const requiredElements = [
+                'employmentIncome', 'businessIncome', 'otherIncome', 'investmentIncome',
+                'epfContributions', 'insurancePremiums', 'donations', 'medicalExpenses',
+                'totalIncome', 'totalDeductions', 'taxableIncome', 'incomeTaxPayable', 'monthlyTax'
+            ];
+            
+            requiredElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    console.log(`✅ Element found: ${id}`);
+                } else {
+                    console.error(`❌ Element missing: ${id}`);
+                }
+            });
+            
+            // Run initial calculation
+            setTimeout(() => {
+                console.log('🧮 Running initial tax calculation...');
+                calculateTaxNow();
+            }, 1000);
+        });
+
         // User data and companies management
         let currentUser = null;
         let userCompanies = [];
