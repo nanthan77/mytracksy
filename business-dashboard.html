@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Business Owner/CEO Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #059669;
+            --secondary-color: #047857;
+            --accent-color: #fbbf24;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #064e3b 0%, #92400e 100%);
+            margin: 0;
+            padding: 2rem;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .header h1 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        .entities-section, .analytics-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .entity-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .entity-item:last-child {
+            border-bottom: none;
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        .btn-accent {
+            background: var(--accent-color);
+            color: var(--dark-color);
+        }
+        .btn-accent:hover {
+            background: #f59e0b;
+        }
+        .voice-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0.5rem;
+            font-weight: 600;
+        }
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .kpi-card {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .kpi-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>📊 Business Owner/CEO Dashboard</h1>
+            <p>Executive-level financial management and multi-entity business intelligence for Sri Lankan entrepreneurs</p>
+        </div>
+
+        <div class="voice-section">
+            <h3><i class="fas fa-microphone"></i> Executive Voice Commands</h3>
+            <p>Use business terminology for strategic financial management and multi-entity tracking</p>
+            <button class="voice-btn" onclick="startBusinessVoice()">
+                <i class="fas fa-microphone"></i> Business Voice Input
+            </button>
+            <button class="voice-btn" onclick="logExecutiveExpense()">
+                <i class="fas fa-chart-line"></i> Executive Expense
+            </button>
+            <button class="voice-btn" onclick="recordRevenue()">
+                <i class="fas fa-dollar-sign"></i> Record Revenue
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem; font-weight: 600;"></div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">LKR 15.2M</div>
+                <div>Total Portfolio Value</div>
+                <small style="color: var(--success-color);"><i class="fas fa-arrow-up"></i> +18.5% YoY growth</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">7</div>
+                <div>Business Entities</div>
+                <small style="color: var(--primary-color);"><i class="fas fa-building"></i> Active subsidiaries</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">LKR 2.8M</div>
+                <div>Monthly Revenue</div>
+                <small style="color: var(--success-color);"><i class="fas fa-arrow-up"></i> +22% from last month</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">145</div>
+                <div>Total Employees</div>
+                <small style="color: var(--primary-color);"><i class="fas fa-users"></i> Across all entities</small>
+            </div>
+        </div>
+
+        <div class="entities-section">
+            <h2 class="section-title">
+                <i class="fas fa-building"></i>
+                Business Entity Portfolio
+            </h2>
+            <div class="entity-item">
+                <div>
+                    <h4>TechVenture Solutions (Pvt) Ltd</h4>
+                    <small style="color: var(--gray-600);">IT Services • Holding Company • Est. 2018</small>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: var(--success-color); font-weight: 600;">LKR 8.5M Revenue</div>
+                    <small>65 Employees</small>
+                </div>
+            </div>
+            <div class="entity-item">
+                <div>
+                    <h4>Green Energy Lanka (Pvt) Ltd</h4>
+                    <small style="color: var(--gray-600);">Renewable Energy • Subsidiary • Est. 2020</small>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: var(--success-color); font-weight: 600;">LKR 4.2M Revenue</div>
+                    <small>35 Employees</small>
+                </div>
+            </div>
+            <div class="entity-item">
+                <div>
+                    <h4>Export Trading International</h4>
+                    <small style="color: var(--gray-600);">Import/Export • Partnership • Est. 2019</small>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: var(--success-color); font-weight: 600;">LKR 2.1M Revenue</div>
+                    <small>25 Employees</small>
+                </div>
+            </div>
+            <div class="entity-item">
+                <div>
+                    <h4>Property Investments Lanka</h4>
+                    <small style="color: var(--gray-600);">Real Estate • Investment Vehicle • Est. 2021</small>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: var(--primary-color); font-weight: 600;">LKR 1.8M Portfolio</div>
+                    <small>8 Properties</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-pie"></i>
+                Executive Business Intelligence
+            </h2>
+            
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-value">78%</div>
+                    <div>Profit Margin</div>
+                    <small style="color: var(--success-color);">+5% improvement</small>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">92%</div>
+                    <div>Employee Satisfaction</div>
+                    <small style="color: var(--success-color);">Recent survey</small>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">LKR 5.2M</div>
+                    <div>Cash Flow</div>
+                    <small style="color: var(--success-color);">Positive trend</small>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">15</div>
+                    <div>New Clients</div>
+                    <small style="color: var(--primary-color);">This quarter</small>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="addEntity()">
+                <i class="fas fa-plus"></i> Add Business Entity
+            </button>
+            <button class="btn btn-accent" onclick="generateReport()">
+                <i class="fas fa-file-alt"></i> Executive Report
+            </button>
+            <button class="btn" onclick="manageEmployees()">
+                <i class="fas fa-users"></i> Employee Management
+            </button>
+            <button class="btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const businessSamples = [
+            { amount: 85000, description: 'Office rent payment - head office', category: 'Office Expenses', entity: 'TechVenture Solutions' },
+            { amount: 125000, description: 'Employee payroll - IT department', category: 'Payroll', entity: 'TechVenture Solutions' },
+            { amount: 45000, description: 'Marketing campaign - digital advertising', category: 'Marketing', entity: 'Green Energy Lanka' },
+            { amount: 250000, description: 'Equipment purchase - renewable energy', category: 'Capital Expenditure', entity: 'Green Energy Lanka' },
+            { amount: 35000, description: 'Legal consultation - corporate matters', category: 'Professional Services', entity: 'Multiple Entities' },
+            { amount: 75000, description: 'Insurance premium - business liability', category: 'Insurance', entity: 'All Entities' }
+        ];
+
+        const revenueSamples = [
+            { amount: 850000, description: 'Software development contract', entity: 'TechVenture Solutions', client: 'Government Project' },
+            { amount: 420000, description: 'Solar installation project', entity: 'Green Energy Lanka', client: 'Industrial Client' },
+            { amount: 210000, description: 'Export commission - tea products', entity: 'Export Trading', client: 'European Buyer' },
+            { amount: 180000, description: 'Property rental income', entity: 'Property Investments', client: 'Commercial Tenant' }
+        ];
+
+        function startBusinessVoice() {
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = '🎤 Listening... Say: "Add office rent 85000 rupees TechVenture head office"';
+            
+            setTimeout(() => {
+                const sample = businessSamples[Math.floor(Math.random() * businessSamples.length)];
+                status.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                        <strong>📊 Business Voice Command Recognized:</strong><br>
+                        <strong>💰 Amount:</strong> LKR ${sample.amount.toLocaleString()}<br>
+                        <strong>📋 Description:</strong> ${sample.description}<br>
+                        <strong>🏢 Category:</strong> ${sample.category}<br>
+                        <strong>🏗️ Entity:</strong> ${sample.entity}
+                    </div>
+                `;
+                showNotification('Business expense added via voice!');
+            }, 3000);
+        }
+
+        function logExecutiveExpense() {
+            const executiveExpenses = [
+                'Board meeting catering', 'Executive travel expenses', 'Business conference attendance',
+                'Strategic consulting fees', 'Investor relations event', 'Executive training program'
+            ];
+            const expense = executiveExpenses[Math.floor(Math.random() * executiveExpenses.length)];
+            const amount = Math.floor(Math.random() * 100000) + 25000;
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>👔 Executive Expense Logged:</strong><br>
+                    <strong>💰 Amount:</strong> LKR ${amount.toLocaleString()}<br>
+                    <strong>📋 Description:</strong> ${expense}<br>
+                    <strong>🏢 Category:</strong> Executive Expenses<br>
+                    <strong>📅 Date:</strong> ${new Date().toLocaleDateString()}
+                </div>
+            `;
+            showNotification(`Executive expense logged: ${expense}`);
+        }
+
+        function recordRevenue() {
+            const sample = revenueSamples[Math.floor(Math.random() * revenueSamples.length)];
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>💰 Revenue Recorded:</strong><br>
+                    <strong>💵 Amount:</strong> LKR ${sample.amount.toLocaleString()}<br>
+                    <strong>📋 Description:</strong> ${sample.description}<br>
+                    <strong>🏢 Entity:</strong> ${sample.entity}<br>
+                    <strong>👤 Client:</strong> ${sample.client}
+                </div>
+            `;
+            showNotification(`Revenue recorded: LKR ${sample.amount.toLocaleString()}`);
+        }
+
+        function addEntity() {
+            showNotification('New business entity registration form opening...');
+        }
+
+        function generateReport() {
+            showNotification('Generating executive financial report...');
+        }
+
+        function manageEmployees() {
+            showNotification('Employee management system opening...');
+        }
+
+        function goBack() {
+            window.location.href = 'index.html';
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--success-color);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Initialize revenue chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Total Revenue (LKR)',
+                        data: [1800000, 2100000, 2350000, 2200000, 2650000, 2800000],
+                        borderColor: '#059669',
+                        backgroundColor: 'rgba(5, 150, 105, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Portfolio Revenue Trend (6 Months)'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'LKR ' + (value / 1000000).toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

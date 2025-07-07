@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy - Advanced Analytics Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="advanced-analytics-engine.js"></script>
+    <script src="performance-optimization.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #6366f1;
+            --secondary-color: #8b5cf6;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #06b6d4 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .analytics-dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '📊';
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 5rem;
+            opacity: 0.2;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .realtime-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(45deg, transparent, rgba(99, 102, 241, 0.1));
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+        }
+
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 1rem;
+            color: var(--gray-600);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-trend {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .trend-positive {
+            color: var(--success-color);
+        }
+
+        .trend-negative {
+            color: var(--error-color);
+        }
+
+        .analytics-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 1.5rem;
+        }
+
+        .chart-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn.active,
+        .control-btn:hover {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .insight-card {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .insight-description {
+            color: var(--gray-600);
+            margin-bottom: 1rem;
+        }
+
+        .insight-impact {
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .impact-high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .impact-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .impact-low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .kpi-dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .kpi-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-100);
+        }
+
+        .kpi-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-label {
+            font-size: 0.875rem;
+            color: var(--gray-600);
+        }
+
+        .predictive-analytics {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .prediction-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .prediction-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .prediction-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: var(--accent-color);
+            transition: width 0.3s ease;
+        }
+
+        .benchmarking-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .benchmark-chart {
+            position: relative;
+            height: 300px;
+        }
+
+        .recommendations-list {
+            list-style: none;
+        }
+
+        .recommendation-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--warning-color);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .recommendation-priority {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+
+        .priority-critical {
+            color: var(--error-color);
+        }
+
+        .priority-high {
+            color: var(--warning-color);
+        }
+
+        .priority-medium {
+            color: var(--accent-color);
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-accent {
+            background: var(--accent-color);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+        }
+
+        .loading-skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid var(--warning-color);
+        }
+
+        .alert-success {
+            background: #d1fae5;
+            color: #065f46;
+            border-left: 4px solid var(--success-color);
+        }
+
+        @media (max-width: 768px) {
+            .analytics-dashboard {
+                padding: 1rem;
+                margin: 1rem;
+            }
+            
+            .benchmarking-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-container {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="analytics-dashboard">
+        <div class="header">
+            <h1>📊 Advanced Analytics Dashboard</h1>
+            <p>Comprehensive business intelligence and predictive analytics for informed decision-making</p>
+        </div>
+
+        <!-- Real-time Metrics -->
+        <div class="realtime-metrics" id="realtimeMetrics">
+            <div class="metric-card">
+                <div class="metric-value" id="cashFlowVelocity">2.5x</div>
+                <div class="metric-label">Cash Flow Velocity</div>
+                <div class="metric-trend trend-positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>12% vs last month</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="expenseEfficiency">87%</div>
+                <div class="metric-label">Expense Efficiency</div>
+                <div class="metric-trend trend-positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>5% improvement</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="taxOptimization">92%</div>
+                <div class="metric-label">Tax Optimization</div>
+                <div class="metric-trend trend-positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>3% vs benchmark</span>
+                </div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-value" id="budgetAdherence">94%</div>
+                <div class="metric-label">Budget Adherence</div>
+                <div class="metric-trend trend-negative">
+                    <i class="fas fa-arrow-down"></i>
+                    <span>2% below target</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Trends Analysis -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                Financial Trends Analysis
+            </h2>
+            <div class="chart-controls">
+                <button class="control-btn active" onclick="updateTimeRange('1M')">1 Month</button>
+                <button class="control-btn" onclick="updateTimeRange('3M')">3 Months</button>
+                <button class="control-btn" onclick="updateTimeRange('6M')">6 Months</button>
+                <button class="control-btn" onclick="updateTimeRange('12M')">12 Months</button>
+            </div>
+            <div class="chart-container">
+                <canvas id="trendsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Key Performance Indicators -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-tachometer-alt"></i>
+                Key Performance Indicators
+            </h2>
+            <div class="kpi-dashboard" id="kpiDashboard">
+                <div class="kpi-card">
+                    <div class="kpi-value">18.5%</div>
+                    <div class="kpi-label">ROI</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">28.3%</div>
+                    <div class="kpi-label">Profit Margin</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">15.2%</div>
+                    <div class="kpi-label">Expense Ratio</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">8.7</div>
+                    <div class="kpi-label">Months Runway</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">94%</div>
+                    <div class="kpi-label">Receipt Compliance</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-value">72%</div>
+                    <div class="kpi-label">Digital Adoption</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Predictive Analytics -->
+        <div class="predictive-analytics">
+            <h2 class="section-title">
+                <i class="fas fa-crystal-ball"></i>
+                Predictive Analytics & Forecasting
+            </h2>
+            <p style="margin-bottom: 1.5rem;">AI-powered predictions based on historical data and market trends</p>
+            
+            <div class="prediction-grid">
+                <div class="prediction-card">
+                    <div class="prediction-value">LKR 145,000</div>
+                    <div>Next Month Expenses</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 85%"></div>
+                    </div>
+                    <small>85% confidence</small>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-value">LKR 28,500</div>
+                    <div>Estimated Tax Liability</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 92%"></div>
+                    </div>
+                    <small>92% confidence</small>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-value">March 15</div>
+                    <div>Budget Depletion Date</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 78%"></div>
+                    </div>
+                    <small>78% confidence</small>
+                </div>
+                <div class="prediction-card">
+                    <div class="prediction-value">Goal: 89%</div>
+                    <div>Savings Target Achievement</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: 89%"></div>
+                    </div>
+                    <small>On track</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Industry Benchmarking -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                Industry Benchmarking
+            </h2>
+            <div class="benchmarking-section">
+                <div>
+                    <h3 style="margin-bottom: 1rem;">Performance vs Industry Average</h3>
+                    <div class="benchmark-chart">
+                        <canvas id="benchmarkChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom: 1rem;">Sri Lankan Market Position</h3>
+                    <div class="insights-grid">
+                        <div class="insight-card">
+                            <div class="insight-title">Expense Efficiency</div>
+                            <div class="insight-description">15% above industry average</div>
+                            <span class="insight-impact impact-low">Excellent</span>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-title">Tax Compliance</div>
+                            <div class="insight-description">8% better than peers</div>
+                            <span class="insight-impact impact-low">Superior</span>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-title">Digital Adoption</div>
+                            <div class="insight-description">5% below market leader</div>
+                            <span class="insight-impact impact-medium">Opportunity</span>
+                        </div>
+                        <div class="insight-card">
+                            <div class="insight-title">Profit Margin</div>
+                            <div class="insight-description">2% above sector median</div>
+                            <span class="insight-impact impact-low">Good</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI-Powered Insights -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-robot"></i>
+                AI-Powered Insights & Recommendations
+            </h2>
+            
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span>High expense volatility detected in Transportation category. Consider reviewing vendor contracts.</span>
+            </div>
+            
+            <div class="alert alert-success">
+                <i class="fas fa-check-circle"></i>
+                <span>Tax efficiency optimization successful. Potential savings of LKR 15,000 identified.</span>
+            </div>
+
+            <h3 style="margin-bottom: 1rem;">Actionable Recommendations</h3>
+            <ul class="recommendations-list" id="recommendationsList">
+                <li class="recommendation-item">
+                    <div class="recommendation-priority priority-critical">Critical</div>
+                    <strong>Cash Flow Optimization</strong>
+                    <p>Negative cash flow projected for next month. Consider accelerating receivables or deferring non-critical expenses.</p>
+                    <small>Potential Impact: LKR 45,000 savings</small>
+                </li>
+                <li class="recommendation-item">
+                    <div class="recommendation-priority priority-high">High Priority</div>
+                    <strong>Expense Category Rebalancing</strong>
+                    <p>Transportation expenses are 25% above budget. Implement cost controls or renegotiate vendor contracts.</p>
+                    <small>Potential Impact: LKR 12,000 monthly savings</small>
+                </li>
+                <li class="recommendation-item">
+                    <div class="recommendation-priority priority-medium">Medium Priority</div>
+                    <strong>Tax Deduction Optimization</strong>
+                    <p>Several eligible business deductions not claimed. Review with tax advisor for potential savings.</p>
+                    <small>Potential Impact: LKR 8,500 tax savings</small>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Expense Pattern Analysis -->
+        <div class="analytics-section">
+            <h2 class="section-title">
+                <i class="fas fa-search"></i>
+                Expense Pattern Analysis
+            </h2>
+            <div class="chart-container">
+                <canvas id="patternChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="exportAnalyticsReport()">
+                <i class="fas fa-download"></i> Export Analytics Report
+            </button>
+            <button class="btn btn-accent" onclick="scheduleAnalytics()">
+                <i class="fas fa-calendar"></i> Schedule Regular Reports
+            </button>
+            <button class="btn btn-secondary" onclick="configureAlerts()">
+                <i class="fas fa-bell"></i> Configure Alerts
+            </button>
+            <button class="btn btn-secondary" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let analyticsEngine;
+        let performanceEngine;
+        let taxEngine;
+        let currentTimeRange = '1M';
+        let charts = {};
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAnalytics();
+            loadDashboardData();
+            setupRealTimeUpdates();
+            createCharts();
+        });
+
+        function initializeAnalytics() {
+            analyticsEngine = new AdvancedAnalyticsEngine();
+            performanceEngine = new PerformanceOptimizationEngine();
+            taxEngine = new SriLankanTaxEngine();
+            
+            console.log('📊 Advanced Analytics Dashboard initialized');
+        }
+
+        async function loadDashboardData() {
+            try {
+                showLoadingState();
+                
+                // Simulate user data
+                const userData = {
+                    expenses: generateSampleExpenses(),
+                    income: generateSampleIncome(),
+                    company: {
+                        industry: 'technology',
+                        size: 'small'
+                    },
+                    cash: 500000
+                };
+
+                // Generate insights
+                const insights = await analyticsEngine.generateFinancialInsights(userData, currentTimeRange);
+                const dashboardData = await analyticsEngine.generateDashboardData(userData);
+                
+                // Update dashboard
+                updateRealTimeMetrics(dashboardData.realTime);
+                updateKPIs(dashboardData.kpis);
+                updateRecommendations(insights.insights.recommendations);
+                
+                hideLoadingState();
+                showSuccessMessage('Analytics data loaded successfully');
+            } catch (error) {
+                console.error('Dashboard loading failed:', error);
+                showErrorMessage('Failed to load analytics data');
+            }
+        }
+
+        function generateSampleExpenses() {
+            const categories = ['Food & Dining', 'Transportation', 'Business', 'Utilities', 'Healthcare'];
+            const expenses = [];
+            
+            for (let i = 0; i < 100; i++) {
+                expenses.push({
+                    id: i,
+                    amount: Math.random() * 5000 + 500,
+                    category: categories[Math.floor(Math.random() * categories.length)],
+                    date: new Date(Date.now() - Math.random() * 365 * 24 * 60 * 60 * 1000).toISOString(),
+                    description: `Sample expense ${i + 1}`
+                });
+            }
+            
+            return expenses;
+        }
+
+        function generateSampleIncome() {
+            const income = [];
+            
+            for (let i = 0; i < 12; i++) {
+                income.push({
+                    id: i,
+                    amount: Math.random() * 50000 + 100000,
+                    source: 'Business Revenue',
+                    date: new Date(Date.now() - i * 30 * 24 * 60 * 60 * 1000).toISOString()
+                });
+            }
+            
+            return income;
+        }
+
+        function updateRealTimeMetrics(realTimeData) {
+            if (realTimeData && realTimeData.cashFlow) {
+                document.getElementById('cashFlowVelocity').textContent = realTimeData.cashFlow.velocity + 'x';
+            }
+            
+            if (realTimeData && realTimeData.efficiency) {
+                document.getElementById('expenseEfficiency').textContent = Math.round(realTimeData.efficiency.taxOptimization * 100) + '%';
+                document.getElementById('taxOptimization').textContent = Math.round(realTimeData.efficiency.taxOptimization * 100) + '%';
+            }
+            
+            if (realTimeData && realTimeData.expenses) {
+                document.getElementById('budgetAdherence').textContent = Math.round(realTimeData.expenses.budgetUsed * 100) + '%';
+            }
+        }
+
+        function updateKPIs(kpis) {
+            if (!kpis) return;
+            
+            const kpiContainer = document.getElementById('kpiDashboard');
+            // KPIs are already populated in HTML, can be updated dynamically here
+        }
+
+        function updateRecommendations(recommendations) {
+            if (!recommendations || !recommendations.recommendations) return;
+            
+            const container = document.getElementById('recommendationsList');
+            container.innerHTML = '';
+            
+            recommendations.recommendations.forEach(rec => {
+                const item = document.createElement('li');
+                item.className = 'recommendation-item';
+                item.innerHTML = `
+                    <div class="recommendation-priority priority-${rec.priority}">${rec.priority.toUpperCase()}</div>
+                    <strong>${rec.title}</strong>
+                    <p>${rec.description}</p>
+                    <small>Potential Impact: ${rec.potential_savings ? `LKR ${rec.potential_savings.toLocaleString()} savings` : 'Process improvement'}</small>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function createCharts() {
+            createTrendsChart();
+            createBenchmarkChart();
+            createPatternChart();
+        }
+
+        function createTrendsChart() {
+            const ctx = document.getElementById('trendsChart').getContext('2d');
+            charts.trends = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Expenses',
+                        data: [120000, 135000, 128000, 142000, 156000, 149000],
+                        borderColor: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Income',
+                        data: [180000, 195000, 185000, 210000, 225000, 220000],
+                        borderColor: '#10b981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }, {
+                        label: 'Savings',
+                        data: [60000, 60000, 57000, 68000, 69000, 71000],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Financial Trends Over Time'
+                        },
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'LKR ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createBenchmarkChart() {
+            const ctx = document.getElementById('benchmarkChart').getContext('2d');
+            charts.benchmark = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Expense Efficiency', 'Tax Optimization', 'Digital Adoption', 'Profit Margin', 'Cash Flow', 'Compliance'],
+                    datasets: [{
+                        label: 'Your Business',
+                        data: [87, 92, 72, 83, 78, 94],
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+                        pointBackgroundColor: '#6366f1'
+                    }, {
+                        label: 'Industry Average',
+                        data: [75, 82, 68, 77, 72, 85],
+                        borderColor: '#94a3b8',
+                        backgroundColor: 'rgba(148, 163, 184, 0.1)',
+                        pointBackgroundColor: '#94a3b8'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Performance vs Industry Benchmarks'
+                        }
+                    },
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+        }
+
+        function createPatternChart() {
+            const ctx = document.getElementById('patternChart').getContext('2d');
+            charts.pattern = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Food & Dining', 'Transportation', 'Business', 'Utilities', 'Healthcare', 'Shopping'],
+                    datasets: [{
+                        label: 'Average Expense',
+                        data: [25000, 35000, 45000, 15000, 12000, 18000],
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#6366f1',
+                            '#10b981',
+                            '#8b5cf6',
+                            '#06b6d4'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Expense Patterns by Category'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'LKR ' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateTimeRange(range) {
+            currentTimeRange = range;
+            
+            // Update active button
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Reload data with new time range
+            loadDashboardData();
+            
+            showSuccessMessage(`Data updated for ${range} period`);
+        }
+
+        function setupRealTimeUpdates() {
+            // Update real-time metrics every 30 seconds
+            setInterval(() => {
+                updateRealTimeMetrics({
+                    cashFlow: {
+                        velocity: (Math.random() * 2 + 1.5).toFixed(1)
+                    },
+                    efficiency: {
+                        taxOptimization: Math.random() * 0.1 + 0.85
+                    },
+                    expenses: {
+                        budgetUsed: Math.random() * 0.1 + 0.85
+                    }
+                });
+            }, 30000);
+        }
+
+        function exportAnalyticsReport() {
+            showSuccessMessage('Analytics report export started. You will receive an email when ready.');
+            
+            // Simulate report generation
+            setTimeout(() => {
+                showSuccessMessage('Analytics report ready for download!');
+            }, 3000);
+        }
+
+        function scheduleAnalytics() {
+            showSuccessMessage('Regular analytics reports scheduled. You will receive weekly insights.');
+        }
+
+        function configureAlerts() {
+            showSuccessMessage('Alert configuration opened. Set your thresholds and preferences.');
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        // Utility Functions
+        function showLoadingState() {
+            document.querySelectorAll('.metric-value').forEach(el => {
+                el.classList.add('loading-skeleton');
+            });
+        }
+
+        function hideLoadingState() {
+            document.querySelectorAll('.metric-value').forEach(el => {
+                el.classList.remove('loading-skeleton');
+            });
+        }
+
+        function showSuccessMessage(message) {
+            showNotification(message, 'success');
+        }
+
+        function showErrorMessage(message) {
+            showNotification(message, 'error');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'error' ? 'var(--error-color)' : 'var(--success-color)'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = `<i class="fas fa-${type === 'error' ? 'exclamation-circle' : 'check-circle'}"></i> ${message}`;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        // Add CSS animation for notifications
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

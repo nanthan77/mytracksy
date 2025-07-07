@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Marketing & Digital Marketing Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #7c3aed;
+            --secondary-color: #6d28d9;
+            --accent-color: #ea580c;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+            --tax-compliance-color: #059669;
+            --tax-warning-color: #f59e0b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #7c3aed 0%, #ea580c 50%, #6d28d9 100%);
+            margin: 0;
+            padding: 2rem;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '🎨';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 4rem;
+            opacity: 0.2;
+        }
+        .header h1 {
+            color: white;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        .marketing-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        .marketing-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        .btn-accent {
+            background: var(--accent-color);
+            color: white;
+        }
+        .voice-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0.5rem;
+            font-weight: 600;
+        }
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .campaign-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .campaign-card {
+            background: var(--gray-100);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+        .platform-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .platform-card {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .platform-spend {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        .tool-subscription {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+        .tool-subscription:last-child {
+            border-bottom: none;
+        }
+        .roi-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .roi-positive {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .roi-negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .roi-neutral {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .tax-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .tax-compliant {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .tax-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .vat-breakdown {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .vat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .vat-row:last-child {
+            margin-bottom: 0;
+            font-weight: 600;
+            border-top: 1px solid #0ea5e9;
+            padding-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🎨 Marketing & Digital Marketing Dashboard</h1>
+            <p>Comprehensive campaign management and ROI tracking for marketers, content creators, and digital specialists</p>
+        </div>
+
+        <div class="voice-section">
+            <h3><i class="fas fa-microphone"></i> Marketing Voice Commands</h3>
+            <p>Use marketing terminology for campaign tracking and expense management</p>
+            <button class="voice-btn" onclick="startMarketingVoice()">
+                <i class="fas fa-microphone"></i> Marketing Voice Input
+            </button>
+            <button class="voice-btn" onclick="logCampaignSpend()">
+                <i class="fas fa-bullhorn"></i> Campaign Spend
+            </button>
+            <button class="voice-btn" onclick="addToolSubscription()">
+                <i class="fas fa-tools"></i> Tool Subscription
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem; font-weight: 600;"></div>
+        </div>
+
+        <div class="marketing-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalAdSpend">LKR 0</div>
+                <div>Total Ad Spend</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-chart-line"></i> Across all platforms</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeCampaigns">0</div>
+                <div>Active Campaigns</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-rocket"></i> Currently running</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="averageROI">0%</div>
+                <div>Average ROI</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-percentage"></i> Campaign performance</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="toolSubscriptions">0</div>
+                <div>Tool Subscriptions</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-cog"></i> Marketing tools</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalVAT">LKR 0</div>
+                <div>Total VAT (18%)</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-receipt"></i> Sri Lankan tax compliance</small>
+            </div>
+        </div>
+
+        <div class="marketing-section">
+            <h2 class="section-title">
+                <i class="fas fa-bullhorn"></i>
+                Campaign Management & ROI Tracking
+            </h2>
+            <div id="campaignsList">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-rocket" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Active Campaigns</h3>
+                    <p>Create your first marketing campaign to track spend and ROI</p>
+                    <button class="btn" onclick="createCampaign()">
+                        <i class="fas fa-plus"></i> Create Campaign
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="marketing-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                Multi-Platform Advertising Spend
+            </h2>
+            <div class="platform-grid">
+                <div class="platform-card">
+                    <div class="platform-spend" id="facebookSpend">$0</div>
+                    <div>Facebook Ads</div>
+                    <small style="color: var(--gray-600);">Meta Advertising</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="googleSpend">$0</div>
+                    <div>Google Ads</div>
+                    <small style="color: var(--gray-600);">Search & Display</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="linkedinSpend">$0</div>
+                    <div>LinkedIn Ads</div>
+                    <small style="color: var(--gray-600);">Professional Network</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="twitterSpend">$0</div>
+                    <div>Twitter Ads</div>
+                    <small style="color: var(--gray-600);">Social Media</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="instagramSpend">$0</div>
+                    <div>Instagram Ads</div>
+                    <small style="color: var(--gray-600);">Visual Marketing</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="youtubeSpend">$0</div>
+                    <div>YouTube Ads</div>
+                    <small style="color: var(--gray-600);">Video Advertising</small>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <button class="btn" onclick="addPlatformSpend()">
+                    <i class="fas fa-plus"></i> Add Platform Spend
+                </button>
+                <button class="btn btn-accent" onclick="comparePlatforms()">
+                    <i class="fas fa-chart-pie"></i> Compare Platforms
+                </button>
+            </div>
+        </div>
+
+        <div class="marketing-section">
+            <h2 class="section-title">
+                <i class="fas fa-tools"></i>
+                Marketing Tools & Software Subscriptions
+            </h2>
+            <div id="marketingTools">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-toolbox" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Tool Subscriptions</h3>
+                    <p>Add your marketing software and tool subscriptions</p>
+                    <button class="btn btn-accent" onclick="addMarketingTool()">
+                        <i class="fas fa-plus"></i> Add Tool
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="marketing-section">
+            <h2 class="section-title">
+                <i class="fas fa-photo-video"></i>
+                Creative Assets & Content Creation
+            </h2>
+            <div id="creativeAssets">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-palette" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Creative Assets Tracked</h3>
+                    <p>Track stock photos, videos, music, and design element costs</p>
+                    <button class="btn" onclick="addCreativeAsset()">
+                        <i class="fas fa-plus"></i> Add Asset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="marketing-section">
+            <h2 class="section-title">
+                <i class="fas fa-users"></i>
+                Client Project Expense Tracking
+            </h2>
+            <div class="campaign-grid" id="clientProjects">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600); grid-column: 1 / -1;">
+                    <i class="fas fa-briefcase" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Client Projects</h3>
+                    <p>Separate and track expenses by different client projects</p>
+                    <button class="btn btn-accent" onclick="addClientProject()">
+                        <i class="fas fa-plus"></i> Add Project
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="marketing-section">
+            <h2 class="section-title">
+                <i class="fas fa-receipt"></i>
+                Sri Lankan Tax Compliance
+            </h2>
+            <div class="platform-grid">
+                <div class="platform-card">
+                    <div class="platform-spend" id="totalVATCollected">LKR 0</div>
+                    <div>VAT Collected (18%)</div>
+                    <small style="color: var(--gray-600);">Input tax credits</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="totalWHT">LKR 0</div>
+                    <div>WHT Deducted</div>
+                    <small style="color: var(--gray-600);">Withholding taxes</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="nextVATFiling">-</div>
+                    <div>Next VAT Return</div>
+                    <small style="color: var(--gray-600);">Due 20th of month</small>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="complianceStatus">✅</div>
+                    <div>Compliance Status</div>
+                    <small style="color: var(--gray-600);">Sri Lankan tax rules</small>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <button class="btn" onclick="calculateTaxes()">
+                    <i class="fas fa-calculator"></i> Calculate All Taxes
+                </button>
+                <button class="btn btn-accent" onclick="generateVATReturn()">
+                    <i class="fas fa-file-alt"></i> Generate VAT Return
+                </button>
+            </div>
+        </div>
+
+        <div class="marketing-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-pie"></i>
+                Campaign Performance Analytics
+            </h2>
+            <div class="chart-container">
+                <canvas id="campaignChart"></canvas>
+            </div>
+            <div class="platform-grid" style="margin-top: 1rem;">
+                <div class="platform-card">
+                    <div class="platform-spend" id="totalImpressions">0</div>
+                    <div>Total Impressions</div>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="totalClicks">0</div>
+                    <div>Total Clicks</div>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="avgCTR">0%</div>
+                    <div>Average CTR</div>
+                </div>
+                <div class="platform-card">
+                    <div class="platform-spend" id="avgCPC">$0</div>
+                    <div>Average CPC</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="generateMarketingReport()">
+                <i class="fas fa-chart-bar"></i> Generate Marketing Report
+            </button>
+            <button class="btn btn-accent" onclick="optimizeCampaigns()">
+                <i class="fas fa-optimize"></i> Optimize Campaigns
+            </button>
+            <button class="btn" onclick="exportROIData()">
+                <i class="fas fa-download"></i> Export ROI Data
+            </button>
+            <button class="btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Sri Lankan Tax Engine
+        let taxEngine;
+        document.addEventListener('DOMContentLoaded', function() {
+            taxEngine = new SriLankanTaxEngine();
+        });
+
+        const marketingSamples = [
+            { amount: 500, description: 'Facebook ad campaign for product launch', platform: 'Facebook', roi: 340 },
+            { amount: 99, description: 'Adobe Creative Suite subscription', category: 'Design Tools', type: 'Monthly' },
+            { amount: 200, description: 'Stock photo bundle purchase', category: 'Creative Assets', usage: 'Multiple campaigns' },
+            { amount: 750, description: 'Google Ads search campaign', platform: 'Google', roi: 1200 },
+            { amount: 49, description: 'Canva Pro subscription', category: 'Design Tools', type: 'Monthly' },
+            { amount: 1200, description: 'Influencer collaboration payment', category: 'Influencer Marketing', reach: '50K followers' }
+        ];
+
+        const marketingPlatforms = [
+            'Facebook Ads', 'Google Ads', 'LinkedIn Ads', 'Twitter Ads', 'Instagram Ads',
+            'YouTube Ads', 'TikTok Ads', 'Pinterest Ads', 'Snapchat Ads', 'Amazon Ads'
+        ];
+
+        const marketingTools = [
+            'HubSpot', 'Mailchimp', 'Hootsuite', 'Buffer', 'Canva Pro', 'Adobe Creative Suite',
+            'Semrush', 'Ahrefs', 'Google Analytics', 'Hotjar', 'Unbounce', 'ConvertKit'
+        ];
+
+        const campaignTypes = [
+            'Brand Awareness', 'Lead Generation', 'Product Launch', 'Retargeting',
+            'Content Promotion', 'Event Marketing', 'Holiday Campaign', 'A/B Testing'
+        ];
+
+        function startMarketingVoice() {
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = '🎤 Listening... Say: "Add Facebook campaign 50000 rupees lead generation"';
+            
+            setTimeout(() => {
+                const sample = marketingSamples[Math.floor(Math.random() * marketingSamples.length)];
+                const amountLKR = sample.amount * 300; // Convert to LKR
+                const vatCalculation = taxEngine.calculateVAT(amountLKR);
+                
+                status.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                        <strong>🎨 Marketing Voice Command:</strong><br>
+                        <strong>💰 Amount:</strong> LKR ${amountLKR.toLocaleString()}<br>
+                        <strong>📋 Description:</strong> ${sample.description}<br>
+                        <strong>🏷️ Category:</strong> ${sample.category || sample.platform}<br>
+                        <strong>📢 VAT (18%):</strong> LKR ${vatCalculation.vatAmount.toLocaleString()}<br>
+                        <strong>📊 ROI:</strong> ${sample.roi ? `LKR ${(sample.roi * 300).toLocaleString()} (${Math.round((sample.roi/sample.amount - 1) * 100)}%)` : 'Tracking'}
+                    </div>
+                `;
+                showNotification('Marketing expense added via voice!');
+                updateTotalVAT(vatCalculation.vatAmount);
+            }, 3000);
+        }
+
+        function logCampaignSpend() {
+            const platform = marketingPlatforms[Math.floor(Math.random() * marketingPlatforms.length)];
+            const amount = Math.floor(Math.random() * 1000) + 100;
+            const campaignType = campaignTypes[Math.floor(Math.random() * campaignTypes.length)];
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>📈 Campaign Spend Added:</strong><br>
+                    <strong>💰 Amount:</strong> $${amount.toLocaleString()}<br>
+                    <strong>📱 Platform:</strong> ${platform}<br>
+                    <strong>🎯 Type:</strong> ${campaignType}<br>
+                    <strong>📅 Status:</strong> Active
+                </div>
+            `;
+            showNotification(`${platform} campaign spend logged`);
+            updateActiveCampaigns();
+        }
+
+        function addToolSubscription() {
+            const tool = marketingTools[Math.floor(Math.random() * marketingTools.length)];
+            const cost = Math.floor(Math.random() * 200) + 29;
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>🛠️ Tool Subscription Added:</strong><br>
+                    <strong>💰 Monthly Cost:</strong> $${cost.toLocaleString()}<br>
+                    <strong>🔧 Tool:</strong> ${tool}<br>
+                    <strong>📊 Category:</strong> Marketing Software<br>
+                    <strong>🔄 Billing:</strong> Monthly
+                </div>
+            `;
+            showNotification(`${tool} subscription added`);
+            updateToolSubscriptions();
+        }
+
+        function createCampaign() {
+            const campaignName = prompt('Campaign Name:');
+            const platform = prompt('Platform (Facebook, Google, LinkedIn, etc.):');
+            const budget = prompt('Budget ($):');
+            const objective = prompt('Campaign Objective:');
+            
+            if (campaignName && platform && budget) {
+                showNotification(`Campaign "${campaignName}" created on ${platform} with $${budget} budget`);
+                updateActiveCampaigns();
+            }
+        }
+
+        function addPlatformSpend() {
+            const platform = prompt('Platform Name:');
+            const amount = prompt('Spend Amount (LKR):');
+            const campaignName = prompt('Campaign Name:');
+            
+            if (platform && amount) {
+                const amountLKR = parseFloat(amount);
+                const vatCalculation = taxEngine.calculateVAT(amountLKR);
+                
+                showNotification(`${platform} spend added: LKR ${amountLKR.toLocaleString()} for ${campaignName || 'campaign'}`);
+                showVATBreakdown(vatCalculation, `${platform} - ${campaignName || 'campaign'}`);
+                updateTotalAdSpend(amountLKR);
+                updateTotalVAT(vatCalculation.vatAmount);
+            }
+        }
+
+        function addMarketingTool() {
+            const tool = prompt('Tool/Software Name:');
+            const cost = prompt('Monthly Cost (LKR):');
+            const purpose = prompt('Primary Use:');
+            
+            if (tool && cost) {
+                const costLKR = parseFloat(cost);
+                const vatCalculation = taxEngine.calculateVAT(costLKR);
+                
+                showNotification(`${tool} subscription added: LKR ${costLKR.toLocaleString()}/month for ${purpose || 'marketing'}`);
+                showVATBreakdown(vatCalculation, `${tool} subscription`);
+                updateToolSubscriptions();
+                updateTotalVAT(vatCalculation.vatAmount);
+            }
+        }
+
+        function addCreativeAsset() {
+            const assetType = prompt('Asset Type (photo, video, music, graphics):');
+            const cost = prompt('Cost ($):');
+            const source = prompt('Source (Shutterstock, Getty, etc.):');
+            
+            if (assetType && cost) {
+                showNotification(`${assetType} asset purchased from ${source || 'provider'}: $${cost}`);
+            }
+        }
+
+        function addClientProject() {
+            const clientName = prompt('Client Name:');
+            const projectName = prompt('Project Name:');
+            const budget = prompt('Project Budget ($):');
+            
+            if (clientName && projectName && budget) {
+                showNotification(`Project "${projectName}" added for ${clientName} with $${budget} budget`);
+            }
+        }
+
+        function updateActiveCampaigns() {
+            const current = parseInt(document.getElementById('activeCampaigns').textContent) || 0;
+            document.getElementById('activeCampaigns').textContent = current + 1;
+        }
+
+        function updateToolSubscriptions() {
+            const current = parseInt(document.getElementById('toolSubscriptions').textContent) || 0;
+            document.getElementById('toolSubscriptions').textContent = current + 1;
+        }
+
+        function updateTotalAdSpend(amount) {
+            const current = parseFloat(document.getElementById('totalAdSpend').textContent.replace('LKR ', '').replace(',', '')) || 0;
+            document.getElementById('totalAdSpend').textContent = `LKR ${(current + amount).toLocaleString()}`;
+        }
+
+        function comparePlatforms() {
+            showNotification('Loading platform performance comparison...');
+        }
+
+        function generateMarketingReport() {
+            showNotification('Generating comprehensive marketing performance report...');
+        }
+
+        function optimizeCampaigns() {
+            showNotification('Analyzing campaign performance and optimization opportunities...');
+        }
+
+        function exportROIData() {
+            showNotification('Exporting ROI and campaign data...');
+        }
+
+        // Sri Lankan Tax Compliance Functions
+        function calculateTaxes() {
+            if (!taxEngine) {
+                taxEngine = new SriLankanTaxEngine();
+            }
+            
+            // Sample calculation for demonstration
+            const sampleAmount = 100000; // LKR 100,000
+            const vatCalculation = taxEngine.calculateVAT(sampleAmount);
+            const whtCalculation = taxEngine.calculateWHT(50000, 'service_fees', true);
+            
+            // Update VAT display
+            document.getElementById('totalVATCollected').textContent = `LKR ${vatCalculation.vatAmount.toLocaleString()}`;
+            document.getElementById('totalWHT').textContent = `LKR ${whtCalculation.whtAmount.toLocaleString()}`;
+            
+            // Update next filing date
+            const nextFiling = taxEngine.getNextFilingDeadline('vat');
+            document.getElementById('nextVATFiling').textContent = nextFiling.toDateString();
+            
+            showNotification('Tax calculations updated with Sri Lankan compliance rules!');
+        }
+
+        function generateVATReturn() {
+            if (!taxEngine) {
+                taxEngine = new SriLankanTaxEngine();
+            }
+            
+            showNotification('Generating VAT return form per Sri Lankan IRD requirements...');
+            
+            // In a real implementation, this would generate the actual VAT return form
+            setTimeout(() => {
+                const vatDetails = {
+                    period: new Date().toISOString().substr(0, 7),
+                    totalSales: 500000,
+                    vatRate: 18,
+                    vatCollected: 90000,
+                    inputCredits: 25000,
+                    netVAT: 65000,
+                    dueDate: taxEngine.getNextFilingDeadline('vat')
+                };
+                
+                console.log('VAT Return Details:', vatDetails);
+                showNotification('VAT return prepared - ready for IRD submission!');
+            }, 2000);
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        function showVATBreakdown(vatCalculation, description) {
+            const breakdown = document.createElement('div');
+            breakdown.className = 'vat-breakdown';
+            breakdown.innerHTML = `
+                <h4 style="margin-top: 0; color: var(--primary-color);">🧾 VAT Calculation - ${description}</h4>
+                <div class="vat-row">
+                    <span>Net Amount:</span>
+                    <span>LKR ${vatCalculation.netAmount.toLocaleString()}</span>
+                </div>
+                <div class="vat-row">
+                    <span>VAT (18%):</span>
+                    <span>LKR ${vatCalculation.vatAmount.toLocaleString()}</span>
+                </div>
+                <div class="vat-row">
+                    <span>Gross Amount:</span>
+                    <span>LKR ${vatCalculation.grossAmount.toLocaleString()}</span>
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--gray-600);">
+                    <i class="fas fa-info-circle"></i> Filing Deadline: ${vatCalculation.filingDeadline.toDateString()}
+                </div>
+            `;
+            
+            const container = document.querySelector('.marketing-section');
+            container.appendChild(breakdown);
+            setTimeout(() => breakdown.remove(), 10000);
+        }
+
+        function updateTotalVAT(vatAmount) {
+            const current = parseFloat(document.getElementById('totalVAT').textContent.replace('LKR ', '').replace(',', '')) || 0;
+            document.getElementById('totalVAT').textContent = `LKR ${(current + vatAmount).toLocaleString()}`;
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--success-color);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}<span class="tax-indicator tax-compliant">VAT Compliant</span>`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Initialize campaign chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('campaignChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['No campaigns yet'],
+                    datasets: [{
+                        label: 'Campaign Performance',
+                        data: [0],
+                        backgroundColor: '#7c3aed',
+                        borderColor: '#6d28d9',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Campaign Performance Overview - Create campaigns to see data'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

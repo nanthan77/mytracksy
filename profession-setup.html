@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy - Profession Setup | Advanced Professional Financial Intelligence</title>
+    <meta name="description" content="Choose your profession for a customized MyTracksy experience designed specifically for your professional needs">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="sri-lanka-tax-engine.js"></script>
+    <style>
+        :root {
+            /* Medical Theme */
+            --medical-primary: #0ea5e9;
+            --medical-secondary: #0284c7;
+            --medical-accent: #06b6d4;
+            --medical-bg: linear-gradient(135deg, #0c4a6e 0%, #075985 100%);
+            
+            /* Legal Theme */
+            --legal-primary: #1e3a8a;
+            --legal-secondary: #1e40af;
+            --legal-accent: #fbbf24;
+            --legal-bg: linear-gradient(135deg, #1e2124 0%, #374151 100%);
+            
+            /* Engineering Theme */
+            --engineering-primary: #ea580c;
+            --engineering-secondary: #c2410c;
+            --engineering-accent: #3b82f6;
+            --engineering-bg: linear-gradient(135deg, #7c2d12 0%, #1e3a8a 100%);
+            
+            /* Business Theme */
+            --business-primary: #059669;
+            --business-secondary: #047857;
+            --business-accent: #fbbf24;
+            --business-bg: linear-gradient(135deg, #064e3b 0%, #92400e 100%);
+            
+            /* Individual Theme */
+            --individual-primary: #7c3aed;
+            --individual-secondary: #6d28d9;
+            --individual-accent: #f59e0b;
+            --individual-bg: linear-gradient(135deg, #581c87 0%, #7c2d12 100%);
+            
+            /* Default Colors */
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #00c851;
+            --warning-color: #ffbb33;
+            --error-color: #ff4444;
+            --dark-color: #2c3e50;
+            --light-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+            --border-radius: 8px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--accent-color) 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .floating-shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape-1 {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape-2 {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .shape-3 {
+            width: 60px;
+            height: 60px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(45deg, #fff, #f0f9ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .professions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .profession-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            min-height: 350px;
+            border: 3px solid transparent;
+        }
+
+        .profession-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--profession-gradient, var(--primary-color));
+            transition: var(--transition);
+        }
+
+        .profession-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 2rem 4rem rgba(0, 0, 0, 0.2);
+            border-color: var(--profession-primary, var(--primary-color));
+        }
+
+        .profession-card.selected {
+            border-color: var(--profession-primary, var(--primary-color));
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.2);
+        }
+
+        .profession-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .profession-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+            background: var(--profession-primary, var(--primary-color));
+        }
+
+        .profession-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+        }
+
+        .profession-subtitle {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            margin-bottom: 1rem;
+        }
+
+        .profession-features {
+            list-style: none;
+            margin-bottom: 1.5rem;
+        }
+
+        .profession-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 0;
+            color: var(--gray-700);
+        }
+
+        .profession-feature i {
+            color: var(--profession-primary, var(--primary-color));
+            width: 20px;
+            text-align: center;
+        }
+
+        .profession-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--profession-primary, var(--primary-color));
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray-600);
+        }
+
+        /* Profession-specific styling */
+        .medical {
+            --profession-primary: var(--medical-primary);
+            --profession-secondary: var(--medical-secondary);
+            --profession-accent: var(--medical-accent);
+            --profession-gradient: var(--medical-bg);
+        }
+
+        .legal {
+            --profession-primary: var(--legal-primary);
+            --profession-secondary: var(--legal-secondary);
+            --profession-accent: var(--legal-accent);
+            --profession-gradient: var(--legal-bg);
+        }
+
+        .engineering {
+            --profession-primary: var(--engineering-primary);
+            --profession-secondary: var(--engineering-secondary);
+            --profession-accent: var(--engineering-accent);
+            --profession-gradient: var(--engineering-bg);
+        }
+
+        .business {
+            --profession-primary: var(--business-primary);
+            --profession-secondary: var(--business-secondary);
+            --profession-accent: var(--business-accent);
+            --profession-gradient: var(--business-bg);
+        }
+
+        .individual {
+            --profession-primary: var(--individual-primary);
+            --profession-secondary: var(--individual-secondary);
+            --profession-accent: var(--individual-accent);
+            --profession-gradient: var(--individual-bg);
+        }
+
+        /* New Professional Categories */
+        .trading {
+            --profession-primary: #1a365d;
+            --profession-secondary: #2c5282;
+            --profession-accent: #d69e2e;
+            --profession-gradient: linear-gradient(135deg, #1a365d 0%, #2c5282 100%);
+        }
+
+        .automotive {
+            --profession-primary: #dc2626;
+            --profession-secondary: #b91c1c;
+            --profession-accent: #64748b;
+            --profession-gradient: linear-gradient(135deg, #dc2626 0%, #64748b 100%);
+        }
+
+        .marketing {
+            --profession-primary: #7c3aed;
+            --profession-secondary: #6d28d9;
+            --profession-accent: #ea580c;
+            --profession-gradient: linear-gradient(135deg, #7c3aed 0%, #ea580c 100%);
+        }
+
+        .travel {
+            --profession-primary: #1e40af;
+            --profession-secondary: #1d4ed8;
+            --profession-accent: #059669;
+            --profession-gradient: linear-gradient(135deg, #1e40af 0%, #059669 100%);
+        }
+
+        .transportation {
+            --profession-primary: #ea580c;
+            --profession-secondary: #c2410c;
+            --profession-accent: #2563eb;
+            --profession-gradient: linear-gradient(135deg, #ea580c 0%, #2563eb 100%);
+        }
+
+        .retail {
+            --profession-primary: #0d9488;
+            --profession-secondary: #0f766e;
+            --profession-accent: #f59e0b;
+            --profession-gradient: linear-gradient(135deg, #0d9488 0%, #f59e0b 100%);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            padding: 0.75rem 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.9);
+            color: var(--dark-color);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: white;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .selected-profession-info {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-top: 2rem;
+            box-shadow: var(--shadow);
+            display: none;
+        }
+
+        .selected-profession-info.show {
+            display: block;
+            animation: slideInUp 0.5s ease-out;
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .professions-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .profession-card {
+                padding: 1.5rem;
+                min-height: auto;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 100%;
+                max-width: 300px;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Choose Your Professional Path</h1>
+            <p>Select your profession to unlock a customized MyTracksy experience designed specifically for your professional needs. Each profession comes with specialized features, terminology, and tools tailored to your industry.</p>
+        </div>
+
+        <div class="professions-grid">
+            <!-- Medical Professional -->
+            <div class="profession-card medical" data-profession="medical" onclick="selectProfession('medical')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-user-md"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Medical Professional</div>
+                        <div class="profession-subtitle">Doctors, Surgeons, Specialists</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-hospital"></i>
+                        Multi-hospital management (Government & Private)
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-calendar-medical"></i>
+                        CME credit tracking & SLMC compliance
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-stethoscope"></i>
+                        Medical equipment & instrument tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-microscope"></i>
+                        Research & conference expense management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-microphone"></i>
+                        Medical terminology voice recognition
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">50+</div>
+                        <div class="stat-label">Medical Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">15+</div>
+                        <div class="stat-label">Specialties</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Languages</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Legal Professional -->
+            <div class="profession-card legal" data-profession="legal" onclick="selectProfession('legal')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-gavel"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Legal Professional</div>
+                        <div class="profession-subtitle">Lawyers, Attorneys, Legal Advisors</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-balance-scale"></i>
+                        Case & client portfolio management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-clock"></i>
+                        Billable hours tracking & time allocation
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-university"></i>
+                        Court fee calculators (Supreme, Appeal, High)
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-certificate"></i>
+                        Bar Association compliance & CLE tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-file-contract"></i>
+                        Legal research & database subscriptions
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">40+</div>
+                        <div class="stat-label">Legal Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">12+</div>
+                        <div class="stat-label">Practice Areas</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">3</div>
+                        <div class="stat-label">Court Levels</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Engineering Professional -->
+            <div class="profession-card engineering" data-profession="engineering" onclick="selectProfession('engineering')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Engineering Professional</div>
+                        <div class="profession-subtitle">Engineers, Architects, Technical Specialists</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-project-diagram"></i>
+                        Multi-project tracking & resource allocation
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-tools"></i>
+                        Software licenses & technical tool management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-award"></i>
+                        IESL certification & professional development
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-calculator"></i>
+                        Project cost allocation & profitability analysis
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-wrench"></i>
+                        Equipment maintenance & depreciation tracking
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">45+</div>
+                        <div class="stat-label">Engineering Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">20+</div>
+                        <div class="stat-label">Disciplines</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">100+</div>
+                        <div class="stat-label">Software Tools</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Business Owner/CEO -->
+            <div class="profession-card business" data-profession="business" onclick="selectProfession('business')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Business Owner/CEO</div>
+                        <div class="profession-subtitle">Entrepreneurs, Executives, Business Leaders</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-building"></i>
+                        Multi-entity & subsidiary management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-analytics"></i>
+                        Executive analytics & strategic planning
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-users"></i>
+                        Employee expense & payroll management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-chart-pie"></i>
+                        Revenue forecasting & cash flow analysis
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-handshake"></i>
+                        Investor relations & board reporting
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">60+</div>
+                        <div class="stat-label">Business Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">25+</div>
+                        <div class="stat-label">Industries</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">∞</div>
+                        <div class="stat-label">Entities</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Individual User -->
+            <div class="profession-card individual" data-profession="individual" onclick="selectProfession('individual')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Individual User</div>
+                        <div class="profession-subtitle">Personal Finance Management</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-home"></i>
+                        Family & household budget management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-piggy-bank"></i>
+                        Personal savings goals & investment tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-graduation-cap"></i>
+                        Education & children's expense planning
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-heart"></i>
+                        Healthcare & family wellness tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-plane"></i>
+                        Travel & entertainment budget management
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">35+</div>
+                        <div class="stat-label">Personal Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">15+</div>
+                        <div class="stat-label">Categories</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">100%</div>
+                        <div class="stat-label">Customizable</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trading & Investment Professionals -->
+            <div class="profession-card trading" data-profession="trading" onclick="selectProfession('trading')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Trading & Investment</div>
+                        <div class="profession-subtitle">Traders, Financial Analysts, Investment Advisors</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-chart-candlestick"></i>
+                        Real-time P&L integration with trading platforms
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-coins"></i>
+                        Tax loss harvesting & capital gains tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-university"></i>
+                        Multiple account & brokerage management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-shield-alt"></i>
+                        Regulatory compliance & licensing tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-analytics"></i>
+                        Performance analytics vs. expenses correlation
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">65+</div>
+                        <div class="stat-label">Trading Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">10+</div>
+                        <div class="stat-label">Asset Classes</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">24/7</div>
+                        <div class="stat-label">Market Coverage</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Automotive Sales Professionals -->
+            <div class="profession-card automotive" data-profession="automotive" onclick="selectProfession('automotive')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Automotive Sales</div>
+                        <div class="profession-subtitle">Car Sales, Dealership Staff, Auto Finance</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-handshake"></i>
+                        Commission tracking & sales performance
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-users"></i>
+                        Customer relationship management expenses
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-car-side"></i>
+                        Vehicle demonstration & inventory costs
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-calendar-alt"></i>
+                        Seasonal expense planning & optimization
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-map-marked-alt"></i>
+                        Multi-location dealership support
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">50+</div>
+                        <div class="stat-label">Sales Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">25+</div>
+                        <div class="stat-label">Vehicle Brands</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">∞</div>
+                        <div class="stat-label">Locations</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Marketing & Digital Marketing Professionals -->
+            <div class="profession-card marketing" data-profession="marketing" onclick="selectProfession('marketing')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-bullhorn"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Marketing & Digital</div>
+                        <div class="profession-subtitle">Marketers, Social Media, Content Creators</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-campaign"></i>
+                        Campaign cost allocation & ROI tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-chart-bar"></i>
+                        Multi-platform advertising spend analytics
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-project-diagram"></i>
+                        Client project expense separation
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-photo-video"></i>
+                        Creative asset & content creation tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-palette"></i>
+                        Design tools & software subscription management
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">70+</div>
+                        <div class="stat-label">Marketing Tools</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">15+</div>
+                        <div class="stat-label">Platforms</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">∞</div>
+                        <div class="stat-label">Campaigns</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Travel Industry Professionals -->
+            <div class="profession-card travel" data-profession="travel" onclick="selectProfession('travel')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-plane"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Travel Industry</div>
+                        <div class="profession-subtitle">Travel Agents, Tour Operators, Hotel Sales</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-globe-americas"></i>
+                        Destination expense tracking by region
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-suitcase"></i>
+                        Familiarization trip management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-wine-glass"></i>
+                        Client entertainment & relationship analytics
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-calendar-week"></i>
+                        Seasonal expense planning & optimization
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-exchange-alt"></i>
+                        Multi-currency transaction support
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">55+</div>
+                        <div class="stat-label">Travel Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">200+</div>
+                        <div class="stat-label">Destinations</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">150+</div>
+                        <div class="stat-label">Currencies</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transportation Workers -->
+            <div class="profession-card transportation" data-profession="transportation" onclick="selectProfession('transportation')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-truck"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Transportation</div>
+                        <div class="profession-subtitle">Drivers, Delivery, Courier Services</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-route"></i>
+                        GPS mileage tracking & optimization
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-gas-pump"></i>
+                        Fuel efficiency analytics & cost tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-tools"></i>
+                        Vehicle maintenance & repair scheduling
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-id-card"></i>
+                        Commercial licensing & safety certification
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-cars"></i>
+                        Multiple vehicle fleet management
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">45+</div>
+                        <div class="stat-label">Transport Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">20+</div>
+                        <div class="stat-label">Vehicle Types</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">24/7</div>
+                        <div class="stat-label">Tracking</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Retail & Sales Professionals -->
+            <div class="profession-card retail" data-profession="retail" onclick="selectProfession('retail')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-shopping-cart"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Retail & Sales</div>
+                        <div class="profession-subtitle">Retail Managers, Sales Reps, Merchandising</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li class="profession-feature">
+                        <i class="fas fa-calendar-alt"></i>
+                        Seasonal expense planning & holiday optimization
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-search"></i>
+                        Inventory research & product sourcing tracking
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-star"></i>
+                        Customer service training investment analytics
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-store"></i>
+                        Multi-location store expense management
+                    </li>
+                    <li class="profession-feature">
+                        <i class="fas fa-chart-line"></i>
+                        Sales performance correlation analysis
+                    </li>
+                </ul>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">60+</div>
+                        <div class="stat-label">Retail Features</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">50+</div>
+                        <div class="stat-label">Product Categories</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">∞</div>
+                        <div class="stat-label">Store Locations</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="selected-profession-info" id="selectedProfessionInfo">
+            <h3 id="selectedTitle">Select a profession to continue</h3>
+            <p id="selectedDescription">Choose your professional category above to see customized features and begin your personalized MyTracksy experience.</p>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="continueBtn" onclick="continueToDashboard()" disabled>
+                <i class="fas fa-arrow-right"></i>
+                Continue to Dashboard
+            </button>
+            <a href="index.html" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i>
+                Back to Home
+            </a>
+        </div>
+    </div>
+
+    <script>
+        let selectedProfession = null;
+
+        const professionData = {
+            medical: {
+                title: "Medical Professional Dashboard",
+                description: "Your dashboard will be customized with medical terminology, hospital management tools, CME tracking, and professional development features specifically designed for healthcare professionals in Sri Lanka.",
+                features: [
+                    "Multi-hospital appointment scheduling",
+                    "CME credit tracking with SLMC integration",
+                    "Medical equipment and instrument management",
+                    "Professional liability insurance tracking",
+                    "Research and conference expense categorization",
+                    "Medical terminology voice recognition"
+                ]
+            },
+            legal: {
+                title: "Legal Professional Dashboard",
+                description: "Your dashboard will feature case management tools, billable hours tracking, court fee calculators, and Bar Association compliance features tailored for legal practice in Sri Lanka.",
+                features: [
+                    "Case and client portfolio management",
+                    "Billable hours tracking with client allocation",
+                    "Court fee calculators for all court levels",
+                    "Bar Association compliance monitoring",
+                    "Legal research database expense tracking",
+                    "Legal terminology voice recognition"
+                ]
+            },
+            engineering: {
+                title: "Engineering Professional Dashboard",
+                description: "Your dashboard will include project management tools, software license tracking, IESL certification monitoring, and technical resource management features for engineering professionals.",
+                features: [
+                    "Multi-project tracking and resource allocation",
+                    "Software license and tool management",
+                    "IESL certification and professional development",
+                    "Project cost allocation and profitability analysis",
+                    "Equipment maintenance and depreciation",
+                    "Technical terminology voice recognition"
+                ]
+            },
+            business: {
+                title: "Business Owner/CEO Dashboard",
+                description: "Your dashboard will provide multi-entity management, executive analytics, employee expense tracking, and strategic planning tools designed for business leaders and entrepreneurs.",
+                features: [
+                    "Multi-entity and subsidiary management",
+                    "Executive analytics and strategic planning",
+                    "Employee expense and payroll management",
+                    "Revenue forecasting and cash flow analysis",
+                    "Investor relations and board reporting",
+                    "Business terminology voice recognition"
+                ]
+            },
+            individual: {
+                title: "Individual User Dashboard",
+                description: "Your dashboard will focus on personal finance management with family budgeting, savings goals, investment tracking, and lifestyle expense management features.",
+                features: [
+                    "Family and household budget management",
+                    "Personal savings goals and investment tracking",
+                    "Education and children's expense planning",
+                    "Healthcare and family wellness tracking",
+                    "Travel and entertainment budget management",
+                    "Personal voice recognition preferences"
+                ]
+            },
+            trading: {
+                title: "Trading & Investment Professional Dashboard",
+                description: "Your dashboard will feature sophisticated trading expense management with real-time P&L integration, tax optimization tools, and comprehensive performance analytics designed for financial traders and investment professionals.",
+                features: [
+                    "Real-time P&L integration with trading platforms",
+                    "Tax loss harvesting & capital gains tracking",
+                    "Multiple account & brokerage management",
+                    "Regulatory compliance & licensing monitoring",
+                    "Performance analytics vs. expenses correlation",
+                    "Financial terminology voice recognition"
+                ]
+            },
+            automotive: {
+                title: "Automotive Sales Professional Dashboard",
+                description: "Your dashboard will include commission tracking, customer relationship management, vehicle demonstration costs, and seasonal planning tools specifically designed for automotive sales professionals.",
+                features: [
+                    "Commission tracking & sales performance analytics",
+                    "Customer relationship management expenses",
+                    "Vehicle demonstration & inventory interaction costs",
+                    "Seasonal expense planning & optimization",
+                    "Multi-location dealership support",
+                    "Automotive terminology voice recognition"
+                ]
+            },
+            marketing: {
+                title: "Marketing & Digital Marketing Dashboard",
+                description: "Your dashboard will provide campaign cost allocation, ROI tracking, multi-platform analytics, and creative asset management tools designed for marketing professionals and content creators.",
+                features: [
+                    "Campaign cost allocation & ROI calculation tools",
+                    "Multi-platform advertising spend analytics",
+                    "Client project expense separation & tracking",
+                    "Creative asset & content creation management",
+                    "Design tools & software subscription tracking",
+                    "Marketing terminology voice recognition"
+                ]
+            },
+            travel: {
+                title: "Travel Industry Professional Dashboard",
+                description: "Your dashboard will feature destination expense tracking, familiarization trip management, client entertainment analytics, and multi-currency support for travel industry professionals.",
+                features: [
+                    "Destination expense tracking by geographic region",
+                    "Familiarization trip management & ROI analysis",
+                    "Client entertainment & relationship analytics",
+                    "Seasonal expense planning for tourism industry",
+                    "Multi-currency transaction & conversion support",
+                    "Travel terminology voice recognition"
+                ]
+            },
+            transportation: {
+                title: "Transportation Professional Dashboard",
+                description: "Your dashboard will include GPS mileage tracking, fuel efficiency analytics, vehicle maintenance scheduling, and commercial licensing management for transportation workers.",
+                features: [
+                    "GPS mileage tracking & route optimization",
+                    "Fuel efficiency analytics & cost optimization",
+                    "Vehicle maintenance & repair scheduling",
+                    "Commercial licensing & safety certification tracking",
+                    "Multiple vehicle fleet management",
+                    "Transportation terminology voice recognition"
+                ]
+            },
+            retail: {
+                title: "Retail & Sales Professional Dashboard",
+                description: "Your dashboard will provide seasonal expense planning, inventory research tracking, customer service analytics, and multi-location management tools for retail professionals.",
+                features: [
+                    "Seasonal expense planning & holiday optimization",
+                    "Inventory research & product sourcing tracking",
+                    "Customer service training investment analytics",
+                    "Multi-location store expense management",
+                    "Sales performance correlation analysis",
+                    "Retail terminology voice recognition"
+                ]
+            }
+        };
+
+        function selectProfession(profession) {
+            // Remove previous selection
+            document.querySelectorAll('.profession-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection to clicked card
+            document.querySelector(`[data-profession="${profession}"]`).classList.add('selected');
+            
+            selectedProfession = profession;
+            
+            // Show profession info
+            const info = document.getElementById('selectedProfessionInfo');
+            const data = professionData[profession];
+            
+            document.getElementById('selectedTitle').textContent = data.title;
+            document.getElementById('selectedDescription').innerHTML = `
+                <p style="margin-bottom: 1rem;">${data.description}</p>
+                <h4 style="margin-bottom: 0.5rem; color: var(--dark-color);">Key Features Include:</h4>
+                <ul style="margin-left: 1.5rem; color: var(--gray-700);">
+                    ${data.features.map(feature => `<li style="margin-bottom: 0.25rem;">${feature}</li>`).join('')}
+                </ul>
+            `;
+            
+            info.classList.add('show');
+            
+            // Enable continue button
+            document.getElementById('continueBtn').disabled = false;
+            
+            // Apply theme
+            applyProfessionTheme(profession);
+        }
+
+        function applyProfessionTheme(profession) {
+            const root = document.documentElement;
+            
+            switch(profession) {
+                case 'medical':
+                    root.style.setProperty('--primary-color', 'var(--medical-primary)');
+                    root.style.setProperty('--secondary-color', 'var(--medical-secondary)');
+                    root.style.setProperty('--accent-color', 'var(--medical-accent)');
+                    break;
+                case 'legal':
+                    root.style.setProperty('--primary-color', 'var(--legal-primary)');
+                    root.style.setProperty('--secondary-color', 'var(--legal-secondary)');
+                    root.style.setProperty('--accent-color', 'var(--legal-accent)');
+                    break;
+                case 'engineering':
+                    root.style.setProperty('--primary-color', 'var(--engineering-primary)');
+                    root.style.setProperty('--secondary-color', 'var(--engineering-secondary)');
+                    root.style.setProperty('--accent-color', 'var(--engineering-accent)');
+                    break;
+                case 'business':
+                    root.style.setProperty('--primary-color', 'var(--business-primary)');
+                    root.style.setProperty('--secondary-color', 'var(--business-secondary)');
+                    root.style.setProperty('--accent-color', 'var(--business-accent)');
+                    break;
+                case 'individual':
+                    root.style.setProperty('--primary-color', 'var(--individual-primary)');
+                    root.style.setProperty('--secondary-color', 'var(--individual-secondary)');
+                    root.style.setProperty('--accent-color', 'var(--individual-accent)');
+                    break;
+                case 'trading':
+                    root.style.setProperty('--primary-color', '#1a365d');
+                    root.style.setProperty('--secondary-color', '#2c5282');
+                    root.style.setProperty('--accent-color', '#d69e2e');
+                    break;
+                case 'automotive':
+                    root.style.setProperty('--primary-color', '#dc2626');
+                    root.style.setProperty('--secondary-color', '#b91c1c');
+                    root.style.setProperty('--accent-color', '#64748b');
+                    break;
+                case 'marketing':
+                    root.style.setProperty('--primary-color', '#7c3aed');
+                    root.style.setProperty('--secondary-color', '#6d28d9');
+                    root.style.setProperty('--accent-color', '#ea580c');
+                    break;
+                case 'travel':
+                    root.style.setProperty('--primary-color', '#1e40af');
+                    root.style.setProperty('--secondary-color', '#1d4ed8');
+                    root.style.setProperty('--accent-color', '#059669');
+                    break;
+                case 'transportation':
+                    root.style.setProperty('--primary-color', '#ea580c');
+                    root.style.setProperty('--secondary-color', '#c2410c');
+                    root.style.setProperty('--accent-color', '#2563eb');
+                    break;
+                case 'retail':
+                    root.style.setProperty('--primary-color', '#0d9488');
+                    root.style.setProperty('--secondary-color', '#0f766e');
+                    root.style.setProperty('--accent-color', '#f59e0b');
+                    break;
+            }
+        }
+
+        function continueToDashboard() {
+            if (!selectedProfession) {
+                alert('Please select a profession first!');
+                return;
+            }
+
+            // Save profession selection
+            const professionProfile = {
+                profession: selectedProfession,
+                selectedAt: new Date().toISOString(),
+                features: professionData[selectedProfession].features
+            };
+
+            localStorage.setItem('myTracksyProfession', JSON.stringify(professionProfile));
+
+            // Show loading message
+            document.getElementById('continueBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Setting up your dashboard...';
+            document.getElementById('continueBtn').disabled = true;
+
+            // Redirect to profession-specific dashboard after short delay
+            setTimeout(() => {
+                window.location.href = `${selectedProfession}-dashboard.html`;
+            }, 2000);
+        }
+
+        // Auto-select if profession already chosen
+        document.addEventListener('DOMContentLoaded', function() {
+            const existingProfession = localStorage.getItem('myTracksyProfession');
+            if (existingProfession) {
+                const data = JSON.parse(existingProfession);
+                selectProfession(data.profession);
+            }
+        });
+    </script>
+</body>
+</html>

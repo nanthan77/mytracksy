@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Sri Lanka - Local Features</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="sri-lanka-tax-engine.js"></script>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #00c851;
+            --warning-color: #ffbb33;
+            --error-color: #ff4444;
+            --dark-color: #2c3e50;
+            --light-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-600: #6c757d;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 2rem;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+        .dashboard {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '🇱🇰';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 4rem;
+            opacity: 0.2;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        .feature-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem 0;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        .payment-methods {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .payment-method {
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .payment-method:hover {
+            border-color: var(--primary-color);
+            background: white;
+        }
+        .payment-method.selected {
+            border-color: var(--primary-color);
+            background: rgba(102, 126, 234, 0.1);
+        }
+        .language-switcher {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--primary-color);
+            background: transparent;
+            color: var(--primary-color);
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .lang-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+        .festival-banner {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🇱🇰 MyTracksy Sri Lanka Features</h1>
+            <p>Specialized features designed for the Sri Lankan market and culture</p>
+        </div>
+
+        <!-- Festival Promotion Banner -->
+        <div class="festival-banner" id="festivalBanner">
+            <h3>🪔 Diwali Special Offer!</h3>
+            <p>Get 25% off on Individual Professional plan during the festival season</p>
+            <button onclick="applyFestivalOffer()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid white; padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                Apply Offer - LKR 562/month
+            </button>
+        </div>
+
+        <!-- Language Support -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <i class="fas fa-language"></i>
+            </div>
+            <h3>Multi-Language Support</h3>
+            <p>Use MyTracksy in your preferred language with full voice recognition support</p>
+            
+            <div class="language-switcher">
+                <button class="lang-btn active" onclick="switchLanguage('en')">English</button>
+                <button class="lang-btn" onclick="switchLanguage('si')">සිංහල</button>
+                <button class="lang-btn" onclick="switchLanguage('ta')">தமிழ்</button>
+            </div>
+            
+            <div id="languageDemo" style="background: var(--gray-100); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                <h4>Voice Command Examples:</h4>
+                <div id="voiceExamples">
+                    <p>🎤 "I spent 500 rupees on lunch at Hotel de Pilawoos"</p>
+                    <p>🎤 "Add fuel expense 2000 rupees for my vehicle"</p>
+                    <p>🎤 "Record grocery shopping 3500 rupees at Cargills"</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="feature-grid">
+            <!-- Local Payment Integration -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-credit-card"></i>
+                </div>
+                <h3>Sri Lankan Payment Methods</h3>
+                <p>Integrated support for popular local payment systems</p>
+                
+                <div class="payment-methods">
+                    <div class="payment-method" onclick="selectPayment('frimi')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">📱</div>
+                        <div>FriMi</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment('ezCash')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💳</div>
+                        <div>eZ Cash</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment('sampath')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🏦</div>
+                        <div>Sampath Bank</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment('commercial')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🏛️</div>
+                        <div>Commercial Bank</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment('hnb')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">🏢</div>
+                        <div>HNB</div>
+                    </div>
+                    <div class="payment-method" onclick="selectPayment('payhere')">
+                        <div style="font-size: 1.5rem; margin-bottom: 0.5rem;">💰</div>
+                        <div>PayHere</div>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="setupLocalPayment()">
+                    <i class="fas fa-link"></i> Connect Payment Method
+                </button>
+            </div>
+
+            <!-- Bank Integration -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-university"></i>
+                </div>
+                <h3>Bank Account Connectivity</h3>
+                <p>Automatically import transactions from major Sri Lankan banks</p>
+                
+                <div style="margin: 1rem 0;">
+                    <h4>Supported Banks:</h4>
+                    <ul style="color: var(--gray-600); line-height: 1.8;">
+                        <li>Commercial Bank of Ceylon</li>
+                        <li>Hatton National Bank (HNB)</li>
+                        <li>Sampath Bank</li>
+                        <li>Nations Trust Bank</li>
+                        <li>DFCC Bank</li>
+                        <li>Bank of Ceylon</li>
+                    </ul>
+                </div>
+                
+                <button class="btn" onclick="connectBank()">
+                    <i class="fas fa-plug"></i> Connect Bank Account
+                </button>
+            </div>
+
+            <!-- Tax Compliance -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-file-invoice"></i>
+                </div>
+                <h3>Sri Lankan Tax Compliance</h3>
+                <p>Automated tax calculation and reporting for local tax requirements</p>
+                
+                <div style="margin: 1rem 0;">
+                    <h4>Features:</h4>
+                    <ul style="color: var(--gray-600); line-height: 1.8;">
+                        <li>VAT calculation (15%)</li>
+                        <li>Income tax estimation</li>
+                        <li>WHT tracking</li>
+                        <li>EPF/ETF calculations</li>
+                        <li>Tax return exports</li>
+                    </ul>
+                </div>
+                
+                <button class="btn" onclick="setupTaxCompliance()">
+                    <i class="fas fa-calculator"></i> Set Up Tax Features
+                </button>
+            </div>
+
+            <!-- Offline Functionality -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-wifi"></i>
+                </div>
+                <h3>Offline Functionality</h3>
+                <p>Continue tracking expenses even without internet connectivity</p>
+                
+                <div style="margin: 1rem 0;">
+                    <div style="background: var(--success-color); color: white; padding: 0.5rem 1rem; border-radius: 20px; display: inline-block; font-size: 0.9rem;">
+                        ✓ Currently Online
+                    </div>
+                </div>
+                
+                <div style="margin: 1rem 0;">
+                    <h4>Offline Capabilities:</h4>
+                    <ul style="color: var(--gray-600); line-height: 1.8;">
+                        <li>Add expenses without internet</li>
+                        <li>Voice recording offline</li>
+                        <li>Photo capture for receipts</li>
+                        <li>Auto-sync when connected</li>
+                    </ul>
+                </div>
+                
+                <button class="btn" onclick="enableOfflineMode()">
+                    <i class="fas fa-download"></i> Enable Offline Mode
+                </button>
+            </div>
+
+            <!-- Family Plans -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Family Plan Discounts</h3>
+                <p>Special pricing for Sri Lankan families with shared expense tracking</p>
+                
+                <div style="margin: 1rem 0;">
+                    <div style="background: linear-gradient(45deg, var(--primary-color), var(--accent-color)); color: white; padding: 1rem; border-radius: 8px;">
+                        <h4 style="margin: 0 0 0.5rem 0;">Family Plan - LKR 1,200/month</h4>
+                        <p style="margin: 0; font-size: 0.9rem;">Up to 6 family members, shared expenses, unified reporting</p>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="setupFamilyPlan()">
+                    <i class="fas fa-heart"></i> Set Up Family Plan
+                </button>
+            </div>
+
+            <!-- Local Business Categories -->
+            <div class="feature-card">
+                <div class="feature-icon">
+                    <i class="fas fa-store"></i>
+                </div>
+                <h3>Local Business Categories</h3>
+                <p>Pre-configured expense categories for Sri Lankan businesses</p>
+                
+                <div style="margin: 1rem 0;">
+                    <h4>Popular Categories:</h4>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; color: var(--gray-600); font-size: 0.9rem;">
+                        <div>🍛 Restaurant & Food</div>
+                        <div>🏪 Retail & Shop</div>
+                        <div>🚛 Transport & Logistics</div>
+                        <div>🏥 Healthcare & Medical</div>
+                        <div>🎓 Education & Training</div>
+                        <div>🏗️ Construction & Building</div>
+                        <div>💻 IT & Technology</div>
+                        <div>👗 Apparel & Textiles</div>
+                    </div>
+                </div>
+                
+                <button class="btn" onclick="setupBusinessCategories()">
+                    <i class="fas fa-tags"></i> Configure Categories
+                </button>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="goBack()" style="width: auto; padding: 1rem 2rem;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const languageData = {
+            en: {
+                voiceExamples: [
+                    '🎤 "I spent 500 rupees on lunch at Hotel de Pilawoos"',
+                    '🎤 "Add fuel expense 2000 rupees for my vehicle"',
+                    '🎤 "Record grocery shopping 3500 rupees at Cargills"'
+                ]
+            },
+            si: {
+                voiceExamples: [
+                    '🎤 "මම හෝටල් ද පිලාවූස් හි දිවා ආහාරය සඳහා රුපියල් 500ක් වියදම් කළා"',
+                    '🎤 "මගේ වාහනය සඳහා ඉන්ධන වියදම රුපියල් 2000 එකතු කරන්න"',
+                    '🎤 "කාර්ගිල්ස් හි සිල්ලර කනිට්ටුව රුපියල් 3500 වාර්තා කරන්න"'
+                ]
+            },
+            ta: {
+                voiceExamples: [
+                    '🎤 "ஹோட்டல் டி பிலாவூஸில் மதிய உணவுக்கு 500 ரூபாய் செலவழித்தேன்"',
+                    '🎤 "என் வாகனத்திற்கு எரிபொருள் செலவு 2000 ரூபாய் சேர்க்கவும்"',
+                    '🎤 "கார்கில்ஸில் மளிகை கொள்முதல் 3500 ரூபாய் பதிவு செய்யவும்"'
+                ]
+            }
+        };
+
+        function switchLanguage(lang) {
+            // Update active button
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update voice examples
+            const examples = languageData[lang].voiceExamples;
+            const container = document.getElementById('voiceExamples');
+            container.innerHTML = examples.map(example => `<p>${example}</p>`).join('');
+            
+            // Save language preference
+            localStorage.setItem('myTracksyLanguage', lang);
+            showNotification(`Language switched to ${lang === 'en' ? 'English' : lang === 'si' ? 'Sinhala' : 'Tamil'}`);
+        }
+
+        function selectPayment(method) {
+            document.querySelectorAll('.payment-method').forEach(pm => pm.classList.remove('selected'));
+            event.currentTarget.classList.add('selected');
+            
+            const methods = {
+                frimi: 'FriMi Mobile Wallet',
+                ezCash: 'Dialog eZ Cash',
+                sampath: 'Sampath Bank',
+                commercial: 'Commercial Bank',
+                hnb: 'Hatton National Bank',
+                payhere: 'PayHere Gateway'
+            };
+            
+            showNotification(`${methods[method]} selected for payment integration`);
+        }
+
+        function setupLocalPayment() {
+            const selected = document.querySelector('.payment-method.selected');
+            if (!selected) {
+                showNotification('Please select a payment method first', 'warning');
+                return;
+            }
+            
+            showNotification('Redirecting to secure payment setup...', 'info');
+            setTimeout(() => {
+                showNotification('Payment method connected successfully!', 'success');
+            }, 2000);
+        }
+
+        function connectBank() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 2000; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(5px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%;">
+                    <h3 style="margin-bottom: 1rem;">Connect Your Bank Account</h3>
+                    <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                        Securely connect your Sri Lankan bank account for automatic transaction import.
+                    </p>
+                    
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Select Your Bank</label>
+                        <select style="width: 100%; padding: 0.75rem; border: 2px solid var(--gray-300); border-radius: 8px;">
+                            <option>Commercial Bank of Ceylon</option>
+                            <option>Hatton National Bank</option>
+                            <option>Sampath Bank</option>
+                            <option>Nations Trust Bank</option>
+                            <option>DFCC Bank</option>
+                            <option>Bank of Ceylon</option>
+                        </select>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button onclick="this.closest('[style*=\"backdrop-filter\"]').remove()" 
+                                style="flex: 1; background: var(--gray-300); color: var(--gray-700); border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button onclick="processBankConnection()" 
+                                style="flex: 1; background: var(--primary-color); color: white; border: none; padding: 0.75rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Connect Bank
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.processBankConnection = function() {
+                modal.remove();
+                showNotification('🏦 Bank connection initiated! You will receive SMS verification shortly.', 'info');
+                setTimeout(() => {
+                    showNotification('✅ Bank account connected successfully!', 'success');
+                }, 3000);
+            };
+        }
+
+        function setupTaxCompliance() {
+            showNotification('📊 Tax compliance features are being configured for Sri Lankan regulations...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Tax features activated! VAT and income tax calculations enabled.', 'success');
+            }, 2000);
+        }
+
+        function enableOfflineMode() {
+            // Simulate offline mode setup
+            showNotification('📱 Downloading offline data...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Offline mode enabled! You can now use MyTracksy without internet.', 'success');
+            }, 2000);
+        }
+
+        function setupFamilyPlan() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 2000; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(5px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 600px; width: 90%;">
+                    <h3 style="margin-bottom: 1rem;">👨‍👩‍👧‍👦 Family Plan Setup</h3>
+                    <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                        Perfect for Sri Lankan families! Share expense tracking with up to 6 family members.
+                    </p>
+                    
+                    <div style="background: var(--gray-100); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <h4 style="margin-bottom: 1rem;">Family Plan Benefits:</h4>
+                        <ul style="color: var(--gray-700); line-height: 1.6;">
+                            <li>✅ Up to 6 family member accounts</li>
+                            <li>✅ Shared expense categories</li>
+                            <li>✅ Family budget tracking</li>
+                            <li>✅ Combined financial reports</li>
+                            <li>✅ Individual privacy controls</li>
+                            <li>✅ 40% savings vs individual plans</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="text-align: center; margin-bottom: 1.5rem;">
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--primary-color);">LKR 1,200/month</div>
+                        <div style="color: var(--gray-600);">instead of LKR 4,500 for 6 individual plans</div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button onclick="this.closest('[style*=\"backdrop-filter\"]').remove()" 
+                                style="flex: 1; background: var(--gray-300); color: var(--gray-700); border: none; padding: 1rem; border-radius: 8px; cursor: pointer;">
+                            Maybe Later
+                        </button>
+                        <button onclick="startFamilyPlan()" 
+                                style="flex: 1; background: var(--primary-color); color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Start Family Plan
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.startFamilyPlan = function() {
+                modal.remove();
+                showNotification('👨‍👩‍👧‍👦 Family plan activated! Invite family members via SMS or email.', 'success');
+            };
+        }
+
+        function setupBusinessCategories() {
+            showNotification('🏪 Local business categories are being configured...', 'info');
+            setTimeout(() => {
+                showNotification('✅ Sri Lankan business categories added to your account!', 'success');
+            }, 2000);
+        }
+
+        function applyFestivalOffer() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 2000; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(5px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; text-align: center;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🪔</div>
+                    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">Diwali Special Offer!</h3>
+                    <p style="color: var(--gray-600); margin-bottom: 1.5rem;">
+                        Celebrate the Festival of Lights with 25% off your Individual Professional plan.
+                    </p>
+                    
+                    <div style="background: linear-gradient(45deg, #ff6b6b, #ffa500); color: white; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem;">
+                        <div style="font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem;">LKR 562/month</div>
+                        <div style="text-decoration: line-through; opacity: 0.8;">Regular: LKR 750/month</div>
+                    </div>
+                    
+                    <div style="display: flex; gap: 1rem;">
+                        <button onclick="this.closest('[style*=\"backdrop-filter\"]').remove()" 
+                                style="flex: 1; background: var(--gray-300); color: var(--gray-700); border: none; padding: 1rem; border-radius: 8px; cursor: pointer;">
+                            Not Now
+                        </button>
+                        <button onclick="activateFestivalOffer()" 
+                                style="flex: 1; background: linear-gradient(45deg, #ff6b6b, #ffa500); color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            Claim Offer
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.activateFestivalOffer = function() {
+                modal.remove();
+                document.getElementById('festivalBanner').style.display = 'none';
+                showNotification('🎉 Diwali offer applied! Enjoy 25% off for the next 12 months.', 'success');
+            };
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'var(--success-color)' : 
+                           type === 'error' ? 'var(--error-color)' : 
+                           type === 'info' ? 'var(--primary-color)' : 'var(--warning-color)';
+            
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; background: ${bgColor};
+                color: white; padding: 1rem 1.5rem; border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+
+        // Check for current festivals and show relevant banners
+        function checkFestivalPromotions() {
+            const today = new Date();
+            const month = today.getMonth() + 1;
+            const day = today.getDate();
+            
+            // Diwali season (October-November)
+            if ((month === 10 && day > 15) || (month === 11 && day < 15)) {
+                document.getElementById('festivalBanner').style.display = 'block';
+            }
+            // Add more festivals as needed
+        }
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkFestivalPromotions();
+            
+            // Load saved language preference
+            const savedLang = localStorage.getItem('myTracksyLanguage') || 'en';
+            if (savedLang !== 'en') {
+                document.querySelector(`[onclick="switchLanguage('${savedLang}')"]`).click();
+            }
+        });
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

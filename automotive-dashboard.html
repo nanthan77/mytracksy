@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Automotive Sales Professional Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #dc2626;
+            --secondary-color: #b91c1c;
+            --accent-color: #64748b;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+            --tax-compliance-color: #059669;
+            --tax-warning-color: #f59e0b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #dc2626 0%, #64748b 50%, #b91c1c 100%);
+            margin: 0;
+            padding: 2rem;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '🚗';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 4rem;
+            opacity: 0.2;
+        }
+        .header h1 {
+            color: white;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        .auto-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        .automotive-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        .btn-accent {
+            background: var(--accent-color);
+            color: white;
+        }
+        .voice-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0.5rem;
+            font-weight: 600;
+        }
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .sales-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .sales-card {
+            background: var(--gray-100);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+        .commission-tracker {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .commission-card {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .commission-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .customer-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .customer-item:last-child {
+            border-bottom: none;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        .tax-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .tax-compliant {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .tax-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .vat-breakdown {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .vat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .vat-row:last-child {
+            margin-bottom: 0;
+            font-weight: 600;
+            border-top: 1px solid #0ea5e9;
+            padding-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🚗 Automotive Sales Professional Dashboard</h1>
+            <p>Comprehensive expense management for car salespeople, dealership staff, and automotive finance specialists</p>
+        </div>
+
+        <div class="voice-section">
+            <h3><i class="fas fa-microphone"></i> Automotive Voice Commands</h3>
+            <p>Use automotive terminology for expense tracking and customer management</p>
+            <button class="voice-btn" onclick="startAutoVoice()">
+                <i class="fas fa-microphone"></i> Auto Voice Input
+            </button>
+            <button class="voice-btn" onclick="logCustomerExpense()">
+                <i class="fas fa-handshake"></i> Customer Entertainment
+            </button>
+            <button class="voice-btn" onclick="addTrainingCost()">
+                <i class="fas fa-graduation-cap"></i> Training Expense
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem; font-weight: 600;"></div>
+        </div>
+
+        <div class="auto-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="monthlyCommission">LKR 0</div>
+                <div>Monthly Commission</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-dollar-sign"></i> Track your earnings</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="salesExpenses">LKR 0</div>
+                <div>Sales Expenses</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-receipt"></i> Business expenses</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="vehiclesSold">0</div>
+                <div>Vehicles Sold</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-car"></i> This month</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="customerMeetings">0</div>
+                <div>Customer Meetings</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-users"></i> Relationship building</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalVAT">LKR 0</div>
+                <div>Total VAT (18%)</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-receipt"></i> Sri Lankan tax compliance</small>
+            </div>
+        </div>
+
+        <div class="automotive-section">
+            <h2 class="section-title">
+                <i class="fas fa-handshake"></i>
+                Commission & Sales Tracking
+            </h2>
+            <div class="commission-tracker">
+                <div class="commission-card">
+                    <div class="commission-value" id="todayCommission">LKR 0</div>
+                    <div>Today's Commission</div>
+                </div>
+                <div class="commission-card">
+                    <div class="commission-value" id="weekCommission">LKR 0</div>
+                    <div>This Week</div>
+                </div>
+                <div class="commission-card">
+                    <div class="commission-value" id="monthCommission">LKR 0</div>
+                    <div>This Month</div>
+                </div>
+                <div class="commission-card">
+                    <div class="commission-value" id="quarterCommission">LKR 0</div>
+                    <div>This Quarter</div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 1rem;">
+                <button class="btn" onclick="addSaleCommission()">
+                    <i class="fas fa-plus"></i> Add Sale Commission
+                </button>
+                <button class="btn btn-accent" onclick="viewCommissionHistory()">
+                    <i class="fas fa-history"></i> Commission History
+                </button>
+            </div>
+        </div>
+
+        <div class="automotive-section">
+            <h2 class="section-title">
+                <i class="fas fa-users"></i>
+                Customer Relationship Management
+            </h2>
+            <div id="customerExpenses">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-wine-glass" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Customer Entertainment Expenses</h3>
+                    <p>Track client lunches, entertainment, and relationship-building expenses</p>
+                    <button class="btn" onclick="addCustomerExpense()">
+                        <i class="fas fa-plus"></i> Add Customer Expense
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="automotive-section">
+            <h2 class="section-title">
+                <i class="fas fa-car-side"></i>
+                Vehicle Demonstration & Test Drives
+            </h2>
+            <div id="vehicleDemonstrations">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-key" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Demonstration Costs</h3>
+                    <p>Track fuel, insurance, and vehicle preparation costs for demos</p>
+                    <button class="btn btn-accent" onclick="addDemonstrationCost()">
+                        <i class="fas fa-plus"></i> Add Demo Cost
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="automotive-section">
+            <h2 class="section-title">
+                <i class="fas fa-graduation-cap"></i>
+                Training & Professional Development
+            </h2>
+            <div class="sales-grid" id="trainingPrograms">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600); grid-column: 1 / -1;">
+                    <i class="fas fa-chalkboard-teacher" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Training Programs</h3>
+                    <p>Add automotive training courses, certifications, and professional development</p>
+                    <button class="btn" onclick="addTrainingProgram()">
+                        <i class="fas fa-plus"></i> Add Training
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="automotive-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                Sales Performance Analytics
+            </h2>
+            <div class="chart-container">
+                <canvas id="salesChart"></canvas>
+            </div>
+            <div class="commission-tracker" style="margin-top: 1rem;">
+                <div class="commission-card">
+                    <div class="commission-value" id="avgDealSize">LKR 0</div>
+                    <div>Avg Deal Size</div>
+                </div>
+                <div class="commission-card">
+                    <div class="commission-value" id="conversionRate">0%</div>
+                    <div>Conversion Rate</div>
+                </div>
+                <div class="commission-card">
+                    <div class="commission-value" id="customerSatisfaction">0%</div>
+                    <div>Customer Satisfaction</div>
+                </div>
+                <div class="commission-card">
+                    <div class="commission-value" id="expenseRatio">0%</div>
+                    <div>Expense Ratio</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="automotive-section">
+            <h2 class="section-title">
+                <i class="fas fa-map-marked-alt"></i>
+                Multi-Location Dealership Management
+            </h2>
+            <div id="dealershipLocations">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-building" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Dealership Locations</h3>
+                    <p>Add dealership locations to track location-specific expenses</p>
+                    <button class="btn btn-accent" onclick="addDealershipLocation()">
+                        <i class="fas fa-plus"></i> Add Location
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="generateSalesReport()">
+                <i class="fas fa-chart-bar"></i> Generate Sales Report
+            </button>
+            <button class="btn btn-accent" onclick="optimizeCustomerSpend()">
+                <i class="fas fa-optimize"></i> Optimize Customer Spend
+            </button>
+            <button class="btn" onclick="exportCommissionData()">
+                <i class="fas fa-download"></i> Export Commission Data
+            </button>
+            <button class="btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Sri Lankan Tax Engine
+        let taxEngine;
+        document.addEventListener('DOMContentLoaded', function() {
+            taxEngine = new SriLankanTaxEngine();
+        });
+
+        const automotiveSamples = [
+            { amount: 75, description: 'Client lunch at steakhouse', category: 'Customer Entertainment', commission: 1200 },
+            { amount: 450, description: 'Automotive sales training course', category: 'Professional Development', duration: '2 days' },
+            { amount: 35, description: 'Fuel for test drives', category: 'Vehicle Operations', vehicles: 3 },
+            { amount: 125, description: 'Customer appreciation dinner', category: 'Customer Entertainment', clients: 2 },
+            { amount: 89, description: 'Vehicle detailing for showroom', category: 'Presentation', impact: 'High' },
+            { amount: 25, description: 'Business cards and brochures', category: 'Marketing Materials', quantity: 500 }
+        ];
+
+        const vehicleBrands = [
+            'Toyota', 'Honda', 'Ford', 'Chevrolet', 'Nissan', 'BMW', 'Mercedes-Benz', 
+            'Audi', 'Volkswagen', 'Hyundai', 'Kia', 'Mazda', 'Subaru', 'Lexus'
+        ];
+
+        const trainingTypes = [
+            'New Vehicle Launch Training', 'Customer Service Excellence', 'Finance & Insurance Training',
+            'Digital Sales Tools', 'Negotiation Skills', 'Product Knowledge Update', 'Sales Process Training'
+        ];
+
+        function startAutoVoice() {
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = '🎤 Listening... Say: "Add customer lunch 85 dollars entertainment category"';
+            
+            setTimeout(() => {
+                const sample = automotiveSamples[Math.floor(Math.random() * automotiveSamples.length)];
+                status.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                        <strong>🚗 Automotive Voice Command:</strong><br>
+                        <strong>💰 Amount:</strong> $${sample.amount.toLocaleString()}<br>
+                        <strong>📋 Description:</strong> ${sample.description}<br>
+                        <strong>🏷️ Category:</strong> ${sample.category}<br>
+                        <strong>📊 Impact:</strong> ${sample.commission ? `Commission: $${sample.commission}` : 'Business Development'}
+                    </div>
+                `;
+                showNotification('Automotive expense added via voice!');
+            }, 3000);
+        }
+
+        function logCustomerExpense() {
+            const restaurants = ['Local Steakhouse', 'Italian Bistro', 'Seafood Restaurant', 'Golf Club', 'Country Club'];
+            const restaurant = restaurants[Math.floor(Math.random() * restaurants.length)];
+            const amount = Math.floor(Math.random() * 150) + 50;
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>🍽️ Customer Entertainment:</strong><br>
+                    <strong>💰 Amount:</strong> $${amount.toLocaleString()}<br>
+                    <strong>📍 Location:</strong> ${restaurant}<br>
+                    <strong>👥 Purpose:</strong> Client relationship building<br>
+                    <strong>📅 Date:</strong> ${new Date().toLocaleDateString()}
+                </div>
+            `;
+            showNotification(`Customer entertainment logged: ${restaurant}`);
+            updateCustomerMeetings();
+        }
+
+        function addTrainingCost() {
+            const training = trainingTypes[Math.floor(Math.random() * trainingTypes.length)];
+            const cost = Math.floor(Math.random() * 800) + 200;
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>🎓 Training Program:</strong><br>
+                    <strong>💰 Cost:</strong> $${cost.toLocaleString()}<br>
+                    <strong>📚 Course:</strong> ${training}<br>
+                    <strong>🎯 Benefit:</strong> Enhanced sales skills<br>
+                    <strong>⏱️ Duration:</strong> 1-2 days
+                </div>
+            `;
+            showNotification(`Training program added: ${training}`);
+        }
+
+        function addSaleCommission() {
+            const brand = vehicleBrands[Math.floor(Math.random() * vehicleBrands.length)];
+            const model = ['Sedan', 'SUV', 'Truck', 'Coupe', 'Hatchback'][Math.floor(Math.random() * 5)];
+            const commission = Math.floor(Math.random() * 2000) + 500;
+            
+            showNotification(`Sale recorded: ${brand} ${model} - Commission: $${commission}`);
+            updateVehiclesSold();
+            updateCommission(commission);
+        }
+
+        function addCustomerExpense() {
+            const type = prompt('Expense Type (lunch, dinner, entertainment, gifts):');
+            const amount = prompt('Amount ($):');
+            const customer = prompt('Customer Name:');
+            
+            if (type && amount && customer) {
+                showNotification(`Customer expense added: ${type} with ${customer} - $${amount}`);
+                updateCustomerMeetings();
+            }
+        }
+
+        function addDemonstrationCost() {
+            const vehicle = vehicleBrands[Math.floor(Math.random() * vehicleBrands.length)];
+            const cost = Math.floor(Math.random() * 50) + 15;
+            const type = ['Fuel', 'Cleaning', 'Insurance', 'Maintenance'][Math.floor(Math.random() * 4)];
+            
+            showNotification(`Demo cost added: ${type} for ${vehicle} - $${cost}`);
+        }
+
+        function addTrainingProgram() {
+            const program = prompt('Training Program Name:');
+            const cost = prompt('Cost ($):');
+            const duration = prompt('Duration (days):');
+            
+            if (program && cost) {
+                showNotification(`Training program added: ${program} - $${cost}`);
+            }
+        }
+
+        function addDealershipLocation() {
+            const location = prompt('Dealership Location:');
+            const address = prompt('Address:');
+            
+            if (location && address) {
+                showNotification(`Dealership location added: ${location}`);
+            }
+        }
+
+        function updateVehiclesSold() {
+            const current = parseInt(document.getElementById('vehiclesSold').textContent) || 0;
+            document.getElementById('vehiclesSold').textContent = current + 1;
+        }
+
+        function updateCustomerMeetings() {
+            const current = parseInt(document.getElementById('customerMeetings').textContent) || 0;
+            document.getElementById('customerMeetings').textContent = current + 1;
+        }
+
+        function updateCommission(amount) {
+            const current = parseFloat(document.getElementById('monthlyCommission').textContent.replace('$', '').replace(',', '')) || 0;
+            document.getElementById('monthlyCommission').textContent = `$${(current + amount).toLocaleString()}`;
+        }
+
+        function viewCommissionHistory() {
+            showNotification('Loading commission history...');
+        }
+
+        function generateSalesReport() {
+            showNotification('Generating comprehensive sales performance report...');
+        }
+
+        function optimizeCustomerSpend() {
+            showNotification('Analyzing customer entertainment ROI and optimization opportunities...');
+        }
+
+        function exportCommissionData() {
+            showNotification('Exporting commission data for tax purposes...');
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--success-color);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Initialize sales chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('salesChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['No data yet'],
+                    datasets: [{
+                        label: 'Sales Performance',
+                        data: [0],
+                        borderColor: '#dc2626',
+                        backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Monthly Sales Performance - Add sales to see trends'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        });
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

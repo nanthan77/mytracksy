@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy - Government Filing Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="government-portal-integration.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e40af;
+            --secondary-color: #1e3a8a;
+            --accent-color: #059669;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #059669 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '🏛️';
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 5rem;
+            opacity: 0.2;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .portal-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .portal-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .portal-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .portal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .portal-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+
+        .status-connected {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-disconnected {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .portal-actions {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--success-color);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+        }
+
+        .btn-secondary {
+            background: var(--gray-600);
+        }
+
+        .filing-section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .filing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .filing-card {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .filing-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .filing-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .submission-history {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .submission-item {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-600);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--gray-100);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--success-color);
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            display: none;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🏛️ Government Filing Dashboard</h1>
+            <p>Direct integration with IRD, EPF, and ETF portals for seamless compliance</p>
+        </div>
+
+        <!-- Portal Status Section -->
+        <div class="filing-section">
+            <h2 class="section-title">
+                <i class="fas fa-link"></i>
+                Portal Connection Status
+            </h2>
+            <div class="portal-status-grid">
+                <div class="portal-card" id="irdPortal">
+                    <div class="portal-header">
+                        <div class="portal-name">IRD - Inland Revenue Department</div>
+                        <div class="status-badge status-connected" id="irdStatus">Connected</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--gray-600); margin-bottom: 0.5rem;">Last Sync: <span id="irdLastSync">Never</span></div>
+                        <div style="color: var(--gray-600);">Features: Income Tax, VAT, WHT, Corporate Tax</div>
+                    </div>
+                    <div class="portal-actions">
+                        <button class="btn" onclick="connectPortal('ird')">
+                            <i class="fas fa-plug"></i> Reconnect
+                        </button>
+                        <button class="btn btn-success" onclick="testConnection('ird')">
+                            <i class="fas fa-check"></i> Test
+                        </button>
+                    </div>
+                </div>
+
+                <div class="portal-card" id="epfPortal">
+                    <div class="portal-header">
+                        <div class="portal-name">EPF - Employee Provident Fund</div>
+                        <div class="status-badge status-connected" id="epfStatus">Connected</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--gray-600); margin-bottom: 0.5rem;">Last Sync: <span id="epfLastSync">Never</span></div>
+                        <div style="color: var(--gray-600);">Features: Employee Registration, Contributions</div>
+                    </div>
+                    <div class="portal-actions">
+                        <button class="btn" onclick="connectPortal('epf')">
+                            <i class="fas fa-plug"></i> Connect
+                        </button>
+                        <button class="btn btn-success" onclick="testConnection('epf')">
+                            <i class="fas fa-check"></i> Test
+                        </button>
+                    </div>
+                </div>
+
+                <div class="portal-card" id="etfPortal">
+                    <div class="portal-header">
+                        <div class="portal-name">ETF - Employee Trust Fund</div>
+                        <div class="status-badge status-connected" id="etfStatus">Connected</div>
+                    </div>
+                    <div>
+                        <div style="color: var(--gray-600); margin-bottom: 0.5rem;">Last Sync: <span id="etfLastSync">Never</span></div>
+                        <div style="color: var(--gray-600);">Features: Employer Contributions, Reports</div>
+                    </div>
+                    <div class="portal-actions">
+                        <button class="btn" onclick="connectPortal('etf')">
+                            <i class="fas fa-plug"></i> Connect
+                        </button>
+                        <button class="btn btn-success" onclick="testConnection('etf')">
+                            <i class="fas fa-check"></i> Test
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Filing Actions -->
+        <div class="filing-section">
+            <h2 class="section-title">
+                <i class="fas fa-file-alt"></i>
+                Quick Filing Actions
+            </h2>
+            <div class="filing-grid">
+                <div class="filing-card">
+                    <div class="filing-title">📄 Income Tax Return</div>
+                    <div class="filing-status">
+                        <i class="fas fa-calendar"></i>
+                        <span>Due: March 31, 2025</span>
+                    </div>
+                    <button class="btn" onclick="openFilingModal('income_tax')">
+                        <i class="fas fa-upload"></i> File Return
+                    </button>
+                </div>
+
+                <div class="filing-card">
+                    <div class="filing-title">🧾 VAT Return</div>
+                    <div class="filing-status">
+                        <i class="fas fa-calendar"></i>
+                        <span>Due: 20th of Each Month</span>
+                    </div>
+                    <button class="btn" onclick="openFilingModal('vat_return')">
+                        <i class="fas fa-upload"></i> File VAT Return
+                    </button>
+                </div>
+
+                <div class="filing-card">
+                    <div class="filing-title">👥 EPF Contributions</div>
+                    <div class="filing-status">
+                        <i class="fas fa-calendar"></i>
+                        <span>Due: Last Working Day</span>
+                    </div>
+                    <button class="btn" onclick="openFilingModal('epf_contributions')">
+                        <i class="fas fa-upload"></i> Submit Contributions
+                    </button>
+                </div>
+
+                <div class="filing-card">
+                    <div class="filing-title">🏢 ETF Contributions</div>
+                    <div class="filing-status">
+                        <i class="fas fa-calendar"></i>
+                        <span>Due: Last Working Day</span>
+                    </div>
+                    <button class="btn" onclick="openFilingModal('etf_contributions')">
+                        <i class="fas fa-upload"></i> Submit Contributions
+                    </button>
+                </div>
+
+                <div class="filing-card">
+                    <div class="filing-title">🏢 Corporate Tax</div>
+                    <div class="filing-status">
+                        <i class="fas fa-calendar"></i>
+                        <span>Due: November 30</span>
+                    </div>
+                    <button class="btn" onclick="openFilingModal('corporate_tax')">
+                        <i class="fas fa-upload"></i> File Corporate Return
+                    </button>
+                </div>
+
+                <div class="filing-card">
+                    <div class="filing-title">📊 WHT Return</div>
+                    <div class="filing-status">
+                        <i class="fas fa-calendar"></i>
+                        <span>Due: Quarterly</span>
+                    </div>
+                    <button class="btn" onclick="openFilingModal('wht_return')">
+                        <i class="fas fa-upload"></i> File WHT Return
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submission History -->
+        <div class="filing-section">
+            <h2 class="section-title">
+                <i class="fas fa-history"></i>
+                Recent Submissions
+            </h2>
+            <div class="submission-history" id="submissionHistory">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-file-alt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Submissions Yet</h3>
+                    <p>Your government filing submissions will appear here</p>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="refreshAllPortals()">
+                <i class="fas fa-sync"></i> Refresh All Portals
+            </button>
+            <button class="btn btn-secondary" onclick="downloadComplianceReport()">
+                <i class="fas fa-download"></i> Compliance Report
+            </button>
+            <button class="btn btn-secondary" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <!-- Filing Modal -->
+    <div id="filingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">File Government Return</h3>
+                <button class="close" onclick="closeModal()">&times;</button>
+            </div>
+            <div id="modalBody">
+                <!-- Dynamic content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification">
+        <span id="notificationText"></span>
+    </div>
+
+    <script>
+        // Global state
+        let governmentPortal;
+        let taxEngine;
+        let currentFilingType = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            initializePortals();
+            loadSubmissionHistory();
+            updatePortalStatus();
+        });
+
+        function initializePortals() {
+            governmentPortal = new GovernmentPortalIntegration();
+            taxEngine = new SriLankanTaxEngine();
+            
+            console.log('🏛️ Government portals initialized');
+            showNotification('Government portal system initialized');
+        }
+
+        async function connectPortal(portalName) {
+            try {
+                showNotification(`Connecting to ${portalName.toUpperCase()} portal...`, 'info');
+                
+                // Simulate credentials (in real app, user would provide these)
+                const mockCredentials = {
+                    username: 'demo_user',
+                    password: 'demo_pass',
+                    certificate: 'demo_cert'
+                };
+                
+                let result;
+                switch (portalName) {
+                    case 'ird':
+                        result = await governmentPortal.connectToIRD(mockCredentials);
+                        break;
+                    case 'epf':
+                        result = await governmentPortal.connectToEPF(mockCredentials);
+                        break;
+                    case 'etf':
+                        result = await governmentPortal.connectToETF(mockCredentials);
+                        break;
+                }
+                
+                if (result.success) {
+                    updatePortalStatus();
+                    showNotification(`Successfully connected to ${portalName.toUpperCase()} portal!`);
+                } else {
+                    showNotification(`Failed to connect to ${portalName.toUpperCase()}: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Portal connection error:', error);
+                showNotification(`Connection error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testConnection(portalName) {
+            try {
+                showNotification(`Testing ${portalName.toUpperCase()} connection...`, 'info');
+                
+                const status = governmentPortal.getPortalStatus(portalName);
+                if (status && status.status === 'connected') {
+                    showNotification(`${portalName.toUpperCase()} connection test successful!`);
+                } else {
+                    showNotification(`${portalName.toUpperCase()} not connected`, 'warning');
+                }
+            } catch (error) {
+                showNotification(`Test failed: ${error.message}`, 'error');
+            }
+        }
+
+        function updatePortalStatus() {
+            const portals = ['ird', 'epf', 'etf'];
+            
+            portals.forEach(portalName => {
+                const status = governmentPortal.getPortalStatus(portalName);
+                const statusElement = document.getElementById(`${portalName}Status`);
+                const lastSyncElement = document.getElementById(`${portalName}LastSync`);
+                
+                if (status) {
+                    statusElement.textContent = status.status === 'connected' ? 'Connected' : 'Disconnected';
+                    statusElement.className = `status-badge ${status.status === 'connected' ? 'status-connected' : 'status-disconnected'}`;
+                    lastSyncElement.textContent = status.lastSync ? new Date(status.lastSync).toLocaleString() : 'Never';
+                }
+            });
+        }
+
+        function openFilingModal(filingType) {
+            currentFilingType = filingType;
+            const modal = document.getElementById('filingModal');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalBody = document.getElementById('modalBody');
+            
+            // Set modal title and content based on filing type
+            const filingTypes = {
+                income_tax: {
+                    title: 'File Income Tax Return',
+                    content: generateIncomeTaxForm()
+                },
+                vat_return: {
+                    title: 'File VAT Return',
+                    content: generateVATForm()
+                },
+                epf_contributions: {
+                    title: 'Submit EPF Contributions',
+                    content: generateEPFForm()
+                },
+                etf_contributions: {
+                    title: 'Submit ETF Contributions',
+                    content: generateETFForm()
+                },
+                corporate_tax: {
+                    title: 'File Corporate Tax Return',
+                    content: generateCorporateTaxForm()
+                },
+                wht_return: {
+                    title: 'File WHT Return',
+                    content: generateWHTForm()
+                }
+            };
+            
+            const filing = filingTypes[filingType];
+            modalTitle.textContent = filing.title;
+            modalBody.innerHTML = filing.content;
+            
+            modal.style.display = 'block';
+        }
+
+        function closeModal() {
+            document.getElementById('filingModal').style.display = 'none';
+            currentFilingType = null;
+        }
+
+        function generateIncomeTaxForm() {
+            return `
+                <form onsubmit="submitFiling(event)">
+                    <div class="form-group">
+                        <label class="form-label">Taxpayer TIN</label>
+                        <input type="text" class="form-input" name="taxpayerTIN" value="123456789V" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tax Year</label>
+                        <select class="form-input" name="taxYear" required>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Annual Income (LKR)</label>
+                        <input type="number" class="form-input" name="totalIncome" placeholder="Enter total income" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Deductions (LKR)</label>
+                        <input type="number" class="form-input" name="totalDeductions" placeholder="Enter deductions" value="0">
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-upload"></i> Submit to IRD
+                    </button>
+                </form>
+            `;
+        }
+
+        function generateVATForm() {
+            return `
+                <form onsubmit="submitFiling(event)">
+                    <div class="form-group">
+                        <label class="form-label">VAT Registration Number</label>
+                        <input type="text" class="form-input" name="vatNumber" value="VAT123456789" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reporting Period</label>
+                        <input type="month" class="form-input" name="period" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Sales (LKR)</label>
+                        <input type="number" class="form-input" name="totalSales" placeholder="Enter total sales" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Purchases (LKR)</label>
+                        <input type="number" class="form-input" name="totalPurchases" placeholder="Enter total purchases" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-upload"></i> Submit VAT Return
+                    </button>
+                </form>
+            `;
+        }
+
+        function generateEPFForm() {
+            return `
+                <form onsubmit="submitFiling(event)">
+                    <div class="form-group">
+                        <label class="form-label">Employer Number</label>
+                        <input type="text" class="form-input" name="employerNumber" value="EPF123456" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contribution Period</label>
+                        <input type="month" class="form-input" name="period" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Number of Employees</label>
+                        <input type="number" class="form-input" name="employeeCount" placeholder="Enter employee count" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Employee Contributions (LKR)</label>
+                        <input type="number" class="form-input" name="employeeContributions" placeholder="8% of total salaries" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Employer Contributions (LKR)</label>
+                        <input type="number" class="form-input" name="employerContributions" placeholder="12% of total salaries" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-upload"></i> Submit EPF Contributions
+                    </button>
+                </form>
+            `;
+        }
+
+        function generateETFForm() {
+            return `
+                <form onsubmit="submitFiling(event)">
+                    <div class="form-group">
+                        <label class="form-label">Employer Code</label>
+                        <input type="text" class="form-input" name="employerCode" value="ETF789012" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Contribution Period</label>
+                        <input type="month" class="form-input" name="period" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Number of Employees</label>
+                        <input type="number" class="form-input" name="employeeCount" placeholder="Enter employee count" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total ETF Contributions (LKR)</label>
+                        <input type="number" class="form-input" name="etfContributions" placeholder="3% of total salaries (employer only)" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-upload"></i> Submit ETF Contributions
+                    </button>
+                </form>
+            `;
+        }
+
+        function generateCorporateTaxForm() {
+            return `
+                <form onsubmit="submitFiling(event)">
+                    <div class="form-group">
+                        <label class="form-label">Company Registration Number</label>
+                        <input type="text" class="form-input" name="companyRegNumber" placeholder="Enter company reg number" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Tax Year</label>
+                        <select class="form-input" name="taxYear" required>
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Gross Income (LKR)</label>
+                        <input type="number" class="form-input" name="grossIncome" placeholder="Enter gross income" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total Expenses (LKR)</label>
+                        <input type="number" class="form-input" name="totalExpenses" placeholder="Enter total expenses" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-upload"></i> Submit Corporate Return
+                    </button>
+                </form>
+            `;
+        }
+
+        function generateWHTForm() {
+            return `
+                <form onsubmit="submitFiling(event)">
+                    <div class="form-group">
+                        <label class="form-label">Company TIN</label>
+                        <input type="text" class="form-input" name="companyTIN" value="123456789V" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Reporting Quarter</label>
+                        <select class="form-input" name="quarter" required>
+                            <option value="Q1-2024">Q1 2024</option>
+                            <option value="Q2-2024">Q2 2024</option>
+                            <option value="Q3-2024">Q3 2024</option>
+                            <option value="Q4-2024">Q4 2024</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Total WHT Deducted (LKR)</label>
+                        <input type="number" class="form-input" name="totalWHT" placeholder="Enter total WHT deducted" required>
+                    </div>
+                    <button type="submit" class="btn" style="width: 100%;">
+                        <i class="fas fa-upload"></i> Submit WHT Return
+                    </button>
+                </form>
+            `;
+        }
+
+        async function submitFiling(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const data = Object.fromEntries(formData);
+            
+            try {
+                showNotification('Submitting to government portal...', 'info');
+                
+                let result;
+                switch (currentFilingType) {
+                    case 'income_tax':
+                        const taxData = {
+                            taxpayerTIN: data.taxpayerTIN,
+                            taxYear: data.taxYear,
+                            totalIncome: parseFloat(data.totalIncome),
+                            totalDeductions: parseFloat(data.totalDeductions),
+                            taxableIncome: parseFloat(data.totalIncome) - parseFloat(data.totalDeductions),
+                            totalTax: taxEngine.calculateIncomeTax(parseFloat(data.totalIncome) - parseFloat(data.totalDeductions)).totalTax,
+                            taxPaid: 0,
+                            refundDue: 0,
+                            balanceDue: 0
+                        };
+                        result = await governmentPortal.submitIRDTaxReturn(taxData);
+                        break;
+                        
+                    case 'vat_return':
+                        const vatData = {
+                            period: data.period,
+                            totalSales: parseFloat(data.totalSales),
+                            vatOnSales: parseFloat(data.totalSales) * 0.18,
+                            totalPurchases: parseFloat(data.totalPurchases),
+                            vatOnPurchases: parseFloat(data.totalPurchases) * 0.18,
+                            netVAT: (parseFloat(data.totalSales) * 0.18) - (parseFloat(data.totalPurchases) * 0.18),
+                            taxpayerTIN: data.vatNumber
+                        };
+                        result = await governmentPortal.submitIRDVATReturn(vatData);
+                        break;
+                        
+                    case 'epf_contributions':
+                        const epfData = {
+                            period: data.period,
+                            employerNumber: data.employerNumber,
+                            employees: [], // In real app, this would come from employee data
+                            totalEmployeeContribution: parseFloat(data.employeeContributions),
+                            totalEmployerContribution: parseFloat(data.employerContributions),
+                            grandTotal: parseFloat(data.employeeContributions) + parseFloat(data.employerContributions)
+                        };
+                        result = await governmentPortal.submitEPFContributions(epfData);
+                        break;
+                        
+                    case 'etf_contributions':
+                        const etfData = {
+                            period: data.period,
+                            employerCode: data.employerCode,
+                            employees: [], // In real app, this would come from employee data
+                            totalETFContribution: parseFloat(data.etfContributions)
+                        };
+                        result = await governmentPortal.submitETFContributions(etfData);
+                        break;
+                }
+                
+                if (result && result.success) {
+                    showNotification(`Submission successful! ID: ${result.submissionId}`);
+                    addSubmissionToHistory(result);
+                    closeModal();
+                } else {
+                    showNotification(`Submission failed: ${result.error}`, 'error');
+                }
+            } catch (error) {
+                console.error('Submission error:', error);
+                showNotification(`Submission error: ${error.message}`, 'error');
+            }
+        }
+
+        function addSubmissionToHistory(submission) {
+            const historyContainer = document.getElementById('submissionHistory');
+            
+            // Remove "no submissions" message if it exists
+            if (historyContainer.children.length === 1 && historyContainer.children[0].style.textAlign === 'center') {
+                historyContainer.innerHTML = '';
+            }
+            
+            const submissionItem = document.createElement('div');
+            submissionItem.className = 'submission-item';
+            submissionItem.innerHTML = `
+                <div>
+                    <div style="font-weight: 600;">${submission.submissionId}</div>
+                    <div style="color: var(--gray-600); font-size: 0.9rem;">${currentFilingType.replace('_', ' ').toUpperCase()} - ${new Date().toLocaleString()}</div>
+                </div>
+                <div style="text-align: right;">
+                    <div class="status-badge status-connected">Submitted</div>
+                    <div style="color: var(--gray-600); font-size: 0.9rem; margin-top: 0.25rem;">Processing</div>
+                </div>
+            `;
+            
+            historyContainer.insertBefore(submissionItem, historyContainer.firstChild);
+        }
+
+        function loadSubmissionHistory() {
+            // Load from localStorage
+            const submissions = JSON.parse(localStorage.getItem('governmentSubmissions') || '[]');
+            const historyContainer = document.getElementById('submissionHistory');
+            
+            if (submissions.length > 0) {
+                historyContainer.innerHTML = '';
+                submissions.forEach(submission => {
+                    const submissionItem = document.createElement('div');
+                    submissionItem.className = 'submission-item';
+                    submissionItem.innerHTML = `
+                        <div>
+                            <div style="font-weight: 600;">${submission.submissionId}</div>
+                            <div style="color: var(--gray-600); font-size: 0.9rem;">${submission.submissionType.toUpperCase()} - ${new Date(submission.submittedAt).toLocaleString()}</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div class="status-badge status-connected">${submission.status}</div>
+                            <div style="color: var(--gray-600); font-size: 0.9rem; margin-top: 0.25rem;">Portal: ${submission.portalName.toUpperCase()}</div>
+                        </div>
+                    `;
+                    historyContainer.appendChild(submissionItem);
+                });
+            }
+        }
+
+        async function refreshAllPortals() {
+            showNotification('Refreshing all portal connections...', 'info');
+            updatePortalStatus();
+            loadSubmissionHistory();
+            showNotification('All portals refreshed successfully!');
+        }
+
+        function downloadComplianceReport() {
+            showNotification('Generating compliance report...', 'info');
+            // In real implementation, this would generate and download a PDF report
+            setTimeout(() => {
+                showNotification('Compliance report downloaded!');
+            }, 2000);
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const notificationText = document.getElementById('notificationText');
+            
+            notificationText.textContent = message;
+            notification.className = `notification ${type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'success'}`;
+            
+            if (type === 'error') {
+                notification.style.background = 'var(--error-color)';
+            } else if (type === 'warning') {
+                notification.style.background = 'var(--warning-color)';
+            } else if (type === 'info') {
+                notification.style.background = 'var(--primary-color)';
+            } else {
+                notification.style.background = 'var(--success-color)';
+            }
+            
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 4000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('filingModal');
+            if (event.target === modal) {
+                closeModal();
+            }
+        }
+    </script>
+</body>
+</html>

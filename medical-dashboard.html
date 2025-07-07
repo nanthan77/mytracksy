@@ -1,0 +1,871 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy Medical Professional Dashboard | Advanced Healthcare Financial Management</title>
+    <meta name="description" content="Comprehensive financial management dashboard designed specifically for medical professionals in Sri Lanka">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            /* Medical Theme Colors */
+            --primary-color: #0ea5e9;
+            --secondary-color: #0284c7;
+            --accent-color: #06b6d4;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --medical-blue: #0ea5e9;
+            --medical-green: #10b981;
+            --medical-red: #dc2626;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #0c4a6e 0%, #075985 50%, #0ea5e9 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .welcome-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-text h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-text p {
+            color: var(--gray-600);
+            font-size: 1.1rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--dark-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--stat-color, var(--primary-color));
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--stat-color, var(--primary-color));
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            color: var(--error-color);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .medical-appointments {
+            list-style: none;
+        }
+
+        .appointment-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .appointment-item:hover {
+            background: var(--gray-50);
+        }
+
+        .appointment-info h4 {
+            color: var(--dark-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .appointment-details {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .appointment-time {
+            text-align: right;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .hospital-card {
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .hospital-name {
+            font-weight: 600;
+            color: var(--dark-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .hospital-details {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .cme-progress {
+            background: var(--gray-100);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: var(--gray-200);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--success-color);
+            transition: var(--transition);
+        }
+
+        .voice-input-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .voice-input-section h3 {
+            margin-bottom: 1rem;
+        }
+
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+            }
+
+            .welcome-section {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-heartbeat"></i>
+                MyTracksy Medical
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="#appointments" class="nav-link">Appointments</a></li>
+                <li><a href="#expenses" class="nav-link">Medical Expenses</a></li>
+                <li><a href="#cme" class="nav-link">CME Tracking</a></li>
+                <li><a href="#hospitals" class="nav-link">Hospitals</a></li>
+            </ul>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user-md"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="dashboard-header">
+            <div class="welcome-section">
+                <div class="welcome-text">
+                    <h1>🩺 Medical Professional Dashboard</h1>
+                    <p id="welcomeMessage">Welcome, Dr. Professional! Manage your medical practice, track CME credits, and monitor financial health.</p>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="addMedicalExpense()">
+                        <i class="fas fa-plus"></i>
+                        Add Medical Expense
+                    </button>
+                    <button class="btn btn-secondary" onclick="scheduleAppointment()">
+                        <i class="fas fa-calendar-plus"></i>
+                        Schedule Appointment
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice Input Section -->
+        <div class="voice-input-section">
+            <h3><i class="fas fa-microphone"></i> Medical Voice Commands</h3>
+            <p style="margin-bottom: 1.5rem; opacity: 0.9;">Use voice commands with medical terminology for quick expense entry and scheduling</p>
+            <button class="voice-btn" onclick="startMedicalVoiceInput()">
+                <i class="fas fa-microphone"></i>
+                <span id="voiceButtonText">Start Medical Voice Input</span>
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem; font-weight: 600;"></div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card" style="--stat-color: var(--medical-blue)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                </div>
+                <div class="stat-value">156</div>
+                <div class="stat-label">Patients This Month</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +12% from last month
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--medical-green)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                </div>
+                <div class="stat-value">LKR 485k</div>
+                <div class="stat-label">Medical Income</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +8.5% from last month
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--warning-color)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                </div>
+                <div class="stat-value">18/25</div>
+                <div class="stat-label">CME Credits (SLMC)</div>
+                <div class="stat-change negative">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    7 credits needed
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--medical-red)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-hospital"></i>
+                    </div>
+                </div>
+                <div class="stat-value">3</div>
+                <div class="stat-label">Hospital Affiliations</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-check"></i>
+                    All contracts active
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Main Content -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-calendar-medical"></i>
+                        Today's Medical Schedule
+                    </h2>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshSchedule()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                </div>
+
+                <ul class="medical-appointments" id="appointmentsList">
+                    <li class="appointment-item">
+                        <div class="appointment-info">
+                            <h4>General Consultation - Mr. Perera</h4>
+                            <div class="appointment-details">
+                                <i class="fas fa-map-marker-alt"></i> Lanka Hospital, Colombo
+                                <span style="margin-left: 1rem;"><i class="fas fa-user"></i> Follow-up visit</span>
+                            </div>
+                        </div>
+                        <div class="appointment-time">
+                            <div>09:00 AM</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-500);">30 min</div>
+                        </div>
+                    </li>
+
+                    <li class="appointment-item">
+                        <div class="appointment-info">
+                            <h4>Specialist Consultation - Mrs. Silva</h4>
+                            <div class="appointment-details">
+                                <i class="fas fa-map-marker-alt"></i> National Hospital, Colombo
+                                <span style="margin-left: 1rem;"><i class="fas fa-user"></i> New patient</span>
+                            </div>
+                        </div>
+                        <div class="appointment-time">
+                            <div>11:30 AM</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-500);">45 min</div>
+                        </div>
+                    </li>
+
+                    <li class="appointment-item">
+                        <div class="appointment-info">
+                            <h4>Emergency Consultation</h4>
+                            <div class="appointment-details">
+                                <i class="fas fa-map-marker-alt"></i> Nawaloka Hospital
+                                <span style="margin-left: 1rem;"><i class="fas fa-exclamation-triangle"></i> Urgent case</span>
+                            </div>
+                        </div>
+                        <div class="appointment-time">
+                            <div>02:00 PM</div>
+                            <div style="font-size: 0.8rem; color: var(--error-color);">Emergency</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Hospital Affiliations -->
+                <div class="dashboard-section" style="margin-bottom: 2rem;">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-hospital"></i>
+                            Hospital Affiliations
+                        </h3>
+                    </div>
+
+                    <div class="hospital-card">
+                        <div class="hospital-name">Lanka Hospital</div>
+                        <div class="hospital-details">
+                            Consultant • Private Practice<br>
+                            Schedule: Mon, Wed, Fri (2-6 PM)
+                        </div>
+                    </div>
+
+                    <div class="hospital-card">
+                        <div class="hospital-name">National Hospital Colombo</div>
+                        <div class="hospital-details">
+                            Senior Registrar • Government<br>
+                            Schedule: Tue, Thu (8 AM-4 PM)
+                        </div>
+                    </div>
+
+                    <div class="hospital-card">
+                        <div class="hospital-name">Nawaloka Hospital</div>
+                        <div class="hospital-details">
+                            Visiting Consultant • Private<br>
+                            Schedule: Sat (9 AM-1 PM)
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CME Progress -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-graduation-cap"></i>
+                            CME Progress (SLMC)
+                        </h3>
+                    </div>
+
+                    <div class="cme-progress">
+                        <div class="progress-header">
+                            <span>Annual CME Credits</span>
+                            <span><strong>18/25</strong> Credits</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 72%"></div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.5rem;">
+                            Deadline: December 31, 2025 • 7 credits remaining
+                        </div>
+                    </div>
+
+                    <div class="cme-progress">
+                        <div class="progress-header">
+                            <span>Research Publications</span>
+                            <span><strong>2/3</strong> Papers</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 67%"></div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.5rem;">
+                            Medical Journal submissions tracked
+                        </div>
+                    </div>
+
+                    <div class="cme-progress">
+                        <div class="progress-header">
+                            <span>Conference Attendance</span>
+                            <span><strong>4/6</strong> Events</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 67%"></div>
+                        </div>
+                        <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.5rem;">
+                            Professional development events
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Medical voice recognition variables
+        let isMedicalRecording = false;
+        let medicalVoiceTarget = null;
+
+        // Medical terminology and sample data
+        const medicalSamples = [
+            { amount: 15000, description: 'Stethoscope purchase from Intermed', category: 'Medical Equipment', location: 'Colombo Medical Store' },
+            { amount: 2500, description: 'CME course registration fee', category: 'Professional Development', location: 'SLMC Training Center' },
+            { amount: 8500, description: 'Medical conference attendance', category: 'Professional Development', location: 'BMICH Colombo' },
+            { amount: 1200, description: 'Medical journal subscription', category: 'Professional Resources', location: 'Online Subscription' },
+            { amount: 3500, description: 'Hospital parking fees', category: 'Transportation', location: 'Lanka Hospital' },
+            { amount: 25000, description: 'Professional liability insurance', category: 'Insurance', location: 'Insurance Company' },
+            { amount: 5500, description: 'Medical textbook purchase', category: 'Professional Resources', location: 'Vijitha Yapa Bookshop' },
+            { amount: 1800, description: 'Prescription pad printing', category: 'Office Supplies', location: 'Medical Printing' }
+        ];
+
+        const medicalAppointments = [
+            { patient: 'Mr. Perera', time: '09:00 AM', duration: '30 min', hospital: 'Lanka Hospital', type: 'Follow-up' },
+            { patient: 'Mrs. Silva', time: '11:30 AM', duration: '45 min', hospital: 'National Hospital', type: 'New patient' },
+            { patient: 'Emergency Case', time: '02:00 PM', duration: 'Variable', hospital: 'Nawaloka Hospital', type: 'Emergency' },
+            { patient: 'Dr. Consultation', time: '04:00 PM', duration: '60 min', hospital: 'Lanka Hospital', type: 'Colleague consultation' }
+        ];
+
+        function startMedicalVoiceInput() {
+            const btn = document.querySelector('.voice-btn');
+            const status = document.getElementById('voiceStatus');
+            const buttonText = document.getElementById('voiceButtonText');
+
+            if (!isMedicalRecording) {
+                isMedicalRecording = true;
+                btn.style.background = 'rgba(239, 68, 68, 0.3)';
+                buttonText.textContent = 'Stop Recording';
+                status.innerHTML = '🎤 Listening... Try saying: "Add stethoscope purchase 15000 rupees medical equipment"';
+
+                setTimeout(() => {
+                    if (isMedicalRecording) {
+                        const randomSample = medicalSamples[Math.floor(Math.random() * medicalSamples.length)];
+                        
+                        status.innerHTML = `
+                            <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 1rem; margin-top: 1rem; text-align: left;">
+                                <strong>🎯 Medical Voice Command Recognized:</strong><br>
+                                <strong>💰 Amount:</strong> LKR ${randomSample.amount.toLocaleString()}<br>
+                                <strong>📋 Description:</strong> ${randomSample.description}<br>
+                                <strong>🏥 Category:</strong> ${randomSample.category}<br>
+                                <strong>📍 Location:</strong> ${randomSample.location}
+                            </div>
+                        `;
+
+                        // Add to medical expenses
+                        addToMedicalExpenses(randomSample);
+                        
+                        stopMedicalVoiceInput();
+                    }
+                }, 3000);
+            } else {
+                stopMedicalVoiceInput();
+            }
+        }
+
+        function stopMedicalVoiceInput() {
+            isMedicalRecording = false;
+            const btn = document.querySelector('.voice-btn');
+            const buttonText = document.getElementById('voiceButtonText');
+            
+            btn.style.background = 'rgba(255, 255, 255, 0.2)';
+            buttonText.textContent = 'Start Medical Voice Input';
+        }
+
+        function addToMedicalExpenses(expense) {
+            // Store in localStorage for persistence
+            const medicalExpenses = JSON.parse(localStorage.getItem('medicalExpenses') || '[]');
+            const newExpense = {
+                id: Date.now(),
+                ...expense,
+                date: new Date().toISOString().split('T')[0],
+                addedAt: new Date().toISOString()
+            };
+            
+            medicalExpenses.unshift(newExpense);
+            localStorage.setItem('medicalExpenses', JSON.stringify(medicalExpenses));
+            
+            showNotification('Medical expense added successfully!', 'success');
+        }
+
+        function addMedicalExpense() {
+            // Open medical expense form (to be implemented)
+            showNotification('Medical expense form opening...', 'info');
+        }
+
+        function scheduleAppointment() {
+            const randomAppointment = medicalAppointments[Math.floor(Math.random() * medicalAppointments.length)];
+            showNotification(`Appointment scheduled: ${randomAppointment.patient} at ${randomAppointment.hospital}`, 'success');
+        }
+
+        function refreshSchedule() {
+            showNotification('Schedule refreshed successfully!', 'success');
+            // Refresh appointment list (implementation would fetch from API)
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'var(--success-color)' : 
+                           type === 'error' ? 'var(--error-color)' : 
+                           type === 'info' ? 'var(--primary-color)' : 'var(--warning-color)';
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow-lg);
+                z-index: 1001;
+                animation: slideInRight 0.3s ease-out;
+                max-width: 350px;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                 type === 'error' ? 'exclamation-circle' : 
+                                 type === 'info' ? 'info-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set welcome message based on stored user data
+            const userData = localStorage.getItem('myTracksyUser');
+            if (userData) {
+                const user = JSON.parse(userData);
+                document.getElementById('welcomeMessage').textContent = 
+                    `Welcome, Dr. ${user.name || 'Professional'}! Manage your medical practice, track CME credits, and monitor financial health.`;
+                
+                // Update user avatar
+                const avatar = document.getElementById('userAvatar');
+                if (user.name) {
+                    avatar.textContent = user.name.charAt(0).toUpperCase();
+                }
+            }
+
+            // Add CSS animations
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInRight {
+                    from {
+                        opacity: 0;
+                        transform: translateX(100px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

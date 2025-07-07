@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /api/
+Disallow: /private/
+
+Sitemap: https://www.mytracksy.com/sitemap.xml
+
+# MyTracksy Production Site
+# Advanced Financial Intelligence Platform for Sri Lanka

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Travel Industry Professional Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e40af;
+            --secondary-color: #1d4ed8;
+            --accent-color: #059669;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+            --tax-compliance-color: #059669;
+            --tax-warning-color: #f59e0b;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #059669 50%, #1d4ed8 100%);
+            margin: 0;
+            padding: 2rem;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '✈️';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 4rem;
+            opacity: 0.2;
+        }
+        .travel-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        .travel-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+        .btn-accent {
+            background: var(--accent-color);
+        }
+        .voice-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .destination-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .destination-card {
+            background: var(--gray-100);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
+        .tax-indicator {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        .tax-compliant {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .tax-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .vat-breakdown {
+            background: #f0f9ff;
+            border: 1px solid #0ea5e9;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .vat-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+        .vat-row:last-child {
+            margin-bottom: 0;
+            font-weight: 600;
+            border-top: 1px solid #0ea5e9;
+            padding-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>✈️ Travel Industry Professional Dashboard</h1>
+            <p>Comprehensive expense management for travel agents, tour operators, and hospitality professionals</p>
+        </div>
+
+        <div class="voice-section">
+            <h3><i class="fas fa-microphone"></i> Travel Voice Commands</h3>
+            <p>Use travel terminology for destination research and client management</p>
+            <button onclick="startTravelVoice()" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); color: white; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; margin: 0.5rem; font-weight: 600;">
+                <i class="fas fa-microphone"></i> Travel Voice Input
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="travel-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="famTripCosts">$0</div>
+                <div>Familiarization Trips</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-suitcase"></i> Research expenses</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="clientEntertainment">$0</div>
+                <div>Client Entertainment</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-wine-glass"></i> Relationship building</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="destinationsVisited">0</div>
+                <div>Destinations Researched</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-globe"></i> This year</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="industryEvents">0</div>
+                <div>Industry Events</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-calendar"></i> Conferences & trade shows</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="totalVAT">LKR 0</div>
+                <div>Total VAT (18%)</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-receipt"></i> Sri Lankan tax compliance</small>
+            </div>
+        </div>
+
+        <div class="travel-section">
+            <h2 style="color: var(--dark-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-suitcase"></i>
+                Familiarization Trips & Destination Research
+            </h2>
+            <div id="famTrips">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-plane-departure" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Familiarization Trips</h3>
+                    <p>Track educational travel expenses and destination research costs</p>
+                    <button class="btn" onclick="addFamTrip()">
+                        <i class="fas fa-plus"></i> Add Fam Trip
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="travel-section">
+            <h2 style="color: var(--dark-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-globe-americas"></i>
+                Destination Expense Tracking
+            </h2>
+            <div class="destination-grid" id="destinationExpenses">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600); grid-column: 1 / -1;">
+                    <i class="fas fa-map-marked-alt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Destination Expenses</h3>
+                    <p>Organize expenses by geographic regions and destinations</p>
+                    <button class="btn btn-accent" onclick="addDestinationExpense()">
+                        <i class="fas fa-plus"></i> Add Destination Expense
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="generateTravelReport()">
+                <i class="fas fa-chart-bar"></i> Generate Travel Report
+            </button>
+            <button class="btn btn-accent" onclick="optimizeDestinations()">
+                <i class="fas fa-route"></i> Optimize Destinations
+            </button>
+            <button class="btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Sri Lankan Tax Engine
+        let taxEngine;
+        document.addEventListener('DOMContentLoaded', function() {
+            taxEngine = new SriLankanTaxEngine();
+        });
+
+        function startTravelVoice() {
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = '🎤 Listening... Say: "Add familiarization trip to Bali 1200 dollars destination research"';
+            setTimeout(() => {
+                status.innerHTML = '<div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">✈️ Travel expense added via voice!</div>';
+            }, 3000);
+        }
+
+        function addFamTrip() {
+            const destination = prompt('Destination:');
+            const cost = prompt('Total Cost (LKR):');
+            if (destination && cost) {
+                const costLKR = parseFloat(cost);
+                const vatCalculation = taxEngine.calculateVAT(costLKR);
+                
+                showNotification(`Familiarization trip to ${destination} added: LKR ${costLKR.toLocaleString()}`);
+                showVATBreakdown(vatCalculation, destination);
+                updateDestinationsVisited();
+                updateTotalVAT(vatCalculation.vatAmount);
+            }
+        }
+
+        function addDestinationExpense() {
+            const destination = prompt('Destination:');
+            const expense = prompt('Expense Type:');
+            const amount = prompt('Amount (LKR):');
+            if (destination && expense && amount) {
+                const amountLKR = parseFloat(amount);
+                const vatCalculation = taxEngine.calculateVAT(amountLKR);
+                
+                showNotification(`${expense} expense added for ${destination}: LKR ${amountLKR.toLocaleString()}`);
+                showVATBreakdown(vatCalculation, `${destination} - ${expense}`);
+                updateTotalVAT(vatCalculation.vatAmount);
+            }
+        }
+
+        function updateDestinationsVisited() {
+            const current = parseInt(document.getElementById('destinationsVisited').textContent) || 0;
+            document.getElementById('destinationsVisited').textContent = current + 1;
+        }
+
+        function generateTravelReport() {
+            showNotification('Generating travel industry report...');
+        }
+
+        function optimizeDestinations() {
+            showNotification('Analyzing destination ROI and optimization opportunities...');
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        function showVATBreakdown(vatCalculation, description) {
+            const breakdown = document.createElement('div');
+            breakdown.className = 'vat-breakdown';
+            breakdown.innerHTML = `
+                <h4 style="margin-top: 0; color: var(--primary-color);">🧾 VAT Calculation - ${description}</h4>
+                <div class="vat-row">
+                    <span>Net Amount:</span>
+                    <span>LKR ${vatCalculation.netAmount.toLocaleString()}</span>
+                </div>
+                <div class="vat-row">
+                    <span>VAT (18%):</span>
+                    <span>LKR ${vatCalculation.vatAmount.toLocaleString()}</span>
+                </div>
+                <div class="vat-row">
+                    <span>Gross Amount:</span>
+                    <span>LKR ${vatCalculation.grossAmount.toLocaleString()}</span>
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--gray-600);">
+                    <i class="fas fa-info-circle"></i> Filing Deadline: ${vatCalculation.filingDeadline.toDateString()}
+                </div>
+            `;
+            
+            const container = document.querySelector('.travel-section');
+            container.appendChild(breakdown);
+            setTimeout(() => breakdown.remove(), 10000);
+        }
+
+        function updateTotalVAT(vatAmount) {
+            const current = parseFloat(document.getElementById('totalVAT').textContent.replace('LKR ', '').replace(',', '')) || 0;
+            document.getElementById('totalVAT').textContent = `LKR ${(current + vatAmount).toLocaleString()}`;
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; background: var(--success-color);
+                color: white; padding: 1rem 1.5rem; border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}<span class="tax-indicator tax-compliant">VAT Compliant</span>`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+    </script>
+</body>
+</html>

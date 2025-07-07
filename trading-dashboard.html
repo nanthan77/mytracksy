@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Trading & Investment Professional Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #1a365d;
+            --secondary-color: #2c5282;
+            --accent-color: #d69e2e;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1a365d 0%, #2c5282 50%, #d69e2e 100%);
+            margin: 0;
+            padding: 2rem;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 200px;
+            height: 200px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            transform: translate(50px, -50px);
+        }
+        .header h1 {
+            color: white;
+            margin-bottom: 0.5rem;
+            position: relative;
+            z-index: 1;
+        }
+        .header p {
+            position: relative;
+            z-index: 1;
+            opacity: 0.9;
+        }
+        .trading-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-2px);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+        .trading-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .section-title {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .expense-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-100);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .expense-item:last-child {
+            border-bottom: none;
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+        .btn-accent {
+            background: var(--accent-color);
+            color: var(--dark-color);
+        }
+        .btn-accent:hover {
+            background: #b7791f;
+        }
+        .voice-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 0.5rem;
+            font-weight: 600;
+        }
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        .account-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .account-card {
+            background: var(--gray-100);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .metric-card {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        .positive { color: var(--success-color); }
+        .negative { color: var(--error-color); }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>📈 Trading & Investment Professional Dashboard</h1>
+            <p>Comprehensive financial expense management for traders, analysts, and investment professionals</p>
+        </div>
+
+        <div class="voice-section">
+            <h3><i class="fas fa-microphone"></i> Trading Voice Commands</h3>
+            <p>Use specialized financial terminology for expense tracking and portfolio management</p>
+            <button class="voice-btn" onclick="startTradingVoice()">
+                <i class="fas fa-microphone"></i> Trading Voice Input
+            </button>
+            <button class="voice-btn" onclick="logTradingExpense()">
+                <i class="fas fa-chart-candlestick"></i> Platform Subscription
+            </button>
+            <button class="voice-btn" onclick="addMarketDataCost()">
+                <i class="fas fa-database"></i> Market Data Feed
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem; font-weight: 600;"></div>
+        </div>
+
+        <div class="trading-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="monthlyPL">$0</div>
+                <div class="stat-label">Monthly P&L</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-chart-line"></i> Real-time tracking</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="tradingExpenses">$0</div>
+                <div class="stat-label">Trading Expenses</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-dollar-sign"></i> Start adding expenses</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="expenseRatio">0%</div>
+                <div class="stat-label">Expense Ratio</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-percentage"></i> Efficiency metric</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="activeAccounts">0</div>
+                <div class="stat-label">Active Accounts</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-university"></i> Brokerage accounts</small>
+            </div>
+        </div>
+
+        <div class="trading-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-candlestick"></i>
+                Trading Platform Subscriptions
+            </h2>
+            <div id="platformSubscriptions">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-desktop" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Platform Subscriptions</h3>
+                    <p>Add your trading platform and software subscriptions</p>
+                    <button class="btn" onclick="addPlatformSubscription()">
+                        <i class="fas fa-plus"></i> Add Platform
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="trading-section">
+            <h2 class="section-title">
+                <i class="fas fa-database"></i>
+                Market Data & Research
+            </h2>
+            <div id="marketDataFeeds">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Market Data Subscriptions</h3>
+                    <p>Track Bloomberg, Reuters, and other data feed costs</p>
+                    <button class="btn btn-accent" onclick="addMarketDataFeed()">
+                        <i class="fas fa-plus"></i> Add Data Feed
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="trading-section">
+            <h2 class="section-title">
+                <i class="fas fa-university"></i>
+                Brokerage Accounts Management
+            </h2>
+            <div class="account-grid" id="brokerageAccounts">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600); grid-column: 1 / -1;">
+                    <i class="fas fa-building-columns" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Brokerage Accounts</h3>
+                    <p>Add your brokerage accounts to track fees and expenses</p>
+                    <button class="btn" onclick="addBrokerageAccount()">
+                        <i class="fas fa-plus"></i> Add Account
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="trading-section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-pie"></i>
+                Expense Performance Analytics
+            </h2>
+            <div class="performance-metrics">
+                <div class="metric-card">
+                    <div class="metric-value" id="totalMonthlyFees">$0</div>
+                    <div>Monthly Fees</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="commissionCosts">$0</div>
+                    <div>Commission Costs</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="dataFeedCosts">$0</div>
+                    <div>Data Feed Costs</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value" id="educationCosts">$0</div>
+                    <div>Education & Training</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="expenseChart"></canvas>
+            </div>
+        </div>
+
+        <div class="trading-section">
+            <h2 class="section-title">
+                <i class="fas fa-graduation-cap"></i>
+                Professional Development & Compliance
+            </h2>
+            <div id="professionalDevelopment">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-certificate" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Training or Certifications</h3>
+                    <p>Track CFA, FRM, and other professional development expenses</p>
+                    <button class="btn btn-accent" onclick="addProfessionalDevelopment()">
+                        <i class="fas fa-plus"></i> Add Training
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="generateTradingReport()">
+                <i class="fas fa-file-alt"></i> Generate Trading Report
+            </button>
+            <button class="btn btn-accent" onclick="optimizeExpenses()">
+                <i class="fas fa-optimize"></i> Optimize Expenses
+            </button>
+            <button class="btn" onclick="exportTaxData()">
+                <i class="fas fa-download"></i> Export Tax Data
+            </button>
+            <button class="btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const tradingSamples = [
+            { amount: 299, description: 'TradingView Pro subscription', category: 'Platform Subscriptions', type: 'Monthly' },
+            { amount: 2400, description: 'Bloomberg Terminal annual license', category: 'Market Data', type: 'Annual' },
+            { amount: 1250, description: 'CFA Level 3 exam fee', category: 'Professional Development', type: 'One-time' },
+            { amount: 89, description: 'MetaTrader VPS hosting', category: 'Technology', type: 'Monthly' },
+            { amount: 15, description: 'E-Trade commission fees', category: 'Brokerage Fees', type: 'Transaction' },
+            { amount: 450, description: 'Options trading course', category: 'Education', type: 'One-time' }
+        ];
+
+        const brokerageNames = [
+            'Interactive Brokers', 'E-Trade', 'TD Ameritrade', 'Charles Schwab', 
+            'Fidelity', 'Robinhood', 'Webull', 'Alpaca'
+        ];
+
+        const certificationTypes = [
+            'CFA (Chartered Financial Analyst)', 'FRM (Financial Risk Manager)', 
+            'CAIA (Chartered Alternative Investment Analyst)', 'CQF (Certificate in Quantitative Finance)',
+            'Series 7', 'Series 63', 'Series 66', 'CMT (Chartered Market Technician)'
+        ];
+
+        function startTradingVoice() {
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = '🎤 Listening... Say: "Add Bloomberg subscription 2400 dollars market data category"';
+            
+            setTimeout(() => {
+                const sample = tradingSamples[Math.floor(Math.random() * tradingSamples.length)];
+                status.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                        <strong>📈 Trading Voice Command Recognized:</strong><br>
+                        <strong>💰 Amount:</strong> $${sample.amount.toLocaleString()}<br>
+                        <strong>📋 Description:</strong> ${sample.description}<br>
+                        <strong>🏷️ Category:</strong> ${sample.category}<br>
+                        <strong>📅 Type:</strong> ${sample.type}
+                    </div>
+                `;
+                showNotification('Trading expense added via voice!');
+            }, 3000);
+        }
+
+        function logTradingExpense() {
+            const platforms = ['TradingView', 'MetaTrader', 'NinjaTrader', 'ThinkOrSwim', 'Interactive Brokers TWS'];
+            const platform = platforms[Math.floor(Math.random() * platforms.length)];
+            const amount = Math.floor(Math.random() * 500) + 50;
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>💻 Platform Subscription Added:</strong><br>
+                    <strong>💰 Amount:</strong> $${amount.toLocaleString()}<br>
+                    <strong>📋 Platform:</strong> ${platform}<br>
+                    <strong>📅 Type:</strong> Monthly Subscription<br>
+                    <strong>🔄 Auto-renewal:</strong> Yes
+                </div>
+            `;
+            showNotification(`${platform} subscription logged`);
+        }
+
+        function addMarketDataCost() {
+            const dataProviders = ['Bloomberg Terminal', 'Reuters Eikon', 'Yahoo Finance Premium', 'Alpha Vantage', 'Quandl'];
+            const provider = dataProviders[Math.floor(Math.random() * dataProviders.length)];
+            const amount = Math.floor(Math.random() * 3000) + 200;
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = `
+                <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px; text-align: left; margin-top: 1rem;">
+                    <strong>📊 Market Data Feed Added:</strong><br>
+                    <strong>💰 Amount:</strong> $${amount.toLocaleString()}<br>
+                    <strong>📋 Provider:</strong> ${provider}<br>
+                    <strong>📈 Data Type:</strong> Real-time market data<br>
+                    <strong>📅 Billing:</strong> Monthly
+                </div>
+            `;
+            showNotification(`${provider} data feed added`);
+        }
+
+        function addPlatformSubscription() {
+            const platform = prompt('Platform Name (e.g., TradingView, MetaTrader):');
+            const cost = prompt('Monthly Cost ($):');
+            const features = prompt('Key Features:');
+            
+            if (platform && cost) {
+                showNotification(`${platform} subscription added: $${cost}/month`);
+                updateActiveAccounts();
+            }
+        }
+
+        function addMarketDataFeed() {
+            const provider = prompt('Data Provider (e.g., Bloomberg, Reuters):');
+            const cost = prompt('Monthly Cost ($):');
+            const dataType = prompt('Data Type (e.g., Real-time, Historical):');
+            
+            if (provider && cost) {
+                showNotification(`${provider} data feed added: $${cost}/month`);
+            }
+        }
+
+        function addBrokerageAccount() {
+            const broker = brokerageNames[Math.floor(Math.random() * brokerageNames.length)];
+            const accountType = ['Cash Account', 'Margin Account', 'IRA Account'][Math.floor(Math.random() * 3)];
+            const commission = (Math.random() * 10).toFixed(2);
+            
+            showNotification(`${broker} ${accountType} added`);
+            updateActiveAccounts();
+        }
+
+        function addProfessionalDevelopment() {
+            const certification = certificationTypes[Math.floor(Math.random() * certificationTypes.length)];
+            const cost = Math.floor(Math.random() * 2000) + 500;
+            
+            showNotification(`${certification} training added: $${cost}`);
+        }
+
+        function updateActiveAccounts() {
+            const currentCount = parseInt(document.getElementById('activeAccounts').textContent) || 0;
+            document.getElementById('activeAccounts').textContent = currentCount + 1;
+        }
+
+        function generateTradingReport() {
+            showNotification('Generating comprehensive trading expense report...');
+        }
+
+        function optimizeExpenses() {
+            showNotification('Analyzing expense optimization opportunities...');
+        }
+
+        function exportTaxData() {
+            showNotification('Exporting tax-ready trading data...');
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: var(--success-color);
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Initialize expense chart
+        document.addEventListener('DOMContentLoaded', function() {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No expenses yet'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#e5e7eb'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Trading Expense Distribution - Add expenses to see breakdown'
+                        },
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        });
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

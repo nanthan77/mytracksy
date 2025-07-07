@@ -1,0 +1,168 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions for authentication and authorization
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function isCompanyOwner(companyId) {
+      return request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.owners;
+    }
+    
+    function isCompanyMember(companyId) {
+      return request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.employees ||
+             request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.owners;
+    }
+    
+    function isValidExpense(expense) {
+      return expense.keys().hasAll(['amount', 'category', 'description', 'date', 'userId']) &&
+             expense.amount is number &&
+             expense.amount > 0 &&
+             expense.category is string &&
+             expense.description is string &&
+             expense.date is timestamp &&
+             expense.userId == request.auth.uid;
+    }
+    
+    function isValidUser(user) {
+      return user.keys().hasAll(['email', 'profile', 'createdAt']) &&
+             user.email is string &&
+             user.profile is map &&
+             user.createdAt is timestamp;
+    }
+    
+    // Users collection rules
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) && isValidUser(resource.data);
+    }
+    
+    // Companies collection rules
+    match /companies/{companyId} {
+      allow read: if isAuthenticated() && isCompanyMember(companyId);
+      allow write: if isAuthenticated() && isCompanyOwner(companyId);
+      allow create: if isAuthenticated() && request.auth.uid in resource.data.owners;
+    }
+    
+    // Expenses collection rules
+    match /expenses/{expenseId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) || 
+                      isCompanyMember(resource.data.companyId));
+      allow create: if isAuthenticated() && 
+                       isOwner(resource.data.userId) && 
+                       isValidExpense(resource.data);
+      allow update: if isAuthenticated() && 
+                       isOwner(resource.data.userId) &&
+                       resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Tax calculations collection rules
+    match /taxCalculations/{calcId} {
+      allow read, write: if isAuthenticated() && 
+                           (isOwner(resource.data.userId) ||
+                            isCompanyMember(resource.data.companyId));
+      allow create: if isAuthenticated() && request.auth.uid == resource.data.userId;
+    }
+    
+    // Government filings collection rules
+    match /governmentFilings/{filingId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) ||
+                      isCompanyMember(resource.data.companyId));
+      allow create, update: if isAuthenticated() && 
+                              isOwner(resource.data.userId) &&
+                              request.auth.uid == resource.data.userId;
+      allow delete: if false; // Government filings should not be deleted
+    }
+    
+    // Employees collection rules
+    match /employees/{employeeId} {
+      allow read: if isAuthenticated() && 
+                     (isCompanyOwner(resource.data.companyId) ||
+                      request.auth.uid == resource.data.userId);
+      allow write: if isAuthenticated() && isCompanyOwner(resource.data.companyId);
+    }
+    
+    // Reports collection rules
+    match /reports/{reportId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) ||
+                      isCompanyMember(resource.data.companyId));
+      allow create: if isAuthenticated() && request.auth.uid == resource.data.userId;
+      allow update: if isAuthenticated() && isOwner(resource.data.userId);
+      allow delete: if isAuthenticated() && isOwner(resource.data.userId);
+    }
+    
+    // Analytics collection rules (read-only for users)
+    match /analytics/{analyticsId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) ||
+                      isCompanyMember(resource.data.companyId));
+      allow write: if false; // Only system can write analytics
+    }
+    
+    // System configurations (read-only for users)
+    match /systemConfigurations/{configId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admin functions can modify
+    }
+    
+    // Tax configurations (read-only for users)
+    match /taxConfigurations/{taxConfigId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admin functions can modify
+    }
+    
+    // Schemas (read-only for users)
+    match /schemas/{schemaId} {
+      allow read: if isAuthenticated();
+      allow write: if false; // Only admin functions can modify
+    }
+    
+    // Audit logs (read-only for users, write-only for system)
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated() && 
+                     (isOwner(resource.data.userId) ||
+                      isCompanyMember(resource.data.companyId));
+      allow write: if false; // Only system can write audit logs
+    }
+    
+    // User activity logs
+    match /users/{userId}/activityLogs/{logId} {
+      allow read: if isAuthenticated() && isOwner(userId);
+      allow write: if false; // Only system can write activity logs
+    }
+    
+    // Company-specific subcollections
+    match /companies/{companyId}/expenses/{expenseId} {
+      allow read, write: if isAuthenticated() && isCompanyMember(companyId);
+    }
+    
+    match /companies/{companyId}/employees/{employeeId} {
+      allow read: if isAuthenticated() && isCompanyMember(companyId);
+      allow write: if isAuthenticated() && isCompanyOwner(companyId);
+    }
+    
+    match /companies/{companyId}/reports/{reportId} {
+      allow read, write: if isAuthenticated() && isCompanyMember(companyId);
+    }
+    
+    // Backup collections (admin only)
+    match /backups/{backupId} {
+      allow read, write: if false; // Only admin functions
+    }
+    
+    // Default deny rule for any unmatched paths
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

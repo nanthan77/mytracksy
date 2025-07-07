@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy - Employee Management & EPF/ETF Compliance</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e40af;
+            --secondary-color: #1e3a8a;
+            --accent-color: #fbbf24;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 50%, #fbbf24 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2.5rem;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '👥';
+            position: absolute;
+            top: 20px;
+            right: 30px;
+            font-size: 5rem;
+            opacity: 0.2;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-weight: 600;
+        }
+
+        .section {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-100);
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(30, 64, 175, 0.3);
+        }
+
+        .btn-accent {
+            background: var(--accent-color);
+            color: var(--dark-color);
+        }
+
+        .btn-accent:hover {
+            background: #f59e0b;
+        }
+
+        .btn-success {
+            background: var(--success-color);
+        }
+
+        .btn-warning {
+            background: var(--warning-color);
+        }
+
+        .btn-error {
+            background: var(--error-color);
+        }
+
+        .employee-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .employee-card {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid var(--primary-color);
+            transition: all 0.3s ease;
+        }
+
+        .employee-card:hover {
+            background: white;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-3px);
+        }
+
+        .employee-info h4 {
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .employee-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .epf-etf-summary {
+            background: linear-gradient(135deg, var(--success-color), #34d399);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        .epf-etf-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .compliance-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-compliant {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .status-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .status-overdue {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--gray-100);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+        }
+
+        .required {
+            color: var(--error-color);
+        }
+
+        .calculation-panel {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-top: 2rem;
+        }
+
+        .calculation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .calc-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 1.5rem;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+        }
+
+        .calc-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .calc-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .penalty-alert {
+            background: linear-gradient(135deg, var(--error-color), #f87171);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .compliance-calendar {
+            background: var(--gray-100);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-top: 2rem;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .calendar-item {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .calendar-date {
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--gray-600);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover {
+            background: var(--gray-100);
+            color: var(--dark-color);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-600);
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                margin: 1rem;
+                padding: 1rem;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .employee-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>👥 Employee Management & EPF/ETF Compliance</h1>
+            <p>Comprehensive Sri Lankan employment compliance system with automated EPF/ETF calculations and reporting</p>
+        </div>
+
+        <!-- Statistics Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalEmployees">0</div>
+                <div class="stat-label">Total Employees</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="monthlyEPF">LKR 0</div>
+                <div class="stat-label">Monthly EPF Contributions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="monthlyETF">LKR 0</div>
+                <div class="stat-label">Monthly ETF Contributions</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="complianceStatus">100%</div>
+                <div class="stat-label">Compliance Rate</div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-bolt"></i>
+                    Quick Actions
+                </h2>
+            </div>
+            <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <button class="btn" onclick="openAddEmployeeModal()">
+                    <i class="fas fa-user-plus"></i>
+                    Add New Employee
+                </button>
+                <button class="btn btn-accent" onclick="calculateMonthlyContributions()">
+                    <i class="fas fa-calculator"></i>
+                    Calculate EPF/ETF
+                </button>
+                <button class="btn btn-success" onclick="generateComplianceReport()">
+                    <i class="fas fa-file-alt"></i>
+                    Generate Report
+                </button>
+                <button class="btn btn-warning" onclick="checkComplianceStatus()">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Check Compliance
+                </button>
+            </div>
+        </div>
+
+        <!-- Employee Management -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-users"></i>
+                    Employee Database
+                </h2>
+                <button class="btn" onclick="openBulkImportModal()">
+                    <i class="fas fa-upload"></i>
+                    Bulk Import
+                </button>
+            </div>
+            <div class="employee-grid" id="employeeGrid">
+                <div class="empty-state">
+                    <i class="fas fa-users"></i>
+                    <h3>No Employees Registered</h3>
+                    <p>Add your first employee to start managing EPF/ETF compliance</p>
+                    <button class="btn" onclick="openAddEmployeeModal()" style="margin-top: 1rem;">
+                        <i class="fas fa-user-plus"></i>
+                        Add First Employee
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Calculations Panel -->
+        <div class="calculation-panel" id="calculationPanel" style="display: none;">
+            <h2 style="margin-bottom: 1rem;">
+                <i class="fas fa-calculator"></i>
+                Monthly EPF/ETF Calculations
+            </h2>
+            <div class="calculation-grid" id="calculationGrid">
+                <!-- Calculations will be populated here -->
+            </div>
+        </div>
+
+        <!-- Compliance Calendar -->
+        <div class="section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-calendar-check"></i>
+                    Compliance Calendar
+                </h2>
+            </div>
+            <div class="compliance-calendar">
+                <h3 style="margin-bottom: 1rem; color: var(--dark-color);">Upcoming Deadlines</h3>
+                <div class="calendar-grid" id="complianceCalendar">
+                    <div class="calendar-item">
+                        <div class="calendar-date">15th of Next Month</div>
+                        <div>EPF/ETF Payment Due</div>
+                        <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.5rem;">
+                            Monthly contributions must be paid by 15th of following month
+                        </div>
+                    </div>
+                    <div class="calendar-item">
+                        <div class="calendar-date">Within 14 Days</div>
+                        <div>Employee Registration</div>
+                        <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.5rem;">
+                            New employees must be registered within 14 days of hiring
+                        </div>
+                    </div>
+                    <div class="calendar-item">
+                        <div class="calendar-date">Monthly</div>
+                        <div>Electronic Filing</div>
+                        <div style="font-size: 0.8rem; color: var(--gray-600); margin-top: 0.5rem;">
+                            Mandatory for companies with 15+ employees (ETF) or 50+ employees (EPF)
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div style="text-align: center; margin-top: 3rem;">
+            <a href="user-profile.html" class="btn">
+                <i class="fas fa-arrow-left"></i>
+                Back to Dashboard
+            </a>
+            <button class="btn btn-accent" onclick="openTaxCalculatorModal()">
+                <i class="fas fa-calculator"></i>
+                Tax Calculator
+            </button>
+            <button class="btn btn-success" onclick="exportData()">
+                <i class="fas fa-download"></i>
+                Export Data
+            </button>
+        </div>
+    </div>
+
+    <!-- Add Employee Modal -->
+    <div class="modal" id="addEmployeeModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('addEmployeeModal')">&times;</button>
+            <h2 style="margin-bottom: 2rem; color: var(--primary-color);">
+                <i class="fas fa-user-plus"></i>
+                Add New Employee
+            </h2>
+            
+            <form id="employeeForm" onsubmit="addEmployee(event)">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="employeeName">Full Name <span class="required">*</span></label>
+                        <input type="text" id="employeeName" class="form-control" required placeholder="As per National Identity Card">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employeeNIC">National Identity Card <span class="required">*</span></label>
+                        <input type="text" id="employeeNIC" class="form-control" required placeholder="123456789V or 123456789012">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employeeDOB">Date of Birth <span class="required">*</span></label>
+                        <input type="date" id="employeeDOB" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employmentDate">Employment Date <span class="required">*</span></label>
+                        <input type="date" id="employmentDate" class="form-control" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="designation">Job Designation <span class="required">*</span></label>
+                        <input type="text" id="designation" class="form-control" required placeholder="e.g., Software Engineer">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="basicSalary">Basic Salary (LKR) <span class="required">*</span></label>
+                        <input type="number" id="basicSalary" class="form-control" required placeholder="50000" min="0" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="allowances">Allowances (LKR)</label>
+                        <input type="number" id="allowances" class="form-control" placeholder="10000" min="0" step="0.01">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employeeAddress">Permanent Address <span class="required">*</span></label>
+                        <textarea id="employeeAddress" class="form-control" required placeholder="Full permanent address" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employeePhone">Contact Number</label>
+                        <input type="tel" id="employeePhone" class="form-control" placeholder="+94 71 234 5678">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="employeeEmail">Email Address</label>
+                        <input type="email" id="employeeEmail" class="form-control" placeholder="employee@company.com">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bankAccount">Bank Account Number</label>
+                        <input type="text" id="bankAccount" class="form-control" placeholder="For future benefit payments">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="bankName">Bank Name</label>
+                        <select id="bankName" class="form-control">
+                            <option value="">Select Bank</option>
+                            <option value="Bank of Ceylon">Bank of Ceylon</option>
+                            <option value="People's Bank">People's Bank</option>
+                            <option value="Commercial Bank">Commercial Bank</option>
+                            <option value="Hatton National Bank">Hatton National Bank</option>
+                            <option value="Sampath Bank">Sampath Bank</option>
+                            <option value="Nations Trust Bank">Nations Trust Bank</option>
+                            <option value="DFCC Bank">DFCC Bank</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button type="submit" class="btn" style="flex: 1;">
+                        <i class="fas fa-save"></i>
+                        Register Employee
+                    </button>
+                    <button type="button" class="btn btn-accent" onclick="closeModal('addEmployeeModal')" style="flex: 1;">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tax Calculator Modal -->
+    <div class="modal" id="taxCalculatorModal">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('taxCalculatorModal')">&times;</button>
+            <h2 style="margin-bottom: 2rem; color: var(--primary-color);">
+                <i class="fas fa-calculator"></i>
+                Sri Lankan Tax Calculator
+            </h2>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="calcAnnualIncome">Annual Income (LKR)</label>
+                    <input type="number" id="calcAnnualIncome" class="form-control" placeholder="2400000" min="0" step="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label for="calcMonthlyIncome">Monthly Income (LKR)</label>
+                    <input type="number" id="calcMonthlyIncome" class="form-control" placeholder="200000" min="0" step="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label for="calcBusinessExpenses">Business Expenses (LKR)</label>
+                    <input type="number" id="calcBusinessExpenses" class="form-control" placeholder="50000" min="0" step="0.01">
+                </div>
+                
+                <div class="form-group">
+                    <label for="calcServiceExport">Service Export Income (LKR)</label>
+                    <input type="number" id="calcServiceExport" class="form-control" placeholder="100000" min="0" step="0.01">
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin: 2rem 0;">
+                <button class="btn" onclick="calculateAllTaxes()">
+                    <i class="fas fa-calculator"></i>
+                    Calculate All Taxes
+                </button>
+            </div>
+            
+            <div id="taxCalculationResults"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize the Sri Lankan Tax Engine
+        const taxEngine = new SriLankanTaxEngine();
+        let employees = JSON.parse(localStorage.getItem('myTracksyEmployees') || '[]');
+        let companySize = employees.length;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStatistics();
+            renderEmployees();
+            updateComplianceCalendar();
+        });
+
+        function updateStatistics() {
+            const totalEmployees = employees.length;
+            let totalEPF = 0;
+            let totalETF = 0;
+            let complianceIssues = 0;
+
+            employees.forEach(employee => {
+                const monthlyEarnings = {
+                    basic_salary: employee.basicSalary || 0,
+                    cost_of_living_allowance: employee.allowances || 0
+                };
+
+                const epfEtfCalc = taxEngine.calculateEPFETF(employee, monthlyEarnings);
+                totalEPF += epfEtfCalc.epf.totalContribution;
+                totalETF += epfEtfCalc.etf.employerContribution;
+
+                // Check compliance issues
+                const validation = taxEngine.validateEmployeeRegistration(employee);
+                if (!validation.isValid || validation.warnings.length > 0) {
+                    complianceIssues++;
+                }
+            });
+
+            const complianceRate = totalEmployees > 0 ? ((totalEmployees - complianceIssues) / totalEmployees * 100).toFixed(0) : 100;
+
+            document.getElementById('totalEmployees').textContent = totalEmployees;
+            document.getElementById('monthlyEPF').textContent = `LKR ${totalEPF.toLocaleString()}`;
+            document.getElementById('monthlyETF').textContent = `LKR ${totalETF.toLocaleString()}`;
+            document.getElementById('complianceStatus').textContent = `${complianceRate}%`;
+
+            // Update compliance status color
+            const statusElement = document.getElementById('complianceStatus');
+            if (complianceRate >= 90) {
+                statusElement.style.color = 'var(--success-color)';
+            } else if (complianceRate >= 70) {
+                statusElement.style.color = 'var(--warning-color)';
+            } else {
+                statusElement.style.color = 'var(--error-color)';
+            }
+        }
+
+        function renderEmployees() {
+            const employeeGrid = document.getElementById('employeeGrid');
+            
+            if (employees.length === 0) {
+                employeeGrid.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        <h3>No Employees Registered</h3>
+                        <p>Add your first employee to start managing EPF/ETF compliance</p>
+                        <button class="btn" onclick="openAddEmployeeModal()" style="margin-top: 1rem;">
+                            <i class="fas fa-user-plus"></i>
+                            Add First Employee
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+
+            employeeGrid.innerHTML = employees.map(employee => {
+                const monthlyEarnings = {
+                    basic_salary: employee.basicSalary || 0,
+                    cost_of_living_allowance: employee.allowances || 0
+                };
+
+                const epfEtfCalc = taxEngine.calculateEPFETF(employee, monthlyEarnings);
+                const validation = taxEngine.validateEmployeeRegistration(employee);
+                
+                let statusClass = 'status-compliant';
+                let statusText = 'Compliant';
+                let statusIcon = 'check-circle';
+
+                if (!validation.isValid) {
+                    statusClass = 'status-overdue';
+                    statusText = 'Issues';
+                    statusIcon = 'exclamation-triangle';
+                } else if (validation.warnings.length > 0) {
+                    statusClass = 'status-pending';
+                    statusText = 'Warnings';
+                    statusIcon = 'clock';
+                }
+
+                return `
+                    <div class="employee-card">
+                        <div class="employee-info">
+                            <h4>${employee.name}</h4>
+                            <div class="compliance-status ${statusClass}">
+                                <i class="fas fa-${statusIcon}"></i>
+                                ${statusText}
+                            </div>
+                        </div>
+                        
+                        <div class="employee-details">
+                            <div><strong>NIC:</strong> ${employee.nic}</div>
+                            <div><strong>EPF No:</strong> ${employee.epfNumber || 'Pending'}</div>
+                            <div><strong>Designation:</strong> ${employee.designation}</div>
+                            <div><strong>Employment:</strong> ${new Date(employee.employmentDate).toLocaleDateString()}</div>
+                            <div><strong>Basic Salary:</strong> LKR ${(employee.basicSalary || 0).toLocaleString()}</div>
+                            <div><strong>Total Earnings:</strong> LKR ${epfEtfCalc.earnings.totalEarnings.toLocaleString()}</div>
+                        </div>
+                        
+                        <div class="epf-etf-summary">
+                            <h5 style="margin-bottom: 0.75rem;">Monthly EPF/ETF Contributions</h5>
+                            <div class="epf-etf-grid">
+                                <div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">EPF Employee</div>
+                                    <div style="font-weight: 700;">LKR ${epfEtfCalc.epf.employeeContribution.toLocaleString()}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">EPF Employer</div>
+                                    <div style="font-weight: 700;">LKR ${epfEtfCalc.epf.employerContribution.toLocaleString()}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.8rem; opacity: 0.8;">ETF Employer</div>
+                                    <div style="font-weight: 700;">LKR ${epfEtfCalc.etf.employerContribution.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            <div style="border-top: 1px solid rgba(255,255,255,0.3); margin-top: 0.75rem; padding-top: 0.75rem;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Net Salary:</span>
+                                    <span style="font-weight: 700;">LKR ${epfEtfCalc.earnings.netSalary.toLocaleString()}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span>Employer Total:</span>
+                                    <span style="font-weight: 700;">LKR ${epfEtfCalc.totals.employerContributions.toLocaleString()}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${validation.warnings.length > 0 ? `
+                            <div class="penalty-alert">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div>
+                                    <strong>Compliance Warning:</strong><br>
+                                    ${validation.warnings[0]}
+                                </div>
+                            </div>
+                        ` : ''}
+                        
+                        <div style="display: flex; gap: 0.5rem; margin-top: 1rem;">
+                            <button class="btn" onclick="editEmployee('${employee.id}')" style="flex: 1;">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </button>
+                            <button class="btn btn-accent" onclick="viewEmployeeDetails('${employee.id}')" style="flex: 1;">
+                                <i class="fas fa-eye"></i>
+                                Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openAddEmployeeModal() {
+            document.getElementById('addEmployeeModal').style.display = 'flex';
+            
+            // Set default employment date to today
+            document.getElementById('employmentDate').value = new Date().toISOString().split('T')[0];
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function addEmployee(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(event.target);
+            const employee = {
+                id: Date.now().toString(),
+                name: document.getElementById('employeeName').value,
+                nic: document.getElementById('employeeNIC').value,
+                dateOfBirth: document.getElementById('employeeDOB').value,
+                employmentDate: document.getElementById('employmentDate').value,
+                designation: document.getElementById('designation').value,
+                basicSalary: parseFloat(document.getElementById('basicSalary').value) || 0,
+                allowances: parseFloat(document.getElementById('allowances').value) || 0,
+                address: document.getElementById('employeeAddress').value,
+                phone: document.getElementById('employeePhone').value,
+                email: document.getElementById('employeeEmail').value,
+                bankAccount: document.getElementById('bankAccount').value,
+                bankName: document.getElementById('bankName').value,
+                epfNumber: generateEPFNumber(),
+                registeredDate: new Date().toISOString(),
+                companySize: employees.length + 1
+            };
+
+            // Validate employee data
+            const validation = taxEngine.validateEmployeeRegistration(employee);
+            
+            if (!validation.isValid) {
+                alert('Employee registration validation failed:\n' + validation.errors.join('\n'));
+                return;
+            }
+
+            if (validation.warnings.length > 0) {
+                const proceed = confirm('Warning:\n' + validation.warnings.join('\n') + '\n\nDo you want to proceed?');
+                if (!proceed) return;
+            }
+
+            employees.push(employee);
+            localStorage.setItem('myTracksyEmployees', JSON.stringify(employees));
+            
+            closeModal('addEmployeeModal');
+            updateStatistics();
+            renderEmployees();
+            
+            showNotification(`Employee ${employee.name} registered successfully! EPF Number: ${employee.epfNumber}`, 'success');
+            
+            // Reset form
+            document.getElementById('employeeForm').reset();
+        }
+
+        function generateEPFNumber() {
+            // Generate EPF number (simplified format)
+            const district = 'COL'; // Colombo district
+            const sequence = (employees.length + 1).toString().padStart(6, '0');
+            return `${district}${sequence}`;
+        }
+
+        function calculateMonthlyContributions() {
+            if (employees.length === 0) {
+                showNotification('No employees registered. Add employees first.', 'warning');
+                return;
+            }
+
+            let totalEmployeeEPF = 0;
+            let totalEmployerEPF = 0;
+            let totalETF = 0;
+            let totalGross = 0;
+            let totalNet = 0;
+
+            const calculations = employees.map(employee => {
+                const monthlyEarnings = {
+                    basic_salary: employee.basicSalary || 0,
+                    cost_of_living_allowance: employee.allowances || 0
+                };
+
+                const calc = taxEngine.calculateEPFETF(employee, monthlyEarnings);
+                
+                totalEmployeeEPF += calc.epf.employeeContribution;
+                totalEmployerEPF += calc.epf.employerContribution;
+                totalETF += calc.etf.employerContribution;
+                totalGross += calc.earnings.totalEarnings;
+                totalNet += calc.earnings.netSalary;
+
+                return calc;
+            });
+
+            // Show calculation panel
+            const calcPanel = document.getElementById('calculationPanel');
+            const calcGrid = document.getElementById('calculationGrid');
+            
+            calcGrid.innerHTML = `
+                <div class="calc-item">
+                    <div class="calc-label">Total Gross Salaries</div>
+                    <div class="calc-value">LKR ${totalGross.toLocaleString()}</div>
+                </div>
+                <div class="calc-item">
+                    <div class="calc-label">Total Net Salaries</div>
+                    <div class="calc-value">LKR ${totalNet.toLocaleString()}</div>
+                </div>
+                <div class="calc-item">
+                    <div class="calc-label">Employee EPF (8%)</div>
+                    <div class="calc-value">LKR ${totalEmployeeEPF.toLocaleString()}</div>
+                </div>
+                <div class="calc-item">
+                    <div class="calc-label">Employer EPF (12%)</div>
+                    <div class="calc-value">LKR ${totalEmployerEPF.toLocaleString()}</div>
+                </div>
+                <div class="calc-item">
+                    <div class="calc-label">Employer ETF (3%)</div>
+                    <div class="calc-value">LKR ${totalETF.toLocaleString()}</div>
+                </div>
+                <div class="calc-item">
+                    <div class="calc-label">Total Employer Burden</div>
+                    <div class="calc-value">LKR ${(totalEmployerEPF + totalETF).toLocaleString()}</div>
+                </div>
+                <div class="calc-item">
+                    <div class="calc-label">Payment Deadline</div>
+                    <div class="calc-value">${taxEngine.getNextPaymentDeadline('epf_etf').toLocaleDateString()}</div>
+                </div>
+                <div class="calc-item">
+                    <div class="calc-label">Electronic Filing</div>
+                    <div class="calc-value">${taxEngine.isElectronicFilingRequired(employees.length).either ? 'Required' : 'Optional'}</div>
+                </div>
+            `;
+
+            calcPanel.style.display = 'block';
+            calcPanel.scrollIntoView({ behavior: 'smooth' });
+
+            showNotification('Monthly EPF/ETF contributions calculated successfully!', 'success');
+        }
+
+        function openTaxCalculatorModal() {
+            document.getElementById('taxCalculatorModal').style.display = 'flex';
+        }
+
+        function calculateAllTaxes() {
+            const annualIncome = parseFloat(document.getElementById('calcAnnualIncome').value) || 0;
+            const monthlyIncome = parseFloat(document.getElementById('calcMonthlyIncome').value) || 0;
+            const businessExpenses = parseFloat(document.getElementById('calcBusinessExpenses').value) || 0;
+            const serviceExportIncome = parseFloat(document.getElementById('calcServiceExport').value) || 0;
+
+            const results = document.getElementById('taxCalculationResults');
+            
+            let html = '<h3 style="margin-bottom: 1.5rem; color: var(--primary-color);">Tax Calculation Results</h3>';
+
+            // Income Tax
+            if (annualIncome > 0) {
+                const incomeTax = taxEngine.calculateIncomeTax(annualIncome);
+                html += `
+                    <div class="calc-item" style="margin-bottom: 1rem;">
+                        <h4>Progressive Income Tax</h4>
+                        <div>Annual Income: LKR ${incomeTax.annualIncome.toLocaleString()}</div>
+                        <div>Total Tax: LKR ${incomeTax.totalTax.toLocaleString()}</div>
+                        <div>Monthly Tax: LKR ${incomeTax.monthlyTax.toLocaleString()}</div>
+                        <div>Effective Rate: ${incomeTax.effectiveRate}</div>
+                        <div>Net Income: LKR ${incomeTax.netIncome.toLocaleString()}</div>
+                    </div>
+                `;
+            }
+
+            // VAT on Business Expenses
+            if (businessExpenses > 0) {
+                const vat = taxEngine.calculateVAT(businessExpenses);
+                html += `
+                    <div class="calc-item" style="margin-bottom: 1rem;">
+                        <h4>VAT Calculation</h4>
+                        <div>Net Amount: LKR ${vat.netAmount.toLocaleString()}</div>
+                        <div>VAT (18%): LKR ${vat.vatAmount.toLocaleString()}</div>
+                        <div>Gross Amount: LKR ${vat.grossAmount.toLocaleString()}</div>
+                    </div>
+                `;
+            }
+
+            // Service Export Tax
+            if (serviceExportIncome > 0) {
+                const serviceExportTax = taxEngine.calculateServiceExportTax(serviceExportIncome, true);
+                html += `
+                    <div class="calc-item" style="margin-bottom: 1rem;">
+                        <h4>Service Export Tax</h4>
+                        <div>Monthly Income: LKR ${serviceExportTax.monthlyIncome.toLocaleString()}</div>
+                        <div>Tax (15%): LKR ${serviceExportTax.taxAmount.toLocaleString()}</div>
+                        <div>Net Income: LKR ${serviceExportTax.netIncome.toLocaleString()}</div>
+                        <div>Status: ${serviceExportTax.applicable ? 'Applicable' : 'Not Applicable'}</div>
+                    </div>
+                `;
+            }
+
+            // EPF/ETF for monthly income
+            if (monthlyIncome > 0) {
+                const dummyEmployee = { name: 'Sample', epfNumber: 'SAMPLE001', nic: '123456789V' };
+                const monthlyEarnings = { basic_salary: monthlyIncome };
+                const epfEtf = taxEngine.calculateEPFETF(dummyEmployee, monthlyEarnings);
+                
+                html += `
+                    <div class="calc-item" style="margin-bottom: 1rem;">
+                        <h4>EPF/ETF Contributions</h4>
+                        <div>Employee EPF (8%): LKR ${epfEtf.epf.employeeContribution.toLocaleString()}</div>
+                        <div>Employer EPF (12%): LKR ${epfEtf.epf.employerContribution.toLocaleString()}</div>
+                        <div>Employer ETF (3%): LKR ${epfEtf.etf.employerContribution.toLocaleString()}</div>
+                        <div>Net Salary: LKR ${epfEtf.earnings.netSalary.toLocaleString()}</div>
+                        <div>Total Employer Burden: LKR ${epfEtf.totals.employerContributions.toLocaleString()}</div>
+                    </div>
+                `;
+            }
+
+            if (html === '<h3 style="margin-bottom: 1.5rem; color: var(--primary-color);">Tax Calculation Results</h3>') {
+                html += '<p style="text-align: center; color: var(--gray-600);">Please enter values to calculate taxes</p>';
+            }
+
+            results.innerHTML = html;
+        }
+
+        function generateComplianceReport() {
+            if (employees.length === 0) {
+                showNotification('No employees to generate report for.', 'warning');
+                return;
+            }
+
+            let reportContent = `MyTracksy EPF/ETF Compliance Report\n`;
+            reportContent += `Generated: ${new Date().toLocaleDateString()}\n`;
+            reportContent += `Company Size: ${employees.length} employees\n\n`;
+
+            reportContent += `SUMMARY:\n`;
+            reportContent += `=======\n`;
+            
+            let totalEPF = 0;
+            let totalETF = 0;
+            let complianceIssues = 0;
+
+            employees.forEach(employee => {
+                const monthlyEarnings = {
+                    basic_salary: employee.basicSalary || 0,
+                    cost_of_living_allowance: employee.allowances || 0
+                };
+
+                const calc = taxEngine.calculateEPFETF(employee, monthlyEarnings);
+                const validation = taxEngine.validateEmployeeRegistration(employee);
+
+                totalEPF += calc.epf.totalContribution;
+                totalETF += calc.etf.employerContribution;
+
+                if (!validation.isValid || validation.warnings.length > 0) {
+                    complianceIssues++;
+                }
+
+                reportContent += `\nEmployee: ${employee.name}\n`;
+                reportContent += `NIC: ${employee.nic}\n`;
+                reportContent += `EPF Number: ${employee.epfNumber}\n`;
+                reportContent += `Total Earnings: LKR ${calc.earnings.totalEarnings.toLocaleString()}\n`;
+                reportContent += `EPF Total: LKR ${calc.epf.totalContribution.toLocaleString()}\n`;
+                reportContent += `ETF: LKR ${calc.etf.employerContribution.toLocaleString()}\n`;
+                reportContent += `Net Salary: LKR ${calc.earnings.netSalary.toLocaleString()}\n`;
+                
+                if (!validation.isValid) {
+                    reportContent += `⚠️ COMPLIANCE ISSUES: ${validation.errors.join(', ')}\n`;
+                }
+                if (validation.warnings.length > 0) {
+                    reportContent += `⚠️ WARNINGS: ${validation.warnings.join(', ')}\n`;
+                }
+                reportContent += `---\n`;
+            });
+
+            reportContent += `\nTOTALS:\n`;
+            reportContent += `Total Monthly EPF: LKR ${totalEPF.toLocaleString()}\n`;
+            reportContent += `Total Monthly ETF: LKR ${totalETF.toLocaleString()}\n`;
+            reportContent += `Compliance Issues: ${complianceIssues}\n`;
+            reportContent += `Next Payment Due: ${taxEngine.getNextPaymentDeadline('epf_etf').toLocaleDateString()}\n`;
+
+            // Download as text file
+            const blob = new Blob([reportContent], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `MyTracksy_EPF_ETF_Report_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showNotification('Compliance report generated and downloaded!', 'success');
+        }
+
+        function checkComplianceStatus() {
+            if (employees.length === 0) {
+                showNotification('No employees to check compliance for.', 'warning');
+                return;
+            }
+
+            let issues = [];
+            let warnings = [];
+
+            employees.forEach(employee => {
+                const validation = taxEngine.validateEmployeeRegistration(employee);
+                
+                if (!validation.isValid) {
+                    issues.push(`${employee.name}: ${validation.errors.join(', ')}`);
+                }
+                
+                if (validation.warnings.length > 0) {
+                    warnings.push(`${employee.name}: ${validation.warnings.join(', ')}`);
+                }
+            });
+
+            // Check payment deadline
+            const nextDeadline = taxEngine.getNextPaymentDeadline('epf_etf');
+            const today = new Date();
+            const daysUntilDeadline = Math.ceil((nextDeadline - today) / (1000 * 60 * 60 * 24));
+
+            if (daysUntilDeadline <= 5) {
+                warnings.push(`Payment deadline in ${daysUntilDeadline} days (${nextDeadline.toLocaleDateString()})`);
+            }
+
+            // Check electronic filing requirements
+            const filingReq = taxEngine.isElectronicFilingRequired(employees.length);
+            if (filingReq.either) {
+                warnings.push(`Electronic filing required for company size (${employees.length} employees)`);
+            }
+
+            let message = 'Compliance Status Check:\n\n';
+            
+            if (issues.length === 0 && warnings.length === 0) {
+                message += '✅ All employees are compliant!\n';
+                message += '✅ No immediate action required.\n';
+                showNotification('All employees are fully compliant!', 'success');
+            } else {
+                if (issues.length > 0) {
+                    message += '❌ CRITICAL ISSUES:\n';
+                    issues.forEach(issue => message += `• ${issue}\n`);
+                    message += '\n';
+                }
+                
+                if (warnings.length > 0) {
+                    message += '⚠️ WARNINGS:\n';
+                    warnings.forEach(warning => message += `• ${warning}\n`);
+                }
+                
+                showNotification(`Found ${issues.length} critical issues and ${warnings.length} warnings.`, 'warning');
+            }
+
+            alert(message);
+        }
+
+        function updateComplianceCalendar() {
+            // This would typically fetch real deadlines from the system
+            // For now, showing static compliance reminders
+        }
+
+        function exportData() {
+            if (employees.length === 0) {
+                showNotification('No employee data to export.', 'warning');
+                return;
+            }
+
+            const exportData = {
+                exportDate: new Date().toISOString(),
+                companySize: employees.length,
+                employees: employees,
+                metadata: {
+                    version: '1.0',
+                    format: 'MyTracksy Employee Data Export',
+                    taxEngine: 'Sri Lankan Tax Engine v2025'
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `MyTracksy_Employee_Data_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(url);
+
+            showNotification('Employee data exported successfully!', 'success');
+        }
+
+        function editEmployee(employeeId) {
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (!employee) return;
+
+            // Pre-fill the form with existing data
+            document.getElementById('employeeName').value = employee.name;
+            document.getElementById('employeeNIC').value = employee.nic;
+            document.getElementById('employeeDOB').value = employee.dateOfBirth;
+            document.getElementById('employmentDate').value = employee.employmentDate;
+            document.getElementById('designation').value = employee.designation;
+            document.getElementById('basicSalary').value = employee.basicSalary;
+            document.getElementById('allowances').value = employee.allowances || '';
+            document.getElementById('employeeAddress').value = employee.address;
+            document.getElementById('employeePhone').value = employee.phone || '';
+            document.getElementById('employeeEmail').value = employee.email || '';
+            document.getElementById('bankAccount').value = employee.bankAccount || '';
+            document.getElementById('bankName').value = employee.bankName || '';
+
+            // Store the employee ID for update
+            document.getElementById('employeeForm').dataset.editingId = employeeId;
+
+            openAddEmployeeModal();
+        }
+
+        function viewEmployeeDetails(employeeId) {
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (!employee) return;
+
+            const monthlyEarnings = {
+                basic_salary: employee.basicSalary || 0,
+                cost_of_living_allowance: employee.allowances || 0
+            };
+
+            const calc = taxEngine.calculateEPFETF(employee, monthlyEarnings);
+            const validation = taxEngine.validateEmployeeRegistration(employee);
+
+            let details = `Employee Details: ${employee.name}\n\n`;
+            details += `Personal Information:\n`;
+            details += `• NIC: ${employee.nic}\n`;
+            details += `• Date of Birth: ${new Date(employee.dateOfBirth).toLocaleDateString()}\n`;
+            details += `• Employment Date: ${new Date(employee.employmentDate).toLocaleDateString()}\n`;
+            details += `• Designation: ${employee.designation}\n`;
+            details += `• EPF Number: ${employee.epfNumber}\n\n`;
+
+            details += `Salary Information:\n`;
+            details += `• Basic Salary: LKR ${(employee.basicSalary || 0).toLocaleString()}\n`;
+            details += `• Allowances: LKR ${(employee.allowances || 0).toLocaleString()}\n`;
+            details += `• Total Earnings: LKR ${calc.earnings.totalEarnings.toLocaleString()}\n`;
+            details += `• Net Salary: LKR ${calc.earnings.netSalary.toLocaleString()}\n\n`;
+
+            details += `EPF/ETF Contributions:\n`;
+            details += `• Employee EPF (8%): LKR ${calc.epf.employeeContribution.toLocaleString()}\n`;
+            details += `• Employer EPF (12%): LKR ${calc.epf.employerContribution.toLocaleString()}\n`;
+            details += `• Employer ETF (3%): LKR ${calc.etf.employerContribution.toLocaleString()}\n`;
+            details += `• Total Employer Burden: LKR ${calc.totals.employerContributions.toLocaleString()}\n\n`;
+
+            if (!validation.isValid || validation.warnings.length > 0) {
+                details += `Compliance Status:\n`;
+                if (!validation.isValid) {
+                    details += `❌ Issues: ${validation.errors.join(', ')}\n`;
+                }
+                if (validation.warnings.length > 0) {
+                    details += `⚠️ Warnings: ${validation.warnings.join(', ')}\n`;
+                }
+            } else {
+                details += `✅ Compliance Status: All requirements met\n`;
+            }
+
+            alert(details);
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'var(--success-color)' : 
+                           type === 'warning' ? 'var(--warning-color)' : 'var(--error-color)';
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+                z-index: 10000;
+                animation: slideInRight 0.3s ease-out;
+                max-width: 400px;
+                font-weight: 600;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Add CSS animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

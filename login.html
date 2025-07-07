@@ -1,0 +1,1115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy - Secure Login Portal | www.mytracksy.com</title>
+    <meta name="description" content="Secure login to MyTracksy - Advanced financial intelligence platform for Sri Lankan professionals">
+    <meta name="keywords" content="MyTracksy login, secure authentication, financial platform, Sri Lanka">
+    <meta property="og:title" content="MyTracksy - Secure Login Portal">
+    <meta property="og:description" content="Access your MyTracksy financial intelligence dashboard">
+    <meta property="og:url" content="https://www.mytracksy.com/login.html">
+    <link rel="canonical" href="https://www.mytracksy.com/login.html">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="sri-lanka-tax-engine.js"></script>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #00c851;
+            --warning-color: #ffbb33;
+            --error-color: #ff4444;
+            --dark-color: #2c3e50;
+            --light-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+            --border-radius: 8px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--accent-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        .background-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.1;
+        }
+
+        .floating-shape {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .shape-1 {
+            width: 80px;
+            height: 80px;
+            top: 20%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .shape-2 {
+            width: 120px;
+            height: 120px;
+            top: 60%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+
+        .shape-3 {
+            width: 60px;
+            height: 60px;
+            bottom: 20%;
+            left: 20%;
+            animation-delay: 4s;
+        }
+
+        .shape-4 {
+            width: 100px;
+            height: 100px;
+            top: 10%;
+            right: 30%;
+            animation-delay: 1s;
+        }
+
+        .shape-5 {
+            width: 70px;
+            height: 70px;
+            bottom: 30%;
+            right: 10%;
+            animation-delay: 3s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-20px) rotate(120deg); }
+            66% { transform: translateY(10px) rotate(240deg); }
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: var(--border-radius-lg);
+            padding: 3rem;
+            width: 100%;
+            max-width: 480px;
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+            color: var(--dark-color);
+            animation: slideInUp 0.8s ease-out;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color), #FFD700);
+        }
+
+        .language-selector {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .lang-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--gray-300);
+            background: transparent;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--gray-600);
+        }
+
+        .lang-btn.active {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-color: transparent;
+            transform: scale(1.05);
+        }
+
+        .lang-btn:hover {
+            border-color: var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .app-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .app-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .app-logo i {
+            font-size: 3rem;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .app-name {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin: 0;
+        }
+
+        .app-subtitle {
+            color: var(--gray-600);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .login-tabs {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: var(--border-radius);
+            padding: 0.25rem;
+            margin-bottom: 2rem;
+        }
+
+        .tab-button {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: calc(var(--border-radius) - 2px);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            color: var(--gray-600);
+        }
+
+        .tab-button.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+            transform: translateY(-1px);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .checkbox-label {
+            color: var(--gray-600);
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            color: white;
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 1.5rem 0;
+            position: relative;
+            color: var(--gray-500);
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: var(--gray-300);
+            z-index: 1;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 1rem;
+            position: relative;
+            z-index: 2;
+        }
+
+        .social-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .social-btn {
+            padding: 0.75rem;
+            border: 2px solid var(--gray-200);
+            background: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .social-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .social-btn.google {
+            color: #db4437;
+        }
+
+        .social-btn.google:hover {
+            border-color: #db4437;
+            background: #db4437;
+            color: white;
+        }
+
+        .social-btn.facebook {
+            color: #3b5998;
+        }
+
+        .social-btn.facebook:hover {
+            border-color: #3b5998;
+            background: #3b5998;
+            color: white;
+        }
+
+        .social-btn.linkedin {
+            color: #0077b5;
+        }
+
+        .social-btn.linkedin:hover {
+            border-color: #0077b5;
+            background: #0077b5;
+            color: white;
+        }
+
+        .biometric-section {
+            margin: 1.5rem 0;
+        }
+
+        .biometric-title {
+            text-align: center;
+            margin-bottom: 1rem;
+            color: var(--gray-700);
+            font-weight: 600;
+        }
+
+        .biometric-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .biometric-btn {
+            padding: 1rem;
+            border: 2px solid var(--gray-200);
+            background: white;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--gray-700);
+        }
+
+        .biometric-btn:hover {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .biometric-btn i {
+            font-size: 1.5rem;
+        }
+
+        .auto-login-section {
+            background: var(--gray-100);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1.5rem 0;
+        }
+
+        .auto-login-title {
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .auto-login-desc {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            margin-bottom: 1rem;
+        }
+
+        .trusted-device {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background: white;
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            border: 1px solid var(--gray-200);
+        }
+
+        .device-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .device-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(45deg, var(--primary-color), var(--accent-color));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .device-details h4 {
+            font-size: 0.9rem;
+            color: var(--gray-700);
+            margin: 0;
+        }
+
+        .device-details p {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+            margin: 0;
+        }
+
+        .auto-login-btn {
+            padding: 0.5rem 1rem;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+
+        .auto-login-btn:hover {
+            background: #00a844;
+            transform: scale(1.05);
+        }
+
+        .footer-links {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .footer-link {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-size: 0.9rem;
+            margin: 0 1rem;
+            transition: var(--transition);
+        }
+
+        .footer-link:hover {
+            color: var(--primary-color);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            background: white;
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            color: var(--dark-color);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid var(--gray-300);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 1rem;
+                padding: 2rem;
+            }
+
+            .social-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .biometric-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .app-name {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-animation">
+        <div class="floating-shape shape-1"></div>
+        <div class="floating-shape shape-2"></div>
+        <div class="floating-shape shape-3"></div>
+        <div class="floating-shape shape-4"></div>
+        <div class="floating-shape shape-5"></div>
+    </div>
+
+    <div class="login-container">
+        <!-- Language Selector -->
+        <div class="language-selector">
+            <button class="lang-btn active" onclick="updateLanguage('en')" data-translate="lang_en">English</button>
+            <button class="lang-btn" onclick="updateLanguage('si')" data-translate="lang_si">සිංහල</button>
+            <button class="lang-btn" onclick="updateLanguage('ta')" data-translate="lang_ta">தமிழ்</button>
+        </div>
+
+        <!-- App Header -->
+        <div class="app-header">
+            <div class="app-logo">
+                <i class="fas fa-chart-line"></i>
+                <h1 class="app-name" data-translate="app_name">MyTracksy</h1>
+            </div>
+            <p class="app-subtitle" data-translate="app_subtitle">Advanced Financial Intelligence Platform</p>
+        </div>
+
+        <!-- Login/Register Tabs -->
+        <div class="login-tabs">
+            <button class="tab-button active" onclick="switchTab('login')" data-translate="login_tab">Login</button>
+            <button class="tab-button" onclick="switchTab('register')" data-translate="register_tab">Register</button>
+        </div>
+
+        <!-- Login Form -->
+        <div id="loginForm">
+            <form onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label" data-translate="email_label">Email Address</label>
+                    <input type="email" class="form-input" id="loginEmail" data-translate-placeholder="email_placeholder" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-translate="password_label">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" data-translate-placeholder="password_placeholder" placeholder="Enter your password" required>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" class="checkbox" id="rememberMe">
+                    <label class="checkbox-label" for="rememberMe" data-translate="remember_me">Remember me</label>
+                </div>
+                <button type="submit" class="btn btn-primary" data-translate="login_button">Sign In</button>
+            </form>
+
+            <!-- Social Login -->
+            <div class="divider">
+                <span data-translate="or_continue">Or continue with</span>
+            </div>
+            <div class="social-buttons">
+                <button class="social-btn google" onclick="socialLogin('google')" title="Login with Google">
+                    <i class="fab fa-google"></i>
+                </button>
+                <button class="social-btn facebook" onclick="socialLogin('facebook')" title="Login with Facebook">
+                    <i class="fab fa-facebook-f"></i>
+                </button>
+                <button class="social-btn linkedin" onclick="socialLogin('linkedin')" title="Login with LinkedIn">
+                    <i class="fab fa-linkedin-in"></i>
+                </button>
+            </div>
+
+            <!-- Biometric Login -->
+            <div class="biometric-section">
+                <h3 class="biometric-title" data-translate="biometric_title">Biometric Authentication</h3>
+                <div class="biometric-buttons">
+                    <button class="biometric-btn" onclick="biometricLogin('fingerprint')">
+                        <i class="fas fa-fingerprint"></i>
+                        <span data-translate="fingerprint">Fingerprint</span>
+                    </button>
+                    <button class="biometric-btn" onclick="biometricLogin('face')">
+                        <i class="fas fa-user-circle"></i>
+                        <span data-translate="face_id">Face ID</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Register Form -->
+        <div id="registerForm" class="hidden">
+            <form onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label" data-translate="full_name">Full Name</label>
+                    <input type="text" class="form-input" id="registerName" data-translate-placeholder="name_placeholder" placeholder="Enter your full name" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-translate="email_label">Email Address</label>
+                    <input type="email" class="form-input" id="registerEmail" data-translate-placeholder="email_placeholder" placeholder="Enter your email" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-translate="profession_label">Profession</label>
+                    <select class="form-select" id="profession" required>
+                        <option value="" data-translate="select_profession">Select your profession</option>
+                        <option value="medical" data-translate="medical">Medical Professional</option>
+                        <option value="legal" data-translate="legal">Legal Professional</option>
+                        <option value="engineering" data-translate="engineering">Engineering Professional</option>
+                        <option value="business" data-translate="business">Business Professional</option>
+                        <option value="other" data-translate="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-translate="password_label">Password</label>
+                    <input type="password" class="form-input" id="registerPassword" data-translate-placeholder="password_placeholder" placeholder="Create a password" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" data-translate="confirm_password">Confirm Password</label>
+                    <input type="password" class="form-input" id="confirmPassword" data-translate-placeholder="confirm_password_placeholder" placeholder="Confirm your password" required>
+                </div>
+                <div class="checkbox-group">
+                    <input type="checkbox" class="checkbox" id="agreeTerms" required>
+                    <label class="checkbox-label" for="agreeTerms" data-translate="agree_terms">I agree to the Terms & Conditions</label>
+                </div>
+                <button type="submit" class="btn btn-primary" data-translate="register_button">Create Account</button>
+            </form>
+        </div>
+
+        <!-- Auto-Login Section -->
+        <div class="auto-login-section">
+            <h3 class="auto-login-title">
+                <i class="fas fa-shield-alt"></i>
+                <span data-translate="trusted_devices">Trusted Devices</span>
+            </h3>
+            <p class="auto-login-desc" data-translate="trusted_desc">Quick access from your trusted devices</p>
+            
+            <div class="trusted-device">
+                <div class="device-info">
+                    <div class="device-icon">
+                        <i class="fas fa-laptop"></i>
+                    </div>
+                    <div class="device-details">
+                        <h4 data-translate="this_device">This Device</h4>
+                        <p data-translate="last_login">Last login: Today</p>
+                    </div>
+                </div>
+                <button class="auto-login-btn" onclick="autoLogin()" data-translate="quick_login">Quick Login</button>
+            </div>
+        </div>
+
+        <!-- Footer Links -->
+        <div class="footer-links">
+            <a href="#" class="footer-link" data-translate="forgot_password">Forgot Password?</a>
+            <a href="#" class="footer-link" data-translate="help">Help</a>
+            <a href="#" class="footer-link" data-translate="privacy">Privacy Policy</a>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <p data-translate="authenticating">Authenticating...</p>
+        </div>
+    </div>
+
+    <script>
+        let currentLanguage = 'en';
+        let currentTab = 'login';
+
+        const translations = {
+            en: {
+                lang_en: "English",
+                lang_si: "සිංහල", 
+                lang_ta: "தமிழ்",
+                app_name: "MyTracksy",
+                app_subtitle: "Advanced Financial Intelligence Platform",
+                login_tab: "Login",
+                register_tab: "Register",
+                email_label: "Email Address",
+                email_placeholder: "Enter your email",
+                password_label: "Password",
+                password_placeholder: "Enter your password",
+                remember_me: "Remember me",
+                login_button: "Sign In",
+                or_continue: "Or continue with",
+                biometric_title: "Biometric Authentication",
+                fingerprint: "Fingerprint",
+                face_id: "Face ID",
+                full_name: "Full Name",
+                name_placeholder: "Enter your full name",
+                profession_label: "Profession",
+                select_profession: "Select your profession",
+                medical: "Medical Professional",
+                legal: "Legal Professional", 
+                engineering: "Engineering Professional",
+                business: "Business Professional",
+                other: "Other",
+                confirm_password: "Confirm Password",
+                confirm_password_placeholder: "Confirm your password",
+                agree_terms: "I agree to the Terms & Conditions",
+                register_button: "Create Account",
+                trusted_devices: "Trusted Devices",
+                trusted_desc: "Quick access from your trusted devices",
+                this_device: "This Device",
+                last_login: "Last login: Today",
+                quick_login: "Quick Login",
+                forgot_password: "Forgot Password?",
+                help: "Help",
+                privacy: "Privacy Policy",
+                authenticating: "Authenticating..."
+            },
+            si: {
+                lang_en: "English",
+                lang_si: "සිංහල",
+                lang_ta: "தமிழ்",
+                app_name: "මයිට්‍රැක්සි",
+                app_subtitle: "උසස් මුදල් බුද්ධිය වේදිකාව",
+                login_tab: "ප්‍රවේශය",
+                register_tab: "ලියාපදිංචිය",
+                email_label: "විද්‍යුත් තැපැල් ලිපිනය",
+                email_placeholder: "ඔබේ විද්‍යුත් තැපෑල ඇතුළත් කරන්න",
+                password_label: "මුරපදය",
+                password_placeholder: "ඔබේ මුරපදය ඇතුළත් කරන්න",
+                remember_me: "මතක තබා ගන්න",
+                login_button: "ඇතුළු වන්න",
+                or_continue: "නැතහොත් සමඟ ඉදිරියට යන්න",
+                biometric_title: "ජෛව මිතික සත්‍යාපනය",
+                fingerprint: "ඇඟිලි සටහන",
+                face_id: "මුහුණු හැඳුනුම්",
+                full_name: "සම්පූර්ණ නම",
+                name_placeholder: "ඔබේ සම්පූර්ණ නම ඇතුළත් කරන්න",
+                profession_label: "වෘත්තිය",
+                select_profession: "ඔබේ වෘත්තිය තෝරන්න",
+                medical: "වෛද්‍ය වෘත්තිකයා",
+                legal: "නීති වෘත්තිකයා",
+                engineering: "ඉංජිනේරු වෘත්තිකයා",
+                business: "ව්‍යාපාර වෘත්තිකයා",
+                other: "වෙනත්",
+                confirm_password: "මුරපදය තහවුරු කරන්න",
+                confirm_password_placeholder: "ඔබේ මුරපදය තහවුරු කරන්න",
+                agree_terms: "මම නියමයන් සහ කොන්දේසිවලට එකඟයි",
+                register_button: "ගිණුම සාදන්න",
+                trusted_devices: "විශ්වාසදායක උපකරණ",
+                trusted_desc: "ඔබේ විශ්වාසදායක උපකරණවලින් ඉක්මන් ප්‍රවේශය",
+                this_device: "මෙම උපකරණය",
+                last_login: "අවසන් ප්‍රවේශය: අද",
+                quick_login: "ඉක්මන් ප්‍රවේශය",
+                forgot_password: "මුරපදය අමතකද?",
+                help: "උදව්",
+                privacy: "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+                authenticating: "සත්‍යාපනය කරමින්..."
+            },
+            ta: {
+                lang_en: "English",
+                lang_si: "සිංහල",
+                lang_ta: "தமிழ்",
+                app_name: "மைட்ராக்ஸி",
+                app_subtitle: "மேம்பட்ட நிதி அறிவு தளம்",
+                login_tab: "உள்நுழைவு",
+                register_tab: "பதிவு",
+                email_label: "மின்னஞ்சல் முகவரி",
+                email_placeholder: "உங்கள் மின்னஞ்சலை உள்ளிடுக",
+                password_label: "கடவுச்சொல்",
+                password_placeholder: "உங்கள் கடவுச்சொல்லை உள்ளிடுக",
+                remember_me: "என்னை நினைவில் வைத்துக்கொள்",
+                login_button: "உள்நுழைவு",
+                or_continue: "அல்லது தொடரவும்",
+                biometric_title: "பயோமெட்ரிக் அங்கீகாரம்",
+                fingerprint: "விரல்படம்",
+                face_id: "முக அடையாளம்",
+                full_name: "முழு பெயர்",
+                name_placeholder: "உங்கள் முழு பெயரை உள்ளிடுக",
+                profession_label: "தொழில்",
+                select_profession: "உங்கள் தொழிலைத் தேர்ந்தெடுக்கவும்",
+                medical: "மருத்துவ நிபுணர்",
+                legal: "சட்ட நிபுணர்",
+                engineering: "பொறியியல் நிபுணர்",
+                business: "வணிக நிபுணர்",
+                other: "மற்றவை",
+                confirm_password: "கடவுச்சொல்லை உறுதிப்படுத்தவும்",
+                confirm_password_placeholder: "உங்கள் கடவுச்சொல்லை உறுதிப்படுத்தவும்",
+                agree_terms: "நான் விதிமுறைகள் & நிபந்தனைகளுக்கு ஒப்புக்கொள்கிறேன்",
+                register_button: "கணக்கை உருவாக்கவும்",
+                trusted_devices: "நம்பகமான சாதனங்கள்",
+                trusted_desc: "உங்கள் நம்பகமான சாதனங்களில் இருந்து விரைவான அணுகல்",
+                this_device: "இந்த சாதனம்",
+                last_login: "கடைசி உள்நுழைவு: இன்று",
+                quick_login: "விரைவு உள்நுழைவு",
+                forgot_password: "கடவுச்சொல் மறந்தீர்களா?",
+                help: "உதவி",
+                privacy: "தனியுரிமைக் கொள்கை",
+                authenticating: "அங்கீகரிக்கப்படுகிறது..."
+            }
+        };
+
+        function updateLanguage(lang) {
+            currentLanguage = lang;
+            
+            // Update active language button
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update all translatable elements
+            document.querySelectorAll('[data-translate]').forEach(element => {
+                const key = element.getAttribute('data-translate');
+                if (translations[lang] && translations[lang][key]) {
+                    element.textContent = translations[lang][key];
+                }
+            });
+
+            // Update placeholders
+            document.querySelectorAll('[data-translate-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-translate-placeholder');
+                if (translations[lang] && translations[lang][key]) {
+                    element.placeholder = translations[lang][key];
+                }
+            });
+        }
+
+        function switchTab(tab) {
+            currentTab = tab;
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Show/hide forms
+            if (tab === 'login') {
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+            } else {
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.remove('hidden');
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loadingOverlay').style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            showLoading();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            const rememberMe = document.getElementById('rememberMe').checked;
+            
+            // Simulate authentication delay
+            setTimeout(() => {
+                const userData = {
+                    email: email,
+                    name: email.split('@')[0],
+                    loginTime: new Date().toISOString(),
+                    rememberMe: rememberMe,
+                    language: currentLanguage
+                };
+                
+                localStorage.setItem('myTracksyLogin', JSON.stringify(userData));
+                localStorage.setItem('myTracksyUser', JSON.stringify(userData));
+                
+                hideLoading();
+                window.location.href = 'user-profile.html';
+            }, 2000);
+        }
+
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            const name = document.getElementById('registerName').value;
+            const email = document.getElementById('registerEmail').value;
+            const profession = document.getElementById('profession').value;
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            showLoading();
+            
+            // Simulate registration delay
+            setTimeout(() => {
+                const userData = {
+                    name: name,
+                    email: email,
+                    profession: profession,
+                    registrationTime: new Date().toISOString(),
+                    language: currentLanguage
+                };
+                
+                localStorage.setItem('myTracksyLogin', JSON.stringify(userData));
+                localStorage.setItem('myTracksyUser', JSON.stringify(userData));
+                
+                hideLoading();
+                alert('Account created successfully!');
+                window.location.href = 'user-profile.html';
+            }, 2000);
+        }
+
+        function socialLogin(provider) {
+            showLoading();
+            
+            // Simulate social login
+            setTimeout(() => {
+                const userData = {
+                    email: `user@${provider}.com`,
+                    name: `${provider.charAt(0).toUpperCase() + provider.slice(1)} User`,
+                    provider: provider,
+                    loginTime: new Date().toISOString(),
+                    language: currentLanguage
+                };
+                
+                localStorage.setItem('myTracksySocialLogin', JSON.stringify(userData));
+                localStorage.setItem('myTracksyUser', JSON.stringify(userData));
+                
+                hideLoading();
+                window.location.href = 'user-profile.html';
+            }, 2000);
+        }
+
+        function biometricLogin(type) {
+            if (!('credentials' in navigator)) {
+                alert('❌ Biometric authentication not supported on this device');
+                return;
+            }
+            
+            showLoading();
+            
+            // Simulate biometric authentication
+            setTimeout(() => {
+                const userData = {
+                    email: 'biometric.user@mytracksy.com',
+                    name: 'Biometric User',
+                    biometricType: type,
+                    loginTime: new Date().toISOString(),
+                    language: currentLanguage
+                };
+                
+                localStorage.setItem('myTracksyBiometric', JSON.stringify(userData));
+                localStorage.setItem('myTracksyUser', JSON.stringify(userData));
+                
+                hideLoading();
+                window.location.href = 'user-profile.html';
+            }, 2000);
+        }
+
+        function autoLogin() {
+            showLoading();
+            
+            // Check for existing user data
+            const existingUser = localStorage.getItem('myTracksyUser');
+            if (existingUser) {
+                setTimeout(() => {
+                    hideLoading();
+                    window.location.href = 'user-profile.html';
+                }, 1000);
+            } else {
+                // Create quick login user
+                const userData = {
+                    email: 'quick.user@mytracksy.com',
+                    name: 'Quick Login User',
+                    loginTime: new Date().toISOString(),
+                    autoLogin: true,
+                    language: currentLanguage
+                };
+                
+                setTimeout(() => {
+                    localStorage.setItem('myTracksyUser', JSON.stringify(userData));
+                    hideLoading();
+                    window.location.href = 'user-profile.html';
+                }, 1500);
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            updateLanguage('en');
+            
+            // Check if user is already logged in
+            const existingUser = localStorage.getItem('myTracksyUser');
+            if (existingUser) {
+                setTimeout(() => {
+                    if (confirm('You are already logged in. Go to dashboard?')) {
+                        window.location.href = 'user-profile.html';
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+</body>
+</html>

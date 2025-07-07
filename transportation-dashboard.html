@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Transportation Professional Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #ea580c;
+            --secondary-color: #c2410c;
+            --accent-color: #2563eb;
+            --success-color: #059669;
+            --warning-color: #d97706;
+            --error-color: #dc2626;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-600: #475569;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #ea580c 0%, #2563eb 50%, #c2410c 100%);
+            margin: 0;
+            padding: 2rem;
+            color: var(--dark-color);
+            min-height: 100vh;
+        }
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+        .header::before {
+            content: '🚛';
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 4rem;
+            opacity: 0.2;
+        }
+        .transport-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+        .transport-section {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .btn {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin: 0.5rem;
+        }
+        .btn-accent {
+            background: var(--accent-color);
+        }
+        .voice-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+            color: white;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .vehicle-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .vehicle-card {
+            background: var(--gray-100);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>🚛 Transportation Professional Dashboard</h1>
+            <p>Comprehensive expense management for drivers, delivery professionals, and fleet operators</p>
+        </div>
+
+        <div class="voice-section">
+            <h3><i class="fas fa-microphone"></i> Transportation Voice Commands</h3>
+            <p>Use transportation terminology for vehicle and route expense tracking</p>
+            <button onclick="startTransportVoice()" style="background: rgba(255, 255, 255, 0.2); border: 2px solid rgba(255, 255, 255, 0.3); color: white; padding: 1rem 2rem; border-radius: 8px; cursor: pointer; margin: 0.5rem; font-weight: 600;">
+                <i class="fas fa-microphone"></i> Transport Voice Input
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem;"></div>
+        </div>
+
+        <div class="transport-stats">
+            <div class="stat-card">
+                <div class="stat-value" id="totalMileage">0</div>
+                <div>Total Mileage</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-route"></i> Miles tracked</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="fuelCosts">$0</div>
+                <div>Fuel Costs</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-gas-pump"></i> This month</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="maintenanceCosts">$0</div>
+                <div>Maintenance Costs</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-tools"></i> Vehicle upkeep</small>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="vehiclesManaged">0</div>
+                <div>Vehicles</div>
+                <small style="color: var(--gray-600);"><i class="fas fa-truck"></i> Fleet size</small>
+            </div>
+        </div>
+
+        <div class="transport-section">
+            <h2 style="color: var(--dark-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-gas-pump"></i>
+                Fuel & Efficiency Tracking
+            </h2>
+            <div id="fuelTracking">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600);">
+                    <i class="fas fa-tachometer-alt" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Fuel Records</h3>
+                    <p>Track fuel purchases and efficiency metrics with GPS integration</p>
+                    <button class="btn" onclick="addFuelPurchase()">
+                        <i class="fas fa-plus"></i> Add Fuel Purchase
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="transport-section">
+            <h2 style="color: var(--dark-color); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fas fa-tools"></i>
+                Vehicle Maintenance & Repairs
+            </h2>
+            <div class="vehicle-grid" id="maintenanceRecords">
+                <div style="text-align: center; padding: 2rem; color: var(--gray-600); grid-column: 1 / -1;">
+                    <i class="fas fa-wrench" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <h3>No Maintenance Records</h3>
+                    <p>Schedule and track vehicle maintenance, repairs, and service history</p>
+                    <button class="btn btn-accent" onclick="addMaintenanceRecord()">
+                        <i class="fas fa-plus"></i> Add Maintenance
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 2rem;">
+            <button class="btn" onclick="generateMileageReport()">
+                <i class="fas fa-chart-line"></i> Generate Mileage Report
+            </button>
+            <button class="btn btn-accent" onclick="optimizeRoutes()">
+                <i class="fas fa-route"></i> Optimize Routes
+            </button>
+            <button class="btn" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+        </div>
+    </div>
+
+    <script>
+        function startTransportVoice() {
+            trackBehavioralEvent('transport_voice_attempt');
+            
+            const status = document.getElementById('voiceStatus');
+            status.innerHTML = '🎤 Listening... Say: "Add fuel purchase 45 dollars vehicle operations"';
+            setTimeout(() => {
+                status.innerHTML = '<div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">🚛 Transportation expense added via voice!</div>';
+                
+                // Show transportation-specific behavioral tip
+                showTransportProfessionalTip();
+            }, 3000);
+        }
+
+        function addFuelPurchase() {
+            const amount = prompt('Fuel Cost ($):');
+            const gallons = prompt('Gallons:');
+            const location = prompt('Station Location:');
+            if (amount && gallons) {
+                showNotification(`Fuel purchase added: $${amount} for ${gallons} gallons`);
+                updateFuelCosts(parseFloat(amount));
+            }
+        }
+
+        function addMaintenanceRecord() {
+            const service = prompt('Service Type (oil change, tire rotation, etc.):');
+            const cost = prompt('Cost ($):');
+            const mileage = prompt('Current Mileage:');
+            if (service && cost) {
+                showNotification(`Maintenance record added: ${service} - $${cost}`);
+                updateMaintenanceCosts(parseFloat(cost));
+            }
+        }
+
+        function updateFuelCosts(amount) {
+            const current = parseFloat(document.getElementById('fuelCosts').textContent.replace('$', '').replace(',', '')) || 0;
+            document.getElementById('fuelCosts').textContent = `$${(current + amount).toLocaleString()}`;
+        }
+
+        function updateMaintenanceCosts(amount) {
+            const current = parseFloat(document.getElementById('maintenanceCosts').textContent.replace('$', '').replace(',', '')) || 0;
+            document.getElementById('maintenanceCosts').textContent = `$${(current + amount).toLocaleString()}`;
+        }
+
+        function generateMileageReport() {
+            showNotification('Generating mileage and expense report...');
+        }
+
+        function optimizeRoutes() {
+            showNotification('Analyzing route optimization opportunities...');
+        }
+
+        function goBack() {
+            window.location.href = 'user-profile.html';
+        }
+
+        function showTransportProfessionalTip() {
+            const visits = getTransportDashboardVisits();
+            const fuelEntries = getFuelEntryCount();
+            
+            if (visits === 1) {
+                setTimeout(() => {
+                    showProfessionalFeatureTip(
+                        '🚛 Transport Tax Benefits',
+                        'Transportation professionals can deduct fuel, maintenance, and mileage expenses. Track them all here for maximum tax savings!',
+                        'transport_tax_benefits',
+                        () => addFuelPurchase()
+                    );
+                }, 2000);
+            } else if (fuelEntries >= 5) {
+                setTimeout(() => {
+                    showProfessionalFeatureTip(
+                        '📈 Route Optimization Ready',
+                        'You\'ve tracked multiple fuel purchases! Ready to optimize your routes and save on fuel costs?',
+                        'transport_optimization',
+                        () => optimizeRoutes()
+                    );
+                }, 1500);
+            }
+        }
+        
+        function getTransportDashboardVisits() {
+            const visits = parseInt(localStorage.getItem('myTracksyTransportVisits') || '0') + 1;
+            localStorage.setItem('myTracksyTransportVisits', visits.toString());
+            return visits;
+        }
+        
+        function getFuelEntryCount() {
+            const events = JSON.parse(localStorage.getItem('myTracksyBehavioralEvents') || '[]');
+            return events.filter(e => e.type === 'fuel_entry' && e.page === 'transportation-dashboard').length;
+        }
+        
+        function trackBehavioralEvent(eventType) {
+            const events = JSON.parse(localStorage.getItem('myTracksyBehavioralEvents') || '[]');
+            const event = {
+                type: eventType,
+                timestamp: new Date().toISOString(),
+                page: 'transportation-dashboard'
+            };
+            events.push(event);
+            localStorage.setItem('myTracksyBehavioralEvents', JSON.stringify(events));
+        }
+        
+        function showProfessionalFeatureTip(title, message, tipType, actionCallback) {
+            const dismissed = JSON.parse(localStorage.getItem('myTracksyDismissedTips') || '[]');
+            const recentDismiss = dismissed.find(d => 
+                d.type === tipType && 
+                new Date(d.timestamp) > new Date(Date.now() - 7*24*60*60*1000)
+            );
+            
+            if (recentDismiss) return;
+            
+            const popup = document.createElement('div');
+            popup.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+                color: white;
+                border-radius: 16px;
+                padding: 2rem;
+                max-width: 420px;
+                width: 90%;
+                z-index: 3000;
+                box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+                animation: slideUpScale 0.4s ease-out;
+                text-align: center;
+            `;
+            
+            popup.innerHTML = `
+                <div style="font-size: 2.5rem; margin-bottom: 1rem;">🚛</div>
+                <h3 style="margin-bottom: 1rem; font-size: 1.3rem;">${title}</h3>
+                <p style="margin-bottom: 2rem; line-height: 1.6; opacity: 0.9;">${message}</p>
+                <div style="display: flex; gap: 1rem; justify-content: center;">
+                    <button onclick="handleTransportTipAction('${tipType}')" style="
+                        background: rgba(255,255,255,0.2);
+                        color: white;
+                        border: 2px solid rgba(255,255,255,0.3);
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        backdrop-filter: blur(10px);
+                    ">Let's Do It</button>
+                    <button onclick="dismissTransportTip('${tipType}')" style="
+                        background: transparent;
+                        color: rgba(255,255,255,0.7);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                    ">Later</button>
+                </div>
+            `;
+            
+            const backdrop = document.createElement('div');
+            backdrop.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.6);
+                z-index: 2999;
+                backdrop-filter: blur(3px);
+            `;
+            
+            backdrop.onclick = () => dismissTransportTip(tipType);
+            
+            document.body.appendChild(backdrop);
+            document.body.appendChild(popup);
+            
+            window.currentTransportTipAction = actionCallback;
+        }
+        
+        function handleTransportTipAction(tipType) {
+            if (window.currentTransportTipAction) {
+                window.currentTransportTipAction();
+            }
+            dismissTransportTip(tipType);
+            trackBehavioralEvent('transport_tip_engaged_' + tipType);
+        }
+        
+        function dismissTransportTip(tipType) {
+            const dismissed = JSON.parse(localStorage.getItem('myTracksyDismissedTips') || '[]');
+            dismissed.push({
+                type: tipType,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('myTracksyDismissedTips', JSON.stringify(dismissed));
+            
+            const popup = document.querySelector('[style*="z-index: 3000"]');
+            const backdrop = document.querySelector('[style*="z-index: 2999"]');
+            
+            if (popup) popup.remove();
+            if (backdrop) backdrop.remove();
+            
+            trackBehavioralEvent('transport_tip_dismissed_' + tipType);
+        }
+
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; background: var(--success-color);
+                color: white; padding: 1rem 1.5rem; border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            notification.innerHTML = `<i class="fas fa-check-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+        
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUpScale {
+                from { 
+                    opacity: 0; 
+                    transform: translate(-50%, -40%) scale(0.9); 
+                }
+                to { 
+                    opacity: 1; 
+                    transform: translate(-50%, -50%) scale(1); 
+                }
+            }
+            
+            @keyframes slideInRight {
+                from { opacity: 0; transform: translateX(100px); }
+                to { opacity: 1; transform: translateX(0); }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Initialize page tracking
+        document.addEventListener('DOMContentLoaded', function() {
+            getTransportDashboardVisits();
+            
+            // Show initial tip after page load
+            setTimeout(() => {
+                showTransportProfessionalTip();
+            }, 3000);
+        });
+    </script>
+</body>
+</html>

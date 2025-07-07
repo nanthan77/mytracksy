@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy Legal Professional Dashboard | Advanced Legal Practice Management</title>
+    <meta name="description" content="Comprehensive financial management dashboard designed specifically for legal professionals in Sri Lanka">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            /* Legal Theme Colors */
+            --primary-color: #1e3a8a;
+            --secondary-color: #1e40af;
+            --accent-color: #fbbf24;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-color: #1e2124;
+            --light-color: #ffffff;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --gray-700: #334155;
+            --gray-800: #1e293b;
+            --gray-900: #0f172a;
+            --legal-blue: #1e3a8a;
+            --legal-gold: #fbbf24;
+            --legal-navy: #1e2124;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e2124 0%, #374151 50%, #1e3a8a 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .dashboard-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .welcome-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-text h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-text p {
+            color: var(--gray-600);
+            font-size: 1.1rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--dark-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .btn-accent {
+            background: var(--accent-color);
+            color: var(--dark-color);
+        }
+
+        .btn-accent:hover {
+            background: #f59e0b;
+            transform: translateY(-2px);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--stat-color, var(--primary-color));
+        }
+
+        .stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--stat-color, var(--primary-color));
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .stat-change {
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .stat-change.positive {
+            color: var(--success-color);
+        }
+
+        .stat-change.negative {
+            color: var(--error-color);
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .case-list {
+            list-style: none;
+        }
+
+        .case-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+
+        .case-item:hover {
+            background: var(--gray-50);
+        }
+
+        .case-info h4 {
+            color: var(--dark-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .case-details {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .case-status {
+            text-align: right;
+            font-weight: 600;
+        }
+
+        .case-status.active {
+            color: var(--success-color);
+        }
+
+        .case-status.pending {
+            color: var(--warning-color);
+        }
+
+        .case-status.urgent {
+            color: var(--error-color);
+        }
+
+        .billable-hours {
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid var(--accent-color);
+        }
+
+        .hours-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .hours-client {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .hours-amount {
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .hours-details {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .voice-input-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .voice-input-section h3 {
+            margin-bottom: 1rem;
+        }
+
+        .voice-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 1rem 2rem;
+            border-radius: var(--border-radius);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin: 0.5rem;
+        }
+
+        .voice-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .court-fee-calculator {
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .calculator-title {
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .court-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .court-option {
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .court-option:hover {
+            border-color: var(--primary-color);
+            background: var(--gray-50);
+        }
+
+        .court-option.selected {
+            border-color: var(--primary-color);
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .quick-actions {
+                flex-direction: column;
+            }
+
+            .welcome-section {
+                flex-direction: column;
+                text-align: center;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-balance-scale"></i>
+                MyTracksy Legal
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#dashboard" class="nav-link active">Dashboard</a></li>
+                <li><a href="#cases" class="nav-link">Cases</a></li>
+                <li><a href="#billable" class="nav-link">Billable Hours</a></li>
+                <li><a href="#court-fees" class="nav-link">Court Fees</a></li>
+                <li><a href="#clients" class="nav-link">Clients</a></li>
+            </ul>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user-tie"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="dashboard-header">
+            <div class="welcome-section">
+                <div class="welcome-text">
+                    <h1>⚖️ Legal Professional Dashboard</h1>
+                    <p id="welcomeMessage">Welcome, Attorney! Manage your legal practice, track billable hours, and monitor case progress.</p>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-primary" onclick="addLegalExpense()">
+                        <i class="fas fa-plus"></i>
+                        Add Legal Expense
+                    </button>
+                    <button class="btn btn-accent" onclick="logBillableHours()">
+                        <i class="fas fa-clock"></i>
+                        Log Hours
+                    </button>
+                    <button class="btn btn-secondary" onclick="calculateCourtFee()">
+                        <i class="fas fa-calculator"></i>
+                        Court Fee Calculator
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Voice Input Section -->
+        <div class="voice-input-section">
+            <h3><i class="fas fa-microphone"></i> Legal Voice Commands</h3>
+            <p style="margin-bottom: 1.5rem; opacity: 0.9;">Use voice commands with legal terminology for quick time logging and expense entry</p>
+            <button class="voice-btn" onclick="startLegalVoiceInput()">
+                <i class="fas fa-microphone"></i>
+                <span id="voiceButtonText">Start Legal Voice Input</span>
+            </button>
+            <button class="voice-btn" onclick="startBillableVoiceInput()">
+                <i class="fas fa-clock"></i>
+                <span>Log Billable Hours</span>
+            </button>
+            <div id="voiceStatus" style="margin-top: 1rem; font-weight: 600;"></div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card" style="--stat-color: var(--legal-blue)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                </div>
+                <div class="stat-value">24</div>
+                <div class="stat-label">Active Cases</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +3 new cases this month
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--legal-gold)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+                <div class="stat-value">156.5</div>
+                <div class="stat-label">Billable Hours This Month</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +12.5 hours from last month
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--success-color)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-rupee-sign"></i>
+                    </div>
+                </div>
+                <div class="stat-value">LKR 780k</div>
+                <div class="stat-label">Legal Fees Revenue</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    +15.2% from last month
+                </div>
+            </div>
+
+            <div class="stat-card" style="--stat-color: var(--warning-color)">
+                <div class="stat-header">
+                    <div class="stat-icon">
+                        <i class="fas fa-gavel"></i>
+                    </div>
+                </div>
+                <div class="stat-value">8</div>
+                <div class="stat-label">Court Hearings This Week</div>
+                <div class="stat-change neutral">
+                    <i class="fas fa-calendar"></i>
+                    3 urgent hearings
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Main Content -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-briefcase"></i>
+                        Active Cases & Deadlines
+                    </h2>
+                    <button class="btn btn-secondary btn-sm" onclick="refreshCases()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                </div>
+
+                <ul class="case-list" id="casesList">
+                    <li class="case-item">
+                        <div class="case-info">
+                            <h4>Silva vs. Perera Land Dispute</h4>
+                            <div class="case-details">
+                                <i class="fas fa-map-marker-alt"></i> High Court Colombo
+                                <span style="margin-left: 1rem;"><i class="fas fa-calendar"></i> Hearing: July 15, 2025</span>
+                            </div>
+                        </div>
+                        <div class="case-status active">
+                            <div>Active</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-500);">Civil Case</div>
+                        </div>
+                    </li>
+
+                    <li class="case-item">
+                        <div class="case-info">
+                            <h4>ABC Corporation Contract Review</h4>
+                            <div class="case-details">
+                                <i class="fas fa-building"></i> Corporate Law
+                                <span style="margin-left: 1rem;"><i class="fas fa-clock"></i> Deadline: July 20, 2025</span>
+                            </div>
+                        </div>
+                        <div class="case-status pending">
+                            <div>Review Pending</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-500);">Commercial</div>
+                        </div>
+                    </li>
+
+                    <li class="case-item">
+                        <div class="case-info">
+                            <h4>Criminal Defense - State vs. Fernando</h4>
+                            <div class="case-details">
+                                <i class="fas fa-university"></i> Supreme Court
+                                <span style="margin-left: 1rem;"><i class="fas fa-exclamation-triangle"></i> Urgent: July 12, 2025</span>
+                            </div>
+                        </div>
+                        <div class="case-status urgent">
+                            <div>Urgent</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-500);">Criminal</div>
+                        </div>
+                    </li>
+
+                    <li class="case-item">
+                        <div class="case-info">
+                            <h4>Property Transaction - Rajapaksa Estate</h4>
+                            <div class="case-details">
+                                <i class="fas fa-home"></i> Property Law
+                                <span style="margin-left: 1rem;"><i class="fas fa-file-signature"></i> Documentation Phase</span>
+                            </div>
+                        </div>
+                        <div class="case-status active">
+                            <div>In Progress</div>
+                            <div style="font-size: 0.8rem; color: var(--gray-500);">Property</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Sidebar -->
+            <div>
+                <!-- Billable Hours Tracking -->
+                <div class="dashboard-section" style="margin-bottom: 2rem;">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-clock"></i>
+                            Recent Billable Hours
+                        </h3>
+                    </div>
+
+                    <div class="billable-hours">
+                        <div class="hours-header">
+                            <span class="hours-client">Silva vs. Perera</span>
+                            <span class="hours-amount">LKR 25,000</span>
+                        </div>
+                        <div class="hours-details">
+                            4.5 hours • Legal research and case preparation<br>
+                            Rate: LKR 5,500/hour • July 6, 2025
+                        </div>
+                    </div>
+
+                    <div class="billable-hours">
+                        <div class="hours-header">
+                            <span class="hours-client">ABC Corporation</span>
+                            <span class="hours-amount">LKR 33,000</span>
+                        </div>
+                        <div class="hours-details">
+                            6.0 hours • Contract review and client consultation<br>
+                            Rate: LKR 5,500/hour • July 5, 2025
+                        </div>
+                    </div>
+
+                    <div class="billable-hours">
+                        <div class="hours-header">
+                            <span class="hours-client">Fernando Defense</span>
+                            <span class="hours-amount">LKR 16,500</span>
+                        </div>
+                        <div class="hours-details">
+                            3.0 hours • Court appearance and client meeting<br>
+                            Rate: LKR 5,500/hour • July 4, 2025
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Court Fee Calculator -->
+                <div class="dashboard-section">
+                    <div class="section-header">
+                        <h3 class="section-title">
+                            <i class="fas fa-calculator"></i>
+                            Sri Lankan Court Fees
+                        </h3>
+                    </div>
+
+                    <div class="court-fee-calculator">
+                        <div class="calculator-title">
+                            <i class="fas fa-university"></i>
+                            Select Court Level
+                        </div>
+                        <div class="court-options">
+                            <div class="court-option" onclick="selectCourt('supreme')">
+                                <strong>Supreme Court</strong><br>
+                                <small>LKR 5,000</small>
+                            </div>
+                            <div class="court-option" onclick="selectCourt('appeal')">
+                                <strong>Court of Appeal</strong><br>
+                                <small>LKR 3,000</small>
+                            </div>
+                            <div class="court-option" onclick="selectCourt('high')">
+                                <strong>High Court</strong><br>
+                                <small>LKR 2,000</small>
+                            </div>
+                            <div class="court-option" onclick="selectCourt('district')">
+                                <strong>District Court</strong><br>
+                                <small>LKR 1,000</small>
+                            </div>
+                        </div>
+                        <div id="feeCalculation" style="margin-top: 1rem; font-weight: 600; color: var(--primary-color);"></div>
+                    </div>
+
+                    <!-- Bar Association Compliance -->
+                    <div style="margin-top: 2rem;">
+                        <h4 style="color: var(--dark-color); margin-bottom: 1rem;">
+                            <i class="fas fa-certificate"></i> Bar Association Status
+                        </h4>
+                        <div style="background: var(--success-color); color: white; padding: 1rem; border-radius: var(--border-radius); margin-bottom: 0.5rem;">
+                            <strong>✓ Active Member</strong><br>
+                            <small>Bar Association of Sri Lanka</small>
+                        </div>
+                        <div style="background: var(--warning-color); color: white; padding: 1rem; border-radius: var(--border-radius);">
+                            <strong>⚠ CLE Credits Due</strong><br>
+                            <small>15/20 credits completed</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Legal voice recognition variables
+        let isLegalRecording = false;
+        let legalVoiceTarget = null;
+
+        // Legal terminology and sample data
+        const legalSamples = [
+            { amount: 5000, description: 'Supreme Court filing fee', category: 'Court Fees', case: 'Silva vs. Perera' },
+            { amount: 15000, description: 'Legal research database subscription', category: 'Professional Resources', case: 'Multiple Cases' },
+            { amount: 8500, description: 'Law library access fee', category: 'Professional Resources', case: 'Research' },
+            { amount: 2500, description: 'Client consultation travel expenses', category: 'Transportation', case: 'Fernando Defense' },
+            { amount: 12000, description: 'Expert witness consultation fee', category: 'Professional Services', case: 'ABC Corporation' },
+            { amount: 3000, description: 'Court of Appeal filing fee', category: 'Court Fees', case: 'Property Case' },
+            { amount: 25000, description: 'Continuing Legal Education course', category: 'Professional Development', case: 'CLE Requirement' },
+            { amount: 1800, description: 'Legal document printing and binding', category: 'Office Supplies', case: 'Multiple Cases' }
+        ];
+
+        const billableSamples = [
+            { client: 'Silva vs. Perera', hours: 4.5, rate: 5500, description: 'Legal research and case preparation' },
+            { client: 'ABC Corporation', hours: 6.0, rate: 5500, description: 'Contract review and client consultation' },
+            { client: 'Fernando Defense', hours: 3.0, rate: 5500, description: 'Court appearance and client meeting' },
+            { client: 'Property Transaction', hours: 2.5, rate: 5500, description: 'Document drafting and review' },
+            { client: 'Immigration Case', hours: 1.5, rate: 5500, description: 'Client consultation and filing preparation' }
+        ];
+
+        function startLegalVoiceInput() {
+            const btn = document.querySelector('.voice-btn');
+            const status = document.getElementById('voiceStatus');
+            const buttonText = document.getElementById('voiceButtonText');
+
+            if (!isLegalRecording) {
+                isLegalRecording = true;
+                legalVoiceTarget = 'expense';
+                btn.style.background = 'rgba(239, 68, 68, 0.3)';
+                buttonText.textContent = 'Stop Recording';
+                status.innerHTML = '🎤 Listening... Try saying: "Add Supreme Court filing fee 5000 rupees Silva case"';
+
+                setTimeout(() => {
+                    if (isLegalRecording && legalVoiceTarget === 'expense') {
+                        const randomSample = legalSamples[Math.floor(Math.random() * legalSamples.length)];
+                        
+                        status.innerHTML = `
+                            <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 1rem; margin-top: 1rem; text-align: left;">
+                                <strong>⚖️ Legal Voice Command Recognized:</strong><br>
+                                <strong>💰 Amount:</strong> LKR ${randomSample.amount.toLocaleString()}<br>
+                                <strong>📋 Description:</strong> ${randomSample.description}<br>
+                                <strong>🏛️ Category:</strong> ${randomSample.category}<br>
+                                <strong>📂 Case:</strong> ${randomSample.case}
+                            </div>
+                        `;
+
+                        // Add to legal expenses
+                        addToLegalExpenses(randomSample);
+                        
+                        stopLegalVoiceInput();
+                    }
+                }, 3000);
+            } else {
+                stopLegalVoiceInput();
+            }
+        }
+
+        function startBillableVoiceInput() {
+            if (!isLegalRecording) {
+                isLegalRecording = true;
+                legalVoiceTarget = 'billable';
+                
+                const status = document.getElementById('voiceStatus');
+                status.innerHTML = '🎤 Listening for billable hours... Say: "Log 3 hours Silva case legal research"';
+
+                setTimeout(() => {
+                    if (isLegalRecording && legalVoiceTarget === 'billable') {
+                        const randomSample = billableSamples[Math.floor(Math.random() * billableSamples.length)];
+                        const amount = randomSample.hours * randomSample.rate;
+                        
+                        status.innerHTML = `
+                            <div style="background: rgba(255, 255, 255, 0.2); border-radius: 8px; padding: 1rem; margin-top: 1rem; text-align: left;">
+                                <strong>⏰ Billable Hours Logged:</strong><br>
+                                <strong>👤 Client:</strong> ${randomSample.client}<br>
+                                <strong>🕒 Hours:</strong> ${randomSample.hours} hours<br>
+                                <strong>💰 Amount:</strong> LKR ${amount.toLocaleString()}<br>
+                                <strong>📝 Description:</strong> ${randomSample.description}
+                            </div>
+                        `;
+
+                        // Add to billable hours
+                        addToBillableHours(randomSample);
+                        
+                        stopLegalVoiceInput();
+                    }
+                }, 3000);
+            }
+        }
+
+        function stopLegalVoiceInput() {
+            isLegalRecording = false;
+            legalVoiceTarget = null;
+            const btn = document.querySelector('.voice-btn');
+            const buttonText = document.getElementById('voiceButtonText');
+            
+            btn.style.background = 'rgba(255, 255, 255, 0.2)';
+            buttonText.textContent = 'Start Legal Voice Input';
+        }
+
+        function addToLegalExpenses(expense) {
+            // Store in localStorage for persistence
+            const legalExpenses = JSON.parse(localStorage.getItem('legalExpenses') || '[]');
+            const newExpense = {
+                id: Date.now(),
+                ...expense,
+                date: new Date().toISOString().split('T')[0],
+                addedAt: new Date().toISOString()
+            };
+            
+            legalExpenses.unshift(newExpense);
+            localStorage.setItem('legalExpenses', JSON.stringify(legalExpenses));
+            
+            showNotification('Legal expense added successfully!', 'success');
+        }
+
+        function addToBillableHours(billable) {
+            // Store in localStorage for persistence
+            const billableHours = JSON.parse(localStorage.getItem('billableHours') || '[]');
+            const newBillable = {
+                id: Date.now(),
+                ...billable,
+                date: new Date().toISOString().split('T')[0],
+                addedAt: new Date().toISOString()
+            };
+            
+            billableHours.unshift(newBillable);
+            localStorage.setItem('billableHours', JSON.stringify(billableHours));
+            
+            showNotification('Billable hours logged successfully!', 'success');
+        }
+
+        function addLegalExpense() {
+            showNotification('Legal expense form opening...', 'info');
+        }
+
+        function logBillableHours() {
+            showNotification('Billable hours form opening...', 'info');
+        }
+
+        function calculateCourtFee() {
+            showNotification('Select a court level below to calculate fees', 'info');
+        }
+
+        function selectCourt(courtType) {
+            // Remove previous selections
+            document.querySelectorAll('.court-option').forEach(option => {
+                option.classList.remove('selected');
+            });
+
+            // Add selection
+            event.target.closest('.court-option').classList.add('selected');
+
+            const fees = {
+                supreme: { base: 5000, description: 'Supreme Court of Sri Lanka' },
+                appeal: { base: 3000, description: 'Court of Appeal' },
+                high: { base: 2000, description: 'High Court' },
+                district: { base: 1000, description: 'District Court' }
+            };
+
+            const court = fees[courtType];
+            const calculation = document.getElementById('feeCalculation');
+            calculation.innerHTML = `
+                <strong>${court.description}</strong><br>
+                Base Filing Fee: LKR ${court.base.toLocaleString()}<br>
+                <small style="color: var(--gray-600);">Additional fees may apply based on case type and value</small>
+            `;
+
+            showNotification(`${court.description} fee: LKR ${court.base.toLocaleString()}`, 'success');
+        }
+
+        function refreshCases() {
+            showNotification('Case list refreshed successfully!', 'success');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'var(--success-color)' : 
+                           type === 'error' ? 'var(--error-color)' : 
+                           type === 'info' ? 'var(--primary-color)' : 'var(--warning-color)';
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow-lg);
+                z-index: 1001;
+                animation: slideInRight 0.3s ease-out;
+                max-width: 350px;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                 type === 'error' ? 'exclamation-circle' : 
+                                 type === 'info' ? 'info-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set welcome message based on stored user data
+            const userData = localStorage.getItem('myTracksyUser');
+            if (userData) {
+                const user = JSON.parse(userData);
+                document.getElementById('welcomeMessage').textContent = 
+                    `Welcome, Attorney ${user.name || 'Professional'}! Manage your legal practice, track billable hours, and monitor case progress.`;
+                
+                // Update user avatar
+                const avatar = document.getElementById('userAvatar');
+                if (user.name) {
+                    avatar.textContent = user.name.charAt(0).toUpperCase();
+                }
+            }
+
+            // Add CSS animations
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes slideInRight {
+                    from {
+                        opacity: 0;
+                        transform: translateX(100px);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translateX(0);
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        });
+    </script>
+</body>
+</html>

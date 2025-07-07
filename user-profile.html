@@ -1,0 +1,3586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy - User Profile | Personal Financial Dashboard</title>
+    <meta name="description" content="Your personal MyTracksy profile - manage your companies, professional settings, and personal finances">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="sri-lanka-tax-engine.js"></script>
+    <script src="behavioral-engagement-system.js"></script>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --secondary-color: #764ba2;
+            --accent-color: #f093fb;
+            --success-color: #00c851;
+            --warning-color: #ffbb33;
+            --error-color: #ff4444;
+            --dark-color: #2c3e50;
+            --light-color: #ffffff;
+            --gray-100: #f8f9fa;
+            --gray-200: #e9ecef;
+            --gray-300: #dee2e6;
+            --gray-400: #ced4da;
+            --gray-500: #adb5bd;
+            --gray-600: #6c757d;
+            --gray-700: #495057;
+            --gray-800: #343a40;
+            --gray-900: #212529;
+            --shadow-sm: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            --shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            --shadow-lg: 0 1rem 3rem rgba(0, 0, 0, 0.175);
+            --border-radius: 8px;
+            --border-radius-lg: 16px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 50%, var(--accent-color) 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 1rem 0;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .nav-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-link {
+            color: var(--gray-600);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition);
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--primary-color);
+        }
+
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .main-content {
+            margin-top: 80px;
+            padding: 2rem;
+            max-width: 1400px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .profile-header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            text-align: center;
+        }
+
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0 auto 1rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .profile-name {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .profile-email {
+            color: var(--gray-600);
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        .profile-stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .dashboard-section {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--dark-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            transform: translateY(-2px);
+        }
+
+        .btn-accent {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .btn-accent:hover {
+            background: #e879f9;
+            transform: translateY(-2px);
+        }
+
+        .companies-list {
+            list-style: none;
+        }
+
+        .company-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .company-item:hover {
+            background: var(--gray-50);
+        }
+
+        .company-item:last-child {
+            border-bottom: none;
+        }
+
+        .company-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .company-logo {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .company-details h4 {
+            color: var(--dark-color);
+            margin-bottom: 0.25rem;
+        }
+
+        .company-details small {
+            color: var(--gray-600);
+        }
+
+        .company-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .personal-summary {
+            background: var(--gray-50);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: var(--gray-600);
+        }
+
+        .summary-value {
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .action-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .action-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .action-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .action-description {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: var(--gray-600);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--gray-400);
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .profile-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Personal Tax Section Styles */
+        .personal-tax-section {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: var(--border-radius-lg);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid var(--gray-200);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+
+        .section-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.1rem;
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Tax Status Cards */
+        .tax-status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .tax-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 2px solid transparent;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tax-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .tax-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .tax-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .tax-content h3 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .tax-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .tax-status.active {
+            background: rgba(0, 200, 81, 0.1);
+            color: var(--success-color);
+        }
+
+        .tax-status.warning {
+            background: rgba(255, 187, 51, 0.1);
+            color: var(--warning-color);
+        }
+
+        .tax-status.urgent {
+            background: rgba(255, 68, 68, 0.1);
+            color: var(--error-color);
+        }
+
+        .tax-content p {
+            color: var(--gray-600);
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .btn-tax {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            margin-top: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-tax:hover {
+            background: var(--secondary-color);
+            transform: translateY(-2px);
+        }
+
+        /* Tax Calculator Section */
+        .tax-calculator-section {
+            margin-bottom: 3rem;
+        }
+
+        .calculator-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .calculator-header h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .calculator-header p {
+            color: var(--gray-600);
+            font-size: 1rem;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .calculator-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+        }
+
+        .calculator-card h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--gray-700);
+        }
+
+        .tax-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+        }
+
+        .tax-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .tax-calculation-result {
+            background: var(--gray-100);
+        }
+
+        .result-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .result-row:last-child {
+            border-bottom: none;
+            margin-bottom: 1rem;
+        }
+
+        .result-row.highlight {
+            background: rgba(102, 126, 234, 0.1);
+            margin: 0.5rem -1rem;
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .btn-calculate {
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--success-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-calculate:hover {
+            background: #00b347;
+            transform: translateY(-2px);
+        }
+
+        /* Tax Filing Checklist */
+        .tax-filing-checklist {
+            margin-bottom: 3rem;
+        }
+
+        .checklist-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .checklist-header h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .checklist-header p {
+            color: var(--gray-600);
+        }
+
+        .checklist-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .checklist-category {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+        }
+
+        .checklist-category h4 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checklist-items {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .checklist-item:hover {
+            background: var(--gray-100);
+        }
+
+        .checklist-item input[type="checkbox"] {
+            display: none;
+        }
+
+        .checkmark {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--gray-300);
+            border-radius: 4px;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .checklist-item input[type="checkbox"]:checked + .checkmark {
+            background: var(--success-color);
+            border-color: var(--success-color);
+        }
+
+        .checklist-item input[type="checkbox"]:checked + .checkmark::after {
+            content: '✓';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .checklist-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        /* Quick Tax Tools */
+        .quick-tax-tools {
+            margin-bottom: 2rem;
+        }
+
+        .tools-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .tools-header h3 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tools-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .tool-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--gray-200);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
+        }
+
+        .tool-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin: 0 auto 1rem;
+        }
+
+        .tool-card h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-card p {
+            color: var(--gray-600);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .personal-tax-section {
+                padding: 1rem;
+                margin-top: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .tax-status-grid,
+            .calculator-grid,
+            .checklist-grid,
+            .tools-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .checklist-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-chart-line"></i>
+                MyTracksy
+            </a>
+            <ul class="nav-menu">
+                <li><a href="#profile" class="nav-link active">Profile</a></li>
+                <li><a href="#companies" class="nav-link">Companies</a></li>
+                <li><a href="#personal" class="nav-link">Personal Finance</a></li>
+                <li><a href="#settings" class="nav-link">Settings</a></li>
+            </ul>
+            <div class="user-menu">
+                <div class="user-avatar" id="userAvatar">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-avatar" id="profileAvatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <h1 class="profile-name" id="profileName">Welcome User</h1>
+            <p class="profile-email" id="profileEmail">user@example.com</p>
+            <div class="profile-stats">
+                <div class="stat-item">
+                    <div class="stat-value" id="companiesCount">0</div>
+                    <div class="stat-label">Companies</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="totalExpenses">LKR 0</div>
+                    <div class="stat-label">Total Expenses</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="memberSince">2025</div>
+                    <div class="stat-label">Member Since</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- My Companies Section -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-building"></i>
+                        My Companies
+                    </h2>
+                    <button class="btn btn-primary" onclick="createNewCompany()">
+                        <i class="fas fa-plus"></i>
+                        Add Company
+                    </button>
+                </div>
+
+                <ul class="companies-list" id="companiesList">
+                    <!-- Companies will be loaded here -->
+                </ul>
+
+                <div class="empty-state" id="emptyCompaniesState" style="display: none;">
+                    <i class="fas fa-building"></i>
+                    <h3>No Companies Yet</h3>
+                    <p>Create your first company profile to get started with business expense tracking</p>
+                    <button class="btn btn-primary" onclick="createNewCompany()" style="margin-top: 1rem;">
+                        <i class="fas fa-plus"></i>
+                        Create First Company
+                    </button>
+                </div>
+            </div>
+
+            <!-- Personal Finance Summary -->
+            <div class="dashboard-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-user"></i>
+                        Personal Finance Summary
+                    </h2>
+                    <button class="btn btn-secondary" onclick="viewPersonalFinance()">
+                        <i class="fas fa-eye"></i>
+                        View Details
+                    </button>
+                </div>
+
+                <div class="personal-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Personal Expenses This Month</span>
+                        <span class="summary-value" id="personalExpenses">LKR 0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Savings Goals Progress</span>
+                        <span class="summary-value" id="savingsProgress">0%</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Investment Portfolio</span>
+                        <span class="summary-value" id="investmentValue">LKR 0</span>
+                    </div>
+                    <div class="summary-item">
+                        <span class="summary-label">Professional Profile</span>
+                        <span class="summary-value" id="professionType">Not Set</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-accent" onclick="addPersonalExpense()" style="width: 100%; margin-top: 1rem;">
+                    <i class="fas fa-plus"></i>
+                    Add Personal Expense
+                </button>
+            </div>
+        </div>
+
+        <!-- Personal Tax Compliance Section -->
+        <div class="personal-tax-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-receipt"></i>
+                    Personal Income Tax Management
+                </h2>
+                <p class="section-subtitle">Sri Lankan personal income tax calculator and compliance tools</p>
+            </div>
+
+            <!-- Tax Status Cards -->
+            <div class="tax-status-grid">
+                <div class="tax-card income-tax">
+                    <div class="tax-icon">
+                        <i class="fas fa-money-bill-wave"></i>
+                    </div>
+                    <div class="tax-content">
+                        <h3>Income Tax Status</h3>
+                        <div class="tax-status active">Registered</div>
+                        <p>TIN: 987654321V</p>
+                        <p>Tax Year: 2024/2025</p>
+                    </div>
+                    <button class="btn-tax" onclick="calculatePersonalIncomeTax()">
+                        <i class="fas fa-calculator"></i>
+                        Calculate Tax
+                    </button>
+                </div>
+
+                <div class="tax-card vat-registration">
+                    <div class="tax-icon">
+                        <i class="fas fa-percentage"></i>
+                    </div>
+                    <div class="tax-content">
+                        <h3>VAT Registration</h3>
+                        <div class="tax-status warning">Check Required</div>
+                        <p>Threshold: LKR 12M annually</p>
+                        <p>Current Revenue: LKR 8.5M</p>
+                    </div>
+                    <button class="btn-tax" onclick="checkVATRegistrationEligibility()">
+                        <i class="fas fa-search"></i>
+                        Check Eligibility
+                    </button>
+                </div>
+
+                <div class="tax-card withholding-tracker">
+                    <div class="tax-icon">
+                        <i class="fas fa-hand-holding-dollar"></i>
+                    </div>
+                    <div class="tax-content">
+                        <h3>Withholding Tax</h3>
+                        <div class="tax-status active">Tracked</div>
+                        <p>YTD WHT: LKR 45,000</p>
+                        <p>Rate: 5% - 15%</p>
+                    </div>
+                    <button class="btn-tax" onclick="viewWithholdingTaxReport()">
+                        <i class="fas fa-chart-line"></i>
+                        View Report
+                    </button>
+                </div>
+
+                <div class="tax-card filing-reminders">
+                    <div class="tax-icon">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="tax-content">
+                        <h3>Filing Reminders</h3>
+                        <div class="tax-status urgent">Due Soon</div>
+                        <p>Next Filing: March 31, 2025</p>
+                        <p>Days Left: 45</p>
+                    </div>
+                    <button class="btn-tax" onclick="setTaxReminders()">
+                        <i class="fas fa-bell"></i>
+                        Set Reminders
+                    </button>
+                </div>
+            </div>
+
+            <!-- Personal Income Tax Calculator -->
+            <div class="tax-calculator-section">
+                <div class="calculator-header">
+                    <h3><i class="fas fa-calculator"></i> Personal Income Tax Calculator</h3>
+                    <p>Calculate your Sri Lankan personal income tax for 2024/2025</p>
+                </div>
+
+                <div class="calculator-grid">
+                    <div class="calculator-card">
+                        <h4>Income Details</h4>
+                        <div class="input-group">
+                            <label>Annual Employment Income (LKR)</label>
+                            <input type="number" id="employmentIncome" placeholder="1,200,000" class="tax-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Business/Professional Income (LKR)</label>
+                            <input type="number" id="businessIncome" placeholder="500,000" class="tax-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Other Income (LKR)</label>
+                            <input type="number" id="otherIncome" placeholder="100,000" class="tax-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Investment Income (LKR)</label>
+                            <input type="number" id="investmentIncome" placeholder="75,000" class="tax-input">
+                        </div>
+                    </div>
+
+                    <div class="calculator-card">
+                        <h4>Deductions & Reliefs</h4>
+                        <div class="input-group">
+                            <label>EPF Contributions (LKR)</label>
+                            <input type="number" id="epfContributions" placeholder="120,000" class="tax-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Life Insurance Premiums (LKR)</label>
+                            <input type="number" id="insurancePremiums" placeholder="50,000" class="tax-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Donations to Approved Charities (LKR)</label>
+                            <input type="number" id="donations" placeholder="25,000" class="tax-input">
+                        </div>
+                        <div class="input-group">
+                            <label>Medical Expenses (LKR)</label>
+                            <input type="number" id="medicalExpenses" placeholder="30,000" class="tax-input">
+                        </div>
+                    </div>
+
+                    <div class="calculator-card tax-calculation-result">
+                        <h4>Tax Calculation</h4>
+                        <div class="result-row">
+                            <span>Total Income:</span>
+                            <span id="totalIncome">LKR 0</span>
+                        </div>
+                        <div class="result-row">
+                            <span>Total Deductions:</span>
+                            <span id="totalDeductions">LKR 0</span>
+                        </div>
+                        <div class="result-row">
+                            <span>Taxable Income:</span>
+                            <span id="taxableIncome">LKR 0</span>
+                        </div>
+                        <div class="result-row highlight">
+                            <span>Income Tax Payable:</span>
+                            <span id="incomeTaxPayable">LKR 0</span>
+                        </div>
+                        <div class="result-row">
+                            <span>Monthly Tax:</span>
+                            <span id="monthlyTax">LKR 0</span>
+                        </div>
+                        <button class="btn-calculate" onclick="calculatePersonalIncomeTax()">
+                            Calculate Income Tax
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tax Filing Checklist -->
+            <div class="tax-filing-checklist">
+                <div class="checklist-header">
+                    <h3><i class="fas fa-list-check"></i> Tax Filing Checklist</h3>
+                    <p>Ensure you have all required documents for your tax return</p>
+                </div>
+
+                <div class="checklist-grid">
+                    <div class="checklist-category">
+                        <h4><i class="fas fa-briefcase"></i> Employment Documents</h4>
+                        <div class="checklist-items">
+                            <label class="checklist-item">
+                                <input type="checkbox" id="employmentCertificate">
+                                <span class="checkmark"></span>
+                                Employment Certificate
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="salarySlips">
+                                <span class="checkmark"></span>
+                                12 Months Salary Slips
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="epfStatement">
+                                <span class="checkmark"></span>
+                                EPF Statement
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="leaveEncashment">
+                                <span class="checkmark"></span>
+                                Leave Encashment Details
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-category">
+                        <h4><i class="fas fa-building"></i> Business Documents</h4>
+                        <div class="checklist-items">
+                            <label class="checklist-item">
+                                <input type="checkbox" id="businessRegistration">
+                                <span class="checkmark"></span>
+                                Business Registration
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="profitLossStatement">
+                                <span class="checkmark"></span>
+                                Profit & Loss Statement
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="balanceSheet">
+                                <span class="checkmark"></span>
+                                Balance Sheet
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="businessBankStatements">
+                                <span class="checkmark"></span>
+                                Business Bank Statements
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="checklist-category">
+                        <h4><i class="fas fa-receipt"></i> Supporting Documents</h4>
+                        <div class="checklist-items">
+                            <label class="checklist-item">
+                                <input type="checkbox" id="insurancePolicies">
+                                <span class="checkmark"></span>
+                                Life Insurance Policies
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="medicalBills">
+                                <span class="checkmark"></span>
+                                Medical Bills & Receipts
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="donationReceipts">
+                                <span class="checkmark"></span>
+                                Donation Receipts
+                            </label>
+                            <label class="checklist-item">
+                                <input type="checkbox" id="bankStatements">
+                                <span class="checkmark"></span>
+                                Personal Bank Statements
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checklist-actions">
+                    <button class="btn-primary" onclick="generateTaxFilingReport()">
+                        <i class="fas fa-file-pdf"></i>
+                        Generate Pre-filled Return
+                    </button>
+                    <button class="btn-secondary" onclick="saveChecklistProgress()">
+                        <i class="fas fa-save"></i>
+                        Save Progress
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Tax Tools -->
+            <div class="quick-tax-tools">
+                <div class="tools-header">
+                    <h3><i class="fas fa-tools"></i> Quick Tax Tools</h3>
+                </div>
+
+                <div class="tools-grid">
+                    <div class="tool-card" onclick="openPayeCalculator()">
+                        <div class="tool-icon">
+                            <i class="fas fa-money-check-alt"></i>
+                        </div>
+                        <h4>PAYE Calculator</h4>
+                        <p>Calculate monthly PAYE deductions</p>
+                    </div>
+
+                    <div class="tool-card" onclick="openVATCalculator()">
+                        <div class="tool-icon">
+                            <i class="fas fa-percentage"></i>
+                        </div>
+                        <h4>VAT Calculator</h4>
+                        <p>Calculate VAT on purchases and sales</p>
+                    </div>
+
+                    <div class="tool-card" onclick="openTaxCalendar()">
+                        <div class="tool-icon">
+                            <i class="fas fa-calendar-alt"></i>
+                        </div>
+                        <h4>Tax Calendar</h4>
+                        <p>Important tax dates and deadlines</p>
+                    </div>
+
+                    <div class="tool-card" onclick="openTaxGuide()">
+                        <div class="tool-icon">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <h4>Tax Guide</h4>
+                        <p>Sri Lankan tax laws and guidance</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <!-- User Help & Quick Tips -->
+        <div style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; border-radius: var(--border-radius-lg); padding: 1.5rem; margin-bottom: 2rem; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: rgba(255,255,255,0.1); border-radius: 50%; transform: translate(30px, -30px);"></div>
+            <div style="position: relative; z-index: 1;">
+                <h3 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-question-circle"></i>
+                    Need Help Getting Started?
+                </h3>
+                <p style="margin-bottom: 1.5rem; opacity: 0.9;">New to MyTracksy? Let us guide you through the essential features to maximize your financial management experience.</p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <button onclick="showWelcomeGuide()" style="
+                        background: rgba(255,255,255,0.2);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        transition: var(--transition);
+                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        <i class="fas fa-play"></i> Start Tour Again
+                    </button>
+                    <button onclick="showMonetizationInfo()" style="
+                        background: rgba(255,255,255,0.2);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        transition: var(--transition);
+                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        <i class="fas fa-star"></i> View Plans
+                    </button>
+                    <button onclick="showFeatureGuide()" style="
+                        background: rgba(255,255,255,0.2);
+                        color: white;
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 0.75rem 1.5rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        transition: var(--transition);
+                    " onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
+                        <i class="fas fa-book"></i> Feature Guide
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <a href="profession-setup.html" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <div class="action-title">Set Professional Profile</div>
+                <div class="action-description">Choose your profession for customized features</div>
+            </a>
+
+            <a href="company-setup.html" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="action-title">Create Company</div>
+                <div class="action-description">Set up a new business entity</div>
+            </a>
+
+            <a href="phases.html" class="action-card">
+                <div class="action-icon">
+                    <i class="fas fa-rocket"></i>
+                </div>
+                <div class="action-title">Explore Features</div>
+                <div class="action-description">Try all 22 phases of functionality</div>
+            </a>
+
+            <a href="#settings" class="action-card" onclick="openSettings()">
+                <div class="action-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="action-title">Account Settings</div>
+                <div class="action-description">Manage your profile and preferences</div>
+            </a>
+
+            <a href="#reports" class="action-card" onclick="generateReports()">
+                <div class="action-icon">
+                    <i class="fas fa-chart-bar"></i>
+                </div>
+                <div class="action-title">Financial Reports</div>
+                <div class="action-description">View comprehensive financial analytics</div>
+            </a>
+
+            <a href="#employee-management" class="action-card" onclick="openEmployeeManagement()">
+                <div class="action-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="action-title">Employee Management</div>
+                <div class="action-description">Manage employees across all companies</div>
+            </a>
+
+            <a href="sri-lanka-features.html" class="action-card">
+                <div class="action-icon" style="background: linear-gradient(45deg, #ff6b6b, #ffa500);">
+                    <i class="fas fa-flag"></i>
+                </div>
+                <div class="action-title">🇱🇰 Sri Lankan Features</div>
+                <div class="action-description">Local payments, banks, and cultural adaptations</div>
+            </a>
+            
+            <a href="#support" class="action-card" onclick="contactSupport()">
+                <div class="action-icon">
+                    <i class="fas fa-headset"></i>
+                </div>
+                <div class="action-title">Support & Help</div>
+                <div class="action-description">Get assistance and tutorials</div>
+            </a>
+        </div>
+    </main>
+
+    <script>
+        // User data and companies management
+        let currentUser = null;
+        let userCompanies = [];
+
+        // Initialize user profile
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserData();
+            loadUserCompanies();
+            updateUI();
+            updatePersonalFinanceData();
+            initializePersonalTaxCalculators();
+            loadChecklistProgress();
+        });
+
+        function loadUserData() {
+            // Load user data from various login methods
+            const loginData = localStorage.getItem('myTracksyLogin');
+            const socialLogin = localStorage.getItem('myTracksySocialLogin');
+            const biometricLogin = localStorage.getItem('myTracksyBiometric');
+            const userData = localStorage.getItem('myTracksyUser');
+            
+            if (loginData || socialLogin || biometricLogin || userData) {
+                currentUser = JSON.parse(userData || loginData || socialLogin || biometricLogin);
+            } else {
+                // Redirect to login if no user data found
+                window.location.href = 'login.html';
+                return;
+            }
+        }
+
+        function loadUserCompanies() {
+            // Load companies from localStorage
+            const companies = localStorage.getItem('myTracksyUserCompanies');
+            if (companies) {
+                userCompanies = JSON.parse(companies);
+            } else {
+                userCompanies = [];
+            }
+        }
+
+        function updateUI() {
+            if (!currentUser) return;
+
+            // Update profile information
+            document.getElementById('profileName').textContent = currentUser.name || currentUser.email || 'User';
+            document.getElementById('profileEmail').textContent = currentUser.email || 'user@example.com';
+            
+            // Update avatars
+            const profileAvatar = document.getElementById('profileAvatar');
+            const userAvatar = document.getElementById('userAvatar');
+            
+            if (currentUser.name) {
+                const initial = currentUser.name.charAt(0).toUpperCase();
+                profileAvatar.textContent = initial;
+                userAvatar.textContent = initial;
+            }
+
+            // Update stats
+            document.getElementById('companiesCount').textContent = userCompanies.length;
+            document.getElementById('memberSince').textContent = new Date().getFullYear();
+
+            // Load profession info
+            const professionData = localStorage.getItem('myTracksyProfession');
+            if (professionData) {
+                const profession = JSON.parse(professionData);
+                document.getElementById('professionType').textContent = 
+                    profession.profession.charAt(0).toUpperCase() + profession.profession.slice(1);
+            }
+
+            // Update companies list
+            updateCompaniesList();
+        }
+
+        function updateCompaniesList() {
+            const companiesList = document.getElementById('companiesList');
+            const emptyState = document.getElementById('emptyCompaniesState');
+
+            if (userCompanies.length === 0) {
+                companiesList.style.display = 'none';
+                emptyState.style.display = 'block';
+            } else {
+                companiesList.style.display = 'block';
+                emptyState.style.display = 'none';
+                
+                companiesList.innerHTML = userCompanies.map(company => `
+                    <li class="company-item" onclick="selectCompany('${company.id}')">
+                        <div class="company-info">
+                            <div class="company-logo">
+                                ${company.logo ? `<img src="${company.logo}" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">` : 
+                                  `<i class="fas fa-building"></i>`}
+                            </div>
+                            <div class="company-details">
+                                <h4>${company.name}</h4>
+                                <small>${company.category ? company.category.charAt(0).toUpperCase() + company.category.slice(1) : 'Business'} • ${company.employees || 'N/A'} employees</small>
+                            </div>
+                        </div>
+                        <div class="company-actions">
+                            <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); openCompanyDashboard('${company.id}')">
+                                <i class="fas fa-external-link-alt"></i>
+                                Open
+                            </button>
+                            <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); editCompany('${company.id}')">
+                                <i class="fas fa-edit"></i>
+                                Edit
+                            </button>
+                        </div>
+                    </li>
+                `).join('');
+            }
+        }
+
+        function createNewCompany() {
+            // Check if user has set professional profile first
+            const professionData = localStorage.getItem('myTracksyProfession');
+            if (!professionData) {
+                if (confirm('Please set your professional profile first to get customized company features. Set up now?')) {
+                    window.location.href = 'profession-setup.html';
+                    return;
+                }
+            }
+            
+            // Redirect to company setup
+            window.location.href = 'company-setup.html';
+        }
+
+        function selectCompany(companyId) {
+            const company = userCompanies.find(c => c.id === companyId);
+            if (company) {
+                // Store selected company
+                localStorage.setItem('myTracksySelectedCompany', JSON.stringify(company));
+                showNotification(`Selected company: ${company.name}`, 'success');
+            }
+        }
+
+        function openCompanyDashboard(companyId) {
+            const company = userCompanies.find(c => c.id === companyId);
+            if (company) {
+                // Store selected company and redirect to company profile
+                localStorage.setItem('myTracksySelectedCompany', JSON.stringify(company));
+                localStorage.setItem('myTracksyCompany', JSON.stringify(company));
+                window.location.href = 'company-profile.html';
+            }
+        }
+
+        function editCompany(companyId) {
+            const company = userCompanies.find(c => c.id === companyId);
+            if (company) {
+                // Store company for editing and redirect to setup
+                localStorage.setItem('myTracksyEditCompany', JSON.stringify(company));
+                window.location.href = 'company-setup.html';
+            }
+        }
+
+        function addPersonalExpense() {
+            showPersonalExpenseForm();
+        }
+
+        function showPersonalExpenseForm() {
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+            `;
+
+            modal.innerHTML = `
+                <div class="expense-form-modal" style="
+                    background: white;
+                    border-radius: var(--border-radius-lg);
+                    padding: 2rem;
+                    max-width: 500px;
+                    width: 90%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    box-shadow: var(--shadow-lg);
+                    animation: slideInUp 0.3s ease-out;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="margin: 0; color: var(--dark-color);">
+                            <i class="fas fa-user" style="color: var(--primary-color); margin-right: 0.5rem;"></i>
+                            Add Personal Expense
+                        </h2>
+                        <button onclick="closeExpenseForm()" style="
+                            background: none;
+                            border: none;
+                            font-size: 1.5rem;
+                            color: var(--gray-500);
+                            cursor: pointer;
+                            padding: 0.5rem;
+                            border-radius: 50%;
+                            transition: var(--transition);
+                        ">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <form id="personalExpenseForm" style="display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- Amount Input -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark-color);">
+                                Amount (LKR) *
+                            </label>
+                            <input type="number" id="personalAmount" placeholder="Enter amount" required style="
+                                width: 100%;
+                                padding: 0.75rem 1rem;
+                                border: 2px solid var(--gray-300);
+                                border-radius: var(--border-radius);
+                                font-size: 1rem;
+                                transition: var(--transition);
+                            ">
+                        </div>
+
+                        <!-- Description Input -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark-color);">
+                                Description *
+                            </label>
+                            <input type="text" id="personalDescription" placeholder="What did you spend on?" required style="
+                                width: 100%;
+                                padding: 0.75rem 1rem;
+                                border: 2px solid var(--gray-300);
+                                border-radius: var(--border-radius);
+                                font-size: 1rem;
+                                transition: var(--transition);
+                            ">
+                        </div>
+
+                        <!-- Category Selection -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark-color);">
+                                Category *
+                            </label>
+                            <select id="personalCategory" required style="
+                                width: 100%;
+                                padding: 0.75rem 1rem;
+                                border: 2px solid var(--gray-300);
+                                border-radius: var(--border-radius);
+                                font-size: 1rem;
+                                background: white;
+                                transition: var(--transition);
+                            ">
+                                <option value="">Select category</option>
+                                <option value="Food & Groceries">Food & Groceries</option>
+                                <option value="Transportation">Transportation</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Shopping">Shopping</option>
+                                <option value="Bills & Utilities">Bills & Utilities</option>
+                                <option value="Education">Education</option>
+                                <option value="Travel">Travel</option>
+                                <option value="Family">Family</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <!-- Date Input -->
+                        <div>
+                            <label style="display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--dark-color);">
+                                Date *
+                            </label>
+                            <input type="date" id="personalDate" required style="
+                                width: 100%;
+                                padding: 0.75rem 1rem;
+                                border: 2px solid var(--gray-300);
+                                border-radius: var(--border-radius);
+                                font-size: 1rem;
+                                transition: var(--transition);
+                            ">
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                            <button type="submit" style="
+                                flex: 1;
+                                background: var(--primary-color);
+                                color: white;
+                                border: none;
+                                padding: 0.75rem 1.5rem;
+                                border-radius: var(--border-radius);
+                                font-size: 1rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: var(--transition);
+                                display: flex;
+                                align-items: center;
+                                justify-content: center;
+                                gap: 0.5rem;
+                            ">
+                                <i class="fas fa-save"></i>
+                                Save Personal Expense
+                            </button>
+                            <button type="button" onclick="closeExpenseForm()" style="
+                                background: var(--gray-500);
+                                color: white;
+                                border: none;
+                                padding: 0.75rem 1.5rem;
+                                border-radius: var(--border-radius);
+                                font-size: 1rem;
+                                font-weight: 600;
+                                cursor: pointer;
+                                transition: var(--transition);
+                            ">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Set default date to today
+            document.getElementById('personalDate').value = new Date().toISOString().split('T')[0];
+
+            // Handle form submission
+            document.getElementById('personalExpenseForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitPersonalExpenseForm();
+            });
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeExpenseForm();
+                }
+            });
+        }
+
+        function closeExpenseForm() {
+            const modal = document.querySelector('[style*="backdrop-filter: blur(5px)"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function submitPersonalExpenseForm() {
+            const amount = parseFloat(document.getElementById('personalAmount').value);
+            const description = document.getElementById('personalDescription').value.trim();
+            const category = document.getElementById('personalCategory').value;
+            const date = document.getElementById('personalDate').value;
+
+            if (!amount || !description || !category || !date) {
+                showNotification('Please fill in all required fields!', 'error');
+                return;
+            }
+
+            const newExpense = {
+                id: Date.now(),
+                amount: amount,
+                category: category,
+                description: description,
+                date: date,
+                type: 'personal',
+                addedAt: new Date().toISOString()
+            };
+
+            // Save to personal expenses
+            const personalExpenses = JSON.parse(localStorage.getItem('myTracksyPersonalExpenses') || '[]');
+            personalExpenses.unshift(newExpense);
+            localStorage.setItem('myTracksyPersonalExpenses', JSON.stringify(personalExpenses));
+            
+            // Close the form
+            closeExpenseForm();
+            
+            // Show success notification
+            showNotification('Personal expense added successfully!', 'success');
+            
+            // Update UI
+            updatePersonalFinanceData();
+        }
+
+        function updatePersonalFinanceData() {
+            const personalExpenses = JSON.parse(localStorage.getItem('myTracksyPersonalExpenses') || '[]');
+            const thisMonth = new Date().toISOString().substring(0, 7); // YYYY-MM format
+            
+            const monthlyExpenses = personalExpenses.filter(expense => 
+                expense.date.startsWith(thisMonth)
+            ).reduce((sum, expense) => sum + expense.amount, 0);
+            
+            document.getElementById('personalExpenses').textContent = `LKR ${monthlyExpenses.toLocaleString()}`;
+        }
+
+        function openEmployeeManagement() {
+            showEmployeeManagementPanel();
+        }
+
+        function showEmployeeManagementPanel() {
+            // Create modal overlay for employee management
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+            `;
+
+            modal.innerHTML = `
+                <div class="employee-panel" style="
+                    background: white;
+                    border-radius: var(--border-radius-lg);
+                    padding: 2rem;
+                    max-width: 800px;
+                    width: 90%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    box-shadow: var(--shadow-lg);
+                    animation: slideInUp 0.3s ease-out;
+                ">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2 style="margin: 0; color: var(--dark-color);">
+                            <i class="fas fa-users" style="color: var(--primary-color); margin-right: 0.5rem;"></i>
+                            Employee Management
+                        </h2>
+                        <button onclick="closeEmployeePanel()" style="
+                            background: none;
+                            border: none;
+                            font-size: 1.5rem;
+                            color: var(--gray-500);
+                            cursor: pointer;
+                            padding: 0.5rem;
+                            border-radius: 50%;
+                            transition: var(--transition);
+                        ">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <div style="margin-bottom: 2rem;">
+                        <button class="btn btn-primary" onclick="addNewEmployee()" style="margin-right: 1rem;">
+                            <i class="fas fa-plus"></i>
+                            Add Employee
+                        </button>
+                        <button class="btn btn-secondary" onclick="importEmployees()">
+                            <i class="fas fa-upload"></i>
+                            Import Employees
+                        </button>
+                    </div>
+
+                    <div id="employeesList">
+                        <!-- Employees will be loaded here -->
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            loadEmployeesList();
+
+            // Close modal when clicking outside
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeEmployeePanel();
+                }
+            });
+        }
+
+        function closeEmployeePanel() {
+            const modal = document.querySelector('.employee-panel').closest('[style*="backdrop-filter"]');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        function loadEmployeesList() {
+            const employees = JSON.parse(localStorage.getItem('myTracksyEmployees') || '[]');
+            const employeesList = document.getElementById('employeesList');
+            
+            if (employees.length === 0) {
+                employeesList.innerHTML = `
+                    <div style="text-align: center; padding: 3rem; color: var(--gray-600);">
+                        <i class="fas fa-users" style="font-size: 3rem; color: var(--gray-400); margin-bottom: 1rem;"></i>
+                        <h3>No Employees Yet</h3>
+                        <p>Add your first employee to get started with employee management</p>
+                    </div>
+                `;
+            } else {
+                employeesList.innerHTML = `
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: var(--gray-100);">
+                                    <th style="text-align: left; padding: 1rem; border-bottom: 2px solid var(--gray-200);">Name</th>
+                                    <th style="text-align: left; padding: 1rem; border-bottom: 2px solid var(--gray-200);">Position</th>
+                                    <th style="text-align: left; padding: 1rem; border-bottom: 2px solid var(--gray-200);">Company</th>
+                                    <th style="text-align: left; padding: 1rem; border-bottom: 2px solid var(--gray-200);">Salary</th>
+                                    <th style="text-align: left; padding: 1rem; border-bottom: 2px solid var(--gray-200);">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${employees.map(employee => `
+                                    <tr style="border-bottom: 1px solid var(--gray-200);">
+                                        <td style="padding: 1rem;">
+                                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                                <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary-color); display: flex; align-items: center; justify-content: center; color: white; font-weight: 600;">
+                                                    ${employee.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div>
+                                                    <div style="font-weight: 600;">${employee.name}</div>
+                                                    <div style="font-size: 0.9rem; color: var(--gray-600);">${employee.email}</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td style="padding: 1rem;">${employee.position}</td>
+                                        <td style="padding: 1rem;">${employee.company}</td>
+                                        <td style="padding: 1rem;">LKR ${employee.salary.toLocaleString()}</td>
+                                        <td style="padding: 1rem;">
+                                            <button class="btn btn-sm" onclick="editEmployee('${employee.id}')" style="margin-right: 0.5rem; padding: 0.5rem;">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm" onclick="deleteEmployee('${employee.id}')" style="background: var(--error-color); padding: 0.5rem;">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+        }
+
+        function addNewEmployee() {
+            const name = prompt('Employee Name:');
+            const email = prompt('Employee Email:');
+            const position = prompt('Position:');
+            const company = prompt('Company:');
+            const salary = prompt('Monthly Salary (LKR):');
+
+            if (name && email && position && company && salary) {
+                const employees = JSON.parse(localStorage.getItem('myTracksyEmployees') || '[]');
+                const newEmployee = {
+                    id: Date.now().toString(),
+                    name: name,
+                    email: email,
+                    position: position,
+                    company: company,
+                    salary: parseFloat(salary),
+                    addedAt: new Date().toISOString()
+                };
+
+                employees.push(newEmployee);
+                localStorage.setItem('myTracksyEmployees', JSON.stringify(employees));
+                loadEmployeesList();
+                showNotification('Employee added successfully!', 'success');
+            }
+        }
+
+        function editEmployee(employeeId) {
+            const employees = JSON.parse(localStorage.getItem('myTracksyEmployees') || '[]');
+            const employee = employees.find(e => e.id === employeeId);
+            if (employee) {
+                const newName = prompt('Employee Name:', employee.name);
+                const newPosition = prompt('Position:', employee.position);
+                const newSalary = prompt('Monthly Salary (LKR):', employee.salary);
+
+                if (newName && newPosition && newSalary) {
+                    employee.name = newName;
+                    employee.position = newPosition;
+                    employee.salary = parseFloat(newSalary);
+                    
+                    localStorage.setItem('myTracksyEmployees', JSON.stringify(employees));
+                    loadEmployeesList();
+                    showNotification('Employee updated successfully!', 'success');
+                }
+            }
+        }
+
+        function deleteEmployee(employeeId) {
+            if (confirm('Are you sure you want to delete this employee?')) {
+                let employees = JSON.parse(localStorage.getItem('myTracksyEmployees') || '[]');
+                employees = employees.filter(e => e.id !== employeeId);
+                localStorage.setItem('myTracksyEmployees', JSON.stringify(employees));
+                loadEmployeesList();
+                showNotification('Employee deleted successfully!', 'success');
+            }
+        }
+
+        function importEmployees() {
+            showNotification('Employee import feature coming soon!', 'info');
+        }
+
+        function viewPersonalFinance() {
+            window.location.href = 'individual-dashboard.html';
+        }
+
+        function openSettings() {
+            showNotification('Advanced settings panel opening...', 'info');
+        }
+
+        function generateReports() {
+            showNotification('Generating comprehensive financial reports...', 'info');
+        }
+
+        function contactSupport() {
+            showNotification('Support chat system opening...', 'info');
+        }
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'var(--success-color)' : 
+                           type === 'error' ? 'var(--error-color)' : 
+                           type === 'info' ? 'var(--primary-color)' : 'var(--warning-color)';
+            
+            notification.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: ${bgColor};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: var(--border-radius);
+                box-shadow: var(--shadow-lg);
+                z-index: 1001;
+                animation: slideInRight 0.3s ease-out;
+                max-width: 350px;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas fa-${type === 'success' ? 'check-circle' : 
+                                 type === 'error' ? 'exclamation-circle' : 
+                                 type === 'info' ? 'info-circle' : 'exclamation-triangle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
+        }
+
+        // Initialize user guidance system
+        function initializeUserGuidance() {
+            const hasSeenGuidance = localStorage.getItem('myTracksyGuidanceSeen');
+            if (!hasSeenGuidance) {
+                setTimeout(() => {
+                    showWelcomeGuide();
+                }, 1000);
+            }
+            
+            // Check for first-time user experience
+            checkFirstTimeExperience();
+        }
+        
+        function checkFirstTimeExperience() {
+            const companiesCount = userCompanies.length;
+            const personalExpenses = JSON.parse(localStorage.getItem('myTracksyPersonalExpenses') || '[]');
+            const professionSet = localStorage.getItem('myTracksyProfession');
+            
+            if (companiesCount === 0 && personalExpenses.length === 0 && !professionSet) {
+                // Show getting started tips
+                setTimeout(() => {
+                    showGettingStartedTips();
+                }, 2000);
+            }
+        }
+        
+        function showWelcomeGuide() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(10px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 3rem;
+                    max-width: 600px;
+                    width: 90%;
+                    text-align: center;
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+                    animation: welcomePopup 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+                ">
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🎉</div>
+                    <h2 style="color: var(--primary-color); margin-bottom: 1rem; font-size: 2rem;">Welcome to MyTracksy!</h2>
+                    <p style="color: var(--gray-600); margin-bottom: 2rem; font-size: 1.1rem; line-height: 1.6;">
+                        Welcome to Sri Lanka's most advanced financial intelligence platform! <br>
+                        Let's help you understand how to maximize your experience.
+                    </p>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        <div style="padding: 1rem; background: var(--gray-100); border-radius: 12px;">
+                            <i class="fas fa-building" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 0.5rem;"></i>
+                            <h4>Create Companies</h4>
+                            <p style="font-size: 0.9rem; color: var(--gray-600);">Set up business entities</p>
+                        </div>
+                        <div style="padding: 1rem; background: var(--gray-100); border-radius: 12px;">
+                            <i class="fas fa-chart-line" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 0.5rem;"></i>
+                            <h4>Track Expenses</h4>
+                            <p style="font-size: 0.9rem; color: var(--gray-600);">Monitor personal & business</p>
+                        </div>
+                        <div style="padding: 1rem; background: var(--gray-100); border-radius: 12px;">
+                            <i class="fas fa-rocket" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 0.5rem;"></i>
+                            <h4>22 Features</h4>
+                            <p style="font-size: 0.9rem; color: var(--gray-600);">Explore all capabilities</p>
+                        </div>
+                    </div>
+                    <button onclick="startGuidedTour()" style="
+                        background: var(--primary-color);
+                        color: white;
+                        border: none;
+                        padding: 1rem 2rem;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        margin-right: 1rem;
+                        font-size: 1.1rem;
+                    ">
+                        <i class="fas fa-play"></i> Start Guided Tour
+                    </button>
+                    <button onclick="skipGuidance()" style="
+                        background: var(--gray-300);
+                        color: var(--gray-700);
+                        border: none;
+                        padding: 1rem 2rem;
+                        border-radius: 10px;
+                        font-weight: 600;
+                        cursor: pointer;
+                        font-size: 1.1rem;
+                    ">
+                        Skip for Now
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.startGuidedTour = function() {
+                modal.remove();
+                startStepByStepGuide();
+            };
+            
+            window.skipGuidance = function() {
+                modal.remove();
+                localStorage.setItem('myTracksyGuidanceSeen', 'true');
+            };
+        }
+        
+        function startStepByStepGuide() {
+            const steps = [
+                {
+                    element: '.section-title:first-of-type',
+                    title: 'Companies Section',
+                    description: 'Start by creating your first company profile. You can manage multiple businesses from here.',
+                    position: 'bottom'
+                },
+                {
+                    element: '[onclick="createNewCompany()"]',
+                    title: 'Add Company',
+                    description: 'Click here to create a new company with industry-specific themes and features.',
+                    position: 'bottom'
+                },
+                {
+                    element: '.personal-summary',
+                    title: 'Personal Finance',
+                    description: 'Track your personal expenses, savings goals, and investment portfolio here.',
+                    position: 'top'
+                },
+                {
+                    element: '[onclick="addPersonalExpense()"]',
+                    title: 'Add Expenses',
+                    description: 'Easily add personal expenses with voice input or manual entry.',
+                    position: 'top'
+                },
+                {
+                    element: '.quick-actions',
+                    title: 'Quick Actions',
+                    description: 'Access all major features quickly from these action cards.',
+                    position: 'top'
+                }
+            ];
+            
+            showStepGuide(steps, 0);
+        }
+        
+        function showStepGuide(steps, currentStep) {
+            if (currentStep >= steps.length) {
+                localStorage.setItem('myTracksyGuidanceSeen', 'true');
+                showNotification('🎉 Welcome tour completed! You\'re ready to start using MyTracksy.', 'success');
+                return;
+            }
+            
+            const step = steps[currentStep];
+            const element = document.querySelector(step.element);
+            
+            if (!element) {
+                showStepGuide(steps, currentStep + 1);
+                return;
+            }
+            
+            const rect = element.getBoundingClientRect();
+            const tooltip = document.createElement('div');
+            
+            tooltip.style.cssText = `
+                position: fixed;
+                background: white;
+                border-radius: 12px;
+                padding: 1.5rem;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                z-index: 2001;
+                max-width: 300px;
+                border: 2px solid var(--primary-color);
+            `;
+            
+            const topPosition = step.position === 'bottom' ? rect.bottom + 10 : rect.top - 200;
+            tooltip.style.top = `${topPosition}px`;
+            tooltip.style.left = `${rect.left}px`;
+            
+            tooltip.innerHTML = `
+                <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">${step.title}</h4>
+                <p style="color: var(--gray-600); margin-bottom: 1rem;">${step.description}</p>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--gray-500); font-size: 0.9rem;">Step ${currentStep + 1} of ${steps.length}</span>
+                    <button onclick="nextStep()" style="
+                        background: var(--primary-color);
+                        color: white;
+                        border: none;
+                        padding: 0.5rem 1rem;
+                        border-radius: 6px;
+                        cursor: pointer;
+                        font-weight: 600;
+                    ">
+                        ${currentStep === steps.length - 1 ? 'Finish' : 'Next'}
+                    </button>
+                </div>
+            `;
+            
+            // Highlight element
+            element.style.boxShadow = '0 0 0 3px var(--primary-color)';
+            element.style.borderRadius = '8px';
+            
+            document.body.appendChild(tooltip);
+            
+            window.nextStep = function() {
+                tooltip.remove();
+                element.style.boxShadow = '';
+                showStepGuide(steps, currentStep + 1);
+            };
+            
+            // Auto-advance after 10 seconds
+            setTimeout(() => {
+                if (document.body.contains(tooltip)) {
+                    window.nextStep();
+                }
+            }, 10000);
+        }
+        
+        function showGettingStartedTips() {
+            const tipModal = document.createElement('div');
+            tipModal.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                background: var(--primary-color);
+                color: white;
+                padding: 1.5rem;
+                border-radius: 12px;
+                box-shadow: var(--shadow-lg);
+                z-index: 1500;
+                max-width: 350px;
+                animation: slideInRight 0.5s ease-out;
+            `;
+            
+            tipModal.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <i class="fas fa-lightbulb" style="font-size: 1.5rem;"></i>
+                    <h4 style="margin: 0;">Getting Started Tips</h4>
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 1.2rem;
+                        cursor: pointer;
+                        margin-left: auto;
+                    ">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <ul style="margin: 0; padding-left: 1rem; line-height: 1.6;">
+                    <li>Set up your professional profile first</li>
+                    <li>Create your first company or business entity</li>
+                    <li>Start tracking personal expenses</li>
+                    <li>Explore the 22 phases of features</li>
+                </ul>
+                <button onclick="showMonetizationInfo()" style="
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    border: none;
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    margin-top: 1rem;
+                    width: 100%;
+                ">
+                    <i class="fas fa-info-circle"></i> Learn About Premium Features
+                </button>
+            `;
+            
+            document.body.appendChild(tipModal);
+            
+            // Auto-remove after 15 seconds
+            setTimeout(() => {
+                if (document.body.contains(tipModal)) {
+                    tipModal.remove();
+                }
+            }, 15000);
+        }
+        
+        function showMonetizationInfo() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 2rem;
+                    max-width: 900px;
+                    width: 95%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    animation: slideInUp 0.3s ease-out;
+                ">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <h2 style="color: var(--primary-color); margin-bottom: 1rem;">💎 MyTracksy Sri Lanka - Pricing Plans</h2>
+                        <p style="color: var(--gray-600); font-size: 1.1rem;">Professional financial management designed for Sri Lankan professionals</p>
+                        <div style="background: linear-gradient(45deg, #667eea, #764ba2); color: white; padding: 0.5rem 1rem; border-radius: 20px; display: inline-block; margin-top: 0.5rem; font-size: 0.9rem;">🇱🇰 Optimized for Sri Lankan Market</div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem;">
+                        <!-- FREE TIER -->
+                        <div style="
+                            border: 2px solid var(--gray-300);
+                            border-radius: 16px;
+                            padding: 2rem;
+                            text-align: center;
+                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                        ">
+                            <div style="background: var(--success-color); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; margin-bottom: 1rem;">STARTER</div>
+                            <div style="font-size: 2.5rem; font-weight: 800; color: var(--success-color); margin-bottom: 0.5rem;">FREE</div>
+                            <div style="color: var(--gray-600); margin-bottom: 1.5rem;">Perfect for getting started</div>
+                            <ul style="text-align: left; color: var(--gray-700); line-height: 1.8; margin-bottom: 2rem; list-style: none;">
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i> 5 voice entries daily</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i> Basic expense tracking</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i> 1 Company profile</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i> Standard OCR scanning</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i> Basic reports</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--success-color); margin-right: 0.5rem;"></i> Mobile access</li>
+                            </ul>
+                            <button style="
+                                background: var(--success-color);
+                                color: white;
+                                border: none;
+                                padding: 1rem 2rem;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                width: 100%;
+                                font-weight: 600;
+                                font-size: 1.1rem;
+                            ">Current Plan</button>
+                        </div>
+                        
+                        <!-- INDIVIDUAL PROFESSIONAL -->
+                        <div style="
+                            border: 3px solid var(--primary-color);
+                            border-radius: 16px;
+                            padding: 2rem;
+                            text-align: center;
+                            position: relative;
+                            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+                            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+                        ">
+                            <div style="
+                                position: absolute;
+                                top: -15px;
+                                left: 50%;
+                                transform: translateX(-50%);
+                                background: var(--primary-color);
+                                color: white;
+                                padding: 0.5rem 1.5rem;
+                                border-radius: 25px;
+                                font-size: 0.9rem;
+                                font-weight: 700;
+                                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                            ">⭐ MOST POPULAR</div>
+                            <div style="background: var(--primary-color); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; margin-bottom: 1rem; margin-top: 1rem;">INDIVIDUAL PRO</div>
+                            <div style="display: flex; align-items: baseline; justify-content: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 2.5rem; font-weight: 800; color: var(--primary-color);">LKR 750</span>
+                                <span style="color: var(--gray-600); margin-left: 0.5rem;">/month</span>
+                            </div>
+                            <div style="color: var(--gray-600); margin-bottom: 0.5rem;">$2.99/month internationally</div>
+                            <div style="background: rgba(102, 126, 234, 0.1); color: var(--primary-color); padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem; margin-bottom: 1.5rem;">2 months FREE with annual plan</div>
+                            <ul style="text-align: left; color: var(--gray-700); line-height: 1.8; margin-bottom: 2rem; list-style: none;">
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary-color); margin-right: 0.5rem;"></i> Unlimited voice entries</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary-color); margin-right: 0.5rem;"></i> Advanced 99%+ OCR accuracy</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary-color); margin-right: 0.5rem;"></i> Multi-language support (සිංහල/தமிழ்)</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary-color); margin-right: 0.5rem;"></i> Advanced analytics & insights</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary-color); margin-right: 0.5rem;"></i> Tax export features</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--primary-color); margin-right: 0.5rem;"></i> Priority support</li>
+                            </ul>
+                            <button onclick="upgradeToIndividual()" style="
+                                background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+                                color: white;
+                                border: none;
+                                padding: 1rem 2rem;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                width: 100%;
+                                font-weight: 600;
+                                font-size: 1.1rem;
+                                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                            ">Start Free Trial</button>
+                        </div>
+                        
+                        <!-- BUSINESS PROFESSIONAL -->
+                        <div style="
+                            border: 2px solid var(--accent-color);
+                            border-radius: 16px;
+                            padding: 2rem;
+                            text-align: center;
+                            background: linear-gradient(135deg, #fefcfb 0%, #fef7ed 100%);
+                        ">
+                            <div style="background: var(--accent-color); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; margin-bottom: 1rem;">BUSINESS PRO</div>
+                            <div style="display: flex; align-items: baseline; justify-content: center; margin-bottom: 0.5rem;">
+                                <span style="font-size: 2.5rem; font-weight: 800; color: var(--accent-color);">LKR 1,500</span>
+                                <span style="color: var(--gray-600); margin-left: 0.5rem;">/month</span>
+                            </div>
+                            <div style="color: var(--gray-600); margin-bottom: 0.5rem;">$5.99/month internationally</div>
+                            <div style="background: rgba(245, 158, 11, 0.1); color: var(--accent-color); padding: 0.25rem 0.75rem; border-radius: 15px; font-size: 0.8rem; margin-bottom: 1.5rem;">For growing businesses</div>
+                            <ul style="text-align: left; color: var(--gray-700); line-height: 1.8; margin-bottom: 2rem; list-style: none;">
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-color); margin-right: 0.5rem;"></i> All Individual Pro features</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-color); margin-right: 0.5rem;"></i> Up to 5 companies</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-color); margin-right: 0.5rem;"></i> Team collaboration</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-color); margin-right: 0.5rem;"></i> Advanced reporting</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-color); margin-right: 0.5rem;"></i> Accounting integrations</li>
+                                <li style="margin-bottom: 0.5rem;"><i class="fas fa-check" style="color: var(--accent-color); margin-right: 0.5rem;"></i> Audit trails</li>
+                            </ul>
+                            <button onclick="upgradeToBusiness()" style="
+                                background: linear-gradient(45deg, var(--accent-color), #f59e0b);
+                                color: white;
+                                border: none;
+                                padding: 1rem 2rem;
+                                border-radius: 12px;
+                                cursor: pointer;
+                                width: 100%;
+                                font-weight: 600;
+                                font-size: 1.1rem;
+                            ">Start Free Trial</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Enterprise Section -->
+                    <div style="background: linear-gradient(135deg, #1f2937 0%, #374151 100%); color: white; border-radius: 16px; padding: 2rem; margin-top: 2rem; text-align: center;">
+                        <h3 style="margin-bottom: 1rem;">🏢 Enterprise Solutions</h3>
+                        <p style="margin-bottom: 1.5rem; opacity: 0.9;">Custom pricing starting at LKR 5,000/month for large organizations with unlimited companies, white-label options, and dedicated support.</p>
+                        <button onclick="contactEnterprise()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.75rem 2rem; border-radius: 8px; cursor: pointer; font-weight: 600;">Contact Sales</button>
+                    </div>
+                    
+                    <!-- Sri Lankan Specific Features -->
+                    <div style="background: linear-gradient(45deg, #ec4899, #8b5cf6); color: white; border-radius: 16px; padding: 1.5rem; margin-top: 2rem;">
+                        <h4 style="margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;"><span>🇱🇰</span> Sri Lankan Market Features</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.9rem;">
+                            <div>✓ Local payment integration</div>
+                            <div>✓ Bank account connectivity</div>
+                            <div>✓ Tax compliance support</div>
+                            <div>✓ Festival season promotions</div>
+                            <div>✓ Family plan discounts</div>
+                            <div>✓ Offline functionality</div>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button onclick="this.closest('[style*=backdrop-filter]').remove()" style="
+                            background: var(--gray-300);
+                            color: var(--gray-700);
+                            border: none;
+                            padding: 0.75rem 2rem;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            window.upgradeToIndividual = function() {
+                showUpgradeFlow('individual', 'LKR 750', 'Individual Professional');
+                modal.remove();
+            };
+            
+            window.upgradeToBusiness = function() {
+                showUpgradeFlow('business', 'LKR 1,500', 'Business Professional');
+                modal.remove();
+            };
+            
+            window.contactEnterprise = function() {
+                showNotification('🏢 Enterprise sales team will contact you within 24 hours!', 'info');
+                modal.remove();
+            };
+        }
+        
+        function showUpgradeFlow(plan, price, planName) {
+            const upgradeModal = document.createElement('div');
+            upgradeModal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 2001;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+            `;
+            
+            upgradeModal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 3rem;
+                    max-width: 500px;
+                    width: 90%;
+                    text-align: center;
+                    animation: slideInUp 0.3s ease-out;
+                ">
+                    <div style="font-size: 3rem; margin-bottom: 1rem;">🚀</div>
+                    <h2 style="color: var(--primary-color); margin-bottom: 1rem;">Start Your Free Trial</h2>
+                    <p style="color: var(--gray-600); margin-bottom: 2rem;">Upgrade to ${planName} for ${price}/month</p>
+                    
+                    <div style="background: var(--gray-100); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                        <h4 style="margin-bottom: 1rem; color: var(--dark-color);">14-Day Free Trial Includes:</h4>
+                        <ul style="text-align: left; color: var(--gray-700); line-height: 1.6;">
+                            <li>All premium features unlocked</li>
+                            <li>No credit card required</li>
+                            <li>Cancel anytime</li>
+                            <li>Priority support</li>
+                        </ul>
+                    </div>
+                    
+                    <button onclick="startFreeTrial('${plan}')" style="
+                        background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+                        color: white;
+                        border: none;
+                        padding: 1rem 2rem;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        margin-bottom: 1rem;
+                        width: 100%;
+                        font-size: 1.1rem;
+                        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+                    ">Start 14-Day Free Trial</button>
+                    
+                    <button onclick="this.closest('[style*="backdrop-filter"]').remove()" style="
+                        background: transparent;
+                        color: var(--gray-600);
+                        border: none;
+                        padding: 0.75rem;
+                        cursor: pointer;
+                        text-decoration: underline;
+                    ">Maybe Later</button>
+                </div>
+            `;
+            
+            document.body.appendChild(upgradeModal);
+            
+            window.startFreeTrial = function(selectedPlan) {
+                // Save trial info
+                const trialData = {
+                    plan: selectedPlan,
+                    startDate: new Date().toISOString(),
+                    endDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                    status: 'active'
+                };
+                localStorage.setItem('myTracksyTrial', JSON.stringify(trialData));
+                
+                upgradeModal.remove();
+                showNotification(`🎉 Welcome to your 14-day ${selectedPlan} trial! All premium features are now unlocked.`, 'success');
+                
+                // Refresh the page to show premium features
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            };
+        }
+        
+        function showFeatureGuide() {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.8);
+                z-index: 2000;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(5px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="
+                    background: white;
+                    border-radius: 20px;
+                    padding: 2rem;
+                    max-width: 800px;
+                    width: 90%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    animation: slideInUp 0.3s ease-out;
+                ">
+                    <div style="text-align: center; margin-bottom: 2rem;">
+                        <h2 style="color: var(--primary-color); margin-bottom: 1rem;">📚 Complete Feature Guide</h2>
+                        <p style="color: var(--gray-600);">Discover everything MyTracksy can do for your financial management</p>
+                    </div>
+                    
+                    <div style="display: grid; gap: 1.5rem;">
+                        <div style="border-left: 4px solid var(--primary-color); padding-left: 1rem;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🏢 Company Management</h4>
+                            <p style="color: var(--gray-600); line-height: 1.6;">Create multiple business entities with industry-specific themes (Technology, Healthcare, Legal, Manufacturing, Restaurant, Retail, Service, Finance, Education). Each company gets customized features based on its industry.</p>
+                        </div>
+                        
+                        <div style="border-left: 4px solid var(--success-color); padding-left: 1rem;">
+                            <h4 style="color: var(--success-color); margin-bottom: 0.5rem;">💰 Personal Finance Tracking</h4>
+                            <p style="color: var(--gray-600); line-height: 1.6;">Monitor personal expenses, set savings goals, track investment portfolios, and manage family finances with voice input capabilities and comprehensive reporting.</p>
+                        </div>
+                        
+                        <div style="border-left: 4px solid var(--warning-color); padding-left: 1rem;">
+                            <h4 style="color: var(--warning-color); margin-bottom: 0.5rem;">👥 Employee Management</h4>
+                            <p style="color: var(--gray-600); line-height: 1.6;">Add, edit, and manage employees across all your companies. Track salaries, positions, and performance with detailed employee profiles and analytics.</p>
+                        </div>
+                        
+                        <div style="border-left: 4px solid var(--error-color); padding-left: 1rem;">
+                            <h4 style="color: var(--error-color); margin-bottom: 0.5rem;">🎙️ Voice Input System</h4>
+                            <p style="color: var(--gray-600); line-height: 1.6;">Use natural language voice commands throughout the app to add expenses, update records, and navigate features. Available in multiple languages including Sinhala and Tamil.</p>
+                        </div>
+                        
+                        <div style="border-left: 4px solid var(--accent-color); padding-left: 1rem;">
+                            <h4 style="color: var(--accent-color); margin-bottom: 0.5rem;">📈 Professional Dashboards</h4>
+                            <p style="color: var(--gray-600); line-height: 1.6;">Access specialized dashboards for Medical, Legal, Engineering, Business, and Individual professionals with industry-specific features and compliance tracking.</p>
+                        </div>
+                        
+                        <div style="border-left: 4px solid var(--primary-color); padding-left: 1rem;">
+                            <h4 style="color: var(--primary-color); margin-bottom: 0.5rem;">🚀 22 Advanced Features</h4>
+                            <p style="color: var(--gray-600); line-height: 1.6;">Explore SMS banking integration, cultural celebrations tracking, AI chat assistant, export capabilities, investment tracking, budget optimization, and much more!</p>
+                        </div>
+                    </div>
+                    
+                    <div style="background: var(--gray-100); border-radius: 12px; padding: 1.5rem; margin-top: 2rem; text-align: center;">
+                        <h4 style="color: var(--dark-color); margin-bottom: 1rem;">🎆 Ready to Explore?</h4>
+                        <p style="color: var(--gray-600); margin-bottom: 1rem;">Start with the basics: create a company, add personal expenses, and explore professional profiles!</p>
+                        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                            <a href="company-setup.html" style="
+                                background: var(--primary-color);
+                                color: white;
+                                text-decoration: none;
+                                padding: 0.75rem 1.5rem;
+                                border-radius: 8px;
+                                font-weight: 600;
+                            ">Create Company</a>
+                            <a href="profession-setup.html" style="
+                                background: var(--success-color);
+                                color: white;
+                                text-decoration: none;
+                                padding: 0.75rem 1.5rem;
+                                border-radius: 8px;
+                                font-weight: 600;
+                            ">Set Profession</a>
+                            <a href="phases.html" style="
+                                background: var(--accent-color);
+                                color: white;
+                                text-decoration: none;
+                                padding: 0.75rem 1.5rem;
+                                border-radius: 8px;
+                                font-weight: 600;
+                            ">Explore Features</a>
+                        </div>
+                    </div>
+                    
+                    <div style="text-align: center; margin-top: 2rem;">
+                        <button onclick="this.closest('[style*=backdrop-filter]').remove()" style="
+                            background: var(--gray-300);
+                            color: var(--gray-700);
+                            border: none;
+                            padding: 0.75rem 2rem;
+                            border-radius: 8px;
+                            cursor: pointer;
+                            font-weight: 600;
+                        ">Close Guide</button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+        
+        // Smart Guidance System
+        function initializeSmartGuidance() {
+            checkUserProgressAndShowGuidance();
+            initializeTooltips();
+            initializeProgressiveDisclosure();
+            trackUserEngagement();
+        }
+        
+        function checkUserProgressAndShowGuidance() {
+            const userProgress = getUserProgress();
+            const currentSession = getCurrentSession();
+            
+            // Smart guidance based on user progress
+            if (userProgress.totalExpenses === 0 && currentSession.visits === 1) {
+                setTimeout(() => showFirstTimeUserGuidance(), 2000);
+            } else if (userProgress.totalExpenses > 0 && userProgress.totalExpenses < 5) {
+                setTimeout(() => showEarlyUserGuidance(), 1500);
+            } else if (userProgress.voiceUsage === 0 && userProgress.totalExpenses > 10) {
+                setTimeout(() => showVoiceFeatureGuidance(), 3000);
+            }
+        }
+        
+        function getUserProgress() {
+            const expenses = JSON.parse(localStorage.getItem('myTracksyPersonalExpenses') || '[]');
+            const companies = JSON.parse(localStorage.getItem('myTracksyUserCompanies') || '[]');
+            const voiceUsage = parseInt(localStorage.getItem('myTracksyVoiceUsage') || '0');
+            const profession = localStorage.getItem('myTracksyProfession');
+            
+            return {
+                totalExpenses: expenses.length,
+                totalCompanies: companies.length,
+                voiceUsage: voiceUsage,
+                hasProfession: !!profession,
+                signupDate: localStorage.getItem('myTracksySignupDate') || new Date().toISOString()
+            };
+        }
+        
+        function getCurrentSession() {
+            const sessionData = JSON.parse(localStorage.getItem('myTracksySession') || '{}');
+            const today = new Date().toDateString();
+            
+            if (sessionData.date !== today) {
+                sessionData.date = today;
+                sessionData.visits = 1;
+                sessionData.actionsToday = 0;
+            } else {
+                sessionData.visits = (sessionData.visits || 0) + 1;
+            }
+            
+            localStorage.setItem('myTracksySession', JSON.stringify(sessionData));
+            return sessionData;
+        }
+        
+        function showFirstTimeUserGuidance() {
+            const guidanceModal = document.createElement('div');
+            guidanceModal.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0, 0, 0, 0.7);
+                z-index: 2500;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                backdrop-filter: blur(8px);
+            `;
+            
+            guidanceModal.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    border-radius: 20px;
+                    padding: 2.5rem;
+                    max-width: 550px;
+                    width: 90%;
+                    text-align: center;
+                    animation: welcomePopup 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+                    box-shadow: 0 25px 50px rgba(0,0,0,0.3);
+                ">
+                    <div style="font-size: 4rem; margin-bottom: 1rem; animation: bounce 2s infinite;">🌟</div>
+                    <h2 style="margin-bottom: 1rem; font-size: 1.8rem;">Welcome to Your Financial Journey!</h2>
+                    <p style="margin-bottom: 2rem; opacity: 0.9; line-height: 1.6;">Let's get you started with the most powerful expense tracking in Sri Lanka. We'll guide you step by step.</p>
+                    
+                    <div style="background: rgba(255,255,255,0.15); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; text-align: left;">
+                        <h4 style="margin-bottom: 1rem; color: #fbbf24;">Your 3-Step Quick Start:</h4>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <div style="background: #10b981; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem;">1</div>
+                            <span>Add your first expense (tap + button below)</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem;">
+                            <div style="background: #3b82f6; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem;">2</div>
+                            <span>Try voice input: "I spent 500 rupees on lunch"</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <div style="background: #8b5cf6; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.8rem;">3</div>
+                            <span>Set up your professional profile</span>
+                        </div>
+                    </div>
+                    
+                    <button onclick="startQuickSetup()" style="
+                        background: rgba(255,255,255,0.9);
+                        color: #667eea;
+                        border: none;
+                        padding: 1rem 2rem;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        margin-right: 1rem;
+                        font-size: 1.1rem;
+                        box-shadow: 0 4px 15px rgba(255,255,255,0.2);
+                    ">Let's Get Started!</button>
+                    
+                    <button onclick="this.closest('[style*="backdrop-filter"]').remove()" style="
+                        background: transparent;
+                        color: rgba(255,255,255,0.8);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 1rem 2rem;
+                        border-radius: 12px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        font-size: 1.1rem;
+                    ">I'll Explore Myself</button>
+                </div>
+            `;
+            
+            document.body.appendChild(guidanceModal);
+            
+            window.startQuickSetup = function() {
+                guidanceModal.remove();
+                showInteractiveQuickSetup();
+            };
+        }
+        
+        function showInteractiveQuickSetup() {
+            // Highlight the "Add Personal Expense" button
+            const expenseButton = document.querySelector('[onclick="addPersonalExpense()"]');
+            if (expenseButton) {
+                highlightElement(expenseButton, "Start here! Add your first expense using voice or manual entry.", 'bottom');
+            }
+        }
+        
+        function highlightElement(element, message, position = 'bottom') {
+            // Create overlay
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: rgba(0,0,0,0.5);
+                z-index: 2000;
+                pointer-events: none;
+            `;
+            
+            // Create spotlight hole around element
+            const rect = element.getBoundingClientRect();
+            const spotlight = document.createElement('div');
+            spotlight.style.cssText = `
+                position: fixed;
+                top: ${rect.top - 10}px;
+                left: ${rect.left - 10}px;
+                width: ${rect.width + 20}px;
+                height: ${rect.height + 20}px;
+                border-radius: 12px;
+                box-shadow: 0 0 0 9999px rgba(0,0,0,0.7);
+                z-index: 2001;
+                pointer-events: none;
+                animation: pulse 2s infinite;
+            `;
+            
+            // Create tooltip
+            const tooltip = document.createElement('div');
+            const tooltipTop = position === 'top' ? rect.top - 200 : rect.bottom + 20;
+            tooltip.style.cssText = `
+                position: fixed;
+                top: ${tooltipTop}px;
+                left: ${rect.left}px;
+                background: linear-gradient(135deg, #667eea, #764ba2);
+                color: white;
+                padding: 1.5rem;
+                border-radius: 12px;
+                max-width: 300px;
+                z-index: 2002;
+                animation: slideInUp 0.3s ease-out;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            `;
+            
+            tooltip.innerHTML = `
+                <p style="margin-bottom: 1rem; line-height: 1.5;">${message}</p>
+                <button onclick="completeHighlight()" style="
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    border: 1px solid rgba(255,255,255,0.3);
+                    padding: 0.5rem 1rem;
+                    border-radius: 6px;
+                    cursor: pointer;
+                    font-weight: 600;
+                ">Got it!</button>
+            `;
+            
+            document.body.appendChild(overlay);
+            document.body.appendChild(spotlight);
+            document.body.appendChild(tooltip);
+            
+            window.completeHighlight = function() {
+                overlay.remove();
+                spotlight.remove();
+                tooltip.remove();
+            };
+        }
+        
+        function showEarlyUserGuidance() {
+            const userProgress = getUserProgress();
+            
+            if (!userProgress.hasProfession) {
+                showProfessionSetupReminder();
+            } else if (userProgress.voiceUsage === 0) {
+                showVoiceFeatureIntroduction();
+            }
+        }
+        
+        function showProfessionSetupReminder() {
+            const reminder = document.createElement('div');
+            reminder.style.cssText = `
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                background: linear-gradient(135deg, #f59e0b, #d97706);
+                color: white;
+                padding: 1.5rem;
+                border-radius: 12px;
+                max-width: 350px;
+                z-index: 1500;
+                animation: slideInRight 0.5s ease-out;
+                box-shadow: 0 10px 30px rgba(245, 158, 11, 0.3);
+            `;
+            
+            reminder.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                    <span style="font-size: 2rem;">🎯</span>
+                    <div>
+                        <h4 style="margin: 0;">Unlock Professional Features!</h4>
+                        <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">Great progress! Set up your profession for customized features.</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" style="
+                        background: none;
+                        border: none;
+                        color: white;
+                        font-size: 1.2rem;
+                        cursor: pointer;
+                        opacity: 0.7;
+                    ">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <button onclick="window.location.href='profession-setup.html'" style="
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    border: 1px solid rgba(255,255,255,0.3);
+                    padding: 0.75rem 1.5rem;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    width: 100%;
+                    font-weight: 600;
+                ">
+                    <i class="fas fa-user-cog"></i> Set Up Profession
+                </button>
+            `;
+            
+            document.body.appendChild(reminder);
+            
+            // Auto-remove after 15 seconds
+            setTimeout(() => {
+                if (document.body.contains(reminder)) {
+                    reminder.remove();
+                }
+            }, 15000);
+        }
+        
+        function showVoiceFeatureGuidance() {
+            if (localStorage.getItem('myTracksyVoiceGuidanceShown')) return;
+            
+            const voiceGuide = document.createElement('div');
+            voiceGuide.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+                color: white;
+                padding: 1.5rem;
+                border-radius: 16px;
+                max-width: 400px;
+                z-index: 1500;
+                animation: slideInUp 0.5s ease-out;
+                box-shadow: 0 15px 40px rgba(139, 92, 246, 0.3);
+            `;
+            
+            voiceGuide.innerHTML = `
+                <div style="text-align: center; margin-bottom: 1rem;">
+                    <span style="font-size: 2.5rem; margin-bottom: 0.5rem; display: block;">🎤</span>
+                    <h4 style="margin: 0 0 0.5rem 0;">Try Voice Input!</h4>
+                    <p style="margin: 0; font-size: 0.9rem; opacity: 0.9;">You've been adding expenses manually. Voice input is 3x faster!</p>
+                </div>
+                
+                <div style="background: rgba(255,255,255,0.15); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div style="font-size: 0.9rem; margin-bottom: 0.5rem; opacity: 0.8;">Try saying:</div>
+                    <div style="font-style: italic;">"I spent 1500 rupees on groceries at Cargills"</div>
+                </div>
+                
+                <div style="display: flex; gap: 0.5rem;">
+                    <button onclick="tryVoiceDemo()" style="
+                        background: rgba(255,255,255,0.9);
+                        color: #8b5cf6;
+                        border: none;
+                        padding: 0.75rem 1rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        flex: 1;
+                    ">Try It Now</button>
+                    <button onclick="this.parentElement.parentElement.remove(); localStorage.setItem('myTracksyVoiceGuidanceShown', 'true');" style="
+                        background: transparent;
+                        color: rgba(255,255,255,0.8);
+                        border: 1px solid rgba(255,255,255,0.3);
+                        padding: 0.75rem 1rem;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: 600;
+                        flex: 1;
+                    ">Later</button>
+                </div>
+            `;
+            
+            document.body.appendChild(voiceGuide);
+            
+            window.tryVoiceDemo = function() {
+                voiceGuide.remove();
+                localStorage.setItem('myTracksyVoiceGuidanceShown', 'true');
+                // Trigger voice demo
+                setTimeout(() => {
+                    addPersonalExpense();
+                }, 500);
+            };
+        }
+        
+        function initializeTooltips() {
+            // Add smart tooltips to various elements
+            const tooltipElements = [
+                {
+                    selector: '[onclick="addPersonalExpense()"]',
+                    message: 'Add expenses quickly with voice: "I spent 500 rupees on coffee"',
+                    trigger: 'hover'
+                },
+                {
+                    selector: '[onclick="createNewCompany()"]',
+                    message: 'Create separate business entities with industry-specific features',
+                    trigger: 'hover'
+                },
+                {
+                    selector: '[href="profession-setup.html"]',
+                    message: 'Unlock specialized features for your profession',
+                    trigger: 'hover'
+                }
+            ];
+            
+            tooltipElements.forEach(tooltip => {
+                const element = document.querySelector(tooltip.selector);
+                if (element && !element.hasAttribute('data-tooltip-added')) {
+                    element.setAttribute('data-tooltip-added', 'true');
+                    addSmartTooltip(element, tooltip.message, tooltip.trigger);
+                }
+            });
+        }
+        
+        function addSmartTooltip(element, message, trigger = 'hover') {
+            let tooltip;
+            
+            const showTooltip = () => {
+                if (tooltip) return; // Prevent multiple tooltips
+                
+                tooltip = document.createElement('div');
+                tooltip.style.cssText = `
+                    position: absolute;
+                    background: rgba(30, 41, 59, 0.95);
+                    color: white;
+                    padding: 0.75rem 1rem;
+                    border-radius: 8px;
+                    font-size: 0.9rem;
+                    max-width: 250px;
+                    z-index: 1000;
+                    pointer-events: none;
+                    animation: fadeInUp 0.2s ease-out;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+                `;
+                
+                tooltip.textContent = message;
+                
+                const rect = element.getBoundingClientRect();
+                tooltip.style.top = (rect.bottom + 8) + 'px';
+                tooltip.style.left = rect.left + 'px';
+                
+                document.body.appendChild(tooltip);
+            };
+            
+            const hideTooltip = () => {
+                if (tooltip) {
+                    tooltip.remove();
+                    tooltip = null;
+                }
+            };
+            
+            if (trigger === 'hover') {
+                element.addEventListener('mouseenter', showTooltip);
+                element.addEventListener('mouseleave', hideTooltip);
+            }
+        }
+        
+        function trackUserEngagement() {
+            // Track user actions for smart guidance
+            document.addEventListener('click', function(e) {
+                const sessionData = JSON.parse(localStorage.getItem('myTracksySession') || '{}');
+                sessionData.actionsToday = (sessionData.actionsToday || 0) + 1;
+                localStorage.setItem('myTracksySession', JSON.stringify(sessionData));
+                
+                // Track specific actions
+                if (e.target.closest('[onclick*="addPersonalExpense"]')) {
+                    incrementUsageStat('expenseAdded');
+                }
+                if (e.target.closest('[onclick*="createNewCompany"]')) {
+                    incrementUsageStat('companyCreated');
+                }
+            });
+        }
+        
+        function incrementUsageStat(action) {
+            const stats = JSON.parse(localStorage.getItem('myTracksyUsageStats') || '{}');
+            stats[action] = (stats[action] || 0) + 1;
+            localStorage.setItem('myTracksyUsageStats', JSON.stringify(stats));
+        }
+        
+        // Check for premium trial status
+        function checkTrialStatus() {
+            const trialData = JSON.parse(localStorage.getItem('myTracksyTrial') || 'null');
+            if (trialData && trialData.status === 'active') {
+                const endDate = new Date(trialData.endDate);
+                const daysLeft = Math.ceil((endDate - new Date()) / (1000 * 60 * 60 * 24));
+                
+                if (daysLeft > 0) {
+                    showTrialStatus(daysLeft, trialData.plan);
+                } else {
+                    showTrialExpired(trialData.plan);
+                }
+            }
+        }
+        
+        function showTrialStatus(daysLeft, plan) {
+            const trialBanner = document.createElement('div');
+            trialBanner.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(45deg, #667eea, #764ba2);
+                color: white;
+                padding: 0.75rem;
+                text-align: center;
+                z-index: 1000;
+                font-weight: 600;
+            `;
+            
+            trialBanner.innerHTML = `
+                🎆 ${plan.toUpperCase()} Trial: ${daysLeft} days left | 
+                <button onclick="showMonetizationInfo()" style="background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.25rem 0.75rem; border-radius: 4px; cursor: pointer; margin-left: 0.5rem;">Upgrade Now</button>
+            `;
+            
+            document.body.style.paddingTop = '50px';
+            document.body.insertBefore(trialBanner, document.body.firstChild);
+        }
+        
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCompaniesList();
+            updatePersonalFinanceSummary();
+            initializeUserGuidance();
+            initializeSmartGuidance();
+            checkTrialStatus();
+        });
+
+        // Personal Tax Management Functions
+        function initializePersonalTaxCalculators() {
+            // Add event listeners for real-time calculations
+            const incomeInputs = [
+                'employmentIncome',
+                'businessIncome',
+                'otherIncome',
+                'investmentIncome'
+            ];
+
+            const deductionInputs = [
+                'epfContributions',
+                'insurancePremiums',
+                'donations',
+                'medicalExpenses'
+            ];
+
+            [...incomeInputs, ...deductionInputs].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', calculatePersonalIncomeTax);
+                }
+            });
+        }
+
+        function calculatePersonalIncomeTax() {
+            // Get income values
+            const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value) || 0;
+            const businessIncome = parseFloat(document.getElementById('businessIncome')?.value) || 0;
+            const otherIncome = parseFloat(document.getElementById('otherIncome')?.value) || 0;
+            const investmentIncome = parseFloat(document.getElementById('investmentIncome')?.value) || 0;
+
+            // Get deduction values
+            const epfContributions = parseFloat(document.getElementById('epfContributions')?.value) || 0;
+            const insurancePremiums = parseFloat(document.getElementById('insurancePremiums')?.value) || 0;
+            const donations = parseFloat(document.getElementById('donations')?.value) || 0;
+            const medicalExpenses = parseFloat(document.getElementById('medicalExpenses')?.value) || 0;
+
+            // Calculate totals
+            const totalIncome = employmentIncome + businessIncome + otherIncome + investmentIncome;
+            const totalDeductions = epfContributions + insurancePremiums + donations + medicalExpenses;
+            const taxableIncome = Math.max(0, totalIncome - totalDeductions);
+
+            // Calculate Sri Lankan personal income tax (2024/2025 rates)
+            let incomeTax = 0;
+            
+            if (taxableIncome > 1200000) {
+                // First 1.2M: 6%
+                incomeTax += Math.min(taxableIncome, 1200000) * 0.06;
+                
+                if (taxableIncome > 1200000) {
+                    // Next 1.3M (1.2M to 2.5M): 12%
+                    const band2 = Math.min(taxableIncome - 1200000, 1300000);
+                    incomeTax += band2 * 0.12;
+                    
+                    if (taxableIncome > 2500000) {
+                        // Next 2.5M (2.5M to 5M): 18%
+                        const band3 = Math.min(taxableIncome - 2500000, 2500000);
+                        incomeTax += band3 * 0.18;
+                        
+                        if (taxableIncome > 5000000) {
+                            // Next 5M (5M to 10M): 24%
+                            const band4 = Math.min(taxableIncome - 5000000, 5000000);
+                            incomeTax += band4 * 0.24;
+                            
+                            if (taxableIncome > 10000000) {
+                                // Above 10M: 30%
+                                const band5 = taxableIncome - 10000000;
+                                incomeTax += band5 * 0.30;
+                            }
+                        }
+                    }
+                }
+            }
+
+            const monthlyTax = incomeTax / 12;
+
+            // Update display
+            document.getElementById('totalIncome').textContent = `LKR ${totalIncome.toLocaleString()}`;
+            document.getElementById('totalDeductions').textContent = `LKR ${totalDeductions.toLocaleString()}`;
+            document.getElementById('taxableIncome').textContent = `LKR ${taxableIncome.toLocaleString()}`;
+            document.getElementById('incomeTaxPayable').textContent = `LKR ${incomeTax.toLocaleString()}`;
+            document.getElementById('monthlyTax').textContent = `LKR ${monthlyTax.toLocaleString()}`;
+
+            return {
+                totalIncome,
+                totalDeductions,
+                taxableIncome,
+                incomeTax,
+                monthlyTax
+            };
+        }
+
+        function checkVATRegistrationEligibility() {
+            showTaxModal(
+                'VAT Registration Check',
+                'Based on your current revenue of LKR 8.5M, you are below the VAT registration threshold of LKR 12M annually. You can register voluntarily if you wish.',
+                'Learn More',
+                () => {
+                    window.open('https://www.ird.gov.lk', '_blank');
+                }
+            );
+        }
+
+        function viewWithholdingTaxReport() {
+            showTaxModal(
+                'Withholding Tax Report',
+                'Your year-to-date withholding tax payments total LKR 45,000. This includes payments from employment, dividends, and other sources.',
+                'Download Report',
+                () => {
+                    showPersonalTaxNotification('Withholding tax report downloaded successfully!', 'success');
+                }
+            );
+        }
+
+        function setTaxReminders() {
+            showTaxModal(
+                'Tax Filing Reminders',
+                'Set up automatic reminders for important tax deadlines including annual income tax returns, quarterly advance payments, and other filing requirements.',
+                'Set Reminders',
+                () => {
+                    showPersonalTaxNotification('Tax filing reminders have been set up successfully!', 'success');
+                }
+            );
+        }
+
+        function generateTaxFilingReport() {
+            const taxData = calculatePersonalIncomeTax();
+            showTaxModal(
+                'Pre-filled Tax Return',
+                `Your pre-filled tax return is ready! Total Income: LKR ${taxData.totalIncome.toLocaleString()}, Tax Payable: LKR ${taxData.incomeTax.toLocaleString()}`,
+                'Download PDF',
+                () => {
+                    showPersonalTaxNotification('Pre-filled tax return generated and downloaded!', 'success');
+                }
+            );
+        }
+
+        function saveChecklistProgress() {
+            const checkboxes = document.querySelectorAll('.personal-tax-section input[type="checkbox"]');
+            const progress = {};
+            
+            checkboxes.forEach(checkbox => {
+                progress[checkbox.id] = checkbox.checked;
+            });
+            
+            localStorage.setItem('myTracksyTaxChecklistProgress', JSON.stringify(progress));
+            showPersonalTaxNotification('Tax filing checklist progress saved!', 'success');
+        }
+
+        function loadChecklistProgress() {
+            const savedProgress = localStorage.getItem('myTracksyTaxChecklistProgress');
+            if (savedProgress) {
+                const progress = JSON.parse(savedProgress);
+                Object.keys(progress).forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.checked = progress[id];
+                    }
+                });
+            }
+        }
+
+        function openPayeCalculator() {
+            showTaxModal(
+                'PAYE Calculator',
+                'Calculate your monthly Pay-As-You-Earn (PAYE) tax deductions based on your employment income and tax reliefs.',
+                'Open Calculator',
+                () => {
+                    showPersonalTaxNotification('PAYE calculator opened!', 'info');
+                }
+            );
+        }
+
+        function openVATCalculator() {
+            showTaxModal(
+                'VAT Calculator',
+                'Calculate Value Added Tax (VAT) at 15% for your purchases and sales transactions.',
+                'Open Calculator',
+                () => {
+                    showPersonalTaxNotification('VAT calculator opened!', 'info');
+                }
+            );
+        }
+
+        function openTaxCalendar() {
+            showTaxModal(
+                'Tax Calendar 2025',
+                'Important Sri Lankan tax deadlines: Income Tax Returns (March 31), VAT Returns (Monthly by 20th), Advance Tax Payments (Quarterly)',
+                'View Full Calendar',
+                () => {
+                    showPersonalTaxNotification('Tax calendar opened!', 'info');
+                }
+            );
+        }
+
+        function openTaxGuide() {
+            showTaxModal(
+                'Sri Lankan Tax Guide',
+                'Comprehensive guide to Sri Lankan tax laws, rates, and compliance requirements for individuals and businesses.',
+                'Open Guide',
+                () => {
+                    window.open('https://www.ird.gov.lk', '_blank');
+                }
+            );
+        }
+
+        function showTaxModal(title, message, buttonText, callback) {
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.8); z-index: 2000; display: flex;
+                align-items: center; justify-content: center; backdrop-filter: blur(5px);
+            `;
+            
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 500px; width: 90%; text-align: center;">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary-color);">${title}</h3>
+                    <p style="color: var(--gray-600); margin-bottom: 2rem; line-height: 1.6;">${message}</p>
+                    <div style="display: flex; gap: 1rem; justify-content: center;">
+                        <button onclick="this.closest('[style*=\"backdrop-filter\"]').remove()" 
+                                style="flex: 1; background: var(--gray-300); color: var(--gray-700); border: none; padding: 1rem; border-radius: 8px; cursor: pointer;">
+                            Cancel
+                        </button>
+                        <button onclick="(${callback.toString()})(); this.closest('[style*=\"backdrop-filter\"]').remove();" 
+                                style="flex: 1; background: var(--primary-color); color: white; border: none; padding: 1rem; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                            ${buttonText}
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function showPersonalTaxNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'var(--success-color)' : 
+                           type === 'error' ? 'var(--error-color)' : 
+                           type === 'info' ? 'var(--primary-color)' : 'var(--warning-color)';
+            
+            notification.style.cssText = `
+                position: fixed; top: 20px; right: 20px; background: ${bgColor};
+                color: white; padding: 1rem 1.5rem; border-radius: 8px;
+                box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 1000;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            
+            notification.innerHTML = `<i class="fas fa-info-circle"></i> ${message}`;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 4000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            @keyframes slideInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(30px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            @keyframes welcomePopup {
+                from {
+                    opacity: 0;
+                    transform: scale(0.8) translateY(50px);
+                }
+                to {
+                    opacity: 1;
+                    transform: scale(1) translateY(0);
+                }
+            }
+            @keyframes bounce {
+                0%, 20%, 50%, 80%, 100% {
+                    transform: translateY(0);
+                }
+                40% {
+                    transform: translateY(-10px);
+                }
+                60% {
+                    transform: translateY(-5px);
+                }
+            }
+            @keyframes pulse {
+                0% {
+                    box-shadow: 0 0 0 9999px rgba(0,0,0,0.7), 0 0 20px rgba(102, 126, 234, 0.6);
+                }
+                50% {
+                    box-shadow: 0 0 0 9999px rgba(0,0,0,0.7), 0 0 30px rgba(102, 126, 234, 0.8);
+                }
+                100% {
+                    box-shadow: 0 0 0 9999px rgba(0,0,0,0.7), 0 0 20px rgba(102, 126, 234, 0.6);
+                }
+            }
+            @keyframes fadeInUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(10px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+            .tooltip-trigger:hover::after {
+                content: attr(data-tooltip);
+                position: absolute;
+                bottom: 100%;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(30, 41, 59, 0.95);
+                color: white;
+                padding: 0.5rem;
+                border-radius: 4px;
+                font-size: 0.8rem;
+                white-space: nowrap;
+                z-index: 1000;
+                animation: fadeInUp 0.2s ease-out;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
