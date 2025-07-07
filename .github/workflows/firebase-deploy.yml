@@ -33,11 +33,18 @@ jobs:
         echo "Validating Firestore rules..."
         firebase firestore:rules --project $FIREBASE_PROJECT_ID
         
+    - name: 🔐 Setup Firebase Service Account
+      env:
+        FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      run: |
+        echo "$FIREBASE_SERVICE_ACCOUNT" > $HOME/service-account-key.json
+        export GOOGLE_APPLICATION_CREDENTIALS=$HOME/service-account-key.json
+        
     - name: 🚀 Deploy to Firebase
       env:
-        FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+        GOOGLE_APPLICATION_CREDENTIALS: $HOME/service-account-key.json
       run: |
-        firebase deploy --project $FIREBASE_PROJECT_ID --token $FIREBASE_TOKEN --non-interactive
+        firebase deploy --project $FIREBASE_PROJECT_ID --non-interactive
         
     - name: 📊 Deployment Summary
       run: |

@@ -35,18 +35,17 @@ git push -u origin main
 
 To enable automatic Firebase deployment when you push changes:
 
-1. **Get Firebase CI Token:**
-   ```bash
-   firebase login:ci
-   ```
-   Copy the token that appears
+1. **Get Firebase Service Account:**
+   - Go to: https://console.firebase.google.com/project/tracksy-8e30c/settings/serviceaccounts/adminsdk
+   - Click **"Generate new private key"**
+   - Download the JSON file and copy its entire content
 
 2. **Add GitHub Secret:**
    - Go to your GitHub repository
    - Click **Settings** → **Secrets and variables** → **Actions**
    - Click **New repository secret**
-   - Name: `FIREBASE_TOKEN`
-   - Value: Paste the token from step 1
+   - Name: `FIREBASE_SERVICE_ACCOUNT`
+   - Value: Paste the entire JSON content from step 1
    - Click **Add secret**
 
 3. **Test Automatic Deployment:**
