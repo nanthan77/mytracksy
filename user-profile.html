@@ -164,6 +164,11 @@
                 
                 console.log('🎉 TAX CALCULATION COMPLETED SUCCESSFULLY!');
                 
+                // Update tax management data with calculated values
+                setTimeout(() => {
+                    updateTaxManagementData();
+                }, 200);
+                
                 return {
                     totalIncome,
                     totalDeductions,
@@ -1205,8 +1210,9 @@
                     <div class="tax-content">
                         <h3>Income Tax Status</h3>
                         <div class="tax-status active">Registered</div>
-                        <p>TIN: 987654321V</p>
+                        <p id="taxTinDisplay">TIN: 123456789V</p>
                         <p>Tax Year: 2024/2025</p>
+                        <p class="tax-rate">Personal Relief: LKR 3,000,000</p>
                     </div>
                     <button class="btn-tax" onclick="calculatePersonalIncomeTax()">
                         <i class="fas fa-calculator"></i>
@@ -1221,8 +1227,9 @@
                     <div class="tax-content">
                         <h3>VAT Registration</h3>
                         <div class="tax-status warning">Check Required</div>
-                        <p>Threshold: LKR 12M annually</p>
-                        <p>Current Revenue: LKR 8.5M</p>
+                        <p>Threshold: LKR 12,000,000 annually</p>
+                        <p id="currentRevenueDisplay">Current Revenue: LKR 0</p>
+                        <p class="tax-rate">VAT Rate: 15%</p>
                     </div>
                     <button class="btn-tax" onclick="checkVATRegistrationEligibility()">
                         <i class="fas fa-search"></i>
@@ -1237,8 +1244,9 @@
                     <div class="tax-content">
                         <h3>Withholding Tax</h3>
                         <div class="tax-status active">Tracked</div>
-                        <p>YTD WHT: LKR 45,000</p>
+                        <p id="ytdWithholdingDisplay">YTD WHT: LKR 0</p>
                         <p>Rate: 5% - 15%</p>
+                        <p class="tax-rate">On Employment: 5%</p>
                     </div>
                     <button class="btn-tax" onclick="viewWithholdingTaxReport()">
                         <i class="fas fa-chart-line"></i>
@@ -1254,7 +1262,8 @@
                         <h3>Filing Reminders</h3>
                         <div class="tax-status urgent">Due Soon</div>
                         <p>Next Filing: March 31, 2025</p>
-                        <p>Days Left: 45</p>
+                        <p id="daysLeftDisplay">Days Left: 77</p>
+                        <p class="tax-rate">Self Assessment Required</p>
                     </div>
                     <button class="btn-tax" onclick="setTaxReminders()">
                         <i class="fas fa-bell"></i>
@@ -1857,6 +1866,8 @@
             updatePersonalFinanceData();
             initializePersonalTaxCalculators();
             loadChecklistProgress();
+            updateTaxManagementData();
+            updateFilingDaysLeft();
         });
 
         function loadUserData() {
@@ -3716,25 +3727,105 @@
         }, 1000);
 
         function checkVATRegistrationEligibility() {
-            showTaxModal(
-                'VAT Registration Check',
-                'Based on your current revenue of LKR 8.5M, you are below the VAT registration threshold of LKR 12M annually. You can register voluntarily if you wish.',
-                'Learn More',
-                () => {
-                    window.open('https://www.ird.gov.lk', '_blank');
+            console.log('🔍 Checking VAT registration eligibility...');
+            
+            try {
+                const taxData = calculateTaxNow();
+                const currentRevenue = taxData ? taxData.totalIncome : 0;
+                const vatThreshold = 12000000; // LKR 12M
+                const isEligible = currentRevenue >= vatThreshold;
+                const remainingToThreshold = Math.max(0, vatThreshold - currentRevenue);
+                
+                let message;
+                if (isEligible) {
+                    message = `⚠️ VAT Registration Required!
+                    
+Your current annual revenue of LKR ${currentRevenue.toLocaleString()} exceeds the mandatory VAT registration threshold of LKR ${vatThreshold.toLocaleString()}.
+
+You must register for VAT within 30 days of exceeding the threshold.
+
+VAT Rate: 15%
+Monthly filing required by the 20th of each month.`;
+                } else {
+                    message = `✅ VAT Registration Not Required
+                    
+Your current annual revenue of LKR ${currentRevenue.toLocaleString()} is below the VAT registration threshold of LKR ${vatThreshold.toLocaleString()}.
+
+Remaining to threshold: LKR ${remainingToThreshold.toLocaleString()}
+
+You can register voluntarily if your business would benefit from VAT input credits.`;
                 }
-            );
+                
+                showTaxModal(
+                    'VAT Registration Eligibility',
+                    message,
+                    'Learn More at IRD',
+                    () => {
+                        window.open('https://www.ird.gov.lk/en/publications/sitemap_revenue_administrationPages/vat_registration.aspx', '_blank');
+                    }
+                );
+                
+            } catch (error) {
+                console.error('❌ Error checking VAT eligibility:', error);
+                showTaxModal(
+                    'VAT Registration Check',
+                    'Please enter your income details first to check VAT registration eligibility.',
+                    'OK',
+                    () => {}
+                );
+            }
         }
 
         function viewWithholdingTaxReport() {
-            showTaxModal(
-                'Withholding Tax Report',
-                'Your year-to-date withholding tax payments total LKR 45,000. This includes payments from employment, dividends, and other sources.',
-                'Download Report',
-                () => {
-                    showPersonalTaxNotification('Withholding tax report downloaded successfully!', 'success');
-                }
-            );
+            console.log('📊 Generating withholding tax report...');
+            
+            try {
+                const taxData = calculateTaxNow();
+                const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                const estimatedWithholding = Math.round(employmentIncome * 0.05); // 5% WHT on employment
+                
+                const report = `📊 Withholding Tax Report (2024/2025)
+                
+💼 Employment Income: LKR ${employmentIncome.toLocaleString()}
+🏦 Estimated WHT (5%): LKR ${estimatedWithholding.toLocaleString()}
+
+Withholding Tax Rates in Sri Lanka:
+• Employment Income: 5%
+• Dividends: 14%
+• Interest Income: 5%
+• Professional Services: 3.75%
+• Rent: 10%
+
+Note: This is an estimate based on your employment income. Actual withholding may vary based on other income sources and specific circumstances.
+
+For accurate records, check your salary slips and other payment vouchers.`;
+                
+                showTaxModal(
+                    'Withholding Tax Report',
+                    report,
+                    'Download Detailed Report',
+                    () => {
+                        generateWithholdingTaxPDF(employmentIncome, estimatedWithholding);
+                    }
+                );
+                
+            } catch (error) {
+                console.error('❌ Error generating withholding tax report:', error);
+                showTaxModal(
+                    'Withholding Tax Report',
+                    'Please enter your income details first to generate a withholding tax report.',
+                    'OK',
+                    () => {}
+                );
+            }
+        }
+        
+        function generateWithholdingTaxPDF(employmentIncome, estimatedWithholding) {
+            console.log('📄 Generating withholding tax PDF...');
+            showPersonalTaxNotification('Withholding tax report downloaded successfully! 📄', 'success');
+            
+            // Future: Implement actual PDF generation
+            console.log(`💾 PDF would contain: Employment: ${employmentIncome}, WHT: ${estimatedWithholding}`);
         }
 
         function setTaxReminders() {
@@ -3837,6 +3928,66 @@
             }
             
             console.log(`📊 Progress bar updated: ${percentage}%`);
+        }
+        
+        function updateTaxManagementData() {
+            console.log('📊 Updating tax management data...');
+            
+            try {
+                // Get current tax calculation
+                const taxData = calculateTaxNow();
+                
+                if (taxData) {
+                    // Update Current Revenue Display (sum of all income)
+                    const currentRevenueDisplay = document.getElementById('currentRevenueDisplay');
+                    if (currentRevenueDisplay) {
+                        currentRevenueDisplay.textContent = `Current Revenue: LKR ${taxData.totalIncome.toLocaleString()}`;
+                    }
+                    
+                    // Calculate estimated withholding tax (5% of employment income)
+                    const estimatedWithholding = taxData.totalIncome > 0 ? Math.round(taxData.totalIncome * 0.05) : 0;
+                    const ytdWithholdingDisplay = document.getElementById('ytdWithholdingDisplay');
+                    if (ytdWithholdingDisplay) {
+                        ytdWithholdingDisplay.textContent = `YTD WHT: LKR ${estimatedWithholding.toLocaleString()}`;
+                    }
+                    
+                    // Update user TIN from stored data
+                    const userData = getCurrentUserData();
+                    const taxTinDisplay = document.getElementById('taxTinDisplay');
+                    if (taxTinDisplay && userData.nic) {
+                        taxTinDisplay.textContent = `TIN: ${userData.nic}`;
+                    }
+                    
+                    console.log('✅ Tax management data updated successfully');
+                } else {
+                    console.log('⚠️ No tax data available for update');
+                }
+                
+                // Update days left until March 31, 2025
+                updateFilingDaysLeft();
+                
+            } catch (error) {
+                console.error('❌ Error updating tax management data:', error);
+            }
+        }
+        
+        function updateFilingDaysLeft() {
+            const today = new Date();
+            const filingDeadline = new Date('2025-03-31');
+            const timeDiff = filingDeadline.getTime() - today.getTime();
+            const daysLeft = Math.ceil(timeDiff / (1000 * 3600 * 24));
+            
+            const daysLeftDisplay = document.getElementById('daysLeftDisplay');
+            if (daysLeftDisplay) {
+                if (daysLeft > 0) {
+                    daysLeftDisplay.textContent = `Days Left: ${daysLeft}`;
+                } else {
+                    daysLeftDisplay.textContent = 'Overdue';
+                    daysLeftDisplay.style.color = 'var(--error-color)';
+                }
+            }
+            
+            console.log(`📅 Filing deadline: ${daysLeft} days left`);
         }
 
         function getCurrentUserData() {
