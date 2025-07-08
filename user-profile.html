@@ -16,6 +16,131 @@
     
     <!-- jsPDF for PDF generation -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    
+    <!-- CRITICAL: Define calculateTaxNow function IMMEDIATELY in HEAD - before any other scripts -->
+    <script>
+        // Enhanced tax calculation function - defined in HEAD for immediate availability
+        window.calculateTaxNow = function calculateTaxNow() {
+            console.log('🧮 calculateTaxNow() called - HEAD Version');
+            
+            try {
+                // Get income values with robust parsing
+                const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                const businessIncome = parseFloat(document.getElementById('businessIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                const otherIncome = parseFloat(document.getElementById('otherIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                const investmentIncome = parseFloat(document.getElementById('investmentIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                
+                // Get deduction values with robust parsing
+                const epfContributions = parseFloat(document.getElementById('epfContributions')?.value?.replace(/,/g, '') || 0) || 0;
+                const insurancePremiums = parseFloat(document.getElementById('insurancePremiums')?.value?.replace(/,/g, '') || 0) || 0;
+                const donations = parseFloat(document.getElementById('donations')?.value?.replace(/,/g, '') || 0) || 0;
+                const medicalExpenses = parseFloat(document.getElementById('medicalExpenses')?.value?.replace(/,/g, '') || 0) || 0;
+                
+                // Calculate totals
+                const totalIncome = employmentIncome + businessIncome + otherIncome + investmentIncome;
+                const totalDeductions = epfContributions + insurancePremiums + donations + medicalExpenses;
+                const personalRelief = 3000000; // LKR 3 million
+                const taxableIncome = Math.max(0, totalIncome - totalDeductions - personalRelief);
+                
+                console.log(`💰 Inputs - Employment: ${employmentIncome}, Business: ${businessIncome}, Other: ${otherIncome}, Investment: ${investmentIncome}`);
+                console.log(`🏦 Deductions - EPF: ${epfContributions}, Insurance: ${insurancePremiums}, Donations: ${donations}, Medical: ${medicalExpenses}`);
+                console.log(`📊 Calculated - Total Income: ${totalIncome}, Total Deductions: ${totalDeductions}, Taxable: ${taxableIncome}`);
+                
+                // Calculate tax using 2024/2025 brackets
+                let incomeTax = 0;
+                let remainingIncome = taxableIncome;
+                
+                // Progressive brackets calculation
+                if (remainingIncome > 0) {
+                    const bracket1 = Math.min(remainingIncome, 500000);
+                    const tax1 = bracket1 * 0.06;
+                    incomeTax += tax1;
+                    remainingIncome -= bracket1;
+                    console.log(`Bracket 1 (6%): ${bracket1} = ${tax1}`);
+                }
+                
+                if (remainingIncome > 0) {
+                    const bracket2 = Math.min(remainingIncome, 500000);
+                    const tax2 = bracket2 * 0.12;
+                    incomeTax += tax2;
+                    remainingIncome -= bracket2;
+                    console.log(`Bracket 2 (12%): ${bracket2} = ${tax2}`);
+                }
+                
+                if (remainingIncome > 0) {
+                    const bracket3 = Math.min(remainingIncome, 500000);
+                    const tax3 = bracket3 * 0.18;
+                    incomeTax += tax3;
+                    remainingIncome -= bracket3;
+                    console.log(`Bracket 3 (18%): ${bracket3} = ${tax3}`);
+                }
+                
+                if (remainingIncome > 0) {
+                    const bracket4 = Math.min(remainingIncome, 500000);
+                    const tax4 = bracket4 * 0.24;
+                    incomeTax += tax4;
+                    remainingIncome -= bracket4;
+                    console.log(`Bracket 4 (24%): ${bracket4} = ${tax4}`);
+                }
+                
+                if (remainingIncome > 0) {
+                    const bracket5 = Math.min(remainingIncome, 500000);
+                    const tax5 = bracket5 * 0.30;
+                    incomeTax += tax5;
+                    remainingIncome -= bracket5;
+                    console.log(`Bracket 5 (30%): ${bracket5} = ${tax5}`);
+                }
+                
+                if (remainingIncome > 0) {
+                    const tax6 = remainingIncome * 0.36;
+                    incomeTax += tax6;
+                    console.log(`Bracket 6 (36%): ${remainingIncome} = ${tax6}`);
+                }
+                
+                const monthlyTax = incomeTax / 12;
+                
+                console.log(`🎯 Final Tax calculated: ${incomeTax}, Monthly: ${monthlyTax}`);
+                
+                // Update display
+                setTimeout(() => {
+                    const totalIncomeEl = document.getElementById('totalIncome');
+                    const totalDeductionsEl = document.getElementById('totalDeductions');
+                    const taxableIncomeEl = document.getElementById('taxableIncome');
+                    const incomeTaxPayableEl = document.getElementById('incomeTaxPayable');
+                    const monthlyTaxEl = document.getElementById('monthlyTax');
+                    
+                    if (totalIncomeEl) totalIncomeEl.textContent = `LKR ${totalIncome.toLocaleString()}`;
+                    if (totalDeductionsEl) totalDeductionsEl.textContent = `LKR ${totalDeductions.toLocaleString()}`;
+                    if (taxableIncomeEl) taxableIncomeEl.textContent = `LKR ${taxableIncome.toLocaleString()}`;
+                    if (incomeTaxPayableEl) incomeTaxPayableEl.textContent = `LKR ${Math.round(incomeTax).toLocaleString()}`;
+                    if (monthlyTaxEl) monthlyTaxEl.textContent = `LKR ${Math.round(monthlyTax).toLocaleString()}`;
+                    
+                    console.log('✅ Display updated successfully');
+                }, 100);
+                
+                return {
+                    totalIncome,
+                    totalDeductions,
+                    taxableIncome,
+                    incomeTax,
+                    monthlyTax
+                };
+                
+            } catch (error) {
+                console.error('❌ Error in calculateTaxNow:', error);
+                return null;
+            }
+        };
+        
+        // Also create the calculatePersonalIncomeTax function
+        window.calculatePersonalIncomeTax = function calculatePersonalIncomeTax() {
+            console.log('🧮 calculatePersonalIncomeTax() called - redirecting to calculateTaxNow');
+            return window.calculateTaxNow();
+        };
+        
+        console.log('✅ Tax calculation functions defined in HEAD');
+    </script>
+    
     <style>
         :root {
             --primary-color: #667eea;
@@ -1419,21 +1544,22 @@
 
     <script>
         // CRITICAL: Define calculateTaxNow function IMMEDIATELY - accessible to inline event handlers
+        // Enhanced tax calculation function with better error handling
         window.calculateTaxNow = function calculateTaxNow() {
-            console.log('🧮 calculateTaxNow() called - DIRECT CALCULATION');
+            console.log('🧮 calculateTaxNow() called - Enhanced Version');
             
             try {
-                // Get income values
-                const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value) || 0;
-                const businessIncome = parseFloat(document.getElementById('businessIncome')?.value) || 0;
-                const otherIncome = parseFloat(document.getElementById('otherIncome')?.value) || 0;
-                const investmentIncome = parseFloat(document.getElementById('investmentIncome')?.value) || 0;
+                // Get income values with more robust parsing
+                const employmentIncome = parseFloat(document.getElementById('employmentIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                const businessIncome = parseFloat(document.getElementById('businessIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                const otherIncome = parseFloat(document.getElementById('otherIncome')?.value?.replace(/,/g, '') || 0) || 0;
+                const investmentIncome = parseFloat(document.getElementById('investmentIncome')?.value?.replace(/,/g, '') || 0) || 0;
                 
-                // Get deduction values
-                const epfContributions = parseFloat(document.getElementById('epfContributions')?.value) || 0;
-                const insurancePremiums = parseFloat(document.getElementById('insurancePremiums')?.value) || 0;
-                const donations = parseFloat(document.getElementById('donations')?.value) || 0;
-                const medicalExpenses = parseFloat(document.getElementById('medicalExpenses')?.value) || 0;
+                // Get deduction values with more robust parsing
+                const epfContributions = parseFloat(document.getElementById('epfContributions')?.value?.replace(/,/g, '') || 0) || 0;
+                const insurancePremiums = parseFloat(document.getElementById('insurancePremiums')?.value?.replace(/,/g, '') || 0) || 0;
+                const donations = parseFloat(document.getElementById('donations')?.value?.replace(/,/g, '') || 0) || 0;
+                const medicalExpenses = parseFloat(document.getElementById('medicalExpenses')?.value?.replace(/,/g, '') || 0) || 0;
                 
                 // Calculate totals
                 const totalIncome = employmentIncome + businessIncome + otherIncome + investmentIncome;
@@ -1441,91 +1567,154 @@
                 const personalRelief = 3000000; // LKR 3 million
                 const taxableIncome = Math.max(0, totalIncome - totalDeductions - personalRelief);
                 
-                console.log(`💰 Total Income: ${totalIncome}, Deductions: ${totalDeductions}, Taxable: ${taxableIncome}`);
+                console.log(`💰 Inputs - Employment: ${employmentIncome}, Business: ${businessIncome}, Other: ${otherIncome}, Investment: ${investmentIncome}`);
+                console.log(`🏦 Deductions - EPF: ${epfContributions}, Insurance: ${insurancePremiums}, Donations: ${donations}, Medical: ${medicalExpenses}`);
+                console.log(`📊 Calculated - Total Income: ${totalIncome}, Total Deductions: ${totalDeductions}, Taxable: ${taxableIncome}`);
                 
                 // Calculate tax using 2024/2025 brackets
                 let incomeTax = 0;
                 let remainingIncome = taxableIncome;
                 
-                // Progressive brackets
+                // Progressive brackets calculation with detailed logging
                 if (remainingIncome > 0) {
                     // First 500K at 6%
                     const bracket1 = Math.min(remainingIncome, 500000);
-                    incomeTax += bracket1 * 0.06;
+                    const tax1 = bracket1 * 0.06;
+                    incomeTax += tax1;
                     remainingIncome -= bracket1;
+                    console.log(`Bracket 1 (6%): ${bracket1} = ${tax1}`);
                 }
                 
                 if (remainingIncome > 0) {
                     // Next 500K at 12%
                     const bracket2 = Math.min(remainingIncome, 500000);
-                    incomeTax += bracket2 * 0.12;
+                    const tax2 = bracket2 * 0.12;
+                    incomeTax += tax2;
                     remainingIncome -= bracket2;
+                    console.log(`Bracket 2 (12%): ${bracket2} = ${tax2}`);
                 }
                 
                 if (remainingIncome > 0) {
                     // Next 500K at 18%
                     const bracket3 = Math.min(remainingIncome, 500000);
-                    incomeTax += bracket3 * 0.18;
+                    const tax3 = bracket3 * 0.18;
+                    incomeTax += tax3;
                     remainingIncome -= bracket3;
+                    console.log(`Bracket 3 (18%): ${bracket3} = ${tax3}`);
                 }
                 
                 if (remainingIncome > 0) {
                     // Next 500K at 24%
                     const bracket4 = Math.min(remainingIncome, 500000);
-                    incomeTax += bracket4 * 0.24;
+                    const tax4 = bracket4 * 0.24;
+                    incomeTax += tax4;
                     remainingIncome -= bracket4;
+                    console.log(`Bracket 4 (24%): ${bracket4} = ${tax4}`);
                 }
                 
                 if (remainingIncome > 0) {
                     // Next 500K at 30%
                     const bracket5 = Math.min(remainingIncome, 500000);
-                    incomeTax += bracket5 * 0.30;
+                    const tax5 = bracket5 * 0.30;
+                    incomeTax += tax5;
                     remainingIncome -= bracket5;
+                    console.log(`Bracket 5 (30%): ${bracket5} = ${tax5}`);
                 }
                 
                 if (remainingIncome > 0) {
                     // Above 2.5M at 36%
-                    incomeTax += remainingIncome * 0.36;
+                    const tax6 = remainingIncome * 0.36;
+                    incomeTax += tax6;
+                    console.log(`Bracket 6 (36%): ${remainingIncome} = ${tax6}`);
                 }
                 
                 const monthlyTax = incomeTax / 12;
                 
-                console.log(`🎯 Tax calculated: ${incomeTax}, Monthly: ${monthlyTax}`);
+                console.log(`🎯 Final Tax calculated: ${incomeTax}, Monthly: ${monthlyTax}`);
                 
-                // Update display immediately
+                // Update display immediately with error handling
                 updateTaxDisplay(totalIncome, totalDeductions, taxableIncome, incomeTax, monthlyTax);
+                
+                // Return results for further processing if needed
+                return {
+                    totalIncome,
+                    totalDeductions,
+                    taxableIncome,
+                    incomeTax,
+                    monthlyTax
+                };
                 
             } catch (error) {
                 console.error('❌ Error in calculateTaxNow:', error);
+                console.error('Stack trace:', error.stack);
+                
+                // Show error in the UI
+                const errorElements = ['totalIncome', 'totalDeductions', 'taxableIncome', 'incomeTaxPayable', 'monthlyTax'];
+                errorElements.forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.textContent = 'Error';
+                        element.style.color = 'red';
+                    }
+                });
+                
+                return null;
             }
         }
         
-        // Simple display update function
+        // Enhanced display update function with better error handling
         function updateTaxDisplay(totalIncome, totalDeductions, taxableIncome, incomeTax, monthlyTax) {
             try {
+                console.log('🖥️ Updating display with values:', { totalIncome, totalDeductions, taxableIncome, incomeTax, monthlyTax });
+                
                 const totalIncomeEl = document.getElementById('totalIncome');
                 const totalDeductionsEl = document.getElementById('totalDeductions');
                 const taxableIncomeEl = document.getElementById('taxableIncome');
                 const incomeTaxPayableEl = document.getElementById('incomeTaxPayable');
                 const monthlyTaxEl = document.getElementById('monthlyTax');
                 
-                if (totalIncomeEl) totalIncomeEl.textContent = `LKR ${totalIncome.toLocaleString()}`;
-                if (totalDeductionsEl) totalDeductionsEl.textContent = `LKR ${totalDeductions.toLocaleString()}`;
-                if (taxableIncomeEl) taxableIncomeEl.textContent = `LKR ${taxableIncome.toLocaleString()}`;
-                if (incomeTaxPayableEl) incomeTaxPayableEl.textContent = `LKR ${Math.round(incomeTax).toLocaleString()}`;
-                if (monthlyTaxEl) monthlyTaxEl.textContent = `LKR ${Math.round(monthlyTax).toLocaleString()}`;
+                // Log element existence
+                console.log('🔍 Elements found:', {
+                    totalIncome: !!totalIncomeEl,
+                    totalDeductions: !!totalDeductionsEl,
+                    taxableIncome: !!taxableIncomeEl,
+                    incomeTaxPayable: !!incomeTaxPayableEl,
+                    monthlyTax: !!monthlyTaxEl
+                });
                 
-                console.log('✅ Display updated successfully');
+                if (totalIncomeEl) {
+                    totalIncomeEl.textContent = `LKR ${totalIncome.toLocaleString()}`;
+                    totalIncomeEl.style.color = ''; // Reset any error color
+                }
+                if (totalDeductionsEl) {
+                    totalDeductionsEl.textContent = `LKR ${totalDeductions.toLocaleString()}`;
+                    totalDeductionsEl.style.color = ''; // Reset any error color
+                }
+                if (taxableIncomeEl) {
+                    taxableIncomeEl.textContent = `LKR ${taxableIncome.toLocaleString()}`;
+                    taxableIncomeEl.style.color = ''; // Reset any error color
+                }
+                if (incomeTaxPayableEl) {
+                    incomeTaxPayableEl.textContent = `LKR ${Math.round(incomeTax).toLocaleString()}`;
+                    incomeTaxPayableEl.style.color = ''; // Reset any error color
+                }
+                if (monthlyTaxEl) {
+                    monthlyTaxEl.textContent = `LKR ${Math.round(monthlyTax).toLocaleString()}`;
+                    monthlyTaxEl.style.color = ''; // Reset any error color
+                }
+                
+                console.log('✅ Display updated successfully with formatted values');
             } catch (error) {
                 console.error('❌ Error updating display:', error);
+                console.error('Stack trace:', error.stack);
             }
         }
 
         // Function already assigned to window above
 
-        // Test function on page load
+        // Enhanced initialization and testing
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🔧 Testing calculateTaxNow function accessibility...');
+            console.log('🔧 Initializing enhanced tax calculator...');
             
             // Test if function is accessible
             if (typeof window.calculateTaxNow === 'function') {
@@ -1541,19 +1730,50 @@
                 'totalIncome', 'totalDeductions', 'taxableIncome', 'incomeTaxPayable', 'monthlyTax'
             ];
             
+            const missingElements = [];
             requiredElements.forEach(id => {
                 const element = document.getElementById(id);
                 if (element) {
                     console.log(`✅ Element found: ${id}`);
                 } else {
                     console.error(`❌ Element missing: ${id}`);
+                    missingElements.push(id);
                 }
             });
+            
+            if (missingElements.length > 0) {
+                console.warn('⚠️ Missing elements:', missingElements);
+            }
+            
+            // Add additional event listeners as backup
+            setTimeout(() => {
+                console.log('🔧 Adding backup event listeners...');
+                const inputElements = document.querySelectorAll('.tax-input');
+                inputElements.forEach(input => {
+                    if (input) {
+                        // Remove existing listeners first
+                        input.removeEventListener('input', window.calculateTaxNow);
+                        input.removeEventListener('change', window.calculateTaxNow);
+                        input.removeEventListener('keyup', window.calculateTaxNow);
+                        
+                        // Add new listeners
+                        input.addEventListener('input', window.calculateTaxNow);
+                        input.addEventListener('change', window.calculateTaxNow);
+                        input.addEventListener('keyup', window.calculateTaxNow);
+                        
+                        console.log(`✅ Added backup listeners to ${input.id}`);
+                    }
+                });
+            }, 500);
             
             // Run initial calculation
             setTimeout(() => {
                 console.log('🧮 Running initial tax calculation...');
-                calculateTaxNow();
+                if (typeof window.calculateTaxNow === 'function') {
+                    window.calculateTaxNow();
+                } else {
+                    console.error('❌ Cannot run initial calculation - function not found');
+                }
             }, 1000);
         });
 
@@ -3841,9 +4061,9 @@
             closeTaxReturnModal();
         }
 
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
+        // Add CSS animations for PDF
+        const pdfStyle = document.createElement('style');
+        pdfStyle.textContent = `
             @keyframes fadeIn {
                 from { opacity: 0; }
                 to { opacity: 1; }
@@ -3863,7 +4083,7 @@
                 }
             }
         `;
-        document.head.appendChild(style);
+        document.head.appendChild(pdfStyle);
 
         function saveChecklistProgress() {
             const checkboxes = document.querySelectorAll('.personal-tax-section input[type="checkbox"]');
@@ -3980,9 +4200,9 @@
             setTimeout(() => notification.remove(), 4000);
         }
 
-        // Add CSS animations
-        const style = document.createElement('style');
-        style.textContent = `
+        // Add CSS animations for notifications
+        const notificationStyle = document.createElement('style');
+        notificationStyle.textContent = `
             @keyframes slideInRight {
                 from {
                     opacity: 0;
@@ -4061,7 +4281,7 @@
                 animation: fadeInUp 0.2s ease-out;
             }
         `;
-        document.head.appendChild(style);
+        document.head.appendChild(notificationStyle);
     </script>
 </body>
 </html>
