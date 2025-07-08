@@ -1345,6 +1345,17 @@
                 <div class="checklist-header">
                     <h3><i class="fas fa-list-check"></i> Tax Filing Checklist</h3>
                     <p>Ensure you have all required documents for your tax return</p>
+                    
+                    <!-- Progress Bar -->
+                    <div class="checklist-progress" style="margin-top: 1rem;">
+                        <div class="progress-info" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                            <span style="font-weight: 600; color: var(--gray-700);">Progress</span>
+                            <span id="progressText" style="font-weight: 600; color: var(--primary-color);">0/12 (0%)</span>
+                        </div>
+                        <div class="progress-bar" style="background: var(--gray-200); height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div id="progressFill" style="background: linear-gradient(90deg, var(--primary-color), var(--secondary-color)); height: 100%; width: 0%; transition: width 0.3s ease-in-out;"></div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="checklist-grid">
@@ -3738,9 +3749,94 @@
         }
 
         function generateTaxFilingReport() {
-            const taxData = calculatePersonalIncomeTax();
-            const userData = getCurrentUserData();
-            showEnhancedTaxReturnModal(taxData, userData);
+            console.log('📄 Generating tax filing report...');
+            
+            try {
+                // Get current tax calculation data
+                const taxData = calculatePersonalIncomeTax();
+                if (!taxData) {
+                    showPersonalTaxNotification('Please enter your income details first to generate a report', 'warning');
+                    return;
+                }
+                
+                // Get user data
+                const userData = getCurrentUserData();
+                
+                // Get checklist completion status
+                const checklistData = getChecklistStatus();
+                
+                console.log('📊 Tax Data:', taxData);
+                console.log('👤 User Data:', userData);
+                console.log('📋 Checklist Data:', checklistData);
+                
+                // Show enhanced tax return modal
+                showEnhancedTaxReturnModal(taxData, userData, checklistData);
+                
+            } catch (error) {
+                console.error('❌ Error generating tax filing report:', error);
+                showPersonalTaxNotification('Error generating report. Please try again.', 'error');
+            }
+        }
+        
+        function getChecklistStatus() {
+            console.log('📋 Getting checklist completion status...');
+            
+            const checkboxes = document.querySelectorAll('.tax-filing-checklist input[type="checkbox"]');
+            const status = {
+                total: checkboxes.length,
+                completed: 0,
+                items: {}
+            };
+            
+            checkboxes.forEach(checkbox => {
+                status.items[checkbox.id] = {
+                    checked: checkbox.checked,
+                    label: checkbox.parentElement?.textContent?.trim() || checkbox.id
+                };
+                if (checkbox.checked) status.completed++;
+            });
+            
+            status.percentage = Math.round((status.completed / status.total) * 100);
+            
+            console.log(`📈 Checklist status: ${status.completed}/${status.total} (${status.percentage}%)`);
+            
+            // Update progress bar
+            updateProgressBar(status.completed, status.total, status.percentage);
+            
+            return status;
+        }
+        
+        function updateProgressBar(completed, total, percentage) {
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+            
+            if (progressText) {
+                progressText.textContent = `${completed}/${total} (${percentage}%)`;
+                
+                // Change color based on progress
+                if (percentage >= 80) {
+                    progressText.style.color = 'var(--success-color)';
+                } else if (percentage >= 50) {
+                    progressText.style.color = 'var(--warning-color)';
+                } else {
+                    progressText.style.color = 'var(--primary-color)';
+                }
+            }
+            
+            if (progressFill) {
+                progressFill.style.width = `${percentage}%`;
+                
+                // Change gradient based on progress
+                if (percentage >= 80) {
+                    progressFill.style.background = 'linear-gradient(90deg, var(--success-color), #00ff88)';
+                } else if (percentage >= 50) {
+                    progressFill.style.background = 'linear-gradient(90deg, var(--warning-color), #ffdd44)';
+                } else {
+                    progressFill.style.background = 'linear-gradient(90deg, var(--primary-color), var(--secondary-color))';
+                }
+            }
+            
+            console.log(`📊 Progress bar updated: ${percentage}%`);
         }
 
         function getCurrentUserData() {
@@ -3760,7 +3856,7 @@
             };
         }
 
-        function showEnhancedTaxReturnModal(taxData, userData) {
+        function showEnhancedTaxReturnModal(taxData, userData, checklistData) {
             // Create modal overlay with enhanced styling
             const modal = document.createElement('div');
             modal.className = 'enhanced-tax-modal-overlay';
@@ -4143,27 +4239,93 @@
         document.head.appendChild(pdfStyle);
 
         function saveChecklistProgress() {
-            const checkboxes = document.querySelectorAll('.personal-tax-section input[type="checkbox"]');
+            console.log('💾 Saving tax filing checklist progress...');
+            
+            // Get all checkboxes from the tax filing checklist
+            const checkboxes = document.querySelectorAll('.tax-filing-checklist input[type="checkbox"]');
             const progress = {};
+            let checkedCount = 0;
             
             checkboxes.forEach(checkbox => {
                 progress[checkbox.id] = checkbox.checked;
+                if (checkbox.checked) checkedCount++;
+                console.log(`📋 ${checkbox.id}: ${checkbox.checked ? 'checked' : 'unchecked'}`);
             });
             
+            // Save to localStorage
             localStorage.setItem('myTracksyTaxChecklistProgress', JSON.stringify(progress));
-            showPersonalTaxNotification('Tax filing checklist progress saved!', 'success');
+            
+            // Show progress notification
+            const totalItems = checkboxes.length;
+            const progressPercent = Math.round((checkedCount / totalItems) * 100);
+            
+            // Update progress bar
+            updateProgressBar(checkedCount, totalItems, progressPercent);
+            
+            showPersonalTaxNotification(
+                `Tax filing checklist progress saved! ${checkedCount}/${totalItems} items completed (${progressPercent}%)`, 
+                'success'
+            );
+            
+            console.log(`✅ Progress saved: ${checkedCount}/${totalItems} items completed`);
         }
 
         function loadChecklistProgress() {
+            console.log('📂 Loading tax filing checklist progress...');
+            
             const savedProgress = localStorage.getItem('myTracksyTaxChecklistProgress');
             if (savedProgress) {
-                const progress = JSON.parse(savedProgress);
-                Object.keys(progress).forEach(id => {
-                    const checkbox = document.getElementById(id);
-                    if (checkbox) {
-                        checkbox.checked = progress[id];
-                    }
-                });
+                try {
+                    const progress = JSON.parse(savedProgress);
+                    let loadedCount = 0;
+                    
+                    Object.keys(progress).forEach(id => {
+                        const checkbox = document.getElementById(id);
+                        if (checkbox) {
+                            checkbox.checked = progress[id];
+                            if (progress[id]) loadedCount++;
+                            console.log(`📋 Restored ${id}: ${progress[id] ? 'checked' : 'unchecked'}`);
+                        } else {
+                            console.warn(`⚠️ Checkbox not found: ${id}`);
+                        }
+                    });
+                    
+                    console.log(`✅ Loaded ${loadedCount} checked items from saved progress`);
+                    
+                    // Update progress bar with loaded data
+                    const totalItems = Object.keys(progress).length;
+                    const progressPercent = Math.round((loadedCount / totalItems) * 100);
+                    updateProgressBar(loadedCount, totalItems, progressPercent);
+                    
+                    // Add auto-save functionality to all checkboxes
+                    const checkboxes = document.querySelectorAll('.tax-filing-checklist input[type="checkbox"]');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            console.log(`☑️ Checkbox ${this.id} changed to: ${this.checked}`);
+                            // Auto-save on change
+                            setTimeout(saveChecklistProgress, 500);
+                        });
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Error loading checklist progress:', error);
+                }
+            } else {
+                console.log('📝 No saved progress found - starting fresh');
+                
+                // Initialize progress bar with 0
+                setTimeout(() => {
+                    const checkboxes = document.querySelectorAll('.tax-filing-checklist input[type="checkbox"]');
+                    updateProgressBar(0, checkboxes.length, 0);
+                    
+                    // Add auto-save functionality
+                    checkboxes.forEach(checkbox => {
+                        checkbox.addEventListener('change', function() {
+                            console.log(`☑️ Checkbox ${this.id} changed to: ${this.checked}`);
+                            setTimeout(saveChecklistProgress, 500);
+                        });
+                    });
+                }, 1000);
             }
         }
 
