@@ -43,6 +43,12 @@
             --individual-accent: #f59e0b;
             --individual-bg: linear-gradient(135deg, #581c87 0%, #7c2d12 100%);
             
+            /* Aquaculture Theme */
+            --aquaculture-primary: #0891b2;
+            --aquaculture-secondary: #0e7490;
+            --aquaculture-accent: #22c55e;
+            --aquaculture-bg: linear-gradient(135deg, #0c4a6e 0%, #166534 100%);
+            
             /* Default Colors */
             --primary-color: #667eea;
             --secondary-color: #764ba2;
@@ -358,6 +364,13 @@
             --profession-secondary: #0f766e;
             --profession-accent: #f59e0b;
             --profession-gradient: linear-gradient(135deg, #0d9488 0%, #f59e0b 100%);
+        }
+
+        .aquaculture {
+            --profession-primary: #0891b2;
+            --profession-secondary: #0e7490;
+            --profession-accent: #22c55e;
+            --profession-gradient: linear-gradient(135deg, #0891b2 0%, #22c55e 100%);
         }
 
         .action-buttons {
@@ -1087,6 +1100,49 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Aquaculture & Marine Farming Professional -->
+            <div class="profession-card aquaculture" data-profession="aquaculture" onclick="selectProfession('aquaculture')">
+                <div class="profession-header">
+                    <div class="profession-icon">
+                        <i class="fas fa-fish"></i>
+                    </div>
+                    <div>
+                        <div class="profession-title">Aquaculture & Marine Farming</div>
+                        <div class="profession-subtitle">Shrimp Farming, Sea Cucumber, Fish Farming & Export</div>
+                    </div>
+                </div>
+                <ul class="profession-features">
+                    <li><i class="fas fa-water"></i> Pond & Tank Management Systems</li>
+                    <li><i class="fas fa-thermometer-half"></i> Water Quality & Environmental Monitoring</li>
+                    <li><i class="fas fa-seedling"></i> Feed Management & Growth Tracking</li>
+                    <li><i class="fas fa-chart-line"></i> Harvest Yield & Mortality Analytics</li>
+                    <li><i class="fas fa-ship"></i> Export Documentation & Compliance</li>
+                    <li><i class="fas fa-flask"></i> Breeding Program Management</li>
+                    <li><i class="fas fa-truck"></i> Cold Chain & Distribution Tracking</li>
+                    <li><i class="fas fa-certificate"></i> Organic & Sustainable Certification</li>
+                    <li><i class="fas fa-globe"></i> International Market Pricing</li>
+                    <li><i class="fas fa-microscope"></i> Disease Prevention & Treatment</li>
+                </ul>
+                <div class="profession-highlight">
+                    <i class="fas fa-star"></i>
+                    <span>Complete aquaculture business management from pond to export</span>
+                </div>
+                <div class="profession-stats">
+                    <div class="stat">
+                        <div class="stat-value">25+</div>
+                        <div class="stat-label">Species Tracking</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">360°</div>
+                        <div class="stat-label">Farm Management</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value">Global</div>
+                        <div class="stat-label">Export Markets</div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="selected-profession-info" id="selectedProfessionInfo">
@@ -1240,6 +1296,24 @@
                     "Multi-location store expense management",
                     "Sales performance correlation analysis",
                     "Retail terminology voice recognition"
+                ]
+            },
+            aquaculture: {
+                title: "Aquaculture & Marine Farming Professional Dashboard",
+                description: "Your dashboard will feature comprehensive aquaculture management tools including pond monitoring, feed tracking, harvest analytics, export documentation, and sustainability compliance specifically designed for Sri Lankan marine farmers and seafood exporters.",
+                features: [
+                    "Multi-pond/tank monitoring with water quality tracking",
+                    "Feed management & growth rate optimization",
+                    "Harvest yield analytics & mortality reporting",
+                    "Export documentation & international compliance",
+                    "Cold chain temperature monitoring & logistics",
+                    "Breeding program genealogy & genetic tracking",
+                    "Disease prevention protocols & treatment records",
+                    "Sustainable farming certification management",
+                    "International market pricing & currency tracking",
+                    "Aquaculture terminology voice recognition",
+                    "Seasonal planning for monsoon & farming cycles",
+                    "Equipment maintenance for pumps, aerators & filters"
                 ]
             }
         };
