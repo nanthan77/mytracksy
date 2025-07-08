@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy - Medical Professional Dashboard | Healthcare Practice Management</title>
+    <meta name="description" content="Comprehensive medical practice management dashboard for healthcare professionals in Sri Lanka">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Medical Theme Colors */
+            --medical-primary: #0ea5e9;
+            --medical-secondary: #0284c7;
+            --medical-accent: #06b6d4;
+            --medical-success: #10b981;
+            --medical-warning: #f59e0b;
+            --medical-error: #ef4444;
+            --medical-light: #f0f9ff;
+            --medical-dark: #0c4a6e;
+            
+            /* Neutral Colors */
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            /* Spacing */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            /* Border Radius */
+            --border-radius-sm: 6px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 16px;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            /* Transitions */
+            --transition-fast: 150ms ease-in-out;
+            --transition-normal: 300ms ease-in-out;
+            --transition-slow: 500ms ease-in-out;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--medical-light) 0%, var(--gray-50) 100%);
+            color: var(--gray-800);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 3px solid var(--medical-primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-md) var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            color: var(--medical-primary);
+            font-size: 1.5rem;
+            font-weight: 700;
+            text-decoration: none;
+        }
+        
+        .logo i {
+            font-size: 2rem;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--medical-primary), var(--medical-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-weight: 600;
+        }
+        
+        .user-info h4 {
+            color: var(--gray-800);
+            font-size: 0.9rem;
+        }
+        
+        .user-info p {
+            color: var(--gray-500);
+            font-size: 0.8rem;
+        }
+        
+        /* Main Layout */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+            display: grid;
+            gap: var(--spacing-xl);
+        }
+        
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .dashboard-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--medical-dark);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .dashboard-subtitle {
+            font-size: 1.1rem;
+            color: var(--gray-600);
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-xl);
+        }
+        
+        /* Card Styles */
+        .dashboard-card {
+            background: var(--white);
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-xl);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--gray-200);
+            transition: var(--transition-normal);
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: var(--white);
+        }
+        
+        .card-action {
+            background: var(--medical-light);
+            color: var(--medical-primary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: var(--transition-fast);
+        }
+        
+        .card-action:hover {
+            background: var(--medical-primary);
+            color: var(--white);
+        }
+        
+        /* Stat Cards */
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .stat-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            border-left: 4px solid var(--medical-primary);
+            transition: var(--transition-normal);
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .stat-title {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            font-weight: 500;
+        }
+        
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--border-radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--white);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gray-800);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .stat-change {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-xs);
+        }
+        
+        .stat-change.positive {
+            color: var(--medical-success);
+        }
+        
+        .stat-change.negative {
+            color: var(--medical-error);
+        }
+        
+        /* Lists */
+        .list-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--gray-200);
+            transition: var(--transition-fast);
+        }
+        
+        .list-item:hover {
+            background: var(--gray-50);
+        }
+        
+        .list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .list-item-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .list-item-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--medical-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .list-item-details h4 {
+            font-size: 0.9rem;
+            color: var(--gray-800);
+            margin-bottom: 2px;
+        }
+        
+        .list-item-details p {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+        
+        .list-item-meta {
+            text-align: right;
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.confirmed {
+            background: #dcfce7;
+            color: #166534;
+        }
+        
+        .status-badge.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .status-badge.completed {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        
+        .status-badge.critical {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        
+        .status-badge.cancelled {
+            background: #f3f4f6;
+            color: #6b7280;
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: var(--spacing-lg);
+        }
+        
+        /* KPI Cards */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .kpi-card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            padding: var(--spacing-lg);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--medical-primary), var(--medical-accent));
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--medical-primary);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .kpi-label {
+            font-size: 0.9rem;
+            color: var(--gray-600);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .kpi-target {
+            font-size: 0.8rem;
+            color: var(--gray-500);
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .btn {
+            padding: var(--spacing-sm) var(--spacing-lg);
+            border: none;
+            border-radius: var(--border-radius-md);
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-primary {
+            background: var(--medical-primary);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            background: var(--medical-secondary);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-200);
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: var(--spacing-md);
+            }
+            
+            .dashboard-title {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stat-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .header-content {
+                padding: var(--spacing-md);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        /* Color Variations for Icons */
+        .icon-patients { background: var(--medical-primary); }
+        .icon-appointments { background: var(--medical-accent); }
+        .icon-treatments { background: var(--medical-success); }
+        .icon-revenue { background: var(--medical-warning); }
+        .icon-analytics { background: #8b5cf6; }
+        .icon-lab { background: #f59e0b; }
+        .icon-prescriptions { background: #10b981; }
+        .icon-referrals { background: #6366f1; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <i class="fas fa-user-md"></i>
+                <span>MyTracksy Medical</span>
+            </a>
+            
+            <div class="header-actions">
+                <div class="user-profile">
+                    <div class="user-avatar">DK</div>
+                    <div class="user-info">
+                        <h4>Dr. Kasun Perera</h4>
+                        <p>Consultant Physician</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">🏥 Medical Professional Dashboard</h1>
+            <p class="dashboard-subtitle">Comprehensive healthcare practice management and patient care analytics</p>
+        </div>
+
+        <!-- Key Performance Indicators -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value">4.7</div>
+                <div class="kpi-label">Patient Satisfaction</div>
+                <div class="kpi-target">Target: 4.5/5.0</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">92%</div>
+                <div class="kpi-label">Appointment Completion</div>
+                <div class="kpi-target">Target: 90%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">8.3%</div>
+                <div class="kpi-label">Revenue Growth</div>
+                <div class="kpi-target">Target: 10%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">12min</div>
+                <div class="kpi-label">Average Wait Time</div>
+                <div class="kpi-target">Target: <15min</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">94%</div>
+                <div class="kpi-label">Insurance Approval</div>
+                <div class="kpi-target">Target: 95%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">89%</div>
+                <div class="kpi-label">Patient Retention</div>
+                <div class="kpi-target">Target: 85%</div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="stat-grid">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Total Patients</div>
+                    <div class="stat-icon icon-patients">
+                        <i class="fas fa-users"></i>
+                    </div>
+                </div>
+                <div class="stat-value">287</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+23 this month</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Today's Appointments</div>
+                    <div class="stat-icon icon-appointments">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                </div>
+                <div class="stat-value">18</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>2 more than yesterday</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Active Treatments</div>
+                    <div class="stat-icon icon-treatments">
+                        <i class="fas fa-stethoscope"></i>
+                    </div>
+                </div>
+                <div class="stat-value">45</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>5 new this week</span>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div class="stat-title">Monthly Revenue</div>
+                    <div class="stat-icon icon-revenue">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="stat-value">$85,420</div>
+                <div class="stat-change positive">
+                    <i class="fas fa-arrow-up"></i>
+                    <span>+8.3% from last month</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards Grid -->
+        <div class="dashboard-grid">
+            <!-- Patient Management -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon icon-patients">
+                            <i class="fas fa-user-injured"></i>
+                        </div>
+                        Patient Management
+                    </div>
+                    <button class="card-action" onclick="viewAllPatients()">View All</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">AM</div>
+                            <div class="list-item-details">
+                                <h4>Amara Perera</h4>
+                                <p>Last visit: 2 days ago</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge critical">Critical</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">NK</div>
+                            <div class="list-item-details">
+                                <h4>Nimal Kumara</h4>
+                                <p>Follow-up required</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge pending">Follow-up</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">SS</div>
+                            <div class="list-item-details">
+                                <h4>Sita Silva</h4>
+                                <p>Treatment ongoing</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge confirmed">Stable</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="addNewPatient()">
+                        <i class="fas fa-plus"></i>
+                        Add Patient
+                    </button>
+                    <button class="btn btn-secondary" onclick="searchPatients()">
+                        <i class="fas fa-search"></i>
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <!-- Appointment Scheduling -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon icon-appointments">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        Today's Schedule
+                    </div>
+                    <button class="card-action" onclick="viewFullSchedule()">Full Schedule</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">9:00</div>
+                            <div class="list-item-details">
+                                <h4>Ruwan Fernando</h4>
+                                <p>Annual check-up</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge confirmed">Confirmed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">10:30</div>
+                            <div class="list-item-details">
+                                <h4>Kamala Wijesinghe</h4>
+                                <p>Follow-up consultation</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">2:00</div>
+                            <div class="list-item-details">
+                                <h4>Thisara Jayawardene</h4>
+                                <p>Emergency consultation</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge critical">Urgent</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="bookAppointment()">
+                        <i class="fas fa-plus"></i>
+                        Book Appointment
+                    </button>
+                    <button class="btn btn-secondary" onclick="rescheduleAppointment()">
+                        <i class="fas fa-edit"></i>
+                        Reschedule
+                    </button>
+                </div>
+            </div>
+
+            <!-- Clinical Workflow -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon icon-treatments">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        Clinical Workflow
+                    </div>
+                    <button class="card-action" onclick="viewClinicalData()">View All</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar"><i class="fas fa-pills"></i></div>
+                            <div class="list-item-details">
+                                <h4>Active Prescriptions</h4>
+                                <p>180 prescriptions</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge confirmed">Active</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar"><i class="fas fa-flask"></i></div>
+                            <div class="list-item-details">
+                                <h4>Lab Results</h4>
+                                <p>23 pending results</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge pending">Pending</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar"><i class="fas fa-share"></i></div>
+                            <div class="list-item-details">
+                                <h4>Referrals</h4>
+                                <p>12 sent, 5 received</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge completed">Active</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="createPrescription()">
+                        <i class="fas fa-prescription"></i>
+                        New Prescription
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewLabResults()">
+                        <i class="fas fa-vial"></i>
+                        Lab Results
+                    </button>
+                </div>
+            </div>
+
+            <!-- Financial Overview -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon icon-revenue">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        Financial Overview
+                    </div>
+                    <button class="card-action" onclick="viewFinancialDetails()">Details</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="generateFinancialReport()">
+                        <i class="fas fa-file-alt"></i>
+                        Generate Report
+                    </button>
+                    <button class="btn btn-secondary" onclick="manageInsurance()">
+                        <i class="fas fa-shield-alt"></i>
+                        Insurance Claims
+                    </button>
+                </div>
+            </div>
+
+            <!-- Performance Analytics -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon icon-analytics">
+                            <i class="fas fa-chart-bar"></i>
+                        </div>
+                        Performance Analytics
+                    </div>
+                    <button class="card-action" onclick="viewAnalytics()">View All</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="performanceChart"></canvas>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="customAnalytics()">
+                        <i class="fas fa-cog"></i>
+                        Custom Reports
+                    </button>
+                    <button class="btn btn-secondary" onclick="exportData()">
+                        <i class="fas fa-download"></i>
+                        Export Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon icon-lab">
+                            <i class="fas fa-bolt"></i>
+                        </div>
+                        Quick Actions
+                    </div>
+                </div>
+                
+                <div class="action-buttons" style="flex-direction: column; gap: var(--spacing-md);">
+                    <button class="btn btn-primary" onclick="emergencyProtocol()">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Emergency Protocol
+                    </button>
+                    <button class="btn btn-secondary" onclick="updateMedicalRecords()">
+                        <i class="fas fa-file-medical"></i>
+                        Update Records
+                    </button>
+                    <button class="btn btn-secondary" onclick="orderLabTests()">
+                        <i class="fas fa-vials"></i>
+                        Order Lab Tests
+                    </button>
+                    <button class="btn btn-secondary" onclick="viewGuidelines()">
+                        <i class="fas fa-book-medical"></i>
+                        Clinical Guidelines
+                    </button>
+                    <button class="btn btn-secondary" onclick="telemedicine()">
+                        <i class="fas fa-video"></i>
+                        Telemedicine
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            updateDashboardData();
+        });
+
+        function initializeCharts() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Monthly Revenue',
+                        data: [78900, 82400, 76800, 85420, 79300, 88900],
+                        borderColor: '#0ea5e9',
+                        backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toLocaleString();
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Performance Chart
+            const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+            new Chart(performanceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Completed', 'Pending', 'Cancelled'],
+                    datasets: [{
+                        data: [92, 6, 2],
+                        backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDashboardData() {
+            console.log('🏥 Medical dashboard data updated');
+        }
+
+        // Dashboard Functions
+        function viewAllPatients() {
+            showNotification('Opening patient management system...', 'info');
+        }
+
+        function addNewPatient() {
+            showNotification('Opening new patient registration form...', 'info');
+        }
+
+        function searchPatients() {
+            showNotification('Opening patient search...', 'info');
+        }
+
+        function viewFullSchedule() {
+            showNotification('Opening full appointment schedule...', 'info');
+        }
+
+        function bookAppointment() {
+            showNotification('Opening appointment booking system...', 'info');
+        }
+
+        function rescheduleAppointment() {
+            showNotification('Opening appointment rescheduling...', 'info');
+        }
+
+        function viewClinicalData() {
+            showNotification('Opening clinical data management...', 'info');
+        }
+
+        function createPrescription() {
+            showNotification('Opening prescription system...', 'info');
+        }
+
+        function viewLabResults() {
+            showNotification('Opening lab results viewer...', 'info');
+        }
+
+        function viewFinancialDetails() {
+            showNotification('Opening financial management...', 'info');
+        }
+
+        function generateFinancialReport() {
+            showNotification('Generating financial report...', 'success');
+        }
+
+        function manageInsurance() {
+            showNotification('Opening insurance claims management...', 'info');
+        }
+
+        function viewAnalytics() {
+            showNotification('Opening analytics dashboard...', 'info');
+        }
+
+        function customAnalytics() {
+            showNotification('Opening custom analytics builder...', 'info');
+        }
+
+        function exportData() {
+            showNotification('Preparing data export...', 'success');
+        }
+
+        function emergencyProtocol() {
+            showNotification('Activating emergency protocol...', 'warning');
+        }
+
+        function updateMedicalRecords() {
+            showNotification('Opening medical records system...', 'info');
+        }
+
+        function orderLabTests() {
+            showNotification('Opening lab test ordering system...', 'info');
+        }
+
+        function viewGuidelines() {
+            showNotification('Opening clinical guidelines...', 'info');
+        }
+
+        function telemedicine() {
+            showNotification('Launching telemedicine platform...', 'info');
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : type === 'error' ? '#ef4444' : '#0ea5e9'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Add keyframes for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
