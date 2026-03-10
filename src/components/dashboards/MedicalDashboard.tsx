@@ -5,6 +5,9 @@ import TransactionList, { Transaction } from './TransactionList';
 import InvoiceForm, { InvoiceData } from './InvoiceForm';
 import VoiceInput, { ParsedVoiceAction } from '../VoiceInput';
 import PrescriptionPad from '../PrescriptionPad';
+import TaxSpeedometer from '../TaxSpeedometer';
+import ReceiptScanner from '../ReceiptScanner';
+import AuditorExport from '../AuditorExport';
 
 interface MedicalDashboardProps {
     userName: string;
@@ -22,8 +25,11 @@ const navItems = [
     { id: 'appointments', label: 'Appointments', icon: '📅' },
     { id: 'income', label: 'Income & Invoices', icon: '💰' },
     { id: 'expenses', label: 'Expenses', icon: '💸' },
+    { id: 'tax', label: 'Tax & IRD', icon: '🧾' },
+    { id: 'receipts', label: 'Receipts', icon: '📸' },
     { id: 'banking', label: 'Banking & Cheques', icon: '🏦' },
     { id: 'reports', label: 'Reports', icon: '📋' },
+    { id: 'export', label: 'Auditor Export', icon: '📦' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -111,6 +117,25 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const [appointmentStatuses, setAppointmentStatuses] = useState<Record<string, string>>({});
     const [noteText, setNoteText] = useState('');
 
+    // ===== Dual-Income State =====
+    const [govSalary] = useState(185000); // Monthly MoH base salary
+    const [datAllowance] = useState(25000); // DAT allowance
+    const govMonthly = govSalary + datAllowance;
+    const govAnnual = govMonthly * 12;
+    const govAPIT = Math.round(govAnnual * 0.12); // Simplified APIT for demo
+
+    // ===== Channeling Payment Tracker State =====
+    const [channelingShifts, setChannelingShifts] = useState<{ id: string; hospital: string; date: string; patients: number; expected: number; status: 'pending' | 'received' | 'overdue'; receivedDate?: string }[]>([
+        { id: 'cs1', hospital: 'Asiri Central', date: '2026-03-08', patients: 14, expected: 35000, status: 'received', receivedDate: '2026-03-10' },
+        { id: 'cs2', hospital: 'Lanka Hospitals', date: '2026-03-07', patients: 10, expected: 30000, status: 'pending' },
+        { id: 'cs3', hospital: 'Nawaloka Hospital', date: '2026-03-05', patients: 18, expected: 39600, status: 'overdue' },
+        { id: 'cs4', hospital: 'Asiri Central', date: '2026-03-01', patients: 16, expected: 40000, status: 'received', receivedDate: '2026-03-04' },
+        { id: 'cs5', hospital: 'Lanka Hospitals', date: '2026-02-28', patients: 12, expected: 36000, status: 'overdue' },
+        { id: 'cs6', hospital: 'Private Clinic (Nugegoda)', date: '2026-03-09', patients: 22, expected: 44000, status: 'pending' },
+    ]);
+    const [showAddShift, setShowAddShift] = useState(false);
+    const [shiftForm, setShiftForm] = useState({ hospital: channelingData[0].hospital, date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
+
     const handleVoiceAction = (action: ParsedVoiceAction) => {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' });
@@ -177,6 +202,11 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 
     const fmt = (n: number) => `LKR ${n.toLocaleString('en-LK')}`;
 
+    // Private income calculations
+    const privateIncome = invoices.reduce((s, t) => s + t.amount, 0);
+    const privateAnnual = privateIncome * 12;
+    const totalWHT = Math.round(privateAnnual * 0.05);
+
     const renderContent = () => {
         switch (activeNav) {
             case 'overview':
@@ -197,10 +227,16 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 return renderIncome();
             case 'expenses':
                 return renderExpenses();
+            case 'tax':
+                return <TaxSpeedometer annualPrivateIncome={privateAnnual} annualGovIncome={govAnnual} annualExpenses={totalExpenses * 12} whtDeducted={totalWHT} />;
+            case 'receipts':
+                return <ReceiptScanner />;
             case 'banking':
                 return renderBanking();
             case 'reports':
                 return renderReports();
+            case 'export':
+                return <AuditorExport invoices={invoices} expenses={expenses} />;
             case 'settings':
                 return renderSettings();
             default:
@@ -329,80 +365,166 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         );
     };
 
-    /* ========== OVERVIEW ========== */
-    const renderOverview = () => (
-        <div>
-            {/* KPI Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="💰" label="Monthly Income" value={fmt(totalIncome)} change="+12.5%" changeType="up" color="#22c55e" />
-                <KPICard icon="💸" label="Monthly Expenses" value={fmt(totalExpenses)} change="-3.2%" changeType="down" color="#ef4444" />
-                <KPICard icon="📈" label="Net Profit" value={fmt(netProfit)} change="+18.7%" changeType="up" color="#6366f1" />
-                <KPICard icon="📋" label="Pending Invoices" value={String(pendingInvoices)} change={pendingInvoices > 0 ? 'Action needed' : 'All clear'} changeType={pendingInvoices > 0 ? 'down' : 'up'} color="#f59e0b" />
-            </div>
+    /* ========== OVERVIEW (Dual-Income Dashboard) ========== */
+    const renderOverview = () => {
+        const govNetMonthly = govMonthly - Math.round(govAPIT / 12);
+        const privateNet = totalIncome; // Monthly private
+        const totalTakeHome = govNetMonthly + privateNet - totalExpenses;
+        const overdueCount = channelingShifts.filter(s => s.status === 'overdue').length;
+        const pendingAmount = channelingShifts.filter(s => s.status === 'pending').reduce((s, c) => s + c.expected, 0);
+        const overdueAmount = channelingShifts.filter(s => s.status === 'overdue').reduce((s, c) => s + c.expected, 0);
 
-            {/* Quick Actions */}
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-                <button onClick={() => setShowInvoiceForm(true)} style={actionBtn('#6366f1')}>+ Create Invoice</button>
-                <button onClick={() => { setActiveNav('expenses'); setShowAddExpense(true); }} style={actionBtn('#ef4444')}>+ Add Expense</button>
-                <button onClick={() => setActiveNav('quicknotes')} style={actionBtn('#8b5cf6')}>📝 Quick Note</button>
-                <button onClick={() => setActiveNav('today')} style={actionBtn('#f59e0b')}>🕐 Today</button>
-                <button onClick={() => setActiveNav('prescriptions')} style={actionBtn('#22c55e')}>💊 Prescription</button>
-                <button onClick={() => setActiveNav('banking')} style={actionBtn('#06b6d4')}>🏦 Banking</button>
-            </div>
-
-            {/* Charts Row */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                {/* Income vs Expenses Chart */}
-                <div style={cardStyle}>
-                    <h3 style={cardTitle}>📊 Income vs Expenses (Last 6 Months)</h3>
-                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', height: 180, padding: '1rem 0' }}>
-                        {['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].map((month, i) => {
-                            const incomeH = [65, 72, 58, 80, 75, 85];
-                            const expenseH = [30, 35, 40, 28, 32, 36];
-                            return (
-                                <div key={month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                                    <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 150 }}>
-                                        <div style={{ width: 16, height: `${incomeH[i]}%`, background: 'linear-gradient(to top, #22c55e, #4ade80)', borderRadius: 4 }} />
-                                        <div style={{ width: 16, height: `${expenseH[i]}%`, background: 'linear-gradient(to top, #ef4444, #f87171)', borderRadius: 4 }} />
-                                    </div>
-                                    <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{month}</span>
-                                </div>
-                            );
-                        })}
+        return (
+            <div>
+                {/* ===== Dual-Income Split ===== */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                    {/* Government Bucket */}
+                    <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #065f46, #047857)', color: 'white', borderColor: '#059669' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, opacity: 0.9 }}>🏛️ Government Income</h3>
+                            <span style={{ fontSize: 11, background: 'rgba(255,255,255,0.15)', padding: '3px 10px', borderRadius: 6, fontWeight: 600 }}>Employment</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>MoH Base Salary</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(govSalary)}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>DAT Allowance</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(datAllowance)}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>APIT Deducted (Monthly)</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(Math.round(govAPIT / 12))}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>Net Take-Home</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{fmt(govNetMonthly)}</div>
+                            </div>
+                        </div>
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                        <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>● Income</span>
-                        <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>● Expenses</span>
+
+                    {/* Private Bucket */}
+                    <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #312e81, #4338ca)', color: 'white', borderColor: '#6366f1' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, opacity: 0.9 }}>🩺 Private Practice Income</h3>
+                            <span style={{ fontSize: 11, background: 'rgba(255,255,255,0.15)', padding: '3px 10px', borderRadius: 6, fontWeight: 600 }}>Business</span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>Channeling/Clinic</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(totalIncome)}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>WHT Deducted (5%)</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(Math.round(totalIncome * 0.05))}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>Practice Expenses</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(totalExpenses)}</div>
+                            </div>
+                            <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 10 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7 }}>Net Private Income</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{fmt(privateNet - Math.round(totalIncome * 0.05) - totalExpenses)}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Total Wealth Strip */}
+                <div style={{ ...cardStyle, marginBottom: '1.5rem', background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem 1.5rem' }}>
+                    <div>
+                        <div style={{ fontSize: 12, opacity: 0.6 }}>💎 Total Monthly Take-Home Wealth</div>
+                        <div style={{ fontSize: '1.8rem', fontWeight: 800, background: 'linear-gradient(135deg, #fbbf24, #f59e0b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{fmt(totalTakeHome)}</div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1rem' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 11, opacity: 0.5 }}>Gov %</div>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{Math.round((govNetMonthly / (govNetMonthly + privateNet)) * 100)}%</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 11, opacity: 0.5 }}>Private %</div>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{Math.round((privateNet / (govNetMonthly + privateNet)) * 100)}%</div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Category Breakdown */}
-                <div style={cardStyle}>
-                    <h3 style={cardTitle}>📂 Expense Categories</h3>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', padding: '0.5rem 0' }}>
-                        {medicalExpenseCategories.slice(0, 5).map((cat, i) => {
-                            const amounts = [35000, 12000, 8500, 5200, 3000];
-                            const pct = [45, 30, 20, 12, 8];
-                            return (
-                                <div key={cat.name}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{cat.icon} {cat.name}</span>
-                                        <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>{fmt(amounts[i])}</span>
+                {/* Missing Money Alert */}
+                {(overdueCount > 0) && (
+                    <div style={{ ...cardStyle, marginBottom: '1.5rem', background: '#fef2f2', border: '2px solid #fecaca', cursor: 'pointer' }} onClick={() => setActiveNav('channeling')}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ fontSize: 28, animation: 'voicePulse 2s infinite' }}>🚨</div>
+                            <div>
+                                <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>Missing Money Alert — {overdueCount} unpaid shift{overdueCount > 1 ? 's' : ''}</div>
+                                <div style={{ fontSize: 13, color: '#b91c1c' }}>{fmt(overdueAmount)} overdue from hospitals. {fmt(pendingAmount)} still pending. Tap to review →</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Quick Actions */}
+                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+                    <button onClick={() => setShowInvoiceForm(true)} style={actionBtn('#6366f1')}>+ Create Invoice</button>
+                    <button onClick={() => { setActiveNav('expenses'); setShowAddExpense(true); }} style={actionBtn('#ef4444')}>+ Add Expense</button>
+                    <button onClick={() => setActiveNav('quicknotes')} style={actionBtn('#8b5cf6')}>📝 Quick Note</button>
+                    <button onClick={() => setActiveNav('today')} style={actionBtn('#f59e0b')}>🕐 Today</button>
+                    <button onClick={() => setActiveNav('tax')} style={actionBtn('#06b6d4')}>🧾 Tax & IRD</button>
+                    <button onClick={() => setActiveNav('receipts')} style={actionBtn('#22c55e')}>📸 Scan Receipt</button>
+                    <button onClick={() => setActiveNav('export')} style={actionBtn('#1e293b')}>📦 Auditor Export</button>
+                </div>
+
+                {/* Charts Row */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <div style={cardStyle}>
+                        <h3 style={cardTitle}>📊 Income vs Expenses (Last 6 Months)</h3>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', height: 180, padding: '1rem 0' }}>
+                            {['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].map((month, i) => {
+                                const incomeH = [65, 72, 58, 80, 75, 85];
+                                const expenseH = [30, 35, 40, 28, 32, 36];
+                                return (
+                                    <div key={month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                        <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 150 }}>
+                                            <div style={{ width: 16, height: `${incomeH[i]}%`, background: 'linear-gradient(to top, #22c55e, #4ade80)', borderRadius: 4 }} />
+                                            <div style={{ width: 16, height: `${expenseH[i]}%`, background: 'linear-gradient(to top, #ef4444, #f87171)', borderRadius: 4 }} />
+                                        </div>
+                                        <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{month}</span>
                                     </div>
-                                    <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
-                                        <div style={{ height: '100%', width: `${pct[i]}%`, background: cat.color, borderRadius: 3, transition: 'width 0.5s ease' }} />
+                                );
+                            })}
+                        </div>
+                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>● Income</span>
+                            <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>● Expenses</span>
+                        </div>
+                    </div>
+
+                    <div style={cardStyle}>
+                        <h3 style={cardTitle}>📂 Expense Categories</h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', padding: '0.5rem 0' }}>
+                            {medicalExpenseCategories.slice(0, 5).map((cat, i) => {
+                                const amounts = [35000, 12000, 8500, 5200, 3000];
+                                const pct = [45, 30, 20, 12, 8];
+                                return (
+                                    <div key={cat.name}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{cat.icon} {cat.name}</span>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>{fmt(amounts[i])}</span>
+                                        </div>
+                                        <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
+                                            <div style={{ height: '100%', width: `${pct[i]}%`, background: cat.color, borderRadius: 3, transition: 'width 0.5s ease' }} />
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })}
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            {/* Recent Transactions */}
-            <TransactionList transactions={[...invoices, ...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8)} title="Recent Transactions" />
-        </div>
-    );
+                {/* Recent Transactions */}
+                <TransactionList transactions={[...invoices, ...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8)} title="Recent Transactions" />
+            </div>
+        );
+    };
 
     /* ========== PATIENTS ========== */
     const renderPatients = () => (
@@ -441,18 +563,142 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         </div>
     );
 
-    /* ========== CHANNELING ========== */
+    /* ========== CHANNELING + PAYMENT TRACKER ========== */
     const renderChanneling = () => {
         const totalMonthlyEst = channelingData.reduce((s, c) => s + (c.doctorShare * c.avgPatients * 4), 0);
         const wht = Math.round(totalMonthlyEst * 0.05);
+        const pendingShifts = channelingShifts.filter(s => s.status === 'pending');
+        const overdueShifts = channelingShifts.filter(s => s.status === 'overdue');
+        const receivedShifts = channelingShifts.filter(s => s.status === 'received');
+        const pendingTotal = pendingShifts.reduce((s, c) => s + c.expected, 0);
+        const overdueTotal = overdueShifts.reduce((s, c) => s + c.expected, 0);
+        const receivedTotal = receivedShifts.reduce((s, c) => s + c.expected, 0);
+
+        const handleAddShift = (e: React.FormEvent) => {
+            e.preventDefault();
+            if (!shiftForm.patients || !shiftForm.expected) return;
+            setChannelingShifts(prev => [{ id: `cs-${Date.now()}`, hospital: shiftForm.hospital, date: shiftForm.date, patients: shiftForm.patients, expected: shiftForm.expected, status: 'pending' }, ...prev]);
+            setShowAddShift(false);
+            setShiftForm({ hospital: channelingData[0].hospital, date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
+        };
+
+        const markReceived = (id: string) => setChannelingShifts(prev => prev.map(s => s.id === id ? { ...s, status: 'received' as const, receivedDate: new Date().toISOString().split('T')[0] } : s));
+
         return (
             <div>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
                     <KPICard icon="🏥" label="Centers" value={String(channelingData.length)} changeType="neutral" color="#6366f1" />
                     <KPICard icon="💰" label="Est. Monthly" value={fmt(totalMonthlyEst)} changeType="up" color="#22c55e" />
-                    <KPICard icon="🧾" label="WHT (5%)" value={fmt(wht)} changeType="neutral" color="#f59e0b" />
-                    <KPICard icon="👥" label="Avg Patients/Day" value={String(Math.round(channelingData.reduce((s, c) => s + c.avgPatients, 0) / channelingData.length))} changeType="neutral" color="#3b82f6" />
+                    <KPICard icon="⏳" label="Pending" value={fmt(pendingTotal)} change={`${pendingShifts.length} shifts`} changeType="neutral" color="#f59e0b" />
+                    <KPICard icon="🚨" label="Overdue" value={fmt(overdueTotal)} change={overdueShifts.length > 0 ? `${overdueShifts.length} unpaid!` : 'All clear'} changeType={overdueShifts.length > 0 ? 'down' : 'up'} color="#ef4444" />
                 </div>
+
+                {/* ===== PAYMENT TRACKER ===== */}
+                <div style={{ ...cardStyle, marginBottom: '1rem', border: '2px solid rgba(99,102,241,0.2)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <h3 style={{ ...cardTitle, margin: 0 }}>💸 Payment Tracker — "Missing Money" Finder</h3>
+                        <button onClick={() => setShowAddShift(true)} style={actionBtn('#6366f1')}>+ Log Shift</button>
+                    </div>
+
+                    {/* Add Shift Form */}
+                    {showAddShift && (
+                        <form onSubmit={handleAddShift} style={{ padding: '1rem', background: '#f8fafc', borderRadius: 10, marginBottom: '1rem', border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '0.75rem' }}>
+                                <div>
+                                    <label style={labelStyle}>Hospital</label>
+                                    <select value={shiftForm.hospital} onChange={e => setShiftForm(p => ({ ...p, hospital: e.target.value }))} style={inputStyle}>
+                                        {channelingData.map(c => <option key={c.id} value={c.hospital}>{c.hospital}</option>)}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Date</label>
+                                    <input type="date" value={shiftForm.date} onChange={e => setShiftForm(p => ({ ...p, date: e.target.value }))} style={inputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Patients Seen</label>
+                                    <input type="number" value={shiftForm.patients || ''} onChange={e => setShiftForm(p => ({ ...p, patients: parseInt(e.target.value) || 0 }))} placeholder="15" style={inputStyle} />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Expected (Rs.)</label>
+                                    <input type="number" value={shiftForm.expected || ''} onChange={e => setShiftForm(p => ({ ...p, expected: parseFloat(e.target.value) || 0 }))} placeholder="30000" style={inputStyle} />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: '0.75rem' }}>
+                                <button type="button" onClick={() => setShowAddShift(false)} style={{ ...actionBtn('#94a3b8'), background: '#f1f5f9', color: '#64748b' }}>Cancel</button>
+                                <button type="submit" style={actionBtn('#22c55e')}>✅ Log Shift</button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* Overdue Shifts (RED) */}
+                    {overdueShifts.length > 0 && (
+                        <div style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#ef4444', textTransform: 'uppercase', marginBottom: 6 }}>🚨 Overdue — Call Hospital Accounts</div>
+                            {overdueShifts.map(s => (
+                                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#fef2f2', borderRadius: 8, border: '1.5px solid #fecaca', marginBottom: 6, animation: 'voicePulse 3s infinite' }}>
+                                    <div>
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#991b1b' }}>{s.hospital}</div>
+                                        <div style={{ fontSize: 12, color: '#b91c1c' }}>{s.date} · {s.patients} patients · Expected: {fmt(s.expected)}</div>
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                        <button onClick={() => markReceived(s.id)} style={{ padding: '5px 12px', background: '#22c55e', color: 'white', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✅ Received</button>
+                                        <a href="tel:" style={{ padding: '5px 12px', background: '#ef4444', color: 'white', borderRadius: 6, fontSize: 12, fontWeight: 700, textDecoration: 'none' }}>📞 Call</a>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Pending Shifts (YELLOW) */}
+                    {pendingShifts.length > 0 && (
+                        <div style={{ marginBottom: '0.75rem' }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#f59e0b', textTransform: 'uppercase', marginBottom: 6 }}>⏳ Pending Payments</div>
+                            {pendingShifts.map(s => (
+                                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fef3c7', marginBottom: 6 }}>
+                                    <div>
+                                        <div style={{ fontSize: 14, fontWeight: 600, color: '#92400e' }}>{s.hospital}</div>
+                                        <div style={{ fontSize: 12, color: '#a16207' }}>{s.date} · {s.patients} patients · Expected: {fmt(s.expected)}</div>
+                                    </div>
+                                    <button onClick={() => markReceived(s.id)} style={{ padding: '5px 12px', background: '#22c55e', color: 'white', border: 'none', borderRadius: 6, fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>✅ Received</button>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Received Shifts (GREEN) */}
+                    {receivedShifts.length > 0 && (
+                        <div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', marginBottom: 6 }}>✅ Confirmed Payments</div>
+                            {receivedShifts.slice(0, 3).map(s => (
+                                <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 14px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #dcfce7', marginBottom: 4 }}>
+                                    <div>
+                                        <div style={{ fontSize: 13, fontWeight: 500, color: '#166534' }}>{s.hospital}</div>
+                                        <div style={{ fontSize: 12, color: '#15803d' }}>{s.date} · {s.patients} pts · Deposited: {s.receivedDate}</div>
+                                    </div>
+                                    <span style={{ fontSize: 13, fontWeight: 700, color: '#22c55e' }}>✓ {fmt(s.expected)}</span>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Monthly Summary */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem', marginTop: '1rem', padding: '0.75rem', background: '#f8fafc', borderRadius: 10 }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 11, color: '#64748b' }}>Expected</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: '#1e293b' }}>{fmt(pendingTotal + overdueTotal + receivedTotal)}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 11, color: '#64748b' }}>Received</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: '#22c55e' }}>{fmt(receivedTotal)}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: 11, color: '#64748b' }}>Outstanding</div>
+                            <div style={{ fontSize: 16, fontWeight: 700, color: '#ef4444' }}>{fmt(pendingTotal + overdueTotal)}</div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Original Channeling Schedule */}
                 <div style={cardStyle}>
                     <h3 style={cardTitle}>🏥 Channeling Schedule & Fee Split</h3>
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
