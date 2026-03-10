@@ -1,0 +1,113 @@
+{
+  "app": {
+    "name": "Tracksy",
+    "tagline": "Voice-First Expense Tracker for Sri Lanka",
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "retry": "Try Again",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "save": "Save",
+    "delete": "Delete",
+    "edit": "Edit",
+    "add": "Add",
+    "close": "Close"
+  },
+  "voice": {
+    "title": "Voice Expense Entry",
+    "startListening": "Start Voice Entry",
+    "stopListening": "Stop Listening",
+    "processing": "Processing voice command...",
+    "confidence": "Processing Confidence",
+    "currentInput": "Current Input",
+    "processedResult": "Processed Result",
+    "aiEnhanced": "AI Enhanced",
+    "testFeedback": "Test voice feedback",
+    "clearTranscript": "Clear transcript",
+    "noSupport": "Voice recognition is not supported in your browser. Please use Chrome, Edge, or Safari.",
+    "examples": {
+      "try": "Try saying:",
+      "coffee": "I spent 500 rupees on coffee",
+      "lunch": "Add 1200 rupees for lunch at Keells",
+      "transport": "Taxi fare 800 rupees"
+    },
+    "feedback": {
+      "added": "Expense added successfully",
+      "failed": "Voice processing failed",
+      "working": "Voice system is working"
+    }
+  },
+  "expense": {
+    "amount": "Amount",
+    "category": "Category",
+    "description": "Description",
+    "date": "Date",
+    "paymentMethod": "Payment Method",
+    "tags": "Tags",
+    "confirm": "Confirm Expense",
+    "confirmMessage": "Please confirm this expense:",
+    "addExpense": "Add Expense",
+    "editExpense": "Edit Expense",
+    "deleteExpense": "Delete Expense",
+    "noExpenses": "No expenses found",
+    "totalExpenses": "Total Expenses"
+  },
+  "categories": {
+    "food": "Food & Dining",
+    "transport": "Transport",
+    "shopping": "Shopping",
+    "bills": "Bills & Utilities",
+    "healthcare": "Healthcare",
+    "entertainment": "Entertainment",
+    "education": "Education",
+    "religious": "Religious/Donations",
+    "family": "Family Support",
+    "business": "Business Expenses",
+    "groceries": "Groceries",
+    "fuel": "Fuel",
+    "miscellaneous": "Miscellaneous"
+  },
+  "cultural": {
+    "poyaDay": "Poya Day",
+    "festival": "Festival",
+    "religious": "Religious Event",
+    "national": "National Holiday",
+    "upcoming": "Upcoming Events",
+    "today": "Today's Special",
+    "expenses": "Festival Expenses",
+    "donations": "Religious Donations",
+    "traditional": "Traditional Items"
+  },
+  "currency": {
+    "lkr": "Sri Lankan Rupees",
+    "symbol": "Rs.",
+    "code": "LKR"
+  },
+  "language": {
+    "english": "English",
+    "sinhala": "සිංහල",
+    "tamil": "தமிழ்",
+    "switch": "Switch Language"
+  },
+  "navigation": {
+    "dashboard": "Dashboard",
+    "expenses": "Expenses",
+    "budgets": "Budgets",
+    "income": "Income",
+    "reports": "Reports",
+    "settings": "Settings",
+    "voice": "Voice Entry"
+  },
+  "sms": {
+    "title": "SMS Banking Integration",
+    "enable": "Enable SMS Integration",
+    "consent": "SMS Banking Integration",
+    "consentMessage": "Enable automatic expense tracking from bank SMS notifications. Your SMS data is processed locally and never shared.",
+    "allow": "Allow SMS Access",
+    "deny": "Not Now",
+    "banks": "Supported Banks",
+    "processing": "Processing SMS...",
+    "detected": "SMS Transaction Detected",
+    "confidence": "Detection Confidence"
+  }
+}

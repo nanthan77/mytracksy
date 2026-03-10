@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy - Fish Operations Dashboard | Export & Trading Management</title>
+    <meta name="description" content="Professional fish export and trading operations management dashboard">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Fish Operations Theme Colors */
+            --fish-primary: #1e40af;
+            --fish-secondary: #1e3a8a;
+            --fish-accent: #3b82f6;
+            --fish-success: #10b981;
+            --fish-warning: #f59e0b;
+            --fish-error: #ef4444;
+            --fish-light: #eff6ff;
+            --fish-dark: #1e3a8a;
+            --fish-ocean: #0c4a6e;
+            --fish-silver: #94a3b8;
+            
+            /* Layout variables */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            --border-radius-sm: 6px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 16px;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            --transition-fast: 150ms ease-in-out;
+            --transition-normal: 300ms ease-in-out;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--fish-light) 0%, #f9fafb 100%);
+            color: #1f2937;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: #ffffff;
+            box-shadow: var(--shadow-sm);
+            border-bottom: 3px solid var(--fish-primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-md) var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            text-decoration: none;
+            color: #1f2937;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .logo i {
+            background: var(--fish-primary);
+            color: white;
+            padding: 0.75rem;
+            border-radius: var(--border-radius-lg);
+            font-size: 1.25rem;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--fish-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+        }
+        
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        .dashboard-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--fish-primary), var(--fish-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .dashboard-subtitle {
+            font-size: 1.25rem;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Rest of the CSS following the same pattern as the other dashboards but with fish-specific styling */
+        /* KPI Grid, Dashboard Cards, etc. */
+        
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        .kpi-card {
+            background: white;
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--fish-primary), var(--fish-accent));
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--fish-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .kpi-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .kpi-target {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: var(--spacing-xl);
+        }
+        
+        .dashboard-card {
+            background: white;
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--spacing-xl);
+            transition: var(--transition-normal);
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid #f3f4f6;
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1f2937;
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.25rem;
+            background: var(--fish-primary);
+        }
+        
+        .card-action {
+            background: var(--fish-primary);
+            color: white;
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .card-action:hover {
+            background: var(--fish-secondary);
+            transform: translateY(-1px);
+        }
+        
+        /* List Items */
+        .list-container {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            margin-bottom: var(--spacing-sm);
+            transition: var(--transition-fast);
+            border: 1px solid #e5e7eb;
+        }
+        
+        .list-item:hover {
+            background: #f9fafb;
+            border-color: var(--fish-primary);
+        }
+        
+        .list-item-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .list-item-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-md);
+            background: var(--fish-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        
+        .list-item-details h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1f2937;
+        }
+        
+        .list-item-details p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.optimal {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--fish-success);
+        }
+        
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--fish-warning);
+        }
+        
+        .status-badge.processing {
+            background: rgba(30, 64, 175, 0.1);
+            color: var(--fish-primary);
+        }
+        
+        .status-badge.shipped {
+            background: rgba(148, 163, 184, 0.1);
+            color: var(--fish-silver);
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .btn {
+            flex: 1;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-primary {
+            background: var(--fish-primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--fish-secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #f3f4f6;
+            color: #374151;
+            border: 2px solid #d1d5db;
+        }
+        
+        .btn-secondary:hover {
+            background: #e5e7eb;
+            border-color: #9ca3af;
+        }
+        
+        .btn-accent {
+            background: var(--fish-accent);
+            color: white;
+        }
+        
+        .btn-accent:hover {
+            background: var(--fish-silver);
+            transform: translateY(-2px);
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: var(--spacing-lg) 0;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: var(--spacing-md);
+            }
+            
+            .dashboard-title {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <i class="fas fa-fish"></i>
+                <span>MyTracksy Fish Operations</span>
+            </a>
+            
+            <div class="user-profile">
+                <div class="user-avatar">FO</div>
+                <div class="user-info">
+                    <h4>Fisheries Owner</h4>
+                    <p>Export Manager</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">🐟 Fish Operations Dashboard</h1>
+            <p class="dashboard-subtitle">Professional fish export and trading operations management</p>
+        </div>
+
+        <!-- Key Performance Indicators -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value">18</div>
+                <div class="kpi-label">Active Orders</div>
+                <div class="kpi-target">$285K pending shipment</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">95%</div>
+                <div class="kpi-label">Quality Rating</div>
+                <div class="kpi-target">International standards</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">24hrs</div>
+                <div class="kpi-label">Avg Processing Time</div>
+                <div class="kpi-target">Target: <48hrs</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">$485K</div>
+                <div class="kpi-label">Monthly Revenue</div>
+                <div class="kpi-target">+12% from last month</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards Grid -->
+        <div class="dashboard-grid">
+            <!-- Export Orders -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        Export Orders
+                    </div>
+                    <button class="card-action" onclick="viewAllOrders()">View All</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">EU</div>
+                            <div class="list-item-details">
+                                <h4>European Union Export</h4>
+                                <p>3.5T Mixed Fish • $125,000</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge processing">Processing</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">JP</div>
+                            <div class="list-item-details">
+                                <h4>Japan Premium Fish</h4>
+                                <p>2.8T Tuna & Snapper • $95,000</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge shipped">Shipped</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">US</div>
+                            <div class="list-item-details">
+                                <h4>USA Market Supply</h4>
+                                <p>4.2T Frozen Fish • $165,000</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge warning">Documentation</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="createOrder()">
+                        <i class="fas fa-plus"></i>
+                        New Order
+                    </button>
+                    <button class="btn btn-secondary" onclick="trackShipments()">
+                        <i class="fas fa-map-marker-alt"></i>
+                        Track
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quality Control -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-certificate"></i>
+                        </div>
+                        Quality Control
+                    </div>
+                    <button class="card-action" onclick="qualityReports()">Reports</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="qualityChart"></canvas>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="qualityInspection()">
+                        <i class="fas fa-search"></i>
+                        Inspection
+                    </button>
+                    <button class="btn btn-accent" onclick="certifications()">
+                        <i class="fas fa-award"></i>
+                        Certifications
+                    </button>
+                </div>
+            </div>
+
+            <!-- Cold Chain Management */
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-thermometer-half"></i>
+                        </div>
+                        Cold Chain
+                    </div>
+                    <button class="card-action" onclick="temperatureMonitoring()">Monitor</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">-18°C</div>
+                            <div class="list-item-details">
+                                <h4>Storage Unit A</h4>
+                                <p>Frozen fish • 85% capacity</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Optimal</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">4°C</div>
+                            <div class="list-item-details">
+                                <h4>Fresh Fish Storage</h4>
+                                <p>Chilled fish • 60% capacity</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Optimal</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="temperatureAlerts()">
+                        <i class="fas fa-bell"></i>
+                        Alerts
+                    </button>
+                    <button class="btn btn-secondary" onclick="coldChainReport()">
+                        <i class="fas fa-clipboard-list"></i>
+                        Report
+                    </button>
+                </div>
+            </div>
+
+            <!-- Financial Performance */
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        Financial Performance
+                    </div>
+                    <button class="card-action" onclick="financialAnalysis()">Analysis</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="profitAnalysis()">
+                        <i class="fas fa-calculator"></i>
+                        P&L Analysis
+                    </button>
+                    <button class="btn btn-secondary" onclick="marketTrends()">
+                        <i class="fas fa-trending-up"></i>
+                        Market Trends
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+        });
+
+        function initializeCharts() {
+            // Quality Chart
+            const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+            new Chart(qualityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Grade A', 'Grade B', 'Grade C'],
+                    datasets: [{
+                        data: [65, 25, 10],
+                        backgroundColor: ['#1e40af', '#3b82f6', '#94a3b8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Revenue (USD)',
+                        data: [385000, 420000, 445000, 485000, 452000, 495000],
+                        borderColor: '#1e40af',
+                        backgroundColor: 'rgba(30, 64, 175, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + (value / 1000) + 'K';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Dashboard Functions
+        function viewAllOrders() {
+            showNotification('Opening export order management...', 'info');
+        }
+
+        function createOrder() {
+            showNotification('Creating new export order...', 'info');
+        }
+
+        function trackShipments() {
+            showNotification('Opening shipment tracking system...', 'info');
+        }
+
+        function qualityReports() {
+            showNotification('Generating quality control reports...', 'success');
+        }
+
+        function qualityInspection() {
+            showNotification('Starting quality inspection protocol...', 'info');
+        }
+
+        function certifications() {
+            showNotification('Opening certification management...', 'info');
+        }
+
+        function temperatureMonitoring() {
+            showNotification('Loading temperature monitoring system...', 'info');
+        }
+
+        function temperatureAlerts() {
+            showNotification('Checking temperature alert system...', 'warning');
+        }
+
+        function coldChainReport() {
+            showNotification('Generating cold chain report...', 'success');
+        }
+
+        function financialAnalysis() {
+            showNotification('Loading financial analysis dashboard...', 'info');
+        }
+
+        function profitAnalysis() {
+            showNotification('Calculating profit and loss analysis...', 'success');
+        }
+
+        function marketTrends() {
+            showNotification('Fetching market trend analysis...', 'info');
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : type === 'error' ? '#ef4444' : '#1e40af'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+                font-weight: 600;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 4000);
+        }
+
+        // Add keyframes for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

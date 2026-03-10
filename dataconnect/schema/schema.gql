@@ -1,0 +1,47 @@
+type User @table {
+  firebaseUid: String!
+  createdAt: Timestamp!
+  email: String
+  displayName: String
+}
+
+type Account @table {
+  user: User!
+  name: String!
+  type: String!
+  currency: String!
+  createdAt: Timestamp!
+  initialBalance: Float
+  description: String
+}
+
+type Category @table {
+  user: User!
+  name: String!
+  type: String!
+  createdAt: Timestamp!
+  description: String
+}
+
+type Transaction @table {
+  user: User!
+  account: Account!
+  category: Category!
+  amount: Float!
+  type: String!
+  date: Date!
+  createdAt: Timestamp!
+  description: String
+  location: String
+}
+
+type Budget @table {
+  user: User!
+  category: Category!
+  amount: Float!
+  period: String!
+  startDate: Date!
+  createdAt: Timestamp!
+  endDate: Date
+  notes: String
+}

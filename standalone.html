@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy - Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background: #1976d2; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #1565c0; }
+        .message { margin-top: 10px; padding: 10px; border-radius: 4px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>MyTracksy - Authentication Test</h1>
+        
+        <div id="login-form">
+            <h2>Login</h2>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="email" value="test@example.com">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="password" value="password123">
+            </div>
+            <button onclick="testLogin()">Test Login</button>
+        </div>
+
+        <div id="register-form" style="margin-top: 30px;">
+            <h2>Register</h2>
+            <div class="form-group">
+                <label>Email:</label>
+                <input type="email" id="reg-email" value="newuser@example.com">
+            </div>
+            <div class="form-group">
+                <label>Password:</label>
+                <input type="password" id="reg-password" value="password123">
+            </div>
+            <div class="form-group">
+                <label>Name:</label>
+                <input type="text" id="reg-name" value="Test User">
+            </div>
+            <button onclick="testRegister()">Test Register</button>
+        </div>
+
+        <div id="message"></div>
+    </div>
+
+    <script type="module">
+        // Import Firebase
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnRy9L2hMx12QvraOOeK49ZbaaHFUV6uQ",
+            authDomain: "tracksy-8e30c.firebaseapp.com",
+            projectId: "tracksy-8e30c",
+            storageBucket: "tracksy-8e30c.firebasestorage.app",
+            messagingSenderId: "941924690758",
+            appId: "1:941924690758:web:ac3e5c4fc9aac58a5c9347",
+            measurementId: "G-FH9Q1PGV0H"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
+        window.testLogin = async function() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const messageDiv = document.getElementById('message');
+
+            try {
+                console.log('Attempting login...');
+                const result = await signInWithEmailAndPassword(auth, email, password);
+                messageDiv.innerHTML = `<div class="message success">Login successful! User: ${result.user.email}</div>`;
+                console.log('Login successful:', result.user);
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="message error">Login failed: ${error.message}</div>`;
+                console.error('Login error:', error);
+            }
+        };
+
+        window.testRegister = async function() {
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const name = document.getElementById('reg-name').value;
+            const messageDiv = document.getElementById('message');
+
+            try {
+                console.log('Attempting registration...');
+                const result = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(result.user, { displayName: name });
+                messageDiv.innerHTML = `<div class="message success">Registration successful! User: ${result.user.email}</div>`;
+                console.log('Registration successful:', result.user);
+            } catch (error) {
+                messageDiv.innerHTML = `<div class="message error">Registration failed: ${error.message}</div>`;
+                console.error('Registration error:', error);
+            }
+        };
+
+        console.log('Firebase initialized successfully');
+    </script>
+</body>
+</html>

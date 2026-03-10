@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracksy - Offline Mode</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            line-height: 1.6;
+        }
+
+        .offline-container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .offline-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .offline-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(45deg, #fff, #e3f2fd);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .offline-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-weight: 300;
+        }
+
+        .offline-features {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 1rem;
+        }
+
+        .feature-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .feature-icon {
+            font-size: 20px;
+            margin-right: 12px;
+            opacity: 0.9;
+        }
+
+        .retry-button {
+            background: linear-gradient(45deg, #4caf50, #66bb6a);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.3);
+            margin-top: 20px;
+        }
+
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(76, 175, 80, 0.4);
+        }
+
+        .retry-button:active {
+            transform: translateY(0);
+        }
+
+        .status-indicator {
+            display: inline-flex;
+            align-items: center;
+            background: rgba(244, 67, 54, 0.2);
+            color: #ff5722;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff5722;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .wifi-icon {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .language-switcher {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .lang-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+
+        .lang-button:hover,
+        .lang-button.active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+
+        @media (max-width: 600px) {
+            .offline-container {
+                margin: 20px;
+                padding: 30px 20px;
+            }
+
+            .offline-title {
+                font-size: 2rem;
+            }
+
+            .offline-icon {
+                font-size: 60px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="wifi-icon offline-icon">🌐</div>
+        
+        <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span id="status-text">You're currently offline</span>
+        </div>
+
+        <h1 class="offline-title" id="main-title">Tracksy Offline Mode</h1>
+        <p class="offline-subtitle" id="subtitle">Don't worry! You can still track expenses offline.</p>
+
+        <div class="offline-features">
+            <div class="feature-item">
+                <span class="feature-icon">✅</span>
+                <span id="feature1">Add expenses with voice commands</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">💾</span>
+                <span id="feature2">All data saved locally</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🔄</span>
+                <span id="feature3">Auto-sync when back online</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">🌍</span>
+                <span id="feature4">Works in Sinhala, Tamil & English</span>
+            </div>
+            <div class="feature-item">
+                <span class="feature-icon">📊</span>
+                <span id="feature5">View expense analytics</span>
+            </div>
+        </div>
+
+        <button class="retry-button" onclick="retryConnection()" id="retry-btn">
+            🔄 Try Reconnecting
+        </button>
+
+        <div class="language-switcher">
+            <button class="lang-button active" onclick="setLanguage('en')" data-lang="en">English</button>
+            <button class="lang-button" onclick="setLanguage('si')" data-lang="si">සිංහල</button>
+            <button class="lang-button" onclick="setLanguage('ta')" data-lang="ta">தமிழ்</button>
+        </div>
+    </div>
+
+    <script>
+        // Language translations
+        const translations = {
+            en: {
+                status: "You're currently offline",
+                title: "Tracksy Offline Mode",
+                subtitle: "Don't worry! You can still track expenses offline.",
+                feature1: "Add expenses with voice commands",
+                feature2: "All data saved locally",
+                feature3: "Auto-sync when back online",
+                feature4: "Works in Sinhala, Tamil & English",
+                feature5: "View expense analytics",
+                retryBtn: "🔄 Try Reconnecting"
+            },
+            si: {
+                status: "ඔබ දැන් අන්තර්ජාලයෙන් බැහැර",
+                title: "Tracksy නොබැඳි ප්‍රකාරය",
+                subtitle: "කනස්සල්ල නැහැ! ඔබට තවමත් නොබැඳිව වියදම් සටහන් කළ හැකි.",
+                feature1: "හඬ විධාන සමඟ වියදම් එකතු කරන්න",
+                feature2: "සියලු දත්ත ස්ථානිකව සුරකිනු ලැබේ",
+                feature3: "නැවත සම්බන්ධ වූ විට ස්වයංක්‍රීය සමමුහුර්ත කරන්න",
+                feature4: "සිංහල, දමිළ සහ ඉංග්‍රීසි භාෂා සහාය",
+                feature5: "වියදම් විශ්ලේෂණ බලන්න",
+                retryBtn: "🔄 නැවත සම්බන්ධ වීමට උත්සාහ කරන්න"
+            },
+            ta: {
+                status: "நீங்கள் தற்போது ஆஃப்லைனில் உள்ளீர்கள்",
+                title: "Tracksy ஆஃப்லைன் பயன்முறை",
+                subtitle: "கவலைப்பட வேண்டாம்! நீங்கள் இன்னும் ஆஃப்லைனில் செலவுகளைக் கண்காணிக்கலாம்.",
+                feature1: "குரல் கட்டளைகளுடன் செலவுகளைச் சேர்க்கவும்",
+                feature2: "அனைத்து தரவும் உள்ளூரில் சேமிக்கப்படும்",
+                feature3: "மீண்டும் ஆன்லைனில் வரும்போது தானாக ஒத்திசைக்கவும்",
+                feature4: "சிங்களம், தமிழ் மற்றும் ஆங்கில மொழி ஆதரவு",
+                feature5: "செலவு பகுப்பாய்வுகளைப் பார்க்கவும்",
+                retryBtn: "🔄 மீண்டும் இணைக்க முயற்சிக்கவும்"
+            }
+        };
+
+        let currentLang = 'en';
+
+        // Set language
+        function setLanguage(lang) {
+            currentLang = lang;
+            const t = translations[lang];
+            
+            document.getElementById('status-text').textContent = t.status;
+            document.getElementById('main-title').textContent = t.title;
+            document.getElementById('subtitle').textContent = t.subtitle;
+            document.getElementById('feature1').textContent = t.feature1;
+            document.getElementById('feature2').textContent = t.feature2;
+            document.getElementById('feature3').textContent = t.feature3;
+            document.getElementById('feature4').textContent = t.feature4;
+            document.getElementById('feature5').textContent = t.feature5;
+            document.getElementById('retry-btn').textContent = t.retryBtn;
+            
+            // Update active button
+            document.querySelectorAll('.lang-button').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.lang === lang) {
+                    btn.classList.add('active');
+                }
+            });
+            
+            // Store preference
+            localStorage.setItem('tracksy-offline-lang', lang);
+        }
+
+        // Retry connection
+        function retryConnection() {
+            const button = document.getElementById('retry-btn');
+            const originalText = button.textContent;
+            
+            // Show loading state
+            button.textContent = '🔄 Checking...';
+            button.disabled = true;
+            
+            // Check if online
+            if (navigator.onLine) {
+                button.textContent = '✅ Connected!';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                button.textContent = '❌ Still offline';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Listen for online/offline events
+        window.addEventListener('online', () => {
+            document.getElementById('status-text').textContent = 'Back online! Redirecting...';
+            document.querySelector('.status-indicator').style.background = 'rgba(76, 175, 80, 0.2)';
+            document.querySelector('.status-indicator').style.color = '#4caf50';
+            document.querySelector('.status-dot').style.background = '#4caf50';
+            
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+        });
+
+        window.addEventListener('offline', () => {
+            const t = translations[currentLang];
+            document.getElementById('status-text').textContent = t.status;
+        });
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load saved language preference
+            const savedLang = localStorage.getItem('tracksy-offline-lang') || 'en';
+            setLanguage(savedLang);
+            
+            // Check initial online status
+            if (navigator.onLine) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 500);
+            }
+        });
+
+        // Service Worker registration check
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.addEventListener('message', (event) => {
+                if (event.data && event.data.type === 'CACHE_UPDATED') {
+                    console.log('Cache updated, app ready for offline use');
+                }
+            });
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'r' || event.key === 'R') {
+                if (event.ctrlKey || event.metaKey) {
+                    event.preventDefault();
+                    retryConnection();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

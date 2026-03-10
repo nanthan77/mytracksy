@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy - Personal Expense Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f8f9fa; }
+        
+        /* Header */
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 1rem; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .header h1 { font-size: 24px; }
+        .user-info { display: flex; justify-content: space-between; align-items: center; }
+        .logout-btn { background: rgba(255,255,255,0.2); border: none; color: white; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+        .logout-btn:hover { background: rgba(255,255,255,0.3); }
+        
+        /* Navigation */
+        .nav { background: white; border-bottom: 1px solid #e9ecef; overflow-x: auto; }
+        .nav-tabs { display: flex; list-style: none; }
+        .nav-tab { padding: 1rem 1.5rem; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .nav-tab:hover { background: #f8f9fa; }
+        .nav-tab.active { border-bottom-color: #667eea; background: #f8f9fa; font-weight: 600; }
+        
+        /* Content */
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        
+        /* Auth Forms */
+        .auth-container { max-width: 400px; margin: 50px auto; background: white; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); overflow: hidden; }
+        .auth-header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; text-align: center; }
+        .auth-content { padding: 2rem; }
+        .form-group { margin-bottom: 1.5rem; }
+        label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: #333; }
+        input { width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px; font-size: 16px; }
+        input:focus { outline: none; border-color: #667eea; }
+        .btn { width: 100%; padding: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; margin-bottom: 1rem; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-secondary { background: #6c757d; }
+        .btn-success { background: #28a745; }
+        .btn-danger { background: #dc3545; }
+        
+        /* Cards */
+        .card { background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 2rem; }
+        .card-header { padding: 1.5rem; border-bottom: 1px solid #e9ecef; font-weight: 600; }
+        .card-body { padding: 1.5rem; }
+        
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .stat-value { font-size: 2rem; font-weight: bold; color: #667eea; }
+        .stat-label { color: #6c757d; margin-top: 0.5rem; }
+        
+        /* Lists */
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 1px solid #e9ecef; }
+        .list-item:last-child { border-bottom: none; }
+        
+        /* Messages */
+        .message { padding: 12px; border-radius: 8px; margin-bottom: 1rem; }
+        .message.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .message.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .nav-tabs { flex-wrap: nowrap; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Hidden */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+    <!-- Authentication Section -->
+    <div id="auth-section">
+        <div class="auth-container">
+            <div class="auth-header">
+                <h1>MyTracksy</h1>
+                <p>Personal Expense Tracker</p>
+            </div>
+            <div class="auth-content">
+                <!-- Login Form -->
+                <div id="login-form">
+                    <h3 style="margin-bottom: 1.5rem;">Sign In</h3>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="login-email" value="test@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="login-password" value="password123">
+                    </div>
+                    <button class="btn" onclick="handleLogin()">Sign In</button>
+                    <button class="btn btn-secondary" onclick="showRegisterForm()">Create Account</button>
+                </div>
+
+                <!-- Register Form -->
+                <div id="register-form" class="hidden">
+                    <h3 style="margin-bottom: 1.5rem;">Create Account</h3>
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="register-name" value="New User">
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="register-email" value="">
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="register-password" value="">
+                    </div>
+                    <button class="btn" onclick="handleRegister()">Create Account</button>
+                    <button class="btn btn-secondary" onclick="showLoginForm()">Back to Login</button>
+                </div>
+
+                <div id="auth-message"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Section -->
+    <div id="app-section" class="hidden">
+        <!-- Header -->
+        <div class="header">
+            <div class="user-info">
+                <h1>MyTracksy</h1>
+                <div>
+                    <span id="user-display">Welcome, User!</span>
+                    <button class="logout-btn" onclick="handleLogout()">Logout</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <nav class="nav">
+            <ul class="nav-tabs">
+                <li class="nav-tab active" onclick="showSection('dashboard')">Dashboard</li>
+                <li class="nav-tab" onclick="showSection('expenses')">Expenses</li>
+                <li class="nav-tab" onclick="showSection('budgets')">Budgets</li>
+                <li class="nav-tab" onclick="showSection('income')">Income</li>
+                <li class="nav-tab" onclick="showSection('analytics')">Analytics</li>
+                <li class="nav-tab" onclick="showSection('settings')">Settings</li>
+            </ul>
+        </nav>
+
+        <!-- Content -->
+        <div class="container">
+            <!-- Dashboard -->
+            <div id="dashboard-section" class="content-section active">
+                <h2 style="margin-bottom: 2rem;">Dashboard</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-expenses">$0.00</div>
+                        <div class="stat-label">Total Expenses This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-income">$0.00</div>
+                        <div class="stat-label">Total Income This Month</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="remaining-budget">$0.00</div>
+                        <div class="stat-label">Remaining Budget</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-budgets">0</div>
+                        <div class="stat-label">Active Budgets</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Recent Expenses</div>
+                    <div class="card-body">
+                        <div id="recent-expenses">
+                            <p style="color: #6c757d; text-align: center;">No expenses yet. Add your first expense!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Expenses -->
+            <div id="expenses-section" class="content-section">
+                <h2 style="margin-bottom: 2rem;">Expenses</h2>
+                
+                <div class="card">
+                    <div class="card-header">Add New Expense</div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label>Amount</label>
+                                <input type="number" id="expense-amount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div>
+                                <label>Category</label>
+                                <select id="expense-category" style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px;">
+                                    <option value="food">Food & Dining</option>
+                                    <option value="transport">Transportation</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="entertainment">Entertainment</option>
+                                    <option value="bills">Bills & Utilities</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label>Description</label>
+                                <input type="text" id="expense-description" placeholder="Expense description">
+                            </div>
+                            <div>
+                                <label>Date</label>
+                                <input type="date" id="expense-date">
+                            </div>
+                        </div>
+                        <button class="btn" onclick="addExpense()">Add Expense</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Your Expenses</div>
+                    <div class="card-body">
+                        <div id="expenses-list">
+                            <p style="color: #6c757d; text-align: center;">No expenses yet. Add your first expense above!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Budgets -->
+            <div id="budgets-section" class="content-section">
+                <h2 style="margin-bottom: 2rem;">Budgets</h2>
+                
+                <div class="card">
+                    <div class="card-header">Create New Budget</div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label>Budget Name</label>
+                                <input type="text" id="budget-name" placeholder="e.g. Monthly Food Budget">
+                            </div>
+                            <div>
+                                <label>Amount</label>
+                                <input type="number" id="budget-amount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div>
+                                <label>Category</label>
+                                <select id="budget-category" style="width: 100%; padding: 12px; border: 2px solid #e1e5e9; border-radius: 8px;">
+                                    <option value="food">Food & Dining</option>
+                                    <option value="transport">Transportation</option>
+                                    <option value="shopping">Shopping</option>
+                                    <option value="entertainment">Entertainment</option>
+                                    <option value="bills">Bills & Utilities</option>
+                                    <option value="healthcare">Healthcare</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button class="btn" onclick="addBudget()">Create Budget</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Your Budgets</div>
+                    <div class="card-body">
+                        <div id="budgets-list">
+                            <p style="color: #6c757d; text-align: center;">No budgets yet. Create your first budget above!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Income -->
+            <div id="income-section" class="content-section">
+                <h2 style="margin-bottom: 2rem;">Income</h2>
+                
+                <div class="card">
+                    <div class="card-header">Add Income</div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+                            <div>
+                                <label>Amount</label>
+                                <input type="number" id="income-amount" placeholder="0.00" step="0.01">
+                            </div>
+                            <div>
+                                <label>Source</label>
+                                <input type="text" id="income-source" placeholder="e.g. Salary, Freelance">
+                            </div>
+                            <div>
+                                <label>Date</label>
+                                <input type="date" id="income-date">
+                            </div>
+                        </div>
+                        <button class="btn" onclick="addIncome()">Add Income</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Your Income</div>
+                    <div class="card-body">
+                        <div id="income-list">
+                            <p style="color: #6c757d; text-align: center;">No income recorded yet. Add your first income above!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics -->
+            <div id="analytics-section" class="content-section">
+                <h2 style="margin-bottom: 2rem;">Analytics</h2>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="avg-daily-expense">$0.00</div>
+                        <div class="stat-label">Average Daily Expense</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="top-category">-</div>
+                        <div class="stat-label">Top Spending Category</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="savings-rate">0%</div>
+                        <div class="stat-label">Savings Rate</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="budget-utilization">0%</div>
+                        <div class="stat-label">Budget Utilization</div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Spending by Category</div>
+                    <div class="card-body">
+                        <div id="category-breakdown">
+                            <p style="color: #6c757d; text-align: center;">Add some expenses to see analytics!</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings -->
+            <div id="settings-section" class="content-section">
+                <h2 style="margin-bottom: 2rem;">Settings</h2>
+                
+                <div class="card">
+                    <div class="card-header">Profile Settings</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label>Display Name</label>
+                            <input type="text" id="settings-name" placeholder="Your Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email</label>
+                            <input type="email" id="settings-email" placeholder="your@email.com" disabled>
+                        </div>
+                        <button class="btn" onclick="updateProfile()">Update Profile</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">Data Management</div>
+                    <div class="card-body">
+                        <button class="btn btn-secondary" onclick="exportData()">Export Data</button>
+                        <button class="btn btn-danger" onclick="clearAllData()" style="margin-left: 1rem;">Clear All Data</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="app-message"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBnRy9L2hMx12QvraOOeK49ZbaaHFUV6uQ",
+            authDomain: "tracksy-8e30c.firebaseapp.com",
+            projectId: "tracksy-8e30c",
+            storageBucket: "tracksy-8e30c.firebasestorage.app",
+            messagingSenderId: "941924690758",
+            appId: "1:941924690758:web:ac3e5c4fc9aac58a5c9347",
+            measurementId: "G-FH9Q1PGV0H"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        
+        let currentUser = null;
+        let expenses = JSON.parse(localStorage.getItem('expenses') || '[]');
+        let budgets = JSON.parse(localStorage.getItem('budgets') || '[]');
+        let income = JSON.parse(localStorage.getItem('income') || '[]');
+
+        // Utility functions
+        function showMessage(text, type = 'error', container = 'auth-message') {
+            const messageDiv = document.getElementById(container);
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            setTimeout(() => messageDiv.innerHTML = '', 5000);
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+        }
+
+        function formatDate(date) {
+            return new Date(date).toLocaleDateString();
+        }
+
+        function saveData() {
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+            localStorage.setItem('budgets', JSON.stringify(budgets));
+            localStorage.setItem('income', JSON.stringify(income));
+            updateDashboard();
+            updateAnalytics();
+        }
+
+        // Authentication functions
+        window.showLoginForm = function() {
+            document.getElementById('login-form').classList.remove('hidden');
+            document.getElementById('register-form').classList.add('hidden');
+        };
+
+        window.showRegisterForm = function() {
+            document.getElementById('login-form').classList.add('hidden');
+            document.getElementById('register-form').classList.remove('hidden');
+        };
+
+        window.handleLogin = async function() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            if (!email || !password) {
+                showMessage('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const result = await signInWithEmailAndPassword(auth, email, password);
+                showMessage('Login successful!', 'success');
+                showAppSection(result.user);
+            } catch (error) {
+                showMessage('Login failed: ' + error.message);
+            }
+        };
+
+        window.handleRegister = async function() {
+            const name = document.getElementById('register-name').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+
+            if (!name || !email || !password) {
+                showMessage('Please fill in all fields');
+                return;
+            }
+
+            if (password.length < 6) {
+                showMessage('Password must be at least 6 characters');
+                return;
+            }
+
+            try {
+                const result = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(result.user, { displayName: name });
+                showMessage('Account created successfully!', 'success');
+                showAppSection(result.user);
+            } catch (error) {
+                showMessage('Registration failed: ' + error.message);
+            }
+        };
+
+        window.handleLogout = async function() {
+            try {
+                await signOut(auth);
+                showMessage('Logged out successfully', 'success');
+                showAuthSection();
+            } catch (error) {
+                showMessage('Logout failed: ' + error.message, 'error', 'app-message');
+            }
+        };
+
+        // UI functions
+        function showAuthSection() {
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('app-section').classList.add('hidden');
+        }
+
+        function showAppSection(user) {
+            currentUser = user;
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('app-section').classList.remove('hidden');
+            document.getElementById('user-display').textContent = `Welcome, ${user.displayName || user.email}!`;
+            document.getElementById('settings-name').value = user.displayName || '';
+            document.getElementById('settings-email').value = user.email;
+            
+            // Set today's date as default
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('expense-date').value = today;
+            document.getElementById('income-date').value = today;
+            
+            updateDashboard();
+            updateAnalytics();
+        }
+
+        window.showSection = function(sectionName) {
+            // Update nav tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update content sections
+            document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+            document.getElementById(sectionName + '-section').classList.add('active');
+        };
+
+        // Expense functions
+        window.addExpense = function() {
+            const amount = parseFloat(document.getElementById('expense-amount').value);
+            const category = document.getElementById('expense-category').value;
+            const description = document.getElementById('expense-description').value;
+            const date = document.getElementById('expense-date').value;
+
+            if (!amount || amount <= 0) {
+                showMessage('Please enter a valid amount', 'error', 'app-message');
+                return;
+            }
+
+            const expense = {
+                id: Date.now(),
+                amount,
+                category,
+                description: description || 'No description',
+                date,
+                userId: currentUser.uid
+            };
+
+            expenses.unshift(expense);
+            saveData();
+            updateExpensesList();
+            
+            // Clear form
+            document.getElementById('expense-amount').value = '';
+            document.getElementById('expense-description').value = '';
+            
+            showMessage('Expense added successfully!', 'success', 'app-message');
+        };
+
+        function updateExpensesList() {
+            const container = document.getElementById('expenses-list');
+            if (expenses.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d; text-align: center;">No expenses yet. Add your first expense above!</p>';
+                return;
+            }
+
+            container.innerHTML = expenses.map(expense => `
+                <div class="list-item">
+                    <div>
+                        <strong>${expense.description}</strong><br>
+                        <small>${expense.category} • ${formatDate(expense.date)}</small>
+                    </div>
+                    <div>
+                        <strong>${formatCurrency(expense.amount)}</strong><br>
+                        <button onclick="deleteExpense(${expense.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.deleteExpense = function(id) {
+            if (confirm('Are you sure you want to delete this expense?')) {
+                expenses = expenses.filter(expense => expense.id !== id);
+                saveData();
+                updateExpensesList();
+                showMessage('Expense deleted', 'success', 'app-message');
+            }
+        };
+
+        // Budget functions
+        window.addBudget = function() {
+            const name = document.getElementById('budget-name').value;
+            const amount = parseFloat(document.getElementById('budget-amount').value);
+            const category = document.getElementById('budget-category').value;
+
+            if (!name || !amount || amount <= 0) {
+                showMessage('Please fill in all fields with valid values', 'error', 'app-message');
+                return;
+            }
+
+            const budget = {
+                id: Date.now(),
+                name,
+                amount,
+                category,
+                userId: currentUser.uid,
+                createdAt: new Date().toISOString()
+            };
+
+            budgets.push(budget);
+            saveData();
+            updateBudgetsList();
+            
+            // Clear form
+            document.getElementById('budget-name').value = '';
+            document.getElementById('budget-amount').value = '';
+            
+            showMessage('Budget created successfully!', 'success', 'app-message');
+        };
+
+        function updateBudgetsList() {
+            const container = document.getElementById('budgets-list');
+            if (budgets.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d; text-align: center;">No budgets yet. Create your first budget above!</p>';
+                return;
+            }
+
+            container.innerHTML = budgets.map(budget => {
+                const spent = expenses
+                    .filter(expense => expense.category === budget.category)
+                    .reduce((sum, expense) => sum + expense.amount, 0);
+                const remaining = budget.amount - spent;
+                const percentage = (spent / budget.amount * 100).toFixed(1);
+
+                return `
+                    <div class="list-item">
+                        <div>
+                            <strong>${budget.name}</strong><br>
+                            <small>${budget.category} • ${formatCurrency(spent)} of ${formatCurrency(budget.amount)} spent (${percentage}%)</small><br>
+                            <div style="background: #e9ecef; height: 6px; border-radius: 3px; margin-top: 5px;">
+                                <div style="background: ${percentage > 100 ? '#dc3545' : '#28a745'}; height: 100%; width: ${Math.min(percentage, 100)}%; border-radius: 3px;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <strong style="color: ${remaining >= 0 ? '#28a745' : '#dc3545'}">${formatCurrency(remaining)}</strong><br>
+                            <button onclick="deleteBudget(${budget.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.deleteBudget = function(id) {
+            if (confirm('Are you sure you want to delete this budget?')) {
+                budgets = budgets.filter(budget => budget.id !== id);
+                saveData();
+                updateBudgetsList();
+                showMessage('Budget deleted', 'success', 'app-message');
+            }
+        };
+
+        // Income functions
+        window.addIncome = function() {
+            const amount = parseFloat(document.getElementById('income-amount').value);
+            const source = document.getElementById('income-source').value;
+            const date = document.getElementById('income-date').value;
+
+            if (!amount || amount <= 0 || !source) {
+                showMessage('Please fill in all fields with valid values', 'error', 'app-message');
+                return;
+            }
+
+            const incomeItem = {
+                id: Date.now(),
+                amount,
+                source,
+                date,
+                userId: currentUser.uid
+            };
+
+            income.unshift(incomeItem);
+            saveData();
+            updateIncomeList();
+            
+            // Clear form
+            document.getElementById('income-amount').value = '';
+            document.getElementById('income-source').value = '';
+            
+            showMessage('Income added successfully!', 'success', 'app-message');
+        };
+
+        function updateIncomeList() {
+            const container = document.getElementById('income-list');
+            if (income.length === 0) {
+                container.innerHTML = '<p style="color: #6c757d; text-align: center;">No income recorded yet. Add your first income above!</p>';
+                return;
+            }
+
+            container.innerHTML = income.map(item => `
+                <div class="list-item">
+                    <div>
+                        <strong>${item.source}</strong><br>
+                        <small>${formatDate(item.date)}</small>
+                    </div>
+                    <div>
+                        <strong style="color: #28a745">${formatCurrency(item.amount)}</strong><br>
+                        <button onclick="deleteIncome(${item.id})" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 12px;">Delete</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        window.deleteIncome = function(id) {
+            if (confirm('Are you sure you want to delete this income?')) {
+                income = income.filter(item => item.id !== id);
+                saveData();
+                updateIncomeList();
+                showMessage('Income deleted', 'success', 'app-message');
+            }
+        };
+
+        // Dashboard functions
+        function updateDashboard() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+            
+            const monthlyIncome = income.filter(item => {
+                const incomeDate = new Date(item.date);
+                return incomeDate.getMonth() === currentMonth && incomeDate.getFullYear() === currentYear;
+            });
+
+            const totalExpenses = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const totalIncomeAmount = monthlyIncome.reduce((sum, item) => sum + item.amount, 0);
+            const totalBudgetAmount = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+            const remainingBudget = totalBudgetAmount - totalExpenses;
+
+            document.getElementById('total-expenses').textContent = formatCurrency(totalExpenses);
+            document.getElementById('total-income').textContent = formatCurrency(totalIncomeAmount);
+            document.getElementById('remaining-budget').textContent = formatCurrency(remainingBudget);
+            document.getElementById('total-budgets').textContent = budgets.length;
+
+            // Update recent expenses
+            const recentContainer = document.getElementById('recent-expenses');
+            const recentExpenses = expenses.slice(0, 5);
+            
+            if (recentExpenses.length === 0) {
+                recentContainer.innerHTML = '<p style="color: #6c757d; text-align: center;">No expenses yet. Add your first expense!</p>';
+            } else {
+                recentContainer.innerHTML = recentExpenses.map(expense => `
+                    <div class="list-item">
+                        <div>
+                            <strong>${expense.description}</strong><br>
+                            <small>${expense.category} • ${formatDate(expense.date)}</small>
+                        </div>
+                        <strong>${formatCurrency(expense.amount)}</strong>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Analytics functions
+        function updateAnalytics() {
+            const totalExpenses = expenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const totalIncomeAmount = income.reduce((sum, item) => sum + item.amount, 0);
+            const daysWithExpenses = new Set(expenses.map(expense => expense.date)).size;
+            
+            const avgDaily = daysWithExpenses > 0 ? totalExpenses / daysWithExpenses : 0;
+            document.getElementById('avg-daily-expense').textContent = formatCurrency(avgDaily);
+
+            // Top category
+            const categoryTotals = {};
+            expenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+            });
+            
+            const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
+                categoryTotals[a] > categoryTotals[b] ? a : b, '-'
+            );
+            document.getElementById('top-category').textContent = topCategory.charAt(0).toUpperCase() + topCategory.slice(1);
+
+            // Savings rate
+            const savingsRate = totalIncomeAmount > 0 ? ((totalIncomeAmount - totalExpenses) / totalIncomeAmount * 100).toFixed(1) : 0;
+            document.getElementById('savings-rate').textContent = savingsRate + '%';
+
+            // Budget utilization
+            const totalBudgetAmount = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+            const budgetUtilization = totalBudgetAmount > 0 ? (totalExpenses / totalBudgetAmount * 100).toFixed(1) : 0;
+            document.getElementById('budget-utilization').textContent = budgetUtilization + '%';
+
+            // Category breakdown
+            const categoryContainer = document.getElementById('category-breakdown');
+            if (Object.keys(categoryTotals).length === 0) {
+                categoryContainer.innerHTML = '<p style="color: #6c757d; text-align: center;">Add some expenses to see analytics!</p>';
+            } else {
+                categoryContainer.innerHTML = Object.entries(categoryTotals)
+                    .sort(([,a], [,b]) => b - a)
+                    .map(([category, amount]) => {
+                        const percentage = (amount / totalExpenses * 100).toFixed(1);
+                        return `
+                            <div class="list-item">
+                                <div>
+                                    <strong>${category.charAt(0).toUpperCase() + category.slice(1)}</strong><br>
+                                    <small>${percentage}% of total spending</small>
+                                </div>
+                                <strong>${formatCurrency(amount)}</strong>
+                            </div>
+                        `;
+                    }).join('');
+            }
+        }
+
+        // Settings functions
+        window.updateProfile = async function() {
+            const newName = document.getElementById('settings-name').value;
+            
+            if (!newName) {
+                showMessage('Please enter a name', 'error', 'app-message');
+                return;
+            }
+
+            try {
+                await updateProfile(currentUser, { displayName: newName });
+                document.getElementById('user-display').textContent = `Welcome, ${newName}!`;
+                showMessage('Profile updated successfully!', 'success', 'app-message');
+            } catch (error) {
+                showMessage('Failed to update profile: ' + error.message, 'error', 'app-message');
+            }
+        };
+
+        window.exportData = function() {
+            const data = {
+                expenses,
+                budgets,
+                income,
+                exportDate: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `mytracksy-data-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showMessage('Data exported successfully!', 'success', 'app-message');
+        };
+
+        window.clearAllData = function() {
+            if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
+                expenses = [];
+                budgets = [];
+                income = [];
+                saveData();
+                updateExpensesList();
+                updateBudgetsList();
+                updateIncomeList();
+                showMessage('All data cleared', 'success', 'app-message');
+            }
+        };
+
+        // Listen for auth state changes
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                showAppSection(user);
+            } else {
+                showAuthSection();
+            }
+        });
+
+        console.log('MyTracksy initialized successfully');
+    </script>
+</body>
+</html>

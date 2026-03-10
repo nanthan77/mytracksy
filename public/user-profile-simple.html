@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy - User Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 2rem;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .profile-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .section-title {
+            color: #2563eb;
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        .btn {
+            background: #2563eb;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .back-btn {
+            position: absolute;
+            top: 2rem;
+            left: 2rem;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-decoration: none;
+            backdrop-filter: blur(10px);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .success-message {
+            background: #d1fae5;
+            color: #065f46;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <a href="individual-dashboard.html" class="back-btn">← Back to Dashboard</a>
+    
+    <div class="container">
+        <div class="header">
+            <h1>👤 User Profile Settings</h1>
+            <p>Manage your MyTracksy account and preferences</p>
+        </div>
+        
+        <div class="success-message" id="successMessage">
+            ✅ Profile updated successfully!
+        </div>
+        
+        <div class="grid">
+            <div class="profile-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user"></i>
+                    Personal Information
+                </h2>
+                
+                <form id="personalForm">
+                    <div class="form-group">
+                        <label for="fullName">Full Name</label>
+                        <input type="text" id="fullName" placeholder="Enter your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="email">Email Address</label>
+                        <input type="email" id="email" placeholder="Enter your email">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="phone">Phone Number</label>
+                        <input type="tel" id="phone" placeholder="+94 XX XXX XXXX">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="language">Preferred Language</label>
+                        <select id="language">
+                            <option value="en">English</option>
+                            <option value="si">සිංහල (Sinhala)</option>
+                            <option value="ta">தமிழ் (Tamil)</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn">Update Personal Info</button>
+                </form>
+            </div>
+            
+            <div class="profile-section">
+                <h2 class="section-title">
+                    <i class="fas fa-calculator"></i>
+                    Financial Settings
+                </h2>
+                
+                <form id="financialForm">
+                    <div class="form-group">
+                        <label for="tin">Tax Identification Number (TIN)</label>
+                        <input type="text" id="tin" placeholder="Enter your TIN">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="currency">Default Currency</label>
+                        <select id="currency">
+                            <option value="LKR">Sri Lankan Rupee (LKR)</option>
+                            <option value="USD">US Dollar (USD)</option>
+                            <option value="EUR">Euro (EUR)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="income">Annual Income (LKR)</label>
+                        <input type="number" id="income" placeholder="Enter annual income">
+                    </div>
+                    
+                    <button type="submit" class="btn">Update Financial Info</button>
+                </form>
+            </div>
+            
+            <div class="profile-section">
+                <h2 class="section-title">
+                    <i class="fas fa-cog"></i>
+                    Account Settings
+                </h2>
+                
+                <form id="settingsForm">
+                    <div class="form-group">
+                        <label for="notifications">Email Notifications</label>
+                        <select id="notifications">
+                            <option value="all">All notifications</option>
+                            <option value="important">Important only</option>
+                            <option value="none">None</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="theme">Theme Preference</label>
+                        <select id="theme">
+                            <option value="light">Light</option>
+                            <option value="dark">Dark</option>
+                            <option value="auto">Auto</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn">Update Settings</button>
+                    <button type="button" class="btn btn-secondary" onclick="logout()">Logout</button>
+                </form>
+            </div>
+        </div>
+        
+        <div class="loading" id="loading">
+            <p>⏳ Updating profile...</p>
+        </div>
+    </div>
+
+    <!-- Firebase (loaded asynchronously) -->
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script defer src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    
+    <script>
+        // Lightweight profile management
+        document.addEventListener('DOMContentLoaded', function() {
+            loadUserProfile();
+            setupEventListeners();
+        });
+        
+        function loadUserProfile() {
+            // Load saved profile data
+            const savedProfile = JSON.parse(localStorage.getItem('mytracksy_profile') || '{}');
+            
+            if (savedProfile.fullName) document.getElementById('fullName').value = savedProfile.fullName;
+            if (savedProfile.email) document.getElementById('email').value = savedProfile.email;
+            if (savedProfile.phone) document.getElementById('phone').value = savedProfile.phone;
+            if (savedProfile.language) document.getElementById('language').value = savedProfile.language;
+            if (savedProfile.tin) document.getElementById('tin').value = savedProfile.tin;
+            if (savedProfile.currency) document.getElementById('currency').value = savedProfile.currency;
+            if (savedProfile.income) document.getElementById('income').value = savedProfile.income;
+            if (savedProfile.notifications) document.getElementById('notifications').value = savedProfile.notifications;
+            if (savedProfile.theme) document.getElementById('theme').value = savedProfile.theme;
+        }
+        
+        function setupEventListeners() {
+            document.getElementById('personalForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                updateProfile('personal');
+            });
+            
+            document.getElementById('financialForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                updateProfile('financial');
+            });
+            
+            document.getElementById('settingsForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                updateProfile('settings');
+            });
+        }
+        
+        function updateProfile(section) {
+            showLoading();
+            
+            const profile = JSON.parse(localStorage.getItem('mytracksy_profile') || '{}');
+            
+            if (section === 'personal') {
+                profile.fullName = document.getElementById('fullName').value;
+                profile.email = document.getElementById('email').value;
+                profile.phone = document.getElementById('phone').value;
+                profile.language = document.getElementById('language').value;
+            } else if (section === 'financial') {
+                profile.tin = document.getElementById('tin').value;
+                profile.currency = document.getElementById('currency').value;
+                profile.income = document.getElementById('income').value;
+            } else if (section === 'settings') {
+                profile.notifications = document.getElementById('notifications').value;
+                profile.theme = document.getElementById('theme').value;
+            }
+            
+            localStorage.setItem('mytracksy_profile', JSON.stringify(profile));
+            
+            setTimeout(() => {
+                hideLoading();
+                showSuccess();
+            }, 1000);
+        }
+        
+        function showLoading() {
+            document.getElementById('loading').style.display = 'block';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading').style.display = 'none';
+        }
+        
+        function showSuccess() {
+            const msg = document.getElementById('successMessage');
+            msg.style.display = 'block';
+            setTimeout(() => {
+                msg.style.display = 'none';
+            }, 3000);
+        }
+        
+        function logout() {
+            localStorage.removeItem('mytracksy_auth');
+            localStorage.removeItem('mytracksy_profile');
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
+</html>

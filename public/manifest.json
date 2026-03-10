@@ -1,0 +1,283 @@
+{
+  "name": "Tracksy Sri Lanka - Voice Finance Tracker",
+  "short_name": "Tracksy",
+  "description": "Sri Lanka's premier voice-enabled expense tracker with SMS banking integration and cultural awareness",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1976d2",
+  "theme_color": "#1976d2",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en-LK",
+  "dir": "ltr",
+  
+  "icons": [
+    {
+      "src": "/icons/icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-home.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Voice expense tracking in multiple languages"
+    },
+    {
+      "src": "/screenshots/mobile-sms.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "SMS banking integration with Sri Lankan banks"
+    },
+    {
+      "src": "/screenshots/mobile-analytics.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "platform": "narrow",
+      "label": "Advanced analytics and cultural insights"
+    },
+    {
+      "src": "/screenshots/desktop-dashboard.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "platform": "wide",
+      "label": "Comprehensive financial dashboard"
+    }
+  ],
+  
+  "categories": [
+    "finance",
+    "productivity",
+    "business",
+    "utilities"
+  ],
+  
+  "prefer_related_applications": false,
+  
+  "shortcuts": [
+    {
+      "name": "Add Voice Expense",
+      "short_name": "Voice",
+      "description": "Quickly add an expense using voice command",
+      "url": "/?action=voice",
+      "icons": [
+        {
+          "src": "/icons/voice-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "SMS Banking",
+      "short_name": "SMS",
+      "description": "Check SMS banking transactions",
+      "url": "/?action=sms",
+      "icons": [
+        {
+          "src": "/icons/sms-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "short_name": "Reports",
+      "description": "View expense analytics and reports",
+      "url": "/?action=analytics",
+      "icons": [
+        {
+          "src": "/icons/analytics-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Multi-Company",
+      "short_name": "Business",
+      "description": "Manage multi-company expenses",
+      "url": "/?action=company",
+      "icons": [
+        {
+          "src": "/icons/business-shortcut.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "receipt",
+          "accept": ["image/*", "application/pdf"]
+        }
+      ]
+    }
+  },
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+tracksy",
+      "url": "/?handler=%s"
+    }
+  ],
+  
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  },
+  
+  "offline_enabled": true,
+  
+  "capture_links": "existing-client-navigate",
+  
+  "handle_links": "preferred",
+  
+  "related_applications": [
+    {
+      "platform": "play",
+      "url": "https://play.google.com/store/apps/details?id=lk.tracksy.app",
+      "id": "lk.tracksy.app"
+    },
+    {
+      "platform": "itunes",
+      "url": "https://apps.apple.com/lk/app/tracksy-sri-lanka/id123456789",
+      "id": "123456789"
+    }
+  ],
+  
+  "file_handlers": [
+    {
+      "action": "/import",
+      "accept": {
+        "text/csv": [".csv"],
+        "application/vnd.ms-excel": [".xls"],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/pdf": [".pdf"]
+      },
+      "icons": [
+        {
+          "src": "/icons/import-icon.png",
+          "sizes": "96x96",
+          "type": "image/png"
+        }
+      ],
+      "launch_type": "single-client"
+    }
+  ],
+  
+  "permissions": [
+    "notifications",
+    "background-sync",
+    "storage"
+  ],
+  
+  "features": [
+    "voice-recognition",
+    "sms-integration",
+    "offline-sync",
+    "multi-language",
+    "cultural-awareness",
+    "multi-company",
+    "advanced-analytics",
+    "sri-lankan-banking"
+  ],
+  
+  "localization": {
+    "default_locale": "en-LK",
+    "supported_locales": [
+      "en-LK",
+      "si-LK", 
+      "ta-LK"
+    ]
+  },
+  
+  "sri_lanka_specific": {
+    "supported_banks": [
+      "Bank of Ceylon",
+      "Commercial Bank",
+      "Sampath Bank",
+      "Hatton National Bank",
+      "Seylan Bank",
+      "DFCC Bank",
+      "Nations Trust Bank",
+      "Union Bank"
+    ],
+    "cultural_features": [
+      "Poya Day Tracking",
+      "Festival Expense Categories",
+      "Sri Lankan Calendar Integration",
+      "Local Merchant Recognition",
+      "LKR Currency Support"
+    ],
+    "business_types": [
+      "Personal",
+      "Family Business", 
+      "Partnership",
+      "Private Limited Company",
+      "Sole Proprietorship"
+    ]
+  }
+}

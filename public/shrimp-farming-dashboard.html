@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>MyTracksy - Shrimp Farming Dashboard | Vannamei & Tiger Shrimp Management</title>
+    <meta name="description" content="Specialized shrimp farming management dashboard for intensive aquaculture operations">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            /* Shrimp Farm Theme Colors */
+            --shrimp-primary: #f97316;
+            --shrimp-secondary: #ea580c;
+            --shrimp-accent: #0891b2;
+            --shrimp-success: #10b981;
+            --shrimp-warning: #f59e0b;
+            --shrimp-error: #ef4444;
+            --shrimp-light: #fff7ed;
+            --shrimp-dark: #9a3412;
+            --shrimp-ocean: #0c4a6e;
+            
+            /* Neutral Colors */
+            --white: #ffffff;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+            
+            /* Spacing & Layout */
+            --spacing-xs: 0.25rem;
+            --spacing-sm: 0.5rem;
+            --spacing-md: 1rem;
+            --spacing-lg: 1.5rem;
+            --spacing-xl: 2rem;
+            --spacing-2xl: 3rem;
+            
+            --border-radius-sm: 6px;
+            --border-radius-md: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 16px;
+            
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+            
+            --transition-fast: 150ms ease-in-out;
+            --transition-normal: 300ms ease-in-out;
+            --transition-slow: 500ms ease-in-out;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, var(--shrimp-light) 0%, var(--gray-50) 100%);
+            color: var(--gray-800);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--white);
+            box-shadow: var(--shadow-sm);
+            border-bottom: 3px solid var(--shrimp-primary);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-md) var(--spacing-xl);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            text-decoration: none;
+            color: var(--gray-800);
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        
+        .logo i {
+            background: var(--shrimp-primary);
+            color: var(--white);
+            padding: 0.75rem;
+            border-radius: var(--border-radius-lg);
+            font-size: 1.25rem;
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--shrimp-primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .user-info h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--gray-800);
+        }
+        
+        .user-info p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        /* Main Container */
+        .main-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: var(--spacing-xl);
+        }
+        
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        .dashboard-title {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--shrimp-primary), var(--shrimp-accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .dashboard-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-600);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* Water Quality Monitoring */
+        .monitoring-section {
+            background: linear-gradient(135deg, var(--shrimp-dark) 0%, var(--shrimp-ocean) 100%);
+            border-radius: var(--border-radius-xl);
+            padding: var(--spacing-xl);
+            color: var(--white);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .monitoring-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .sync-status {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .sync-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--shrimp-success);
+            animation: syncPulse 2s ease-in-out infinite;
+        }
+        
+        @keyframes syncPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .parameter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+        }
+        
+        .parameter-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: var(--spacing-lg);
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+        }
+        
+        .parameter-value {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .parameter-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+        
+        .parameter-status {
+            margin-top: var(--spacing-xs);
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .status-optimal { background: rgba(16, 185, 129, 0.3); }
+        .status-warning { background: rgba(245, 158, 11, 0.3); }
+        .status-critical { background: rgba(239, 68, 68, 0.3); }
+        
+        /* KPI Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-lg);
+            margin-bottom: var(--spacing-2xl);
+        }
+        
+        .kpi-card {
+            background: var(--white);
+            padding: var(--spacing-xl);
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-md);
+            text-align: center;
+            border: 2px solid transparent;
+            transition: var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--shrimp-primary), var(--shrimp-accent));
+        }
+        
+        .kpi-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .kpi-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--shrimp-primary);
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .kpi-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: var(--spacing-xs);
+        }
+        
+        .kpi-target {
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: var(--spacing-xl);
+        }
+        
+        .dashboard-card {
+            background: var(--white);
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-lg);
+            padding: var(--spacing-xl);
+            transition: var(--transition-normal);
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-lg);
+            padding-bottom: var(--spacing-md);
+            border-bottom: 2px solid var(--gray-100);
+        }
+        
+        .card-title {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--gray-800);
+        }
+        
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: var(--border-radius-lg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 1.25rem;
+            background: var(--shrimp-primary);
+        }
+        
+        .card-action {
+            background: var(--shrimp-primary);
+            color: var(--white);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+        }
+        
+        .card-action:hover {
+            background: var(--shrimp-secondary);
+            transform: translateY(-1px);
+        }
+        
+        /* List Items */
+        .list-container {
+            margin-bottom: var(--spacing-lg);
+        }
+        
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-radius: var(--border-radius-md);
+            margin-bottom: var(--spacing-sm);
+            transition: var(--transition-fast);
+            border: 1px solid var(--gray-200);
+        }
+        
+        .list-item:hover {
+            background: var(--gray-50);
+            border-color: var(--shrimp-primary);
+        }
+        
+        .list-item-info {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-md);
+        }
+        
+        .list-item-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--border-radius-md);
+            background: var(--shrimp-primary);
+            color: var(--white);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
+        }
+        
+        .list-item-details h4 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--gray-800);
+        }
+        
+        .list-item-details p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--gray-500);
+        }
+        
+        /* Status Badges */
+        .status-badge {
+            padding: var(--spacing-xs) var(--spacing-sm);
+            border-radius: var(--border-radius-sm);
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-badge.optimal {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--shrimp-success);
+        }
+        
+        .status-badge.warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--shrimp-warning);
+        }
+        
+        .status-badge.critical {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--shrimp-error);
+        }
+        
+        .status-badge.harvesting {
+            background: rgba(249, 115, 22, 0.1);
+            color: var(--shrimp-primary);
+        }
+        
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: var(--spacing-md);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .btn {
+            flex: 1;
+            padding: var(--spacing-md) var(--spacing-lg);
+            border: none;
+            border-radius: var(--border-radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .btn-primary {
+            background: var(--shrimp-primary);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            background: var(--shrimp-secondary);
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--gray-100);
+            color: var(--gray-700);
+            border: 2px solid var(--gray-300);
+        }
+        
+        .btn-secondary:hover {
+            background: var(--gray-200);
+            border-color: var(--gray-400);
+        }
+        
+        .btn-accent {
+            background: var(--shrimp-accent);
+            color: var(--white);
+        }
+        
+        .btn-accent:hover {
+            background: #0e7490;
+            transform: translateY(-2px);
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: var(--spacing-lg) 0;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .main-container {
+                padding: var(--spacing-md);
+            }
+            
+            .dashboard-title {
+                font-size: 2rem;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .kpi-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .parameter-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+        
+        /* Premium Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dashboard-card {
+            animation: fadeInUp 0.6s ease-out;
+        }
+        
+        .dashboard-card:nth-child(2) { animation-delay: 0.1s; }
+        .dashboard-card:nth-child(3) { animation-delay: 0.2s; }
+        .dashboard-card:nth-child(4) { animation-delay: 0.3s; }
+        .dashboard-card:nth-child(5) { animation-delay: 0.4s; }
+        .dashboard-card:nth-child(6) { animation-delay: 0.5s; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="index.html" class="logo">
+                <i class="fas fa-shrimp"></i>
+                <span>MyTracksy Shrimp Farming</span>
+            </a>
+            
+            <div class="user-profile">
+                <div class="user-avatar">SF</div>
+                <div class="user-info">
+                    <h4>Sunil Fernando</h4>
+                    <p>Shrimp Farm Manager</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-container">
+        <div class="dashboard-header">
+            <h1 class="dashboard-title">🦐 Shrimp Farming Dashboard</h1>
+            <p class="dashboard-subtitle">Intensive shrimp aquaculture management for Vannamei and Tiger shrimp operations</p>
+        </div>
+
+        <!-- Real-Time Water Quality Monitoring -->
+        <div class="monitoring-section">
+            <div class="monitoring-header">
+                <h2><i class="fas fa-tint"></i> Real-Time Pond Monitoring</h2>
+                <div class="sync-status">
+                    <div class="sync-indicator"></div>
+                    IoT Sensors Active (12 Ponds)
+                </div>
+            </div>
+            <div class="parameter-grid">
+                <div class="parameter-card">
+                    <div class="parameter-value">13.5</div>
+                    <div class="parameter-label">Salinity (ppt)</div>
+                    <div class="parameter-status status-optimal">OPTIMAL</div>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-value">6.42</div>
+                    <div class="parameter-label">Dissolved Oxygen (mg/L)</div>
+                    <div class="parameter-status status-optimal">OPTIMAL</div>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-value">29°C</div>
+                    <div class="parameter-label">Water Temperature</div>
+                    <div class="parameter-status status-optimal">OPTIMAL</div>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-value">7.8</div>
+                    <div class="parameter-label">pH Level</div>
+                    <div class="parameter-status status-optimal">OPTIMAL</div>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-value">0.15</div>
+                    <div class="parameter-label">Ammonia (mg/L)</div>
+                    <div class="parameter-status status-warning">MONITOR</div>
+                </div>
+                <div class="parameter-card">
+                    <div class="parameter-value">12</div>
+                    <div class="parameter-label">Turbidity (NTU)</div>
+                    <div class="parameter-status status-optimal">OPTIMAL</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Performance Indicators -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value">97%</div>
+                <div class="kpi-label">Survival Rate</div>
+                <div class="kpi-target">Target: 95%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">1.2</div>
+                <div class="kpi-label">Feed Conversion Ratio</div>
+                <div class="kpi-target">Target: <1.5</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">22g</div>
+                <div class="kpi-label">Average Body Weight</div>
+                <div class="kpi-target">Ready for harvest: >20g</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">0.6%</div>
+                <div class="kpi-label">Daily Mortality</div>
+                <div class="kpi-target">Target: <1%</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">8.5T</div>
+                <div class="kpi-label">Total Biomass</div>
+                <div class="kpi-target">Harvest ready: 3.2T</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value">$285K</div>
+                <div class="kpi-label">Projected Revenue</div>
+                <div class="kpi-target">This cycle</div>
+            </div>
+        </div>
+
+        <!-- Dashboard Cards Grid -->
+        <div class="dashboard-grid">
+            <!-- Pond Management -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-swimming-pool"></i>
+                        </div>
+                        Active Shrimp Ponds
+                    </div>
+                    <button class="card-action" onclick="viewAllPonds()">View All</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">P1</div>
+                            <div class="list-item-details">
+                                <h4>Vannamei Pond Alpha</h4>
+                                <p>78 days • 55,000 PLs • 2.1T biomass</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge harvesting">Ready</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">P3</div>
+                            <div class="list-item-details">
+                                <h4>Tiger Shrimp Bravo</h4>
+                                <p>45 days • 40,000 PLs • 1.8T biomass</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Growing</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">P8</div>
+                            <div class="list-item-details">
+                                <h4>Vannamei Pond Charlie</h4>
+                                <p>15 days • 60,000 PLs • 0.3T biomass</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge warning">Monitor</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="addShrimpPond()">
+                        <i class="fas fa-plus"></i>
+                        Add Pond
+                    </button>
+                    <button class="btn btn-secondary" onclick="pondWaterExchange()">
+                        <i class="fas fa-sync"></i>
+                        Water Exchange
+                    </button>
+                </div>
+            </div>
+
+            <!-- Feeding Management -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-utensils"></i>
+                        </div>
+                        Feeding Schedule
+                    </div>
+                    <button class="card-action" onclick="optimizeFeedingSchedule()">Optimize</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">5:00</div>
+                            <div class="list-item-details">
+                                <h4>Morning Feed - High Protein</h4>
+                                <p>320kg distributed • FCR: 1.18</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Completed</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">11:00</div>
+                            <div class="list-item-details">
+                                <h4>Mid-Day Feed - Growth Formula</h4>
+                                <p>285kg scheduled • All ponds</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge warning">Due Soon</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">17:00</div>
+                            <div class="list-item-details">
+                                <h4>Evening Feed - Premium Pellets</h4>
+                                <p>340kg planned • Harvest ponds priority</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge harvesting">Scheduled</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="adjustFeeding()">
+                        <i class="fas fa-cog"></i>
+                        Adjust Feeding
+                    </button>
+                    <button class="btn btn-accent" onclick="feedInventory()">
+                        <i class="fas fa-warehouse"></i>
+                        Feed Stock
+                    </button>
+                </div>
+            </div>
+
+            <!-- Disease Management -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-shield-virus"></i>
+                        </div>
+                        Disease Prevention
+                    </div>
+                    <button class="card-action" onclick="diseaseAlert()">Alert System</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar"><i class="fas fa-microscope"></i></div>
+                            <div class="list-item-details">
+                                <h4>White Spot Syndrome (WSSV)</h4>
+                                <p>No detection • Preventive measures active</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Clear</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar"><i class="fas fa-bacteria"></i></div>
+                            <div class="list-item-details">
+                                <h4>Vibrio Count</h4>
+                                <p>Within normal range • Probiotic treatment</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Normal</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar"><i class="fas fa-thermometer-half"></i></div>
+                            <div class="list-item-details">
+                                <h4>Stress Monitoring</h4>
+                                <p>Low stress indicators • Good appetite</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Healthy</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="healthCheck()">
+                        <i class="fas fa-stethoscope"></i>
+                        Health Check
+                    </button>
+                    <button class="btn btn-secondary" onclick="treatmentLog()">
+                        <i class="fas fa-clipboard-list"></i>
+                        Treatment Log
+                    </button>
+                </div>
+            </div>
+
+            <!-- Harvest Planning -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-calendar-check"></i>
+                        </div>
+                        Harvest Planning
+                    </div>
+                    <button class="card-action" onclick="harvestCalculator()">Calculator</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="harvestChart"></canvas>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="scheduleHarvest()">
+                        <i class="fas fa-clock"></i>
+                        Schedule Harvest
+                    </button>
+                    <button class="btn btn-accent" onclick="marketPriceCheck()">
+                        <i class="fas fa-chart-line"></i>
+                        Market Prices
+                    </button>
+                </div>
+            </div>
+
+            <!-- Sales & Export -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-shipping-fast"></i>
+                        </div>
+                        Sales & Export
+                    </div>
+                    <button class="card-action" onclick="exportOrders()">Orders</button>
+                </div>
+                
+                <div class="list-container">
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">EU</div>
+                            <div class="list-item-details">
+                                <h4>Premium Vannamei Export</h4>
+                                <p>2.8T • $95,000 • Size: 21-25g</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge harvesting">Processing</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">JP</div>
+                            <div class="list-item-details">
+                                <h4>Tiger Shrimp Premium</h4>
+                                <p>1.5T • $65,000 • Size: 25-30g</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge warning">Pending</span>
+                        </div>
+                    </div>
+                    
+                    <div class="list-item">
+                        <div class="list-item-info">
+                            <div class="list-item-avatar">US</div>
+                            <div class="list-item-details">
+                                <h4>Local Market Supply</h4>
+                                <p>3.2T • $85,000 • Mixed sizes</p>
+                            </div>
+                        </div>
+                        <div class="list-item-meta">
+                            <span class="status-badge optimal">Confirmed</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="createSalesOrder()">
+                        <i class="fas fa-plus"></i>
+                        New Order
+                    </button>
+                    <button class="btn btn-secondary" onclick="qualityCertificate()">
+                        <i class="fas fa-certificate"></i>
+                        Quality Cert
+                    </button>
+                </div>
+            </div>
+
+            <!-- Financial Performance -->
+            <div class="dashboard-card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <div class="card-icon">
+                            <i class="fas fa-chart-pie"></i>
+                        </div>
+                        Financial Performance
+                    </div>
+                    <button class="card-action" onclick="profitAnalysis()">P&L Analysis</button>
+                </div>
+                
+                <div class="chart-container">
+                    <canvas id="financialChart"></canvas>
+                </div>
+                
+                <div class="action-buttons">
+                    <button class="btn btn-primary" onclick="cycleProfitability()">
+                        <i class="fas fa-calculator"></i>
+                        Cycle P&L
+                    </button>
+                    <button class="btn btn-secondary" onclick="costOptimization()">
+                        <i class="fas fa-optimize"></i>
+                        Cost Analysis
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize Charts
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            updateDashboardData();
+        });
+
+        function initializeCharts() {
+            // Harvest Chart
+            const harvestCtx = document.getElementById('harvestChart').getContext('2d');
+            new Chart(harvestCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 10', 'Week 11', 'Week 12', 'Week 13', 'Week 14'],
+                    datasets: [{
+                        label: 'Biomass Growth (kg)',
+                        data: [1200, 1850, 2450, 2890, 3200],
+                        borderColor: '#f97316',
+                        backgroundColor: 'rgba(249, 115, 22, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }, {
+                        label: 'Harvest Ready (kg)',
+                        data: [0, 0, 800, 1500, 2100],
+                        borderColor: '#0891b2',
+                        backgroundColor: 'rgba(8, 145, 178, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'kg';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Financial Chart
+            const financialCtx = document.getElementById('financialChart').getContext('2d');
+            new Chart(financialCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Feed Costs', 'Labor', 'Energy', 'PLs/Seeds', 'Other'],
+                    datasets: [{
+                        data: [45, 18, 12, 15, 10],
+                        backgroundColor: [
+                            '#f97316',
+                            '#0891b2',
+                            '#10b981',
+                            '#f59e0b',
+                            '#6b7280'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateDashboardData() {
+            console.log('🦐 Shrimp farming dashboard data updated');
+        }
+
+        // Dashboard Functions
+        function viewAllPonds() {
+            showNotification('Opening shrimp pond management system...', 'info');
+        }
+
+        function addShrimpPond() {
+            showNotification('Opening new shrimp pond setup wizard...', 'info');
+        }
+
+        function pondWaterExchange() {
+            showNotification('Initiating water exchange protocols...', 'info');
+        }
+
+        function optimizeFeedingSchedule() {
+            showNotification('Optimizing feeding schedule for maximum FCR...', 'success');
+        }
+
+        function adjustFeeding() {
+            showNotification('Opening feeding adjustment controls...', 'info');
+        }
+
+        function feedInventory() {
+            showNotification('Opening feed stock management...', 'info');
+        }
+
+        function diseaseAlert() {
+            showNotification('Opening disease monitoring system...', 'info');
+        }
+
+        function healthCheck() {
+            showNotification('Initiating comprehensive health assessment...', 'info');
+        }
+
+        function treatmentLog() {
+            showNotification('Opening treatment and medication log...', 'info');
+        }
+
+        function harvestCalculator() {
+            showNotification('Opening harvest yield calculator...', 'info');
+        }
+
+        function scheduleHarvest() {
+            showNotification('Opening harvest scheduling system...', 'info');
+        }
+
+        function marketPriceCheck() {
+            showNotification('Fetching current shrimp market prices...', 'success');
+        }
+
+        function exportOrders() {
+            showNotification('Opening export order management...', 'info');
+        }
+
+        function createSalesOrder() {
+            showNotification('Creating new sales order...', 'info');
+        }
+
+        function qualityCertificate() {
+            showNotification('Generating quality certification documents...', 'success');
+        }
+
+        function profitAnalysis() {
+            showNotification('Loading profit and loss analysis...', 'info');
+        }
+
+        function cycleProfitability() {
+            showNotification('Calculating cycle profitability metrics...', 'success');
+        }
+
+        function costOptimization() {
+            showNotification('Opening cost optimization analysis...', 'info');
+        }
+
+        // Notification System
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#10b981' : type === 'warning' ? '#f59e0b' : type === 'error' ? '#ef4444' : '#f97316'};
+                color: white;
+                padding: 1rem 1.5rem;
+                border-radius: 8px;
+                box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1);
+                z-index: 1000;
+                animation: slideIn 0.3s ease-out;
+                max-width: 300px;
+                font-weight: 600;
+            `;
+            
+            notification.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : type === 'error' ? 'times-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease-out';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 4000);
+        }
+
+        // Add keyframes for animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+                to {
+                    opacity: 0;
+                    transform: translateX(100px);
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

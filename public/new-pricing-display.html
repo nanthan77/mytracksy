@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy - New Pricing Plans</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script defer src="new-monetization-strategy.js"></script>
+    <style>
+        :root {
+            --primary-color: #1e293b;
+            --secondary-color: #475569;
+            --accent-color: #3b82f6;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            min-height: 100vh;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 4rem;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .pricing-toggle {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        .toggle-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50px;
+            padding: 0.5rem;
+            display: flex;
+            backdrop-filter: blur(10px);
+        }
+
+        .toggle-option {
+            padding: 0.75rem 2rem;
+            border-radius: 25px;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .toggle-option.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .discount-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        .pricing-card {
+            background: white;
+            border-radius: 24px;
+            padding: 2.5rem;
+            position: relative;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s;
+            border: 3px solid transparent;
+        }
+
+        .pricing-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .pricing-card.popular {
+            border-color: var(--success-color);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.popular::before {
+            content: 'Most Popular';
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--success-color);
+            color: white;
+            padding: 0.5rem 2rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .plan-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .plan-name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .plan-tagline {
+            color: var(--secondary-color);
+            margin-bottom: 2rem;
+            font-size: 1rem;
+        }
+
+        .plan-price {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .price-amount {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary-color);
+        }
+
+        .price-currency {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+        }
+
+        .price-period {
+            font-size: 1rem;
+            color: var(--secondary-color);
+        }
+
+        .price-usd {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            margin-bottom: 2rem;
+        }
+
+        .savings-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .features-list {
+            list-style: none;
+            margin-bottom: 2.5rem;
+        }
+
+        .features-list li {
+            padding: 0.75rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: var(--secondary-color);
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-icon {
+            color: var(--success-color);
+            font-weight: 600;
+            min-width: 20px;
+        }
+
+        .cta-button {
+            width: 100%;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-button.primary {
+            background: linear-gradient(135deg, var(--accent-color) 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .cta-button.secondary {
+            background: #f8fafc;
+            color: var(--primary-color);
+            border: 2px solid #e2e8f0;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .add-ons-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            margin-bottom: 4rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .add-ons-section h2 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .add-ons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .add-on-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .add-on-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .add-on-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        .add-on-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .add-on-price {
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+        }
+
+        .add-on-description {
+            color: var(--secondary-color);
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .comparison-section {
+            background: white;
+            border-radius: 24px;
+            padding: 3rem;
+            margin-bottom: 4rem;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 2rem;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .comparison-table th {
+            background: #f8fafc;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .feature-available {
+            color: var(--success-color);
+            font-weight: 600;
+        }
+
+        .feature-unavailable {
+            color: #94a3b8;
+        }
+
+        .faq-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 3rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .faq-section h2 {
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .faq-item {
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .faq-question {
+            padding: 1.5rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faq-answer {
+            padding: 0 1.5rem 1.5rem;
+            color: var(--secondary-color);
+            line-height: 1.6;
+            display: none;
+        }
+
+        .faq-answer.active {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2.5rem;
+            }
+
+            .pricing-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-card.popular {
+                transform: none;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>💰 MyTracksy Pricing</h1>
+            <p>Choose the perfect plan for your financial management needs. Designed specifically for Sri Lankan individuals and businesses.</p>
+        </div>
+
+        <!-- Billing Toggle -->
+        <div class="pricing-toggle">
+            <div class="toggle-container">
+                <div class="toggle-option active" onclick="toggleBilling('monthly')">Monthly</div>
+                <div class="toggle-option" onclick="toggleBilling('annual')">Annual</div>
+            </div>
+            <div class="discount-badge">Save 20% with Annual Billing</div>
+        </div>
+
+        <!-- Pricing Cards -->
+        <div class="pricing-grid" id="pricingGrid">
+            <!-- Dynamic pricing cards will be inserted here -->
+        </div>
+
+        <!-- Add-ons Section -->
+        <div class="add-ons-section">
+            <h2>🎯 Additional Services</h2>
+            <p style="text-align: center; color: white; opacity: 0.9; margin-bottom: 2rem;">Enhance your experience with professional services</p>
+            <div class="add-ons-grid" id="addOnsGrid">
+                <!-- Dynamic add-ons will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Feature Comparison -->
+        <div class="comparison-section">
+            <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 1rem;">📊 Feature Comparison</h2>
+            <p style="text-align: center; color: var(--secondary-color); margin-bottom: 2rem;">Compare all features across different plans</p>
+            <div style="overflow-x: auto;">
+                <table class="comparison-table" id="comparisonTable">
+                    <!-- Dynamic comparison table will be inserted here -->
+                </table>
+            </div>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <h2>❓ Frequently Asked Questions</h2>
+            <div class="faq-list">
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        What payment methods do you accept?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        We accept PayHere (for Sri Lankan users), international credit/debit cards via Stripe, and bank transfers. All payments are processed securely.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Can I change my plan anytime?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Yes! You can upgrade or downgrade your plan at any time. Changes take effect immediately, and we'll prorate the billing accordingly.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Is there a free trial available?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Our Starter plan is free forever with generous limits. For paid plans, we offer a 7-day free trial with full access to all features.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Do you offer discounts for students or startups?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Yes! We offer 50% off for verified students, 75% off for startups (first 6 months), and 60% off for registered NGOs. Contact us for verification.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFAQ(this)">
+                        Is my financial data secure?
+                        <i class="fas fa-chevron-down"></i>
+                    </div>
+                    <div class="faq-answer">
+                        Absolutely. We use bank-level encryption, secure servers, and never store your banking passwords. Your data is encrypted both in transit and at rest.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentBilling = 'monthly';
+        let newMonetization = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Wait for monetization strategy to load
+            setTimeout(() => {
+                if (window.newMonetization) {
+                    newMonetization = window.newMonetization;
+                    renderPricingCards();
+                    renderAddOns();
+                    renderComparisonTable();
+                }
+            }, 500);
+        });
+
+        function toggleBilling(period) {
+            currentBilling = period;
+            
+            // Update toggle UI
+            document.querySelectorAll('.toggle-option').forEach(opt => {
+                opt.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Re-render pricing cards
+            renderPricingCards();
+        }
+
+        function renderPricingCards() {
+            if (!newMonetization) return;
+            
+            const grid = document.getElementById('pricingGrid');
+            const tiers = newMonetization.getPricingDisplay();
+            
+            grid.innerHTML = tiers.map(tier => {
+                const isAnnual = currentBilling === 'annual';
+                const price = isAnnual && tier.price > 0 ? Math.round(tier.price * 12 * 0.8) : tier.price;
+                const period = isAnnual ? 'year' : 'month';
+                
+                return `
+                    <div class="pricing-card ${tier.popular ? 'popular' : ''}">
+                        <span class="plan-icon">${tier.icon}</span>
+                        <h3 class="plan-name">${tier.name}</h3>
+                        <p class="plan-tagline">${tier.tagline}</p>
+                        
+                        <div class="plan-price">
+                            <span class="price-amount">${price === 0 ? 'Free' : price.toLocaleString()}</span>
+                            ${price > 0 ? `<span class="price-currency">LKR</span>` : ''}
+                            ${price > 0 ? `<span class="price-period">/${period}</span>` : ''}
+                        </div>
+                        ${price > 0 ? `<div class="price-usd">~$${(price / 160).toFixed(2)}/${period}</div>` : '<div class="price-usd">No credit card required</div>'}
+                        
+                        ${tier.savings ? `<div class="savings-badge">💡 ${tier.savings}</div>` : ''}
+                        
+                        <ul class="features-list">
+                            ${getFeaturesList(tier.features).map(feature => `
+                                <li>
+                                    <span class="feature-icon">✅</span>
+                                    <span>${feature}</span>
+                                </li>
+                            `).join('')}
+                        </ul>
+                        
+                        <button class="cta-button ${tier.popular ? 'primary' : 'secondary'}" onclick="selectPlan('${tier.id}')">
+                            ${tier.price === 0 ? 'Get Started Free' : 'Start Free Trial'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderAddOns() {
+            if (!newMonetization) return;
+            
+            const grid = document.getElementById('addOnsGrid');
+            const addOns = newMonetization.addOns;
+            
+            grid.innerHTML = Object.keys(addOns).map(key => {
+                const addOn = addOns[key];
+                return `
+                    <div class="add-on-card">
+                        <span class="add-on-icon">${addOn.icon}</span>
+                        <h4 class="add-on-name">${addOn.name}</h4>
+                        <div class="add-on-price">LKR ${addOn.price.toLocaleString()}</div>
+                        <p class="add-on-description">${addOn.description}</p>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderComparisonTable() {
+            const table = document.getElementById('comparisonTable');
+            
+            const features = [
+                'Expense Tracking',
+                'Tax Calculator',
+                'Bank Accounts',
+                'Monthly Reports',
+                'Data Export',
+                'Mobile App',
+                'Business Features',
+                'Employee Management',
+                'VAT Management',
+                'API Access',
+                'Priority Support'
+            ];
+            
+            const plans = ['Starter', 'Personal Pro', 'Business Starter', 'Professional'];
+            
+            table.innerHTML = `
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        ${plans.map(plan => `<th>${plan}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody>
+                    ${features.map(feature => `
+                        <tr>
+                            <td>${feature}</td>
+                            <td class="feature-available">✅</td>
+                            <td class="feature-available">✅</td>
+                            <td class="feature-available">✅</td>
+                            <td class="feature-available">✅</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            `;
+        }
+
+        function getFeaturesList(features) {
+            const featureMap = {
+                'expense_tracking': 'Track expenses & income',
+                'basic_tax_calculator': 'Basic tax calculator',
+                'financial_reports': 'Monthly financial reports',
+                'mobile_app_access': 'Mobile app access',
+                'email_support': 'Email support',
+                'unlimited_transactions': 'Unlimited transactions',
+                'advanced_tax_calculator': 'Advanced tax calculator',
+                'investment_tracking': 'Investment tracking',
+                'automated_categorization': 'AI expense categorization',
+                'custom_reports': 'Custom reports',
+                'data_export': 'Export to CSV/PDF',
+                'mobile_app_premium': 'Premium mobile features',
+                'priority_email_support': 'Priority email support',
+                'tax_filing_assistance': 'Tax filing assistance',
+                'all_personal_features': 'All personal features',
+                'business_expense_tracking': 'Business expense tracking',
+                'employee_management': 'Employee management',
+                'payroll_basic': 'Basic payroll',
+                'vat_management': 'VAT management',
+                'invoice_generation': 'Invoice generation',
+                'business_reports': 'Business reports',
+                'tax_compliance': 'Tax compliance',
+                'phone_support': 'Phone support',
+                'accountant_collaboration': 'Accountant collaboration',
+                'all_business_features': 'All business features',
+                'unlimited_employees': 'Unlimited employees',
+                'advanced_payroll': 'Advanced payroll',
+                'multi_company_management': 'Multi-company management',
+                'advanced_analytics': 'Advanced analytics',
+                'api_access': 'API access',
+                'custom_integrations': 'Custom integrations',
+                'dedicated_support': 'Dedicated support',
+                'training_sessions': 'Training sessions',
+                'tax_expert_consultation': 'Tax expert consultation',
+                'white_label_reports': 'White-label reports'
+            };
+            
+            return features.map(feature => featureMap[feature] || feature);
+        }
+
+        function selectPlan(planId) {
+            console.log('Selected plan:', planId);
+            alert(`You selected the ${planId} plan! This would redirect to the signup/upgrade flow.`);
+        }
+
+        function toggleFAQ(element) {
+            const answer = element.nextElementSibling;
+            const icon = element.querySelector('i');
+            
+            if (answer.classList.contains('active')) {
+                answer.classList.remove('active');
+                icon.style.transform = 'rotate(0deg)';
+            } else {
+                // Close all other FAQs
+                document.querySelectorAll('.faq-answer').forEach(ans => ans.classList.remove('active'));
+                document.querySelectorAll('.faq-question i').forEach(ic => ic.style.transform = 'rotate(0deg)');
+                
+                // Open this FAQ
+                answer.classList.add('active');
+                icon.style.transform = 'rotate(180deg)';
+            }
+        }
+    </script>
+</body>
+</html>

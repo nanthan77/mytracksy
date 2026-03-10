@@ -1,0 +1,69 @@
+{
+  "name": "MyTracksy - Financial Intelligence Platform",
+  "short_name": "MyTracksy",
+  "description": "Advanced financial management platform for Sri Lankan professionals with AI and multi-language support",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#1976d2",
+  "theme_color": "#1976d2",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "lang": "en",
+  "categories": ["finance", "productivity", "business"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTkyIiBoZWlnaHQ9IjE5MiIgdmlld0JveD0iMCAwIDE5MiAxOTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSIxOTIiIGhlaWdodD0iMTkyIiByeD0iNDgiIGZpbGw9IiMxOTc2ZDIiLz4KPHN2ZyB4PSI0OCIgeT0iNDgiIHdpZHRoPSI5NiIgaGVpZ2h0PSI5NiIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSIjZmZmZmZmIj4KICA8cGF0aCBkPSJNMjEgN2wtMS00SDJsLTEgNGgxLjM3NGMuNTEgMi44NzIgMy4wNzMgNSA2LjEyNiA1czUuNjE2LTIuMTI4IDYuMTI2LTVIMjF6TTkgMTRjLTEuNjU3IDAtMy0xLjM0My0zLTNzMS4zNDMtMyAzLTMgMyAxLjM0MyAzIDMtMS4zNDMgMy0zIDN6TTkgN0M3LjM0MyA3IDYgOC4zNDMgNiAxMHMxLjM0MyAzIDMgMyAzLTEuMzQzIDMtM1MxMC42NTcgNyA5IDciLz4KPC9zdmc+Cjwvc3ZnPgo=",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNTEyIiBoZWlnaHQ9IjUxMiIgdmlld0JveD0iMCAwIDUxMiA1MTIiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+CjxyZWN0IHdpZHRoPSI1MTIiIGhlaWdodD0iNTEyIiByeD0iMTI4IiBmaWxsPSIjMTk3NmQyIi8+CjxzdmcgeD0iMTI4IiB5PSIxMjgiIHdpZHRoPSIyNTYiIGhlaWdodD0iMjU2IiB2aWV3Qm94PSIwIDAgMjQgMjQiIGZpbGw9IiNmZmZmZmYiPgogIDxwYXRoIGQ9Ik0yMSA3bC0xLTRIMmwtMSA0aDEuMzc0Yy41MSAyLjg3MiAzLjA3MyA1IDYuMTI2IDVzNS42MTYtMi4xMjggNi4xMjYtNUgyMXpNOSAxNGMtMS42NTcgMC0zLTEuMzQzLTMtM3MxLjM0My0zIDMtMyAzIDEuMzQzIDMgMy0xLjM0MyAzLTMgM3pNOSA3QzcuMzQzIDcgNiA4LjM0MyA2IDEwczEuMzQzIDMgMyAzIDMtMS4zNDMgMy0zUzEwLjY1NyA3IDkgNyIvPgo8L3N2Zz4KPC9zdmc+Cg==",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTI4MCIgaGVpZ2h0PSI3MjAiIHZpZXdCb3g9IjAgMCAxMjgwIDcyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyODAiIGhlaWdodD0iNzIwIiBmaWxsPSIjZjVmNWY1Ii8+Cjx0ZXh0IHg9IjY0MCIgeT0iMzYwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBmaWxsPSIjMTk3NmQyIiBmb250LXNpemU9IjQ4IiBmb250LWZhbWlseT0iQXJpYWwiPk15VHJhY2tzeSBEYXNoYm9hcmQ8L3RleHQ+Cjwvc3ZnPgo=",
+      "sizes": "1280x720",
+      "type": "image/svg+xml",
+      "form_factor": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Add Expense",
+      "short_name": "Add Expense",
+      "description": "Quickly add a new expense",
+      "url": "./mytracksy-pwa.html#expenses",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzE5NzZkMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMTkgMTNoLTZ2NmgtMnYtNkg1di0yaDZ2LTZoMnY2aDZ2MnoiLz4KPC9zdmc+Cg==",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "View Budget",
+      "short_name": "Budgets",
+      "description": "Check your budget status",
+      "url": "./mytracksy-pwa.html#budgets",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iOTYiIGhlaWdodD0iOTYiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzE5NzZkMiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cGF0aCBkPSJNMTEuOCA5LjJjLS44OC0uMzItMS42LS43Mi0yLjE2LTEuMkM5LjA0IDcuNCA4LjggNi43OSA4LjggNmMwLS44My4zNC0xLjU4IDEuMDEtMi4xQzEwLjQ4IDMuMzIgMTEuMTggMyAxMiAzczEuNTIuMzIgMi4xOS45QzE0Ljg2IDQuNDIgMTUuMiA1LjE3IDE1LjIgNnMtLjM0IDEuNTgtMS4wMSAyLjEtMS41MS45LTIuMzkuOXptMCA2LjRjLS44OC0uMzItMS42LS43Mi0yLjE2LTEuMkM5LjA0IDEzLjggOC44IDEzLjE5IDguOCAxMmMwLS44My4zNC0xLjU4IDEuMDEtMi4xQzEwLjQ4IDkuMzIgMTEuMTggOSAxMiA5czEuNTIuMzIgMi4xOS45YzAuNjcuNTIgMS4wMSAxLjI3IDEuMDEgMi4xcy0uMzQgMS41OC0xLjAxIDIuMS0xLjUxLjktMi4zOS45eiIvPgo8L3N2Zz4K",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "./mytracksy-pwa.html",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  },
+  "prefer_related_applications": false
+}

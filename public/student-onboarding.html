@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Student Onboarding | Start Your Financial Journey</title>
+    <meta name="description" content="Set up your MyTracksy Student profile and begin tracking your academic expenses from Grade 12 to professional life">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --secondary-color: #1d4ed8;
+            --accent-color: #f59e0b;
+            --success-color: #10b981;
+            --warning-color: #f59e0b;
+            --error-color: #ef4444;
+            --dark-color: #1e293b;
+            --light-color: #ffffff;
+            --gray-50: #f8fafc;
+            --gray-100: #f1f5f9;
+            --gray-200: #e2e8f0;
+            --gray-300: #cbd5e1;
+            --gray-400: #94a3b8;
+            --gray-500: #64748b;
+            --gray-600: #475569;
+            --student-blue: #3b82f6;
+            --student-purple: #8b5cf6;
+            --student-green: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #1e40af 0%, #3730a3 50%, #7c3aed 100%);
+            min-height: 100vh;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .onboarding-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .onboarding-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            max-width: 800px;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        .onboarding-header {
+            background: linear-gradient(135deg, var(--student-blue), var(--student-purple));
+            color: white;
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .onboarding-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+        }
+
+        .onboarding-header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: rgba(255, 255, 255, 0.3);
+            margin-top: 2rem;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s ease;
+            width: 20%;
+        }
+
+        .onboarding-content {
+            padding: 3rem;
+        }
+
+        .step {
+            display: none;
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeInSlide 0.5s ease-out;
+        }
+
+        @keyframes fadeInSlide {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--dark-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-subtitle {
+            color: var(--gray-600);
+            margin-bottom: 2rem;
+        }
+
+        /* Phase Selection */
+        .phase-selection {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .phase-option {
+            position: relative;
+        }
+
+        .phase-option input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .phase-card {
+            background: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .phase-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.15);
+        }
+
+        .phase-option input:checked + .phase-card {
+            background: linear-gradient(135deg, var(--primary-color), var(--student-purple));
+            color: white;
+            border-color: var(--primary-color);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(59, 130, 246, 0.3);
+        }
+
+        .phase-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        .phase-option input:checked + .phase-card .phase-icon {
+            color: white;
+        }
+
+        .phase-card h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .phase-card p {
+            opacity: 0.8;
+        }
+
+        /* Form Elements */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--gray-200);
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* Goal Options */
+        .goal-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .goal-option {
+            background: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .goal-option:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .goal-option input {
+            margin-bottom: 0.5rem;
+        }
+
+        .goal-option.selected {
+            background: linear-gradient(135deg, var(--primary-color), var(--student-purple));
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Budget Setup */
+        .budget-section {
+            background: var(--gray-50);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .budget-section h4 {
+            color: var(--dark-color);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .income-sources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        /* Navigation */
+        .step-navigation {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-200);
+        }
+
+        .btn {
+            padding: 0.875rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--student-purple));
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-secondary {
+            background: var(--gray-200);
+            color: var(--dark-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-300);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Success Animation */
+        .success-animation {
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            color: var(--success-color);
+            margin-bottom: 1rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateY(0);
+            }
+            40% {
+                transform: translateY(-10px);
+            }
+            60% {
+                transform: translateY(-5px);
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .onboarding-container {
+                padding: 1rem;
+            }
+
+            .onboarding-content {
+                padding: 2rem;
+            }
+
+            .onboarding-header h1 {
+                font-size: 2rem;
+            }
+
+            .phase-selection {
+                grid-template-columns: 1fr;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .step-navigation {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="onboarding-container">
+        <div class="onboarding-card">
+            <div class="onboarding-header">
+                <h1>🎓 Welcome to MyTracksy Student</h1>
+                <p>Your financial companion from Grade 12 to professional success</p>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+            </div>
+
+            <div class="onboarding-content">
+                <!-- Step 1: Academic Phase Selection -->
+                <div class="step active" id="step1">
+                    <h2 class="step-title">What's your current academic phase?</h2>
+                    <p class="step-subtitle">This helps us customize your financial tracking experience</p>
+
+                    <div class="phase-selection">
+                        <label class="phase-option">
+                            <input type="radio" name="academicPhase" value="grade12" required>
+                            <div class="phase-card">
+                                <div class="phase-icon">🎓</div>
+                                <h3>Grade 12 / A-Level</h3>
+                                <p>Preparing for university entrance exams and applications</p>
+                            </div>
+                        </label>
+
+                        <label class="phase-option">
+                            <input type="radio" name="academicPhase" value="university" required>
+                            <div class="phase-card">
+                                <div class="phase-icon">🏛️</div>
+                                <h3>University Student</h3>
+                                <p>Currently pursuing undergraduate or postgraduate studies</p>
+                            </div>
+                        </label>
+
+                        <label class="phase-option">
+                            <input type="radio" name="academicPhase" value="professional" required>
+                            <div class="phase-card">
+                                <div class="phase-icon">💼</div>
+                                <h3>Recent Graduate</h3>
+                                <p>Transitioning from studies to professional career</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Step 2: Personal Information -->
+                <div class="step" id="step2">
+                    <h2 class="step-title">Tell us about yourself</h2>
+                    <p class="step-subtitle">Help us personalize your MyTracksy experience</p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="studentName">Full Name</label>
+                            <input type="text" id="studentName" placeholder="Enter your full name" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="studentEmail">Email Address</label>
+                            <input type="email" id="studentEmail" placeholder="your.email@example.com" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="studentAge">Age</label>
+                            <input type="number" id="studentAge" min="16" max="35" placeholder="18" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="studentLocation">Location</label>
+                            <select id="studentLocation" required>
+                                <option value="">Select your district</option>
+                                <option value="Colombo">Colombo</option>
+                                <option value="Gampaha">Gampaha</option>
+                                <option value="Kalutara">Kalutara</option>
+                                <option value="Kandy">Kandy</option>
+                                <option value="Matale">Matale</option>
+                                <option value="Nuwara Eliya">Nuwara Eliya</option>
+                                <option value="Galle">Galle</option>
+                                <option value="Matara">Matara</option>
+                                <option value="Hambantota">Hambantota</option>
+                                <option value="Jaffna">Jaffna</option>
+                                <option value="Kilinochchi">Kilinochchi</option>
+                                <option value="Mannar">Mannar</option>
+                                <option value="Vavuniya">Vavuniya</option>
+                                <option value="Mullaitivu">Mullaitivu</option>
+                                <option value="Batticaloa">Batticaloa</option>
+                                <option value="Ampara">Ampara</option>
+                                <option value="Trincomalee">Trincomalee</option>
+                                <option value="Kurunegala">Kurunegala</option>
+                                <option value="Puttalam">Puttalam</option>
+                                <option value="Anuradhapura">Anuradhapura</option>
+                                <option value="Polonnaruwa">Polonnaruwa</option>
+                                <option value="Badulla">Badulla</option>
+                                <option value="Moneragala">Moneragala</option>
+                                <option value="Ratnapura">Ratnapura</option>
+                                <option value="Kegalle">Kegalle</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 3: Academic Information -->
+                <div class="step" id="step3">
+                    <h2 class="step-title">Academic Details</h2>
+                    <p class="step-subtitle">Tell us about your current studies</p>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="institution">School/University Name</label>
+                            <input type="text" id="institution" placeholder="e.g., University of Colombo" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="courseStream">Course/Stream</label>
+                            <input type="text" id="courseStream" placeholder="e.g., Computer Science Engineering" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="academicYear">Academic Year/Level</label>
+                            <select id="academicYear" required>
+                                <option value="">Select your level</option>
+                                <option value="Grade 12">Grade 12</option>
+                                <option value="1st Year">1st Year University</option>
+                                <option value="2nd Year">2nd Year University</option>
+                                <option value="3rd Year">3rd Year University</option>
+                                <option value="4th Year">4th Year University</option>
+                                <option value="5th Year">5th Year University</option>
+                                <option value="Final Year">Final Year</option>
+                                <option value="Postgraduate">Postgraduate</option>
+                                <option value="Recent Graduate">Recent Graduate</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="graduationDate">Expected Graduation</label>
+                            <input type="month" id="graduationDate" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="careerGoals">Career Goals (Optional)</label>
+                        <textarea id="careerGoals" rows="3" placeholder="What do you want to do after graduation?"></textarea>
+                    </div>
+                </div>
+
+                <!-- Step 4: Financial Goals -->
+                <div class="step" id="step4">
+                    <h2 class="step-title">What are your financial goals?</h2>
+                    <p class="step-subtitle">Select all that apply to customize your tracking</p>
+
+                    <div class="goal-options">
+                        <label class="goal-option">
+                            <input type="checkbox" value="track-expenses">
+                            <div>
+                                <i class="fas fa-chart-pie" style="font-size: 2rem; color: var(--primary-color); margin-bottom: 0.5rem;"></i>
+                                <h4>Track Study Expenses</h4>
+                                <p>Monitor tuition, books, and academic costs</p>
+                            </div>
+                        </label>
+
+                        <label class="goal-option">
+                            <input type="checkbox" value="save-university">
+                            <div>
+                                <i class="fas fa-piggy-bank" style="font-size: 2rem; color: var(--student-green); margin-bottom: 0.5rem;"></i>
+                                <h4>Save for University</h4>
+                                <p>Build funds for higher education</p>
+                            </div>
+                        </label>
+
+                        <label class="goal-option">
+                            <input type="checkbox" value="manage-loans">
+                            <div>
+                                <i class="fas fa-hand-holding-usd" style="font-size: 2rem; color: var(--warning-color); margin-bottom: 0.5rem;"></i>
+                                <h4>Manage Student Loans</h4>
+                                <p>Track borrowing and plan repayment</p>
+                            </div>
+                        </label>
+
+                        <label class="goal-option">
+                            <input type="checkbox" value="career-transition">
+                            <div>
+                                <i class="fas fa-rocket" style="font-size: 2rem; color: var(--student-purple); margin-bottom: 0.5rem;"></i>
+                                <h4>Plan Career Transition</h4>
+                                <p>Prepare financially for professional life</p>
+                            </div>
+                        </label>
+
+                        <label class="goal-option">
+                            <input type="checkbox" value="emergency-fund">
+                            <div>
+                                <i class="fas fa-shield-alt" style="font-size: 2rem; color: var(--error-color); margin-bottom: 0.5rem;"></i>
+                                <h4>Build Emergency Fund</h4>
+                                <p>Create financial safety net</p>
+                            </div>
+                        </label>
+
+                        <label class="goal-option">
+                            <input type="checkbox" value="scholarships">
+                            <div>
+                                <i class="fas fa-award" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 0.5rem;"></i>
+                                <h4>Track Scholarships</h4>
+                                <p>Monitor applications and renewals</p>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Step 5: Budget Setup -->
+                <div class="step" id="step5">
+                    <h2 class="step-title">Set up your budget</h2>
+                    <p class="step-subtitle">Help us understand your financial situation</p>
+
+                    <div class="budget-section">
+                        <h4><i class="fas fa-plus-circle"></i> Monthly Income Sources</h4>
+                        <div class="income-sources">
+                            <div class="form-group">
+                                <label>Family Support (LKR)</label>
+                                <input type="number" id="familySupport" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Part-time Job (LKR)</label>
+                                <input type="number" id="partTimeJob" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Scholarships (LKR)</label>
+                                <input type="number" id="scholarships" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Other Income (LKR)</label>
+                                <input type="number" id="otherIncome" placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="budget-section">
+                        <h4><i class="fas fa-minus-circle"></i> Estimated Monthly Expenses</h4>
+                        <div class="income-sources">
+                            <div class="form-group">
+                                <label>Academic Expenses (LKR)</label>
+                                <input type="number" id="academicExpenses" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Accommodation (LKR)</label>
+                                <input type="number" id="accommodation" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Food & Daily Needs (LKR)</label>
+                                <input type="number" id="dailyExpenses" placeholder="0" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label>Transportation (LKR)</label>
+                                <input type="number" id="transportation" placeholder="0" min="0">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 6: Family Access -->
+                <div class="step" id="step6">
+                    <h2 class="step-title">Family Financial Collaboration</h2>
+                    <p class="step-subtitle">Enable family members to support your financial planning</p>
+
+                    <div style="background: var(--gray-50); border-radius: 12px; padding: 2rem; margin-bottom: 2rem;">
+                        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
+                            <i class="fas fa-users" style="font-size: 2rem; color: var(--primary-color);"></i>
+                            <div>
+                                <h3>Family Collaboration Benefits</h3>
+                                <p style="color: var(--gray-600);">Allow parents/guardians to view reports and contribute to your financial goals</p>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                                <input type="checkbox" id="allowFamilyAccess" checked>
+                                <span>Allow parent/guardian to view financial reports and progress</span>
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="parentEmail">Parent/Guardian Email (Optional)</label>
+                            <input type="email" id="parentEmail" placeholder="parent@example.com">
+                        </div>
+
+                        <div class="form-group">
+                            <label for="relationshipType">Relationship</label>
+                            <select id="relationshipType">
+                                <option value="">Select relationship</option>
+                                <option value="parent">Parent</option>
+                                <option value="guardian">Guardian</option>
+                                <option value="sponsor">Sponsor</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Step 7: Success -->
+                <div class="step" id="step7">
+                    <div class="success-animation">
+                        <div class="success-icon">✅</div>
+                        <h2 class="step-title">Welcome to MyTracksy Student!</h2>
+                        <p class="step-subtitle">Your profile has been created successfully. You're ready to start tracking your academic expenses and planning your financial future.</p>
+                        
+                        <div style="background: var(--gray-50); border-radius: 12px; padding: 2rem; margin: 2rem 0; text-align: left;">
+                            <h3 style="margin-bottom: 1rem;">🎯 What's Next?</h3>
+                            <ul style="list-style: none; padding: 0;">
+                                <li style="margin-bottom: 0.75rem;">
+                                    <i class="fas fa-plus-circle" style="color: var(--success-color); margin-right: 0.5rem;"></i>
+                                    Start adding your academic expenses
+                                </li>
+                                <li style="margin-bottom: 0.75rem;">
+                                    <i class="fas fa-chart-pie" style="color: var(--primary-color); margin-right: 0.5rem;"></i>
+                                    Monitor your spending patterns
+                                </li>
+                                <li style="margin-bottom: 0.75rem;">
+                                    <i class="fas fa-target" style="color: var(--accent-color); margin-right: 0.5rem;"></i>
+                                    Set and track financial goals
+                                </li>
+                                <li style="margin-bottom: 0.75rem;">
+                                    <i class="fas fa-microphone-alt" style="color: var(--student-purple); margin-right: 0.5rem;"></i>
+                                    Try Tracksyna AI for personalized advice
+                                </li>
+                            </ul>
+                        </div>
+
+                        <a href="student-dashboard.html" class="btn btn-primary" style="font-size: 1.1rem; padding: 1rem 2rem;">
+                            <i class="fas fa-arrow-right"></i>
+                            Go to Dashboard
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <div class="step-navigation">
+                    <button type="button" class="btn btn-secondary" id="prevBtn" onclick="changeStep(-1)" style="display: none;">
+                        <i class="fas fa-arrow-left"></i>
+                        Previous
+                    </button>
+                    
+                    <div>
+                        <span id="stepIndicator">Step 1 of 6</span>
+                    </div>
+                    
+                    <button type="button" class="btn btn-primary" id="nextBtn" onclick="changeStep(1)">
+                        Next
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 6;
+        const studentProfile = {};
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressFill').style.width = progress + '%';
+            document.getElementById('stepIndicator').textContent = `Step ${currentStep} of ${totalSteps}`;
+        }
+
+        function showStep(step) {
+            // Hide all steps
+            document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+            
+            // Show current step
+            document.getElementById(`step${step}`).classList.add('active');
+            
+            // Update navigation
+            document.getElementById('prevBtn').style.display = step > 1 ? 'block' : 'none';
+            
+            if (step === totalSteps + 1) {
+                document.getElementById('nextBtn').style.display = 'none';
+                document.querySelector('.step-navigation').style.display = 'none';
+            } else {
+                document.getElementById('nextBtn').style.display = 'block';
+            }
+            
+            updateProgress();
+        }
+
+        function validateStep(step) {
+            switch(step) {
+                case 1:
+                    const phase = document.querySelector('input[name="academicPhase"]:checked');
+                    if (!phase) {
+                        alert('Please select your academic phase');
+                        return false;
+                    }
+                    studentProfile.academicPhase = phase.value;
+                    return true;
+                    
+                case 2:
+                    const name = document.getElementById('studentName').value;
+                    const email = document.getElementById('studentEmail').value;
+                    const age = document.getElementById('studentAge').value;
+                    const location = document.getElementById('studentLocation').value;
+                    
+                    if (!name || !email || !age || !location) {
+                        alert('Please fill in all personal information fields');
+                        return false;
+                    }
+                    
+                    studentProfile.name = name;
+                    studentProfile.email = email;
+                    studentProfile.age = age;
+                    studentProfile.location = location;
+                    return true;
+                    
+                case 3:
+                    const institution = document.getElementById('institution').value;
+                    const course = document.getElementById('courseStream').value;
+                    const year = document.getElementById('academicYear').value;
+                    const graduation = document.getElementById('graduationDate').value;
+                    
+                    if (!institution || !course || !year || !graduation) {
+                        alert('Please fill in all academic information fields');
+                        return false;
+                    }
+                    
+                    studentProfile.institution = institution;
+                    studentProfile.courseStream = course;
+                    studentProfile.academicYear = year;
+                    studentProfile.expectedGraduation = graduation;
+                    studentProfile.careerGoals = document.getElementById('careerGoals').value;
+                    return true;
+                    
+                case 4:
+                    const goals = [];
+                    document.querySelectorAll('.goal-option input:checked').forEach(goal => {
+                        goals.push(goal.value);
+                    });
+                    studentProfile.financialGoals = goals;
+                    return true;
+                    
+                case 5:
+                    // Collect budget information
+                    studentProfile.monthlyBudget = {
+                        income: {
+                            familySupport: parseFloat(document.getElementById('familySupport').value) || 0,
+                            partTimeJob: parseFloat(document.getElementById('partTimeJob').value) || 0,
+                            scholarships: parseFloat(document.getElementById('scholarships').value) || 0,
+                            otherIncome: parseFloat(document.getElementById('otherIncome').value) || 0
+                        },
+                        expenses: {
+                            academic: parseFloat(document.getElementById('academicExpenses').value) || 0,
+                            accommodation: parseFloat(document.getElementById('accommodation').value) || 0,
+                            daily: parseFloat(document.getElementById('dailyExpenses').value) || 0,
+                            transportation: parseFloat(document.getElementById('transportation').value) || 0
+                        }
+                    };
+                    return true;
+                    
+                case 6:
+                    studentProfile.familyAccess = {
+                        allowed: document.getElementById('allowFamilyAccess').checked,
+                        parentEmail: document.getElementById('parentEmail').value,
+                        relationshipType: document.getElementById('relationshipType').value
+                    };
+                    
+                    // Save profile and complete onboarding
+                    completeOnboarding();
+                    return true;
+                    
+                default:
+                    return true;
+            }
+        }
+
+        function changeStep(direction) {
+            if (direction === 1 && !validateStep(currentStep)) {
+                return;
+            }
+            
+            currentStep += direction;
+            
+            if (currentStep < 1) {
+                currentStep = 1;
+            } else if (currentStep > totalSteps + 1) {
+                currentStep = totalSteps + 1;
+            }
+            
+            showStep(currentStep);
+        }
+
+        function completeOnboarding() {
+            // Add metadata
+            studentProfile.createdAt = new Date().toISOString();
+            studentProfile.onboardingCompleted = true;
+            studentProfile.currentPhase = studentProfile.academicPhase;
+            
+            // Calculate total income and expenses
+            const totalIncome = Object.values(studentProfile.monthlyBudget.income).reduce((sum, val) => sum + val, 0);
+            const totalExpenses = Object.values(studentProfile.monthlyBudget.expenses).reduce((sum, val) => sum + val, 0);
+            
+            studentProfile.monthlyBudget.totalIncome = totalIncome;
+            studentProfile.monthlyBudget.totalExpenses = totalExpenses;
+            studentProfile.monthlyBudget.surplus = totalIncome - totalExpenses;
+            
+            // Save to localStorage
+            localStorage.setItem('studentProfile', JSON.stringify(studentProfile));
+            
+            // Initialize other student data
+            if (!localStorage.getItem('studentExpenses')) {
+                localStorage.setItem('studentExpenses', JSON.stringify([]));
+            }
+            
+            if (!localStorage.getItem('studentGoals')) {
+                const defaultGoals = [
+                    {
+                        id: 'emergency-fund',
+                        name: 'Emergency Fund',
+                        target: 15000,
+                        current: 0,
+                        category: 'savings'
+                    },
+                    {
+                        id: 'graduation-fund',
+                        name: 'Graduation Fund',
+                        target: 50000,
+                        current: 0,
+                        category: 'academic'
+                    }
+                ];
+                localStorage.setItem('studentGoals', JSON.stringify(defaultGoals));
+            }
+            
+            console.log('Student profile created:', studentProfile);
+        }
+
+        // Handle goal option selection
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers for goal options
+            document.querySelectorAll('.goal-option').forEach(option => {
+                option.addEventListener('click', function() {
+                    const checkbox = this.querySelector('input[type="checkbox"]');
+                    checkbox.checked = !checkbox.checked;
+                    this.classList.toggle('selected', checkbox.checked);
+                });
+            });
+            
+            // Initialize first step
+            showStep(1);
+        });
+
+        // Handle Enter key navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && currentStep <= totalSteps) {
+                changeStep(1);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyTracksy Admin Panel - System Management</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+    <script defer src="admin-manager.js"></script>
+    <style>
+        :root {
+            --admin-primary: #1e293b;
+            --admin-secondary: #475569;
+            --admin-accent: #0ea5e9;
+            --admin-success: #10b981;
+            --admin-warning: #f59e0b;
+            --admin-error: #ef4444;
+            --admin-bg: #f8fafc;
+            --admin-card: #ffffff;
+            --admin-border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--admin-bg);
+            color: var(--admin-primary);
+            line-height: 1.6;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 280px;
+            background: var(--admin-primary);
+            color: white;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .sidebar-header p {
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        .nav-menu {
+            list-style: none;
+        }
+
+        .nav-item {
+            margin-bottom: 0.5rem;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 1rem 2rem;
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover,
+        .nav-link.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border-left-color: var(--admin-accent);
+        }
+
+        .nav-link i {
+            margin-right: 1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: 280px;
+            padding: 2rem;
+            width: calc(100% - 280px);
+        }
+
+        .top-bar {
+            background: var(--admin-card);
+            padding: 1.5rem 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: var(--admin-accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0284c7;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--admin-error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #dc2626;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--admin-card);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid var(--admin-accent);
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--admin-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: var(--admin-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+        }
+
+        .content-card {
+            background: var(--admin-card);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--admin-border);
+        }
+
+        .card-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--admin-border);
+        }
+
+        .table th {
+            background: var(--admin-bg);
+            font-weight: 600;
+            color: var(--admin-secondary);
+        }
+
+        .badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--admin-success);
+        }
+
+        .badge-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--admin-warning);
+        }
+
+        .badge-error {
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--admin-error);
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: rgba(14, 165, 233, 0.1);
+            border-left-color: var(--admin-accent);
+            color: #0369a1;
+        }
+
+        .alert-warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left-color: var(--admin-warning);
+            color: #d97706;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--admin-primary);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--admin-border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--admin-accent);
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 250px;
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1><i class="fas fa-shield-alt"></i> MyTracksy Admin</h1>
+                <p>System Management Panel</p>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active" onclick="showSection('dashboard')">
+                        <i class="fas fa-tachometer-alt"></i>
+                        Dashboard
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#users" class="nav-link" onclick="showSection('users')">
+                        <i class="fas fa-users"></i>
+                        User Management
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#subscriptions" class="nav-link" onclick="showSection('subscriptions')">
+                        <i class="fas fa-credit-card"></i>
+                        Subscriptions
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#analytics" class="nav-link" onclick="showSection('analytics')">
+                        <i class="fas fa-chart-line"></i>
+                        Analytics
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#settings" class="nav-link" onclick="showSection('settings')">
+                        <i class="fas fa-cog"></i>
+                        System Settings
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#logs" class="nav-link" onclick="showSection('logs')">
+                        <i class="fas fa-file-alt"></i>
+                        System Logs
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <h1 class="page-title" id="pageTitle">System Dashboard</h1>
+                <div class="admin-actions">
+                    <button class="btn btn-primary" onclick="refreshData()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh
+                    </button>
+                    <button class="btn btn-danger" onclick="logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <section id="dashboard-section" class="content-section">
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalUsers">Loading...</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeSubscriptions">Loading...</div>
+                        <div class="stat-label">Active Subscriptions</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="monthlyRevenue">Loading...</div>
+                        <div class="stat-label">Monthly Revenue (LKR)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="systemStatus">Online</div>
+                        <div class="stat-label">System Status</div>
+                    </div>
+                </div>
+
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Recent User Activity</h3>
+                            <button class="btn btn-primary" onclick="exportUserData()">
+                                <i class="fas fa-download"></i>
+                                Export
+                            </button>
+                        </div>
+                        <div class="table-container">
+                            <table class="table" id="userActivityTable">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Action</th>
+                                        <th>Timestamp</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Loading...</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                        <td>-</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3 class="card-title">System Alerts</h3>
+                        </div>
+                        <div id="systemAlerts">
+                            <div class="alert alert-info">
+                                <strong>System Update:</strong> All services are running normally.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users-section" class="content-section hidden">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">User Management</h3>
+                        <div>
+                            <button class="btn btn-primary" onclick="exportUserData()">
+                                <i class="fas fa-download"></i>
+                                Export Users
+                            </button>
+                            <button class="btn btn-primary" onclick="showAddUserModal()">
+                                <i class="fas fa-plus"></i>
+                                Add User
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Email</th>
+                                    <th>Subscription</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Loading users...</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Subscriptions Section -->
+            <section id="subscriptions-section" class="content-section hidden">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">Subscription Management</h3>
+                        <button class="btn btn-primary" onclick="refreshSubscriptions()">
+                            <i class="fas fa-sync-alt"></i>
+                            Refresh
+                        </button>
+                    </div>
+                    <div class="table-container">
+                        <table class="table" id="subscriptionsTable">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Plan</th>
+                                    <th>Status</th>
+                                    <th>Next Billing</th>
+                                    <th>Revenue</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Loading subscriptions...</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                    <td>-</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section id="analytics-section" class="content-section hidden">
+                <div class="content-grid">
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3 class="card-title">Revenue Analytics</h3>
+                        </div>
+                        <canvas id="revenueChart" width="400" height="200"></canvas>
+                    </div>
+                    
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h3 class="card-title">User Growth</h3>
+                        </div>
+                        <canvas id="userGrowthChart" width="400" height="200"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings-section" class="content-section hidden">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">System Settings</h3>
+                    </div>
+                    <form id="settingsForm">
+                        <div class="form-group">
+                            <label class="form-label">System Maintenance Mode</label>
+                            <select class="form-input" id="maintenanceMode">
+                                <option value="false">Disabled</option>
+                                <option value="true">Enabled</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Users Per Plan</label>
+                            <input type="number" class="form-input" id="maxUsersPerPlan" value="1000">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Payment Gateway</label>
+                            <select class="form-input" id="paymentGateway">
+                                <option value="payhere">PayHere (Sri Lanka)</option>
+                                <option value="stripe">Stripe (International)</option>
+                                <option value="both">Both</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Save Settings
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Logs Section -->
+            <section id="logs-section" class="content-section hidden">
+                <div class="content-card">
+                    <div class="card-header">
+                        <h3 class="card-title">System Logs</h3>
+                        <button class="btn btn-primary" onclick="clearLogs()">
+                            <i class="fas fa-trash"></i>
+                            Clear Logs
+                        </button>
+                    </div>
+                    <div id="logsContainer" style="max-height: 500px; overflow-y: auto; background: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 8px; font-family: 'Courier New', monospace;">
+                        <div class="log-entry">[2024-07-09 10:30:15] INFO: Admin panel initialized</div>
+                        <div class="log-entry">[2024-07-09 10:29:45] INFO: User authentication successful</div>
+                        <div class="log-entry">[2024-07-09 10:28:12] INFO: Database connection established</div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Initialize admin panel
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check admin authentication
+            checkAdminAuth();
+            
+            // Load initial data
+            loadDashboardData();
+        });
+
+        function checkAdminAuth() {
+            // Simple admin check - in production, this should be server-side
+            const isAdmin = localStorage.getItem('mytracksy_admin_access');
+            if (!isAdmin) {
+                // Redirect to admin login
+                const password = prompt('Enter admin password:');
+                if (password === 'MyTracksyAdmin2024!') {
+                    localStorage.setItem('mytracksy_admin_access', 'true');
+                } else {
+                    alert('Access denied');
+                    window.location.href = 'index.html';
+                    return;
+                }
+            }
+        }
+
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show target section
+            document.getElementById(sectionName + '-section').classList.remove('hidden');
+            
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+            
+            // Update page title
+            const titles = {
+                dashboard: 'System Dashboard',
+                users: 'User Management',
+                subscriptions: 'Subscription Management',
+                analytics: 'Analytics & Reports',
+                settings: 'System Settings',
+                logs: 'System Logs'
+            };
+            document.getElementById('pageTitle').textContent = titles[sectionName];
+            
+            // Load section-specific data
+            loadSectionData(sectionName);
+        }
+
+        function loadDashboardData() {
+            // Simulate loading dashboard statistics
+            setTimeout(() => {
+                document.getElementById('totalUsers').textContent = '1,247';
+                document.getElementById('activeSubscriptions').textContent = '892';
+                document.getElementById('monthlyRevenue').textContent = '1,234,500';
+                
+                // Load recent activity
+                const activityTable = document.getElementById('userActivityTable').querySelector('tbody');
+                activityTable.innerHTML = `
+                    <tr>
+                        <td>user@example.com</td>
+                        <td>Upgraded to Premium</td>
+                        <td>2 minutes ago</td>
+                        <td><span class="badge badge-success">Success</span></td>
+                    </tr>
+                    <tr>
+                        <td>business@company.lk</td>
+                        <td>Created new company</td>
+                        <td>15 minutes ago</td>
+                        <td><span class="badge badge-success">Success</span></td>
+                    </tr>
+                    <tr>
+                        <td>student@uni.ac.lk</td>
+                        <td>Failed payment</td>
+                        <td>1 hour ago</td>
+                        <td><span class="badge badge-error">Failed</span></td>
+                    </tr>
+                `;
+            }, 1000);
+        }
+
+        function loadSectionData(sectionName) {
+            switch(sectionName) {
+                case 'users':
+                    loadUsersData();
+                    break;
+                case 'subscriptions':
+                    loadSubscriptionsData();
+                    break;
+                case 'analytics':
+                    loadAnalyticsData();
+                    break;
+            }
+        }
+
+        function loadUsersData() {
+            const usersTable = document.getElementById('usersTable').querySelector('tbody');
+            setTimeout(() => {
+                usersTable.innerHTML = `
+                    <tr>
+                        <td>john.doe@email.com</td>
+                        <td>Premium</td>
+                        <td>2024-06-15</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="editUser('john.doe@email.com')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteUser('john.doe@email.com')">Delete</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>business@company.lk</td>
+                        <td>Business</td>
+                        <td>2024-05-20</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="editUser('business@company.lk')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteUser('business@company.lk')">Delete</button>
+                        </td>
+                    </tr>
+                `;
+            }, 500);
+        }
+
+        function loadSubscriptionsData() {
+            const subscriptionsTable = document.getElementById('subscriptionsTable').querySelector('tbody');
+            setTimeout(() => {
+                subscriptionsTable.innerHTML = `
+                    <tr>
+                        <td>john.doe@email.com</td>
+                        <td>Personal Pro</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>2024-08-09</td>
+                        <td>LKR 999</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="manageSubscription('sub1')">Manage</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>business@company.lk</td>
+                        <td>Small Business</td>
+                        <td><span class="badge badge-success">Active</span></td>
+                        <td>2024-08-20</td>
+                        <td>LKR 2,499</td>
+                        <td>
+                            <button class="btn btn-primary" onclick="manageSubscription('sub2')">Manage</button>
+                        </td>
+                    </tr>
+                `;
+            }, 500);
+        }
+
+        function refreshData() {
+            loadDashboardData();
+            addLogEntry('INFO: Dashboard data refreshed by admin');
+        }
+
+        function exportUserData() {
+            // Simulate export
+            addLogEntry('INFO: User data export initiated');
+            alert('User data export started. You will receive an email when ready.');
+        }
+
+        function logout() {
+            localStorage.removeItem('mytracksy_admin_access');
+            window.location.href = 'index.html';
+        }
+
+        function addLogEntry(message) {
+            const timestamp = new Date().toISOString().replace('T', ' ').substr(0, 19);
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            
+            const logsContainer = document.getElementById('logsContainer');
+            logsContainer.insertBefore(logEntry, logsContainer.firstChild);
+        }
+
+        function clearLogs() {
+            document.getElementById('logsContainer').innerHTML = '<div class="log-entry">[' + new Date().toISOString().replace('T', ' ').substr(0, 19) + '] INFO: Logs cleared by admin</div>';
+        }
+
+        // Settings form handler
+        document.getElementById('settingsForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addLogEntry('INFO: System settings updated');
+            alert('Settings saved successfully!');
+        });
+    </script>
+</body>
+</html>

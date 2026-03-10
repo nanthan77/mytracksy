@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>MyTracksy Auth Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .test-form { background: #f8f9fa; padding: 20px; border: 1px solid #dee2e6; border-radius: 4px; margin: 20px 0; }
+        input { margin: 5px 0; padding: 8px; width: 200px; }
+        button { padding: 8px 16px; margin: 5px; }
+    </style>
+</head>
+<body>
+    <h1>MyTracksy Authentication Debug</h1>
+    
+    <div id="status"></div>
+    
+    <div class="test-form">
+        <h3>Test User Registration & Login</h3>
+        <div>
+            <input type="email" id="testEmail" placeholder="test@example.com" value="test@example.com">
+            <input type="password" id="testPassword" placeholder="password123" value="password123">
+            <input type="text" id="testName" placeholder="Test User" value="Test User">
+        </div>
+        <div>
+            <button onclick="testRegister()">Test Register</button>
+            <button onclick="testLogin()">Test Login</button>
+            <button onclick="testLogout()">Test Logout</button>
+            <button onclick="checkAuthState()">Check Auth State</button>
+        </div>
+    </div>
+    
+    <div id="results"></div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, doc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase config from your .env file
+        const firebaseConfig = {
+            apiKey: "AIzaSyBQfLBQjgAXqlcHlg5zBfOSTosCCAbr97I",
+            authDomain: "my-tracksy.firebaseapp.com",
+            projectId: "my-tracksy",
+            storageBucket: "my-tracksy.appspot.com",
+            messagingSenderId: "136606289062",
+            appId: "1:136606289062:web:144515eb44851d8f047867",
+            measurementId: "G-SERJD3TTV4"
+        };
+
+        let app, auth, db;
+        let currentUser = null;
+
+        function updateStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.innerHTML = `<div class="status ${type}">${message}</div>`;
+        }
+
+        function addResult(message, type = 'info') {
+            const resultsDiv = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            resultsDiv.innerHTML += `<div class="status ${type}">[${timestamp}] ${message}</div>`;
+        }
+
+        // Initialize Firebase
+        try {
+            app = initializeApp(firebaseConfig);
+            auth = getAuth(app);
+            db = getFirestore(app);
+            updateStatus('✅ Firebase initialized successfully', 'success');
+            
+            // Listen for auth state changes
+            onAuthStateChanged(auth, (user) => {
+                currentUser = user;
+                if (user) {
+                    addResult(`✅ User logged in: ${user.email} (${user.displayName || 'No display name'})`, 'success');
+                } else {
+                    addResult('❌ User logged out', 'info');
+                }
+            });
+            
+        } catch (error) {
+            updateStatus(`❌ Firebase initialization failed: ${error.message}`, 'error');
+        }
+
+        // Test functions
+        window.testRegister = async function() {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            const displayName = document.getElementById('testName').value;
+            
+            try {
+                addResult(`🔄 Attempting to register: ${email}`, 'info');
+                const { user } = await createUserWithEmailAndPassword(auth, email, password);
+                await updateProfile(user, { displayName });
+                
+                // Create user document in Firestore
+                await setDoc(doc(db, 'users', user.uid), {
+                    uid: user.uid,
+                    email: user.email,
+                    displayName,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                });
+                
+                addResult(`✅ Registration successful! User ID: ${user.uid}`, 'success');
+            } catch (error) {
+                addResult(`❌ Registration failed: ${error.code} - ${error.message}`, 'error');
+            }
+        };
+
+        window.testLogin = async function() {
+            const email = document.getElementById('testEmail').value;
+            const password = document.getElementById('testPassword').value;
+            
+            try {
+                addResult(`🔄 Attempting to login: ${email}`, 'info');
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                addResult(`✅ Login successful! User ID: ${userCredential.user.uid}`, 'success');
+            } catch (error) {
+                addResult(`❌ Login failed: ${error.code} - ${error.message}`, 'error');
+            }
+        };
+
+        window.testLogout = async function() {
+            try {
+                await signOut(auth);
+                addResult('✅ Logout successful', 'success');
+            } catch (error) {
+                addResult(`❌ Logout failed: ${error.message}`, 'error');
+            }
+        };
+
+        window.checkAuthState = function() {
+            if (currentUser) {
+                addResult(`✅ Currently logged in as: ${currentUser.email} (UID: ${currentUser.uid})`, 'success');
+                addResult(`Display Name: ${currentUser.displayName || 'Not set'}`, 'info');
+                addResult(`Email Verified: ${currentUser.emailVerified}`, 'info');
+            } else {
+                addResult('❌ No user currently logged in', 'info');
+            }
+        };
+    </script>
+</body>
+</html>
