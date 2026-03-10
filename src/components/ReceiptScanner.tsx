@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName } from '../config/goldenListCategories';
 
 interface Receipt {
     id: string;
@@ -14,25 +15,6 @@ interface ReceiptScannerProps {
     onReceiptSaved?: (receipt: Receipt) => void;
 }
 
-const EXPENSE_CATEGORIES = [
-    { name: 'Fuel', icon: '⛽', vendors: ['lanka ioc', 'ceypetco', 'shell', 'fuel'] },
-    { name: 'Medical Equipment', icon: '🔬', vendors: ['medical', 'surgical', 'equipment', 'instrument'] },
-    { name: 'Pharmacy', icon: '💊', vendors: ['pharmacy', 'chemist', 'drug', 'state pharmaceuticals'] },
-    { name: 'Groceries', icon: '🛒', vendors: ['keells', 'cargills', 'arpico', 'laugfs', 'spar'] },
-    { name: 'Meals', icon: '🍽️', vendors: ['restaurant', 'cafe', 'hotel', 'food'] },
-    { name: 'Transport', icon: '🚗', vendors: ['uber', 'pickme', 'taxi'] },
-    { name: 'Office Supplies', icon: '📎', vendors: ['office', 'stationery', 'atlas'] },
-    { name: 'Other', icon: '📋', vendors: [] },
-];
-
-function autoCategory(vendor: string): string {
-    const v = vendor.toLowerCase();
-    for (const cat of EXPENSE_CATEGORIES) {
-        if (cat.vendors.some(kw => v.includes(kw))) return cat.name;
-    }
-    return 'Other';
-}
-
 const fmt = (n: number) => `Rs. ${n.toLocaleString('en-LK')}`;
 
 const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
@@ -45,8 +27,9 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
 
     const [showCapture, setShowCapture] = useState(false);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
-    const [form, setForm] = useState({ amount: 0, vendor: '', date: new Date().toISOString().split('T')[0], category: 'Other' });
+    const [form, setForm] = useState({ amount: 0, vendor: '', date: new Date().toISOString().split('T')[0], category: GOLDEN_LIST[0].name });
     const [searchTerm, setSearchTerm] = useState('');
+    const [showGuide, setShowGuide] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +54,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
             amount: form.amount,
             vendor: form.vendor,
             date: form.date,
-            category: form.category || autoCategory(form.vendor),
+            category: form.category || autoCategorizeDr(form.vendor),
             capturedAt: new Date().toISOString(),
         };
 
@@ -84,7 +67,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
         onReceiptSaved?.(receipt);
         setShowCapture(false);
         setPreviewImage(null);
-        setForm({ amount: 0, vendor: '', date: new Date().toISOString().split('T')[0], category: 'Other' });
+        setForm({ amount: 0, vendor: '', date: new Date().toISOString().split('T')[0], category: GOLDEN_LIST[0].name });
     };
 
     const handleDelete = (id: string) => {
@@ -99,6 +82,8 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
         !searchTerm || r.vendor.toLowerCase().includes(searchTerm.toLowerCase()) || r.category.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const selectedCat = getCategoryByName(form.category);
+
     return (
         <div>
             {/* KPI Row */}
@@ -108,7 +93,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                     <div style={{ fontSize: '1.3rem', fontWeight: 700 }}>{receipts.length}</div>
                 </div>
                 <div style={kpiCard}>
-                    <div style={{ fontSize: 12, color: '#94a3b8' }}>Total Amount</div>
+                    <div style={{ fontSize: 12, color: '#94a3b8' }}>Total Claimed</div>
                     <div style={{ fontSize: '1.3rem', fontWeight: 700, color: '#6366f1' }}>{fmt(totalAmount)}</div>
                 </div>
                 <div style={kpiCard}>
@@ -121,7 +106,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                 </div>
             </div>
 
-            {/* Capture Button */}
+            {/* Capture Button + Guide Toggle */}
             <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
                 <button onClick={() => fileInputRef.current?.click()} style={{
                     padding: '12px 24px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
@@ -130,6 +115,13 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                     boxShadow: '0 4px 16px rgba(99,102,241,0.3)',
                 }}>
                     📸 Scan Receipt
+                </button>
+                <button onClick={() => setShowGuide(!showGuide)} style={{
+                    padding: '12px 20px', background: showGuide ? '#f59e0b' : '#fffbeb',
+                    color: showGuide ? 'white' : '#92400e', border: '1.5px solid #f59e0b',
+                    borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                }}>
+                    📜 What Can I Claim?
                 </button>
                 <input ref={fileInputRef} type="file" accept="image/*" capture="environment" onChange={handleFileChange} style={{ display: 'none' }} />
 
@@ -141,6 +133,27 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                     />
                 </div>
             </div>
+
+            {/* ===== GOLDEN LIST GUIDE ===== */}
+            {showGuide && (
+                <div style={{ ...card, marginBottom: '1.5rem', background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '2px solid #fbbf24' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                        <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#92400e' }}>📜 The Golden List — Tax-Deductible Categories</h3>
+                        <button onClick={() => setShowGuide(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400e' }}>✕</button>
+                    </div>
+                    <div style={{ padding: '0.5rem', background: '#fef9c3', borderRadius: 8, marginBottom: '0.75rem', fontSize: 12, color: '#854d0e' }}>
+                        ⚠️ <strong>Private income only:</strong> These deductions apply to your channeling/clinic income, NOT your Government salary.
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.5rem' }}>
+                        {GOLDEN_LIST.filter(c => c.id !== 'other').map(cat => (
+                            <div key={cat.id} style={{ padding: '0.6rem', background: 'white', borderRadius: 8, border: `1px solid ${cat.color}25`, fontSize: 12 }}>
+                                <div style={{ fontWeight: 700, marginBottom: 2 }}>{cat.icon} {cat.name}</div>
+                                <div style={{ color: '#64748b', fontStyle: 'italic' }}>{cat.taxNote}</div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
 
             {/* Capture Form (Modal) */}
             {showCapture && (
@@ -159,8 +172,12 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                             <div>
                                 <label style={labelStyle}>Vendor / Shop *</label>
-                                <input value={form.vendor} onChange={e => { setForm(p => ({ ...p, vendor: e.target.value, category: autoCategory(e.target.value) })); }}
-                                    placeholder="e.g. Lanka IOC, Keells" style={inputStyle} />
+                                <input value={form.vendor} onChange={e => {
+                                    const vendor = e.target.value;
+                                    const autocat = autoCategorizeDr(vendor);
+                                    setForm(p => ({ ...p, vendor, category: autocat !== 'Other Deductible Expense' ? autocat : p.category }));
+                                }}
+                                    placeholder="e.g. SLMC, State Pharmaceuticals, Dialog" style={inputStyle} />
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                                 <div>
@@ -174,11 +191,21 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                                 </div>
                             </div>
                             <div>
-                                <label style={labelStyle}>Category</label>
+                                <label style={labelStyle}>Category (Tax Deductible)</label>
                                 <select value={form.category} onChange={e => setForm(p => ({ ...p, category: e.target.value }))} style={inputStyle}>
-                                    {EXPENSE_CATEGORIES.map(c => <option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
+                                    {GOLDEN_LIST.map(c => <option key={c.name} value={c.name}>{c.icon} {c.name}</option>)}
                                 </select>
                             </div>
+                            {/* Tax Note */}
+                            {selectedCat && (
+                                <div style={{ padding: '8px 12px', background: `${selectedCat.color}08`, borderRadius: 8, border: `1px solid ${selectedCat.color}20`, fontSize: 12 }}>
+                                    <span style={{ color: selectedCat.color, fontWeight: 600 }}>{selectedCat.icon} Tax Note:</span>{' '}
+                                    <span style={{ color: '#475569' }}>{selectedCat.taxNote}</span>
+                                    {selectedCat.isCapitalItem && (
+                                        <span style={{ display: 'block', marginTop: 4, color: '#f59e0b', fontWeight: 600 }}>⚡ Capital item — logged for annual depreciation claim.</span>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
                         <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem', justifyContent: 'flex-end' }}>
@@ -203,7 +230,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                 ) : (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
                         {filtered.map(r => {
-                            const cat = EXPENSE_CATEGORIES.find(c => c.name === r.category) || EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length - 1];
+                            const cat = GOLDEN_LIST.find(c => c.name === r.category) || GOLDEN_LIST[GOLDEN_LIST.length - 1];
                             return (
                                 <div key={r.id} style={{ display: 'flex', gap: 12, padding: '12px', background: '#f8fafc', borderRadius: 10, border: '1px solid #f1f5f9', alignItems: 'flex-start' }}>
                                     {/* Thumbnail */}
@@ -222,7 +249,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
                                         </div>
                                         <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                                             <span>{r.date}</span>
-                                            <span style={{ background: '#6366f115', color: '#6366f1', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>{cat.icon} {r.category}</span>
+                                            <span style={{ background: `${cat.color}15`, color: cat.color, padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>{cat.icon} {r.category}</span>
                                         </div>
                                     </div>
                                     <button onClick={() => handleDelete(r.id)} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 14, padding: 4 }}>✕</button>
@@ -235,7 +262,7 @@ const ReceiptScanner: React.FC<ReceiptScannerProps> = ({ onReceiptSaved }) => {
 
             {/* Info */}
             <div style={{ marginTop: '1rem', padding: '12px 16px', background: '#dbeafe', borderRadius: 10, border: '1px solid #bfdbfe', fontSize: 12, color: '#1e40af' }}>
-                💡 <strong>Tip:</strong> Sri Lankan thermal receipts (fuel, groceries) fade within weeks. Scan them immediately to preserve as digital tax deductions. All receipts are backed up locally and can be exported with the Auditor Export feature.
+                💡 <strong>Tip:</strong> Sri Lankan thermal receipts (fuel, pharmacy) fade within weeks. Scan them immediately to preserve as digital tax deductions. All receipts are backed up locally and can be exported with the Auditor Export feature.
             </div>
         </div>
     );

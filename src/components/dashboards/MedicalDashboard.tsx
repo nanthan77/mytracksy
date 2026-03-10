@@ -8,6 +8,7 @@ import PrescriptionPad from '../PrescriptionPad';
 import TaxSpeedometer from '../TaxSpeedometer';
 import ReceiptScanner from '../ReceiptScanner';
 import AuditorExport from '../AuditorExport';
+import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName } from '../../config/goldenListCategories';
 
 interface MedicalDashboardProps {
     userName: string;
@@ -34,16 +35,8 @@ const navItems = [
 ];
 
 // Medical-specific expense categories
-const medicalExpenseCategories = [
-    { name: 'Medical Equipment', icon: '🔬', color: '#6366f1' },
-    { name: 'CME / Training', icon: '📚', color: '#8b5cf6' },
-    { name: 'Conference Travel', icon: '✈️', color: '#06b6d4' },
-    { name: 'Hospital Fees', icon: '🏥', color: '#ec4899' },
-    { name: 'Insurance', icon: '🛡️', color: '#f59e0b' },
-    { name: 'Medical Subscriptions', icon: '📰', color: '#10b981' },
-    { name: 'Vehicle / Transport', icon: '🚗', color: '#f97316' },
-    { name: 'Office Supplies', icon: '📎', color: '#64748b' },
-];
+// Use GOLDEN_LIST from shared config — legally-grounded tax categories
+const medicalExpenseCategories = GOLDEN_LIST.map(c => ({ name: c.name, icon: c.icon, color: c.color }));
 
 // Sample data — these would come from Firestore in production
 const sampleInvoices: Transaction[] = [
@@ -108,7 +101,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const [invoices, setInvoices] = useState(sampleInvoices);
     const [expenses, setExpenses] = useState(sampleExpenses);
     const [showAddExpense, setShowAddExpense] = useState(false);
-    const [expenseForm, setExpenseForm] = useState({ description: '', amount: 0, category: medicalExpenseCategories[0].name, date: new Date().toISOString().split('T')[0] });
+    const [expenseForm, setExpenseForm] = useState({ description: '', amount: 0, category: GOLDEN_LIST[0].name, date: new Date().toISOString().split('T')[0] });
+    const [showGoldenList, setShowGoldenList] = useState(false);
     const [quickNotes, setQuickNotes] = useState<{ id: string; text: string; time: string; patient?: string; type: string }[]>([
         { id: 'qn1', text: 'Kumara BP 140/90 — started Losartan 50mg', time: '4:15 PM', patient: 'Kumara Bandara', type: 'vitals' },
         { id: 'qn2', text: 'Anoma — follow up in 2 weeks for blood sugar', time: '5:30 PM', patient: 'Anoma Wickramasinghe', type: 'follow-up' },
@@ -192,7 +186,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         };
         setExpenses((prev) => [newExpense, ...prev]);
         setShowAddExpense(false);
-        setExpenseForm({ description: '', amount: 0, category: medicalExpenseCategories[0].name, date: new Date().toISOString().split('T')[0] });
+        setExpenseForm({ description: '', amount: 0, category: GOLDEN_LIST[0].name, date: new Date().toISOString().split('T')[0] });
     };
 
     const totalIncome = invoices.reduce((s, t) => s + t.amount, 0);
@@ -843,95 +837,144 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     );
 
     /* ========== EXPENSES ========== */
-    const renderExpenses = () => (
-        <div>
-            {/* Expense KPIs */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="💸" label="Total Expenses" value={fmt(totalExpenses)} change="-3.2%" changeType="down" color="#ef4444" />
-                <KPICard icon="📊" label="This Week" value={fmt(17200)} changeType="neutral" color="#6366f1" />
-                <KPICard icon="📉" label="Avg Daily" value={fmt(2460)} changeType="neutral" color="#8b5cf6" />
-            </div>
-
-            {/* Add Expense Button */}
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <button onClick={() => setShowAddExpense(true)} style={actionBtn('#ef4444')}>+ Add Expense</button>
-            </div>
-
-            {/* Add Expense Form */}
-            {showAddExpense && (
-                <div style={{ ...cardStyle, marginBottom: '1.5rem', border: '2px solid #6366f1' }}>
-                    <h3 style={{ ...cardTitle, marginBottom: '1rem' }}>➕ Add New Expense</h3>
-                    <form onSubmit={handleAddExpense}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
-                            <div>
-                                <label style={labelStyle}>Description *</label>
-                                <input
-                                    type="text" value={expenseForm.description}
-                                    onChange={(e) => setExpenseForm((p) => ({ ...p, description: e.target.value }))}
-                                    placeholder="What did you spend on?"
-                                    style={inputStyle} required
-                                />
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Amount (LKR) *</label>
-                                <input
-                                    type="number" value={expenseForm.amount || ''}
-                                    onChange={(e) => setExpenseForm((p) => ({ ...p, amount: parseFloat(e.target.value) || 0 }))}
-                                    placeholder="0" style={inputStyle} min="0" step="100" required
-                                />
-                            </div>
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
-                            <div>
-                                <label style={labelStyle}>Category</label>
-                                <select
-                                    value={expenseForm.category}
-                                    onChange={(e) => setExpenseForm((p) => ({ ...p, category: e.target.value }))}
-                                    style={inputStyle}
-                                >
-                                    {medicalExpenseCategories.map((c) => (
-                                        <option key={c.name} value={c.name}>{c.icon} {c.name}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label style={labelStyle}>Date</label>
-                                <input
-                                    type="date" value={expenseForm.date}
-                                    onChange={(e) => setExpenseForm((p) => ({ ...p, date: e.target.value }))}
-                                    style={inputStyle}
-                                />
-                            </div>
-                        </div>
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                            <button type="button" onClick={() => setShowAddExpense(false)} style={{ ...actionBtn('#94a3b8'), background: '#f1f5f9', color: '#64748b' }}>Cancel</button>
-                            <button type="submit" style={actionBtn('#6366f1')}>💾 Save Expense</button>
-                        </div>
-                    </form>
+    const renderExpenses = () => {
+        const selectedCat = getCategoryByName(expenseForm.category);
+        return (
+            <div>
+                {/* Expense KPIs */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <KPICard icon="💸" label="Total Expenses" value={fmt(totalExpenses)} change="-3.2%" changeType="down" color="#ef4444" />
+                    <KPICard icon="📊" label="This Week" value={fmt(17200)} changeType="neutral" color="#6366f1" />
+                    <KPICard icon="📉" label="Avg Daily" value={fmt(2460)} changeType="neutral" color="#8b5cf6" />
                 </div>
-            )}
 
-            {/* Category Cards */}
-            <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
-                <h3 style={cardTitle}>📂 Expense Categories</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', padding: '0.5rem 0' }}>
-                    {medicalExpenseCategories.map((cat) => {
-                        const catTotal = expenses.filter((e) => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
-                        return (
-                            <div key={cat.name} style={{ padding: '0.85rem', background: `${cat.color}08`, borderRadius: 10, border: `1px solid ${cat.color}20`, textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{cat.icon}</div>
-                                <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 2 }}>{cat.name}</div>
-                                <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>{fmt(catTotal)}</div>
-                            </div>
-                        );
-                    })}
+                {/* Add Expense Button */}
+                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
+                    <button onClick={() => setShowAddExpense(true)} style={actionBtn('#ef4444')}>+ Add Expense</button>
+                    <button onClick={() => setShowGoldenList(!showGoldenList)} style={{ ...actionBtn('#f59e0b'), background: showGoldenList ? '#f59e0b' : '#fffbeb', color: showGoldenList ? 'white' : '#92400e', border: '1.5px solid #f59e0b' }}>📜 What Can I Claim?</button>
                 </div>
-            </div>
 
-            {/* Expense List */}
-            <TransactionList transactions={expenses} title="All Expenses" showFilter={false} />
-        </div>
-    );
+                {/* ===== GOLDEN LIST EDUCATIONAL PANEL ===== */}
+                {showGoldenList && (
+                    <div style={{ ...cardStyle, marginBottom: '1.5rem', background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '2px solid #fbbf24' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#92400e' }}>📜 The Golden List — What Sri Lankan Doctors Can Legally Claim</h3>
+                            <button onClick={() => setShowGoldenList(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400e' }}>✕</button>
+                        </div>
+                        <div style={{ padding: '0.5rem', background: '#fef9c3', borderRadius: 8, marginBottom: '0.75rem', fontSize: 12, color: '#854d0e' }}>
+                            ⚠️ <strong>Important:</strong> Under Sri Lankan law, expenses CANNOT be claimed against Government salary (APIT income). These deductions apply ONLY to your private/business practice income.
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem' }}>
+                            {GOLDEN_LIST.filter(c => c.id !== 'other').map(cat => (
+                                <div key={cat.id} style={{ padding: '0.75rem', background: 'white', borderRadius: 10, border: `1.5px solid ${cat.color}30` }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                                        <span style={{ fontSize: 20 }}>{cat.icon}</span>
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{cat.name}</span>
+                                        {cat.isCapitalItem && <span style={{ fontSize: 10, background: '#f59e0b', color: 'white', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>DEPRECIATION</span>}
+                                    </div>
+                                    <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4, fontStyle: 'italic' }}>{cat.taxNote}</div>
+                                    <div style={{ fontSize: 11, color: '#94a3b8' }}>e.g. {cat.examples.slice(0, 3).join(', ')}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#a855f715', borderRadius: 8, border: '1px solid #a855f730', fontSize: 12, color: '#7c3aed' }}>
+                            ✨ <strong>Pro Tip:</strong> Your MyTracksy subscription is a 100% tax-deductible professional business expense!
+                        </div>
+                    </div>
+                )}
+
+                {/* Add Expense Form */}
+                {showAddExpense && (
+                    <div style={{ ...cardStyle, marginBottom: '1.5rem', border: '2px solid #6366f1' }}>
+                        <h3 style={{ ...cardTitle, marginBottom: '1rem' }}>➕ Add New Expense</h3>
+                        <form onSubmit={handleAddExpense}>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.75rem' }}>
+                                <div>
+                                    <label style={labelStyle}>Description *</label>
+                                    <input
+                                        type="text" value={expenseForm.description}
+                                        onChange={(e) => {
+                                            const desc = e.target.value;
+                                            const autocat = autoCategorizeDr(desc);
+                                            setExpenseForm((p) => ({ ...p, description: desc, category: autocat !== 'Other Deductible Expense' ? autocat : p.category }));
+                                        }}
+                                        placeholder="e.g. SLMC Renewal, Gloves purchase, Dialog bill"
+                                        style={inputStyle} required
+                                    />
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Amount (LKR) *</label>
+                                    <input
+                                        type="number" value={expenseForm.amount || ''}
+                                        onChange={(e) => setExpenseForm((p) => ({ ...p, amount: parseFloat(e.target.value) || 0 }))}
+                                        placeholder="0" style={inputStyle} min="0" step="100" required
+                                    />
+                                </div>
+                            </div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '0.5rem' }}>
+                                <div>
+                                    <label style={labelStyle}>Category (Tax Deductible)</label>
+                                    <select
+                                        value={expenseForm.category}
+                                        onChange={(e) => setExpenseForm((p) => ({ ...p, category: e.target.value }))}
+                                        style={inputStyle}
+                                    >
+                                        {GOLDEN_LIST.map((c) => (
+                                            <option key={c.name} value={c.name}>{c.icon} {c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style={labelStyle}>Date</label>
+                                    <input
+                                        type="date" value={expenseForm.date}
+                                        onChange={(e) => setExpenseForm((p) => ({ ...p, date: e.target.value }))}
+                                        style={inputStyle}
+                                    />
+                                </div>
+                            </div>
+                            {/* Tax Note for Selected Category */}
+                            {selectedCat && (
+                                <div style={{ padding: '8px 12px', background: `${selectedCat.color}08`, borderRadius: 8, border: `1px solid ${selectedCat.color}20`, marginBottom: '0.75rem', fontSize: 12 }}>
+                                    <span style={{ color: selectedCat.color, fontWeight: 600 }}>{selectedCat.icon} Tax Note:</span>{' '}
+                                    <span style={{ color: '#475569' }}>{selectedCat.taxNote}</span>
+                                    {selectedCat.isCapitalItem && (
+                                        <span style={{ display: 'block', marginTop: 4, color: '#f59e0b', fontWeight: 600 }}>⚡ Capital item — logged for annual depreciation claim by auditor.</span>
+                                    )}
+                                </div>
+                            )}
+                            <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                                <button type="button" onClick={() => setShowAddExpense(false)} style={{ ...actionBtn('#94a3b8'), background: '#f1f5f9', color: '#64748b' }}>Cancel</button>
+                                <button type="submit" style={actionBtn('#6366f1')}>💾 Save Expense</button>
+                            </div>
+                        </form>
+                    </div>
+                )}
+
+                {/* Category Cards with Tax Notes */}
+                <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
+                    <h3 style={cardTitle}>📂 Expense Categories (Tax Deductible)</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem', padding: '0.5rem 0' }}>
+                        {medicalExpenseCategories.map((cat) => {
+                            const catTotal = expenses.filter((e) => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
+                            const golden = getCategoryByName(cat.name);
+                            return (
+                                <div key={cat.name} style={{ padding: '0.85rem', background: `${cat.color}08`, borderRadius: 10, border: `1px solid ${cat.color}20`, textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s' }} title={golden?.taxNote || ''}>
+                                    <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{cat.icon}</div>
+                                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: 2 }}>{cat.name}</div>
+                                    <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>{fmt(catTotal)}</div>
+                                    {golden?.isCapitalItem && <div style={{ fontSize: 9, color: '#f59e0b', fontWeight: 600, marginTop: 2 }}>📐 DEPRECIATION</div>}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Expense List */}
+                <TransactionList transactions={expenses} title="All Expenses" showFilter={false} />
+            </div>
+        );
+    };
 
     /* ========== BANKING ========== */
     const renderBanking = () => (
