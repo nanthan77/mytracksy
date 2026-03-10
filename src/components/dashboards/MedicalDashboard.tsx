@@ -3,6 +3,8 @@ import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
 import InvoiceForm, { InvoiceData } from './InvoiceForm';
+import VoiceInput, { ParsedVoiceAction } from '../VoiceInput';
+import PrescriptionPad from '../PrescriptionPad';
 
 interface MedicalDashboardProps {
     userName: string;
@@ -12,7 +14,10 @@ interface MedicalDashboardProps {
 
 const navItems = [
     { id: 'overview', label: 'Dashboard', icon: '📊' },
+    { id: 'today', label: "Today's Schedule", icon: '🕐' },
+    { id: 'quicknotes', label: 'Quick Notes', icon: '📝' },
     { id: 'patients', label: 'Patients', icon: '🧑‍⚕️' },
+    { id: 'prescriptions', label: 'Prescriptions', icon: '💊' },
     { id: 'channeling', label: 'Channeling', icon: '🏥' },
     { id: 'appointments', label: 'Appointments', icon: '📅' },
     { id: 'income', label: 'Income & Invoices', icon: '💰' },
@@ -98,6 +103,41 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const [expenses, setExpenses] = useState(sampleExpenses);
     const [showAddExpense, setShowAddExpense] = useState(false);
     const [expenseForm, setExpenseForm] = useState({ description: '', amount: 0, category: medicalExpenseCategories[0].name, date: new Date().toISOString().split('T')[0] });
+    const [quickNotes, setQuickNotes] = useState<{ id: string; text: string; time: string; patient?: string; type: string }[]>([
+        { id: 'qn1', text: 'Kumara BP 140/90 — started Losartan 50mg', time: '4:15 PM', patient: 'Kumara Bandara', type: 'vitals' },
+        { id: 'qn2', text: 'Anoma — follow up in 2 weeks for blood sugar', time: '5:30 PM', patient: 'Anoma Wickramasinghe', type: 'follow-up' },
+        { id: 'qn3', text: 'Ranjith — refer to cardiologist Dr. Silva', time: '6:00 PM', patient: 'Ranjith Fernando', type: 'referral' },
+    ]);
+    const [appointmentStatuses, setAppointmentStatuses] = useState<Record<string, string>>({});
+    const [noteText, setNoteText] = useState('');
+
+    const handleVoiceAction = (action: ParsedVoiceAction) => {
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' });
+        const dateStr = now.toISOString().split('T')[0];
+        switch (action.intent) {
+            case 'income': {
+                const t: Transaction = { id: `v-${Date.now()}`, type: 'income', amount: action.amount || 0, description: action.description || 'Voice entry', category: action.category || 'Consultation', date: dateStr, status: 'paid' };
+                setInvoices(prev => [t, ...prev]);
+                break;
+            }
+            case 'expense': {
+                const t: Transaction = { id: `v-${Date.now()}`, type: 'expense', amount: action.amount || 0, description: action.description || 'Voice entry', category: action.category || 'Office Supplies', date: dateStr, status: 'completed' };
+                setExpenses(prev => [t, ...prev]);
+                break;
+            }
+            case 'note': {
+                setQuickNotes(prev => [{ id: `qn-${Date.now()}`, text: action.description || action.raw, time: timeStr, patient: action.patient, type: 'note' }, ...prev]);
+                setActiveNav('quicknotes');
+                break;
+            }
+            case 'appointment': {
+                setActiveNav('appointments');
+                break;
+            }
+            default: break;
+        }
+    };
 
     const handleCreateInvoice = (invoice: InvoiceData) => {
         const newInvoice: Transaction = {
@@ -141,8 +181,14 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         switch (activeNav) {
             case 'overview':
                 return renderOverview();
+            case 'today':
+                return renderTodaySchedule();
+            case 'quicknotes':
+                return renderQuickNotes();
             case 'patients':
                 return renderPatients();
+            case 'prescriptions':
+                return <PrescriptionPad />;
             case 'channeling':
                 return renderChanneling();
             case 'appointments':
@@ -162,6 +208,127 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         }
     };
 
+    /* ========== TODAY'S SCHEDULE ========== */
+    const renderTodaySchedule = () => {
+        const govSchedule = [
+            { time: '8:00 AM', activity: 'Ward Round — General Ward', type: 'gov', status: 'completed' },
+            { time: '9:30 AM', activity: 'OPD Clinic', type: 'gov', status: 'completed' },
+            { time: '11:00 AM', activity: 'Theatre — Appendectomy', type: 'gov', status: 'completed' },
+            { time: '1:00 PM', activity: 'Lunch Break', type: 'break', status: 'completed' },
+        ];
+        const privateSchedule = [
+            { time: '4:00 PM', activity: 'Asiri Central — Channeling', type: 'private', status: 'active', patients: 15 },
+            { time: '7:30 PM', activity: 'Travel to Lanka Hospitals', type: 'travel', status: 'upcoming' },
+            { time: '8:00 PM', activity: 'Lanka Hospitals — Channeling', type: 'private', status: 'upcoming', patients: 8 },
+        ];
+        const allSlots = [...govSchedule, ...privateSchedule];
+        const completedCount = allSlots.filter(s => s.status === 'completed').length;
+        const todayEarnings = 37500;
+        return (
+            <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <KPICard icon="🏥" label="Gov Hospital" value="Done" change="4 activities" changeType="up" color="#22c55e" />
+                    <KPICard icon="🩺" label="Private Clinics" value="2 sessions" change="23 patients est." changeType="neutral" color="#6366f1" />
+                    <KPICard icon="💰" label="Today's Earnings" value={fmt(todayEarnings)} change="So far" changeType="up" color="#f59e0b" />
+                    <KPICard icon="✅" label="Completed" value={`${completedCount}/${allSlots.length}`} changeType="neutral" color="#3b82f6" />
+                </div>
+
+                {/* Timeline */}
+                <div style={cardStyle}>
+                    <h3 style={cardTitle}>🕐 Today's Timeline — {new Date().toLocaleDateString('en-LK', { weekday: 'long', month: 'short', day: 'numeric' })}</h3>
+                    <div style={{ position: 'relative', paddingLeft: 30 }}>
+                        {/* Timeline line */}
+                        <div style={{ position: 'absolute', left: 13, top: 0, bottom: 0, width: 2, background: 'linear-gradient(to bottom, #22c55e, #6366f1)' }} />
+
+                        {/* Gov section header */}
+                        <div style={{ padding: '8px 0 4px', fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>🏛️ Government Hospital</div>
+                        {govSchedule.map((s, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: -22, width: 12, height: 12, borderRadius: '50%', background: s.status === 'completed' ? '#22c55e' : '#e2e8f0', border: '2px solid white', boxShadow: '0 0 0 2px ' + (s.status === 'completed' ? '#22c55e' : '#e2e8f0') }} />
+                                <div style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', minWidth: 65 }}>{s.time}</div>
+                                <div style={{ fontSize: 14, fontWeight: 500, color: s.status === 'completed' ? '#94a3b8' : '#1e293b', textDecoration: s.status === 'completed' ? 'line-through' : 'none' }}>{s.activity}</div>
+                                {s.status === 'completed' && <span style={{ fontSize: 11, background: '#dcfce7', color: '#22c55e', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>✓ Done</span>}
+                            </div>
+                        ))}
+
+                        {/* Private section header */}
+                        <div style={{ padding: '12px 0 4px', fontSize: 11, fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.06em' }}>🩺 Private Practice</div>
+                        {privateSchedule.map((s, i) => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: -22, width: 12, height: 12, borderRadius: '50%', background: s.status === 'active' ? '#f59e0b' : s.status === 'completed' ? '#22c55e' : '#e2e8f0', border: '2px solid white', boxShadow: '0 0 0 2px ' + (s.status === 'active' ? '#f59e0b' : '#e2e8f0'), animation: s.status === 'active' ? 'voicePulse 2s infinite' : 'none' }} />
+                                <div style={{ fontSize: 12, fontWeight: 700, color: s.status === 'active' ? '#f59e0b' : '#94a3b8', minWidth: 65 }}>{s.time}</div>
+                                <div style={{ fontSize: 14, fontWeight: s.status === 'active' ? 700 : 500, color: s.status === 'active' ? '#1e293b' : '#64748b' }}>{s.activity}</div>
+                                {'patients' in s && <span style={{ fontSize: 11, background: 'rgba(99,102,241,0.08)', color: '#6366f1', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>{(s as any).patients} patients</span>}
+                                {s.status === 'active' && <span style={{ fontSize: 11, background: '#fef3c7', color: '#f59e0b', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>🔴 NOW</span>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
+    /* ========== QUICK NOTES ========== */
+    const renderQuickNotes = () => {
+        const noteTypes: Record<string, { icon: string; color: string }> = {
+            vitals: { icon: '❤️', color: '#ef4444' },
+            'follow-up': { icon: '🔁', color: '#3b82f6' },
+            referral: { icon: '↗️', color: '#8b5cf6' },
+            note: { icon: '📝', color: '#6366f1' },
+            prescription: { icon: '💊', color: '#22c55e' },
+        };
+        const addNote = () => {
+            if (!noteText.trim()) return;
+            const now = new Date();
+            setQuickNotes(prev => [{ id: `qn-${Date.now()}`, text: noteText, time: now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' }), type: 'note' }, ...prev]);
+            setNoteText('');
+        };
+        return (
+            <div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
+                    <KPICard icon="📝" label="Total Notes" value={String(quickNotes.length)} changeType="neutral" color="#6366f1" />
+                    <KPICard icon="❤️" label="Vitals" value={String(quickNotes.filter(n => n.type === 'vitals').length)} changeType="neutral" color="#ef4444" />
+                    <KPICard icon="🔁" label="Follow-ups" value={String(quickNotes.filter(n => n.type === 'follow-up').length)} changeType="neutral" color="#3b82f6" />
+                </div>
+
+                {/* Add Note */}
+                <div style={{ ...cardStyle, marginBottom: '1rem', border: '2px solid rgba(99,102,241,0.2)' }}>
+                    <h3 style={{ ...cardTitle, margin: '0 0 0.5rem' }}>📝 Add Quick Note</h3>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                        <input value={noteText} onChange={e => setNoteText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addNote(); }} placeholder="Type a note or use the mic button →" style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
+                        <button onClick={addNote} style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
+                    </div>
+                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>💡 Tip: Use the floating 🎤 button to add notes by voice — say "Note: BP 140 over 90"</div>
+                </div>
+
+                {/* Notes List */}
+                <div style={cardStyle}>
+                    <h3 style={cardTitle}>📋 Recent Notes</h3>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                        {quickNotes.map(note => {
+                            const nt = noteTypes[note.type] || noteTypes.note;
+                            return (
+                                <div key={note.id} style={{ display: 'flex', gap: 12, padding: '12px 16px', background: '#f8fafc', borderRadius: 10, border: '1px solid #f1f5f9', alignItems: 'flex-start' }}>
+                                    <div style={{ width: 36, height: 36, borderRadius: 10, background: `${nt.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{nt.icon}</div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ fontSize: 14, fontWeight: 500, color: '#1e293b', lineHeight: 1.5 }}>{note.text}</div>
+                                        <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, display: 'flex', gap: 12 }}>
+                                            <span>🕐 {note.time}</span>
+                                            {note.patient && <span>🧑‍⚕️ {note.patient}</span>}
+                                            <span style={{ background: `${nt.color}15`, color: nt.color, padding: '1px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 }}>{note.type}</span>
+                                        </div>
+                                    </div>
+                                    <button onClick={() => setQuickNotes(prev => prev.filter(n => n.id !== note.id))} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 14, padding: 4 }}>✕</button>
+                                </div>
+                            );
+                        })}
+                        {quickNotes.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>No notes yet. Use voice or type above to add notes.</div>}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     /* ========== OVERVIEW ========== */
     const renderOverview = () => (
         <div>
@@ -174,11 +341,13 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             </div>
 
             {/* Quick Actions */}
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
                 <button onClick={() => setShowInvoiceForm(true)} style={actionBtn('#6366f1')}>+ Create Invoice</button>
                 <button onClick={() => { setActiveNav('expenses'); setShowAddExpense(true); }} style={actionBtn('#ef4444')}>+ Add Expense</button>
+                <button onClick={() => setActiveNav('quicknotes')} style={actionBtn('#8b5cf6')}>📝 Quick Note</button>
+                <button onClick={() => setActiveNav('today')} style={actionBtn('#f59e0b')}>🕐 Today</button>
+                <button onClick={() => setActiveNav('prescriptions')} style={actionBtn('#22c55e')}>💊 Prescription</button>
                 <button onClick={() => setActiveNav('banking')} style={actionBtn('#06b6d4')}>🏦 Banking</button>
-                <button onClick={() => setActiveNav('reports')} style={actionBtn('#8b5cf6')}>📋 Reports</button>
             </div>
 
             {/* Charts Row */}
@@ -355,7 +524,20 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                     <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{a.type} · {a.time}</div>
                                 </div>
                             </div>
-                            <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 600, background: a.status === 'confirmed' ? '#dcfce7' : '#fef3c7', color: a.status === 'confirmed' ? '#22c55e' : '#f59e0b' }}>{a.status}</span>
+                            <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+                                {['arrived', 'completed', 'no-show'].map(s => {
+                                    const current = appointmentStatuses[a.id] || a.status;
+                                    const isActive = current === s;
+                                    const colors: Record<string, string> = { arrived: '#3b82f6', completed: '#22c55e', 'no-show': '#ef4444' };
+                                    const icons: Record<string, string> = { arrived: '👋', completed: '✅', 'no-show': '❌' };
+                                    return (
+                                        <button key={s} onClick={() => setAppointmentStatuses(prev => ({ ...prev, [a.id]: s }))}
+                                            style={{ padding: '3px 8px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', border: isActive ? 'none' : '1px solid #e2e8f0', background: isActive ? `${colors[s]}15` : 'white', color: isActive ? colors[s] : '#94a3b8' }}>
+                                            {icons[s]} {s}
+                                        </button>
+                                    );
+                                })}
+                            </div>
                         </div>
                     ))}
                 </div>
@@ -703,6 +885,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     onCancel={() => setShowInvoiceForm(false)}
                 />
             )}
+
+            {/* Floating Voice Assistant */}
+            <VoiceInput onAction={handleVoiceAction} position="float" />
         </>
     );
 };
