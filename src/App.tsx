@@ -1,56 +1,45 @@
 import { useState, useEffect } from 'react';
+import LandingPage from './components/LandingPage';
 import SimpleLogin from './components/SimpleLogin';
 import ProfessionSetup from './components/ProfessionSetup';
 import ProfessionDashboard from './components/dashboards/ProfessionDashboard';
 import { ProfessionType } from './contexts/AuthContext';
 import './i18n';
 
+type AppView = 'landing' | 'login' | 'profession' | 'dashboard';
+
 function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [view, setView] = useState<AppView>('landing');
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [selectedProfession, setSelectedProfession] = useState<ProfessionType | null>(null);
 
-  // Check for stored login or auto-login
+  // Check for stored login on mount
   useEffect(() => {
     const storedUser = localStorage.getItem('tracksyUser');
+    const storedProfession = localStorage.getItem('myTracksyProfession');
+
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
-      setIsLoggedIn(true);
-    } else {
-      // Auto-login after 2 seconds if no stored user
-      setTimeout(() => {
-        if (!isLoggedIn) {
-          const autoUser = {
-            email: 'demo@tracksy.lk',
-            name: 'Demo User',
-            uid: 'auto-' + Date.now()
-          };
-          setCurrentUser(autoUser);
-          setIsLoggedIn(true);
-          try {
-            localStorage.setItem('tracksyUser', JSON.stringify(autoUser));
-          } catch (error) {
-            // Ignore errors
+      if (storedProfession) {
+        try {
+          const data = JSON.parse(storedProfession);
+          if (data.profession) {
+            setSelectedProfession(data.profession);
+            setView('dashboard');
+          } else {
+            setView('profession');
           }
+        } catch {
+          setView('profession');
         }
-      }, 2000);
-    }
-  }, [isLoggedIn]);
-
-  // Check for stored profession on mount
-  useEffect(() => {
-    const stored = localStorage.getItem('myTracksyProfession');
-    if (stored) {
-      try {
-        const data = JSON.parse(stored);
-        if (data.profession) {
-          setSelectedProfession(data.profession);
-        }
-      } catch {
-        // ignore
+      } else {
+        setView('profession');
       }
+    } else {
+      // No stored user — show landing page
+      setView('landing');
     }
   }, []);
 
@@ -61,7 +50,6 @@ function App() {
       uid: Date.now().toString()
     };
     setCurrentUser(user);
-    setIsLoggedIn(true);
     setLoginError('');
     setLoginLoading(false);
     try {
@@ -69,6 +57,7 @@ function App() {
     } catch (error) {
       // Ignore
     }
+    setView('profession');
   };
 
   const handleRegister = (email: string, _password: string) => {
@@ -78,7 +67,6 @@ function App() {
       uid: Date.now().toString()
     };
     setCurrentUser(user);
-    setIsLoggedIn(true);
     setLoginError('');
     setLoginLoading(false);
     try {
@@ -86,29 +74,46 @@ function App() {
     } catch (error) {
       // Ignore
     }
+    setView('profession');
   };
 
   const handleSkipLogin = () => {
     const guestUser = { email: 'guest@tracksy.lk', name: 'Guest User', uid: 'guest' };
     setCurrentUser(guestUser);
-    setIsLoggedIn(true);
+    try {
+      localStorage.setItem('tracksyUser', JSON.stringify(guestUser));
+    } catch { }
+    setView('profession');
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
     setCurrentUser(null);
     setSelectedProfession(null);
     localStorage.removeItem('tracksyUser');
     localStorage.removeItem('myTracksyProfession');
+    setView('landing');
   };
 
   const handleChangeProfession = () => {
     setSelectedProfession(null);
     localStorage.removeItem('myTracksyProfession');
+    setView('profession');
   };
 
-  // 1. Show login page if not logged in
-  if (!isLoggedIn) {
+  // ============ ROUTING ============
+
+  // 0. Landing page (first visit)
+  if (view === 'landing') {
+    return (
+      <LandingPage
+        onGetStarted={() => setView('login')}
+        onLogin={() => setView('login')}
+      />
+    );
+  }
+
+  // 1. Login / Register page
+  if (view === 'login') {
     return (
       <SimpleLogin
         onLogin={handleLogin}
@@ -120,21 +125,22 @@ function App() {
     );
   }
 
-  // 2. Show profession selection if logged in but no profession selected
-  if (!selectedProfession) {
+  // 2. Profession selection
+  if (view === 'profession') {
     return (
       <ProfessionSetup
         onProfessionSelected={(profession) => {
           setSelectedProfession(profession);
+          setView('dashboard');
         }}
       />
     );
   }
 
-  // 3. Show profession-specific dashboard
+  // 3. Dashboard
   return (
     <ProfessionDashboard
-      profession={selectedProfession}
+      profession={selectedProfession!}
       userName={currentUser?.name || currentUser?.email || 'User'}
       onChangeProfession={handleChangeProfession}
       onLogout={handleLogout}
