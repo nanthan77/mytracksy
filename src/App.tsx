@@ -100,6 +100,18 @@ function App() {
     setView('profession');
   };
 
+  // Demo: skip login, go straight to profession dashboard
+  const handleDemoProfession = (profession: ProfessionType) => {
+    const demoUser = { email: 'demo@tracksy.lk', name: 'Demo User', uid: 'demo-' + profession };
+    setCurrentUser(demoUser);
+    setSelectedProfession(profession);
+    try {
+      localStorage.setItem('tracksyUser', JSON.stringify(demoUser));
+      localStorage.setItem('myTracksyProfession', JSON.stringify({ profession }));
+    } catch { }
+    setView('dashboard');
+  };
+
   // ============ ROUTING ============
 
   // 0. Landing page (first visit)
@@ -108,6 +120,7 @@ function App() {
       <LandingPage
         onGetStarted={() => setView('login')}
         onLogin={() => setView('login')}
+        onDemoProfession={handleDemoProfession}
       />
     );
   }

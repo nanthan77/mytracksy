@@ -1,27 +1,29 @@
 import React, { useState, useEffect } from 'react';
+import { ProfessionType } from '../contexts/AuthContext';
 
 interface LandingPageProps {
     onGetStarted: () => void;
     onLogin: () => void;
+    onDemoProfession: (profession: ProfessionType) => void;
 }
 
-const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
+const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onDemoProfession }) => {
     const [mounted, setMounted] = useState(false);
     useEffect(() => { setMounted(true); }, []);
 
-    const professions = [
-        { icon: '🩺', name: 'Medical', color: '#0ea5e9' },
-        { icon: '⚖️', name: 'Legal', color: '#6366f1' },
-        { icon: '📈', name: 'Business', color: '#059669' },
-        { icon: '⚙️', name: 'Engineering', color: '#ea580c' },
-        { icon: '📊', name: 'Trading', color: '#3b82f6' },
-        { icon: '🚗', name: 'Automotive', color: '#dc2626' },
-        { icon: '📢', name: 'Marketing', color: '#7c3aed' },
-        { icon: '✈️', name: 'Travel', color: '#1e40af' },
-        { icon: '🚛', name: 'Transport', color: '#ea580c' },
-        { icon: '🛒', name: 'Retail', color: '#0d9488' },
-        { icon: '🐟', name: 'Aquaculture', color: '#0891b2' },
-        { icon: '👤', name: 'Individual', color: '#7c3aed' },
+    const professions: { icon: string; name: string; color: string; type: ProfessionType }[] = [
+        { icon: '🩺', name: 'Medical', color: '#0ea5e9', type: 'medical' },
+        { icon: '⚖️', name: 'Legal', color: '#6366f1', type: 'legal' },
+        { icon: '📈', name: 'Business', color: '#059669', type: 'business' },
+        { icon: '⚙️', name: 'Engineering', color: '#ea580c', type: 'engineering' },
+        { icon: '📊', name: 'Trading', color: '#3b82f6', type: 'trading' },
+        { icon: '🚗', name: 'Automotive', color: '#dc2626', type: 'automotive' },
+        { icon: '📢', name: 'Marketing', color: '#7c3aed', type: 'marketing' },
+        { icon: '✈️', name: 'Travel', color: '#1e40af', type: 'travel' },
+        { icon: '🚛', name: 'Transport', color: '#ea580c', type: 'transportation' },
+        { icon: '🛒', name: 'Retail', color: '#0d9488', type: 'retail' },
+        { icon: '🐟', name: 'Aquaculture', color: '#0891b2', type: 'aquaculture' },
+        { icon: '👤', name: 'Individual', color: '#7c3aed', type: 'individual' },
     ];
 
     const features = [
@@ -76,8 +78,8 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
         .price-card.popular { border: 2px solid #8b5cf6; box-shadow: 0 20px 40px rgba(139,92,246,0.15); }
         .nav-link { color: rgba(255,255,255,0.65); font-size: 14px; font-weight: 450; text-decoration: none; padding: 6px 14px; border-radius: 8px; transition: all 0.2s ease; cursor: pointer; background: none; border: none; font-family: 'Inter', sans-serif; }
         .nav-link:hover { color: white; background: rgba(255,255,255,0.08); }
-        .profession-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); transition: all 0.3s ease; }
-        .profession-pill:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); }
+        .profession-pill { display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; border-radius: 20px; font-size: 13px; font-weight: 500; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.8); transition: all 0.3s ease; cursor: pointer; font-family: 'Inter', sans-serif; }
+        .profession-pill:hover { background: rgba(255,255,255,0.12); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
       `}</style>
 
             <div style={{ fontFamily: "'Inter', -apple-system, sans-serif", color: '#0f172a' }}>
@@ -235,9 +237,9 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
                         </p>
                         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 10 }}>
                             {professions.map(p => (
-                                <span key={p.name} className="profession-pill" style={{ color: p.color, background: `${p.color}0A`, borderColor: `${p.color}20` }}>
+                                <button key={p.name} className="profession-pill" onClick={() => onDemoProfession(p.type)} style={{ color: p.color, background: `${p.color}0A`, borderColor: `${p.color}20` }} title={`Try ${p.name} Demo`}>
                                     <span>{p.icon}</span> {p.name}
-                                </span>
+                                </button>
                             ))}
                         </div>
                     </div>
