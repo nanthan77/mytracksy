@@ -383,6 +383,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin }) => {
                         {/* Bottom */}
                         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 20, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <span style={{ fontSize: 12 }}>© 2026 MyTracksy. All rights reserved.</span>
+                            <span style={{ fontSize: 12 }}>
+                                Architected by{' '}
+                                <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#a5b4fc', textDecoration: 'none', fontWeight: 500, transition: 'color 0.2s' }} onMouseEnter={e => (e.currentTarget.style.color = '#c084fc')} onMouseLeave={e => (e.currentTarget.style.color = '#a5b4fc')}>
+                                    SafeNet Creations
+                                </a>
+                            </span>
                             <span style={{ fontSize: 12 }}>🇱🇰 Proudly built in Sri Lanka</span>
                         </div>
                     </div>
