@@ -14,7 +14,10 @@ import {
     formatLKR,
     type UniversalTransaction,
 } from '../services/accountingCoreService';
-import { useAuth } from '../contexts/AuthContext';
+
+interface TransactionInboxProps {
+    uid?: string;
+}
 
 const SOURCE_BADGES: Record<string, { icon: string; label: string; color: string }> = {
     email_auto_sync: { icon: '📧', label: 'Email', color: '#6366f1' },
@@ -168,9 +171,7 @@ const SwipeableCard: React.FC<SwipeableCardProps> = ({ txn, onApprove, onIgnore 
 
 // ════════════════════════════════════════════════════════════════
 
-const TransactionInbox: React.FC = () => {
-    const { currentUser } = useAuth();
-    const uid = currentUser?.uid;
+const TransactionInbox: React.FC<TransactionInboxProps> = ({ uid }) => {
     const [pending, setPending] = useState<UniversalTransaction[]>([]);
     const [loading, setLoading] = useState(true);
 

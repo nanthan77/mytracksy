@@ -10,7 +10,7 @@ import ReceiptScanner from '../ReceiptScanner';
 import AuditorExport from '../AuditorExport';
 import TransactionInbox from '../TransactionInbox';
 import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName, isCapitalItem } from '../../config/goldenListCategories';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import {
     addTransaction, subscribeTransactions, seedChartOfAccounts,
     subscribeGovIncomeConfig, toCents, fromCents,
@@ -307,7 +307,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             case 'overview':
                 return renderOverview();
             case 'inbox':
-                return <TransactionInbox />;
+                return <TransactionInbox uid={uid} />;
             case 'today':
                 return renderTodaySchedule();
             case 'quicknotes':
