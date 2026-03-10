@@ -9,6 +9,8 @@ import TaxSpeedometer from '../TaxSpeedometer';
 import ReceiptScanner from '../ReceiptScanner';
 import AuditorExport from '../AuditorExport';
 import TransactionInbox from '../TransactionInbox';
+import AIVoiceVault from '../AIVoiceVault';
+import MorningBriefing from '../MorningBriefing';
 import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName, isCapitalItem } from '../../config/goldenListCategories';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -24,6 +26,7 @@ interface MedicalDashboardProps {
 
 const navItems = [
     { id: 'overview', label: 'Dashboard', icon: '📊' },
+    { id: 'briefing', label: 'Ward Round', icon: '🌅', premium: true },
     { id: 'inbox', label: 'Inbox', icon: '📥' },
     { id: 'today', label: "Today's Schedule", icon: '🕐' },
     { id: 'quicknotes', label: 'Quick Notes', icon: '📝' },
@@ -38,6 +41,7 @@ const navItems = [
     { id: 'banking', label: 'Banking & Cheques', icon: '🏦' },
     { id: 'reports', label: 'Reports', icon: '📋' },
     { id: 'export', label: 'Auditor Export', icon: '📦' },
+    { id: 'voicevault', label: 'Voice Vault', icon: '🎙️', premium: true },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -308,6 +312,10 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 return renderOverview();
             case 'inbox':
                 return <TransactionInbox uid={uid} />;
+            case 'briefing':
+                return <MorningBriefing />;
+            case 'voicevault':
+                return <AIVoiceVault />;
             case 'today':
                 return renderTodaySchedule();
             case 'quicknotes':

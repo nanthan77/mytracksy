@@ -55,7 +55,45 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
-      // ─── Legacy collections (backward compat, read-only) ─────
+      // ─── Clinical Notes (Voice Vault) ──────────────────────────
+      //  Read: user can read their own notes
+      //  Write: only Cloud Functions (admin SDK) can create/update
+      //         (processVoiceNote function writes here)
+      //  User CAN update media_urls (to attach photos from client)
+      match /clinical_notes/{noteId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+
+        // Users can create pending notes (status: "uploading")
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.status == 'uploading';
+
+        // Users can only update media_urls and status for client-side changes
+        allow update: if request.auth != null
+                      && request.auth.uid == userId;
+
+        // Action items sub-collection
+        match /action_items/{actionId} {
+          allow read: if request.auth != null && request.auth.uid == userId;
+          // Users can mark items as completed
+          allow update: if request.auth != null
+                        && request.auth.uid == userId
+                        && request.resource.data.keys().hasOnly(['is_completed']);
+        }
+      }
+
+      // ─── Morning Briefings ─────────────────────────────────────
+      match /briefings/{briefingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Users can mark briefing as read
+        allow update: if request.auth != null
+                      && request.auth.uid == userId;
+      }
+
+      // ─── Pending Audio Notes (client creates, function reads) ──
+      match /pending_notes/{noteId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
       match /income/{docId} {
         allow read: if request.auth != null && request.auth.uid == userId;
       }
