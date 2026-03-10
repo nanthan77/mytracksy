@@ -25,12 +25,15 @@ export const storage = getStorage(app);
 // Initialize Analytics safely (optional, won't crash if it fails)
 let analytics: any = null;
 if (typeof window !== 'undefined') {
-  try {
-    const { getAnalytics } = await import('firebase/analytics');
-    analytics = getAnalytics(app);
-  } catch (error) {
-    console.warn('Firebase Analytics not available:', error);
-  }
+  import('firebase/analytics').then(({ getAnalytics }) => {
+    try {
+      analytics = getAnalytics(app);
+    } catch (error) {
+      console.warn('Firebase Analytics not available:', error);
+    }
+  }).catch(() => {
+    console.warn('Firebase Analytics module not available');
+  });
 }
 export { analytics };
 

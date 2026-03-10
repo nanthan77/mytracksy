@@ -2,16 +2,7 @@ import React, { useState } from 'react';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
-
-interface Transaction {
-    id: string;
-    type: 'income' | 'expense';
-    amount: number;
-    description: string;
-    category: string;
-    date: string;
-    status: string;
-}
+import { Transaction } from './dashboards/TransactionList';
 
 interface Receipt {
     id: string;
@@ -74,7 +65,7 @@ const AuditorExport: React.FC<AuditorExportProps> = ({ invoices, expenses }) => 
                     t.type.toUpperCase(),
                     debit ? debit.toString() : '',
                     credit ? credit.toString() : '',
-                    t.status,
+                    t.status || '',
                     '',
                 ]);
             });

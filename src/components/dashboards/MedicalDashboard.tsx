@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
@@ -9,6 +9,12 @@ import TaxSpeedometer from '../TaxSpeedometer';
 import ReceiptScanner from '../ReceiptScanner';
 import AuditorExport from '../AuditorExport';
 import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName } from '../../config/goldenListCategories';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+    addIncome, addExpense, subscribeIncome, subscribeExpenses,
+    subscribeChanneling, subscribeGovIncomeConfig,
+} from '../../services/doctorFinanceService';
+import { isCapitalItem } from '../../config/goldenListCategories';
 
 interface MedicalDashboardProps {
     userName: string;
@@ -96,10 +102,14 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     onChangeProfession,
     onLogout,
 }) => {
+    const { currentUser } = useAuth();
+    const uid = currentUser?.uid;
+
     const [activeNav, setActiveNav] = useState('overview');
     const [showInvoiceForm, setShowInvoiceForm] = useState(false);
-    const [invoices, setInvoices] = useState(sampleInvoices);
-    const [expenses, setExpenses] = useState(sampleExpenses);
+    const [invoices, setInvoices] = useState<Transaction[]>(sampleInvoices);
+    const [expenses, setExpenses] = useState<Transaction[]>(sampleExpenses);
+    const [firestoreReady, setFirestoreReady] = useState(false);
     const [showAddExpense, setShowAddExpense] = useState(false);
     const [expenseForm, setExpenseForm] = useState({ description: '', amount: 0, category: GOLDEN_LIST[0].name, date: new Date().toISOString().split('T')[0] });
     const [showGoldenList, setShowGoldenList] = useState(false);
@@ -117,6 +127,74 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const govMonthly = govSalary + datAllowance;
     const govAnnual = govMonthly * 12;
     const govAPIT = Math.round(govAnnual * 0.12); // Simplified APIT for demo
+
+    // ===== FIRESTORE REAL-TIME SUBSCRIPTIONS =====
+    useEffect(() => {
+        if (!uid) return; // Demo mode — keep sample data
+
+        // Subscribe to income from Firestore
+        const unsubIncome = subscribeIncome(uid, (entries) => {
+            if (entries.length > 0) {
+                setInvoices(entries.map(e => ({
+                    id: e.id || '',
+                    type: 'income' as const,
+                    amount: e.amount,
+                    description: e.description,
+                    category: e.category,
+                    date: e.date,
+                    status: e.status || 'paid',
+                })));
+                setFirestoreReady(true);
+            } else if (!firestoreReady) {
+                // First load with no data — keep sample for demo feel
+                setFirestoreReady(true);
+            }
+        });
+
+        // Subscribe to expenses from Firestore
+        const unsubExpenses = subscribeExpenses(uid, (entries) => {
+            if (entries.length > 0) {
+                setExpenses(entries.map(e => ({
+                    id: e.id || '',
+                    type: 'expense' as const,
+                    amount: e.amount,
+                    description: e.description,
+                    category: e.category,
+                    date: e.date,
+                    status: 'completed',
+                })));
+            }
+        });
+
+        // Subscribe to channeling shifts from Firestore
+        const unsubChanneling = subscribeChanneling(uid, (entries) => {
+            if (entries.length > 0) {
+                setChannelingShifts(entries.map(e => ({
+                    id: e.id || '',
+                    hospital: e.hospitalName,
+                    date: e.date,
+                    patients: e.patientsCount,
+                    expected: e.netPayable,
+                    status: e.status,
+                    receivedDate: e.paymentDate,
+                })));
+            }
+        });
+
+        // Subscribe to government income config
+        const unsubGov = subscribeGovIncomeConfig(uid, (config) => {
+            if (config) {
+                // Could update govSalary/datAllowance states here in future
+            }
+        });
+
+        return () => {
+            unsubIncome();
+            unsubExpenses();
+            unsubChanneling();
+            unsubGov();
+        };
+    }, [uid]);
 
     // ===== Channeling Payment Tracker State =====
     const [channelingShifts, setChannelingShifts] = useState<{ id: string; hospital: string; date: string; patients: number; expected: number; status: 'pending' | 'received' | 'overdue'; receivedDate?: string }[]>([
@@ -170,6 +248,19 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         };
         setInvoices((prev) => [newInvoice, ...prev]);
         setShowInvoiceForm(false);
+
+        // Persist to Firestore if authenticated
+        if (uid) {
+            addIncome(uid, {
+                description: `${invoice.serviceType} — ${invoice.patientName}`,
+                amount: invoice.amount,
+                category: invoice.serviceType,
+                source: invoice.hospital || '',
+                date: invoice.date,
+                whtDeducted: Math.round(invoice.amount * 0.05),
+                status: (invoice.status as 'received' | 'pending' | 'overdue') || 'pending',
+            }).catch(err => console.error('Failed to save income:', err));
+        }
     };
 
     const handleAddExpense = (e: React.FormEvent) => {
@@ -187,8 +278,18 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         setExpenses((prev) => [newExpense, ...prev]);
         setShowAddExpense(false);
         setExpenseForm({ description: '', amount: 0, category: GOLDEN_LIST[0].name, date: new Date().toISOString().split('T')[0] });
-    };
 
+        // Persist to Firestore if authenticated
+        if (uid) {
+            addExpense(uid, {
+                description: expenseForm.description,
+                amount: expenseForm.amount,
+                category: expenseForm.category,
+                date: expenseForm.date,
+                isCapitalItem: isCapitalItem(expenseForm.category),
+            }).catch(err => console.error('Failed to save expense:', err));
+        }
+    };
     const totalIncome = invoices.reduce((s, t) => s + t.amount, 0);
     const totalExpenses = expenses.reduce((s, t) => s + t.amount, 0);
     const netProfit = totalIncome - totalExpenses;

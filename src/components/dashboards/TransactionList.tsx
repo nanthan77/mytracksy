@@ -7,7 +7,7 @@ export interface Transaction {
     description: string;
     category: string;
     date: string;
-    status?: 'completed' | 'pending' | 'overdue' | 'paid';
+    status?: 'completed' | 'pending' | 'overdue' | 'paid' | 'received';
 }
 
 interface TransactionListProps {
