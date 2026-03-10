@@ -1,11 +1,7 @@
 import React, { useState } from 'react';
 import { ProfessionType } from '../../contexts/AuthContext';
 
-interface NavItem {
-    id: string;
-    label: string;
-    icon: string;
-}
+interface NavItem { id: string; label: string; icon: string; }
 
 interface DashboardLayoutProps {
     profession: ProfessionType;
@@ -21,271 +17,158 @@ interface DashboardLayoutProps {
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
-    profession,
-    professionLabel,
-    professionIcon,
-    userName,
-    navItems,
-    activeNav,
-    onNavChange,
-    onChangeProfession,
-    onLogout,
-    children,
+    professionLabel, professionIcon, userName, navItems, activeNav,
+    onNavChange, onChangeProfession, onLogout, children,
 }) => {
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [collapsed, setCollapsed] = useState(false);
+    const w = collapsed ? 68 : 260;
 
     return (
-        <div style={styles.wrapper}>
-            {/* Sidebar */}
-            <aside
-                style={{
-                    ...styles.sidebar,
-                    width: sidebarCollapsed ? 64 : 240,
-                }}
-            >
-                {/* Logo */}
-                <div style={styles.sidebarHeader}>
-                    {!sidebarCollapsed && (
-                        <div>
-                            <div style={styles.logoText}>🇱🇰 MyTracksy</div>
-                            <div style={styles.logoSubtext}>SaaS Finance</div>
+        <>
+            <style>{`
+                .sidebar-nav-btn { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: none; background: transparent; color: rgba(255,255,255,0.5); border-radius: 10px; cursor: pointer; font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 450; text-align: left; width: 100%; white-space: nowrap; transition: all 0.2s ease; letter-spacing: -0.01em; }
+                .sidebar-nav-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); }
+                .sidebar-nav-btn.active { background: rgba(99,102,241,0.12); color: #a5b4fc; font-weight: 550; }
+                .sidebar-nav-btn.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: #6366f1; border-radius: 0 3px 3px 0; }
+                .sidebar-footer-btn { width: 100%; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border-radius: 8px; cursor: pointer; font-size: 12.5px; font-family: 'Inter', sans-serif; font-weight: 450; text-align: left; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
+                .sidebar-footer-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+                .sidebar-footer-btn.logout:hover { background: rgba(239,68,68,0.08); color: #f87171; border-color: rgba(239,68,68,0.15); }
+                .topbar-search { padding: 8px 14px 8px 36px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; color: #475569; width: 240px; outline: none; transition: all 0.2s ease; background: #f8fafc; }
+                .topbar-search:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.08); background: white; }
+                .topbar-search::placeholder { color: #94a3b8; }
+            `}</style>
+
+            <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Inter', -apple-system, sans-serif", background: '#f8fafc' }}>
+                {/* Sidebar */}
+                <aside style={{
+                    position: 'fixed', top: 0, left: 0, height: '100vh', width: w,
+                    background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 40%, #1e293b 100%)',
+                    color: 'white', display: 'flex', flexDirection: 'column', zIndex: 100,
+                    transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)', overflowX: 'hidden',
+                    borderRight: '1px solid rgba(255,255,255,0.04)',
+                }}>
+                    {/* Logo area */}
+                    <div style={{
+                        padding: collapsed ? '20px 12px' : '20px 20px', display: 'flex', alignItems: 'center',
+                        justifyContent: collapsed ? 'center' : 'space-between', minHeight: 72,
+                        borderBottom: '1px solid rgba(255,255,255,0.06)',
+                    }}>
+                        {!collapsed && (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <div style={{
+                                    width: 32, height: 32, borderRadius: 8,
+                                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: '0.9rem', boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
+                                }}>💰</div>
+                                <div>
+                                    <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2 }}>MyTracksy</div>
+                                    <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)', fontWeight: 400, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>SaaS Finance</div>
+                                </div>
+                            </div>
+                        )}
+                        <button onClick={() => setCollapsed(!collapsed)} style={{
+                            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.06)',
+                            color: 'rgba(255,255,255,0.5)', width: 28, height: 28, borderRadius: 7,
+                            cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 12, transition: 'all 0.2s ease', flexShrink: 0,
+                        }} title={collapsed ? 'Expand' : 'Collapse'}>
+                            {collapsed ? '→' : '←'}
+                        </button>
+                    </div>
+
+                    {/* Nav */}
+                    <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
+                        {navItems.map(item => (
+                            <button key={item.id} onClick={() => onNavChange(item.id)}
+                                className={`sidebar-nav-btn ${activeNav === item.id ? 'active' : ''}`}
+                                style={{ justifyContent: collapsed ? 'center' : 'flex-start', position: 'relative' }}
+                                title={item.label}>
+                                <span style={{ fontSize: '1.15rem', flexShrink: 0, width: 24, textAlign: 'center' }}>{item.icon}</span>
+                                {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>}
+                            </button>
+                        ))}
+                    </nav>
+
+                    {/* Footer */}
+                    {!collapsed && (
+                        <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                            {/* User badge */}
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+                                background: 'rgba(255,255,255,0.04)', borderRadius: 10, marginBottom: 4,
+                            }}>
+                                <div style={{
+                                    width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 14, fontWeight: 700, color: 'white',
+                                }}>{userName.charAt(0).toUpperCase()}</div>
+                                <div>
+                                    <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{userName}</div>
+                                    <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)' }}>{professionLabel}</div>
+                                </div>
+                            </div>
+                            <button onClick={onChangeProfession} className="sidebar-footer-btn">
+                                <span>🔄</span> Change Profession
+                            </button>
+                            <button onClick={onLogout} className="sidebar-footer-btn logout">
+                                <span>🚪</span> Sign Out
+                            </button>
                         </div>
                     )}
-                    <button
-                        onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-                        style={styles.collapseBtn}
-                        title={sidebarCollapsed ? 'Expand' : 'Collapse'}
-                    >
-                        {sidebarCollapsed ? '→' : '←'}
-                    </button>
+                </aside>
+
+                {/* Main */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: w, transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
+                    {/* Top Bar */}
+                    <header style={{
+                        height: 64, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)',
+                        WebkitBackdropFilter: 'blur(12px)',
+                        borderBottom: '1px solid rgba(226,232,240,0.8)', display: 'flex',
+                        alignItems: 'center', justifyContent: 'space-between', padding: '0 24px',
+                        position: 'sticky', top: 0, zIndex: 50,
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <h1 style={{ fontSize: 17, fontWeight: 650, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
+                                {navItems.find(n => n.id === activeNav)?.icon}{' '}
+                                {navItems.find(n => n.id === activeNav)?.label}
+                            </h1>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            {/* Search */}
+                            <div style={{ position: 'relative' }}>
+                                <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#94a3b8' }}>🔍</span>
+                                <input className="topbar-search" type="text" placeholder="Search..." />
+                            </div>
+                            {/* Notifications */}
+                            <div style={{
+                                width: 36, height: 36, borderRadius: 10, background: '#f1f5f9',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                cursor: 'pointer', position: 'relative', fontSize: 16, transition: 'background 0.2s',
+                            }}>🔔
+                                <div style={{
+                                    position: 'absolute', top: -2, right: -2, width: 8, height: 8,
+                                    background: '#ef4444', borderRadius: '50%', border: '2px solid white',
+                                }} />
+                            </div>
+                            {/* Profession badge */}
+                            <span style={{
+                                display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 14px',
+                                borderRadius: 20, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                color: 'white', fontSize: 12, fontWeight: 600, letterSpacing: '0.01em',
+                                boxShadow: '0 2px 8px rgba(99,102,241,0.25)',
+                            }}>
+                                {professionIcon} {professionLabel}
+                            </span>
+                        </div>
+                    </header>
+
+                    {/* Content */}
+                    <main style={{ flex: 1, padding: 24 }}>{children}</main>
                 </div>
-
-                {/* Nav Items */}
-                <nav style={styles.nav}>
-                    {navItems.map((item) => (
-                        <button
-                            key={item.id}
-                            onClick={() => onNavChange(item.id)}
-                            style={{
-                                ...styles.navItem,
-                                ...(activeNav === item.id ? styles.navItemActive : {}),
-                                justifyContent: sidebarCollapsed ? 'center' : 'flex-start',
-                            }}
-                            title={item.label}
-                        >
-                            <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
-                            {!sidebarCollapsed && (
-                                <span style={styles.navLabel}>{item.label}</span>
-                            )}
-                        </button>
-                    ))}
-                </nav>
-
-                {/* Footer */}
-                {!sidebarCollapsed && (
-                    <div style={styles.sidebarFooter}>
-                        <button onClick={onChangeProfession} style={styles.footerBtn}>
-                            🔄 Change Profession
-                        </button>
-                        <button
-                            onClick={onLogout}
-                            style={{ ...styles.footerBtn, ...styles.logoutBtn }}
-                        >
-                            🚪 Logout
-                        </button>
-                    </div>
-                )}
-            </aside>
-
-            {/* Main Content */}
-            <div
-                style={{
-                    ...styles.main,
-                    marginLeft: sidebarCollapsed ? 64 : 240,
-                }}
-            >
-                {/* Top Bar */}
-                <header style={styles.topBar}>
-                    <div style={styles.topBarLeft}>
-                        <h1 style={styles.pageTitle}>
-                            {navItems.find((n) => n.id === activeNav)?.icon}{' '}
-                            {navItems.find((n) => n.id === activeNav)?.label}
-                        </h1>
-                    </div>
-                    <div style={styles.topBarRight}>
-                        <span style={styles.professionBadge}>
-                            {professionIcon} {professionLabel}
-                        </span>
-                        <span style={styles.userName}>👋 {userName}</span>
-                    </div>
-                </header>
-
-                {/* Page Content */}
-                <main style={styles.content}>{children}</main>
             </div>
-        </div>
+        </>
     );
-};
-
-const styles: Record<string, React.CSSProperties> = {
-    wrapper: {
-        display: 'flex',
-        minHeight: '100vh',
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        background: '#f0f2f5',
-    },
-    sidebar: {
-        position: 'fixed' as const,
-        top: 0,
-        left: 0,
-        height: '100vh',
-        background: 'linear-gradient(180deg, #1a1f36 0%, #24293e 100%)',
-        color: 'white',
-        display: 'flex',
-        flexDirection: 'column' as const,
-        zIndex: 100,
-        transition: 'width 0.3s ease',
-        overflowX: 'hidden' as const,
-    },
-    sidebarHeader: {
-        padding: '1.25rem 1rem',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(255,255,255,0.08)',
-        minHeight: 64,
-    },
-    logoText: {
-        fontSize: '1.1rem',
-        fontWeight: 700,
-        whiteSpace: 'nowrap' as const,
-    },
-    logoSubtext: {
-        fontSize: '0.7rem',
-        opacity: 0.6,
-        marginTop: 2,
-    },
-    collapseBtn: {
-        background: 'rgba(255,255,255,0.1)',
-        border: 'none',
-        color: 'white',
-        width: 28,
-        height: 28,
-        borderRadius: 6,
-        cursor: 'pointer',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: '0.85rem',
-        flexShrink: 0,
-    },
-    nav: {
-        flex: 1,
-        padding: '0.75rem 0.5rem',
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: 4,
-    },
-    navItem: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        padding: '0.65rem 0.75rem',
-        border: 'none',
-        background: 'transparent',
-        color: 'rgba(255,255,255,0.65)',
-        borderRadius: 8,
-        cursor: 'pointer',
-        fontSize: '0.9rem',
-        transition: 'all 0.2s ease',
-        textAlign: 'left' as const,
-        width: '100%',
-        whiteSpace: 'nowrap' as const,
-    },
-    navItemActive: {
-        background: 'rgba(99, 102, 241, 0.2)',
-        color: '#818cf8',
-        fontWeight: 600,
-    },
-    navLabel: {
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-    },
-    sidebarFooter: {
-        padding: '0.75rem',
-        borderTop: '1px solid rgba(255,255,255,0.08)',
-        display: 'flex',
-        flexDirection: 'column' as const,
-        gap: 6,
-    },
-    footerBtn: {
-        width: '100%',
-        padding: '0.5rem',
-        background: 'rgba(255,255,255,0.08)',
-        border: 'none',
-        color: 'rgba(255,255,255,0.7)',
-        borderRadius: 6,
-        cursor: 'pointer',
-        fontSize: '0.78rem',
-        textAlign: 'left' as const,
-    },
-    logoutBtn: {
-        color: '#f87171',
-    },
-    main: {
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column' as const,
-        transition: 'margin-left 0.3s ease',
-    },
-    topBar: {
-        height: 60,
-        background: 'white',
-        borderBottom: '1px solid #e5e7eb',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 1.5rem',
-        position: 'sticky' as const,
-        top: 0,
-        zIndex: 50,
-    },
-    topBarLeft: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-    },
-    pageTitle: {
-        fontSize: '1.15rem',
-        fontWeight: 600,
-        color: '#1e293b',
-        margin: 0,
-    },
-    topBarRight: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '1rem',
-    },
-    professionBadge: {
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.3rem',
-        padding: '4px 12px',
-        borderRadius: 20,
-        background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        color: 'white',
-        fontSize: '0.78rem',
-        fontWeight: 600,
-    },
-    userName: {
-        fontSize: '0.88rem',
-        color: '#64748b',
-        fontWeight: 500,
-    },
-    content: {
-        flex: 1,
-        padding: '1.5rem',
-    },
 };
 
 export default DashboardLayout;

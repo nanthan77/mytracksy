@@ -1,543 +1,215 @@
 import React, { useState, useEffect } from 'react';
 import { ProfessionType } from '../contexts/AuthContext';
 
-// Profession data matching build/profession-setup.html
 const professions: {
-    id: ProfessionType;
-    title: string;
-    subtitle: string;
-    icon: string;
-    gradient: string;
-    primaryColor: string;
-    features: string[];
+    id: ProfessionType; title: string; subtitle: string; icon: string;
+    gradient: string; primaryColor: string; features: string[];
     stats: { value: string; label: string }[];
 }[] = [
         {
-            id: 'medical',
-            title: 'Medical Professional',
-            subtitle: 'Doctors, Surgeons, Specialists',
-            icon: '🩺',
-            gradient: 'linear-gradient(135deg, #0c4a6e 0%, #075985 100%)',
-            primaryColor: '#0ea5e9',
-            features: [
-                'Multi-hospital management (Government & Private)',
-                'CME credit tracking & SLMC compliance',
-                'Medical equipment & instrument tracking',
-                'Research & conference expense management',
-                'Medical terminology voice recognition',
-            ],
-            stats: [
-                { value: '50+', label: 'Medical Features' },
-                { value: '15+', label: 'Specialties' },
-                { value: '3', label: 'Languages' },
-            ],
+            id: 'medical', title: 'Medical Professional', subtitle: 'Doctors, Surgeons, Specialists', icon: '🩺',
+            gradient: 'linear-gradient(135deg, #0c4a6e, #075985)', primaryColor: '#0ea5e9',
+            features: ['Multi-hospital management', 'CME credit tracking & SLMC compliance', 'Medical equipment tracking', 'Research expense management', 'Medical voice recognition'],
+            stats: [{ value: '50+', label: 'Features' }, { value: '15+', label: 'Specialties' }, { value: '3', label: 'Languages' }]
         },
         {
-            id: 'legal',
-            title: 'Legal Professional',
-            subtitle: 'Lawyers, Attorneys, Legal Advisors',
-            icon: '⚖️',
-            gradient: 'linear-gradient(135deg, #1e2124 0%, #374151 100%)',
-            primaryColor: '#1e3a8a',
-            features: [
-                'Case & client portfolio management',
-                'Billable hours tracking & time allocation',
-                'Court fee calculators (Supreme, Appeal, High)',
-                'Bar Association compliance & CLE tracking',
-                'Legal research & database subscriptions',
-            ],
-            stats: [
-                { value: '40+', label: 'Legal Features' },
-                { value: '12+', label: 'Practice Areas' },
-                { value: '3', label: 'Court Levels' },
-            ],
+            id: 'legal', title: 'Legal Professional', subtitle: 'Lawyers, Attorneys, Legal Advisors', icon: '⚖️',
+            gradient: 'linear-gradient(135deg, #1e2124, #374151)', primaryColor: '#6366f1',
+            features: ['Case & client portfolio management', 'Billable hours tracking', 'Court fee calculators', 'Bar Association compliance', 'Legal research tracking'],
+            stats: [{ value: '40+', label: 'Features' }, { value: '12+', label: 'Practice Areas' }, { value: '3', label: 'Court Levels' }]
         },
         {
-            id: 'engineering',
-            title: 'Engineering Professional',
-            subtitle: 'Engineers, Architects, Technical Specialists',
-            icon: '⚙️',
-            gradient: 'linear-gradient(135deg, #7c2d12 0%, #1e3a8a 100%)',
-            primaryColor: '#ea580c',
-            features: [
-                'Multi-project tracking & resource allocation',
-                'Software licenses & technical tool management',
-                'IESL certification & professional development',
-                'Project cost allocation & profitability analysis',
-                'Equipment maintenance & depreciation tracking',
-            ],
-            stats: [
-                { value: '45+', label: 'Engineering Features' },
-                { value: '20+', label: 'Disciplines' },
-                { value: '100+', label: 'Software Tools' },
-            ],
+            id: 'engineering', title: 'Engineering Professional', subtitle: 'Engineers, Architects, Technical Specialists', icon: '⚙️',
+            gradient: 'linear-gradient(135deg, #7c2d12, #1e3a8a)', primaryColor: '#ea580c',
+            features: ['Multi-project tracking', 'Software license management', 'IESL certification tracking', 'Cost allocation & profitability', 'Equipment depreciation'],
+            stats: [{ value: '45+', label: 'Features' }, { value: '20+', label: 'Disciplines' }, { value: '100+', label: 'Tools' }]
         },
         {
-            id: 'business',
-            title: 'Business Owner/CEO',
-            subtitle: 'Entrepreneurs, Executives, Business Leaders',
-            icon: '📈',
-            gradient: 'linear-gradient(135deg, #064e3b 0%, #92400e 100%)',
-            primaryColor: '#059669',
-            features: [
-                'Multi-entity & subsidiary management',
-                'Executive analytics & strategic planning',
-                'Employee expense & payroll management',
-                'Revenue forecasting & cash flow analysis',
-                'Investor relations & board reporting',
-            ],
-            stats: [
-                { value: '60+', label: 'Business Features' },
-                { value: '25+', label: 'Industries' },
-                { value: '∞', label: 'Entities' },
-            ],
+            id: 'business', title: 'Business Owner / CEO', subtitle: 'Entrepreneurs, Executives, Business Leaders', icon: '📈',
+            gradient: 'linear-gradient(135deg, #064e3b, #92400e)', primaryColor: '#059669',
+            features: ['Multi-entity management', 'Executive analytics', 'Payroll & HR management', 'Revenue forecasting', 'Investor relations'],
+            stats: [{ value: '60+', label: 'Features' }, { value: '25+', label: 'Industries' }, { value: '∞', label: 'Entities' }]
         },
         {
-            id: 'individual',
-            title: 'Individual User',
-            subtitle: 'Personal Finance Management',
-            icon: '👤',
-            gradient: 'linear-gradient(135deg, #581c87 0%, #7c2d12 100%)',
-            primaryColor: '#7c3aed',
-            features: [
-                'Family & household budget management',
-                'Personal savings goals & investment tracking',
-                'Education & children\'s expense planning',
-                'Healthcare & family wellness tracking',
-                'Travel & entertainment budget management',
-            ],
-            stats: [
-                { value: '35+', label: 'Personal Features' },
-                { value: '15+', label: 'Categories' },
-                { value: '100%', label: 'Customizable' },
-            ],
+            id: 'individual', title: 'Individual User', subtitle: 'Personal Finance Management', icon: '👤',
+            gradient: 'linear-gradient(135deg, #581c87, #7c2d12)', primaryColor: '#7c3aed',
+            features: ['Family budget management', 'Savings goals & investments', 'Education expense planning', 'Healthcare tracking', 'Travel budget management'],
+            stats: [{ value: '35+', label: 'Features' }, { value: '15+', label: 'Categories' }, { value: '100%', label: 'Custom' }]
         },
         {
-            id: 'trading',
-            title: 'Trading & Investment',
-            subtitle: 'Traders, Financial Analysts, Investment Advisors',
-            icon: '📊',
-            gradient: 'linear-gradient(135deg, #1a365d 0%, #2c5282 100%)',
-            primaryColor: '#1a365d',
-            features: [
-                'Real-time P&L integration with trading platforms',
-                'Tax loss harvesting & capital gains tracking',
-                'Multiple account & brokerage management',
-                'Regulatory compliance & licensing tracking',
-                'Performance analytics vs. expenses correlation',
-            ],
-            stats: [
-                { value: '65+', label: 'Trading Features' },
-                { value: '10+', label: 'Asset Classes' },
-                { value: '24/7', label: 'Market Coverage' },
-            ],
+            id: 'trading', title: 'Trading & Investment', subtitle: 'Traders, Financial Analysts, Investment Advisors', icon: '📊',
+            gradient: 'linear-gradient(135deg, #1a365d, #2c5282)', primaryColor: '#3b82f6',
+            features: ['Real-time P&L integration', 'Tax loss harvesting', 'Multiple brokerage management', 'Regulatory compliance', 'Performance analytics'],
+            stats: [{ value: '65+', label: 'Features' }, { value: '10+', label: 'Asset Classes' }, { value: '24/7', label: 'Coverage' }]
         },
         {
-            id: 'automotive',
-            title: 'Automotive Sales',
-            subtitle: 'Car Sales, Dealership Staff, Auto Finance',
-            icon: '🚗',
-            gradient: 'linear-gradient(135deg, #dc2626 0%, #64748b 100%)',
-            primaryColor: '#dc2626',
-            features: [
-                'Commission tracking & sales performance',
-                'Customer relationship management expenses',
-                'Vehicle demonstration & inventory costs',
-                'Seasonal expense planning & optimization',
-                'Multi-location dealership support',
-            ],
-            stats: [
-                { value: '50+', label: 'Sales Features' },
-                { value: '25+', label: 'Vehicle Brands' },
-                { value: '∞', label: 'Locations' },
-            ],
+            id: 'automotive', title: 'Automotive Sales', subtitle: 'Car Sales, Dealership Staff, Auto Finance', icon: '🚗',
+            gradient: 'linear-gradient(135deg, #dc2626, #64748b)', primaryColor: '#dc2626',
+            features: ['Commission tracking', 'Customer relationship expenses', 'Vehicle inventory costs', 'Seasonal expense planning', 'Multi-location support'],
+            stats: [{ value: '50+', label: 'Features' }, { value: '25+', label: 'Brands' }, { value: '∞', label: 'Locations' }]
         },
         {
-            id: 'marketing',
-            title: 'Marketing & Digital',
-            subtitle: 'Marketers, Social Media, Content Creators',
-            icon: '📢',
-            gradient: 'linear-gradient(135deg, #7c3aed 0%, #ea580c 100%)',
-            primaryColor: '#7c3aed',
-            features: [
-                'Campaign cost allocation & ROI tracking',
-                'Multi-platform advertising spend analytics',
-                'Client project expense separation',
-                'Creative asset & content creation tracking',
-                'Design tools & software subscription management',
-            ],
-            stats: [
-                { value: '70+', label: 'Marketing Tools' },
-                { value: '15+', label: 'Platforms' },
-                { value: '∞', label: 'Campaigns' },
-            ],
+            id: 'marketing', title: 'Marketing & Digital', subtitle: 'Marketers, Social Media, Content Creators', icon: '📢',
+            gradient: 'linear-gradient(135deg, #7c3aed, #ea580c)', primaryColor: '#7c3aed',
+            features: ['Campaign ROI tracking', 'Multi-platform ad analytics', 'Client project separation', 'Creative asset tracking', 'Subscription management'],
+            stats: [{ value: '70+', label: 'Tools' }, { value: '15+', label: 'Platforms' }, { value: '∞', label: 'Campaigns' }]
         },
         {
-            id: 'travel',
-            title: 'Travel Industry',
-            subtitle: 'Travel Agents, Tour Operators, Hotel Sales',
-            icon: '✈️',
-            gradient: 'linear-gradient(135deg, #1e40af 0%, #059669 100%)',
-            primaryColor: '#1e40af',
-            features: [
-                'Destination expense tracking by region',
-                'Familiarization trip management',
-                'Client entertainment & relationship analytics',
-                'Seasonal expense planning & optimization',
-                'Multi-currency transaction support',
-            ],
-            stats: [
-                { value: '55+', label: 'Travel Features' },
-                { value: '200+', label: 'Destinations' },
-                { value: '150+', label: 'Currencies' },
-            ],
+            id: 'travel', title: 'Travel Industry', subtitle: 'Travel Agents, Tour Operators, Hotel Sales', icon: '✈️',
+            gradient: 'linear-gradient(135deg, #1e40af, #059669)', primaryColor: '#1e40af',
+            features: ['Destination expense tracking', 'Familiarization trips', 'Client entertainment analytics', 'Seasonal optimization', 'Multi-currency support'],
+            stats: [{ value: '55+', label: 'Features' }, { value: '200+', label: 'Destinations' }, { value: '150+', label: 'Currencies' }]
         },
         {
-            id: 'transportation',
-            title: 'Transportation',
-            subtitle: 'Drivers, Delivery, Courier Services',
-            icon: '🚛',
-            gradient: 'linear-gradient(135deg, #ea580c 0%, #2563eb 100%)',
-            primaryColor: '#ea580c',
-            features: [
-                'GPS mileage tracking & optimization',
-                'Fuel efficiency analytics & cost tracking',
-                'Vehicle maintenance & repair scheduling',
-                'Commercial licensing & safety certification',
-                'Multiple vehicle fleet management',
-            ],
-            stats: [
-                { value: '45+', label: 'Transport Features' },
-                { value: '20+', label: 'Vehicle Types' },
-                { value: '24/7', label: 'Tracking' },
-            ],
+            id: 'transportation', title: 'Transportation', subtitle: 'Drivers, Delivery, Courier Services', icon: '🚛',
+            gradient: 'linear-gradient(135deg, #ea580c, #2563eb)', primaryColor: '#ea580c',
+            features: ['GPS mileage tracking', 'Fuel efficiency analytics', 'Vehicle maintenance scheduling', 'Safety certification', 'Fleet management'],
+            stats: [{ value: '45+', label: 'Features' }, { value: '20+', label: 'Vehicle Types' }, { value: '24/7', label: 'Tracking' }]
         },
         {
-            id: 'retail',
-            title: 'Retail & Sales',
-            subtitle: 'Retail Managers, Sales Reps, Merchandising',
-            icon: '🛒',
-            gradient: 'linear-gradient(135deg, #0d9488 0%, #f59e0b 100%)',
-            primaryColor: '#0d9488',
-            features: [
-                'Seasonal expense planning & holiday optimization',
-                'Inventory research & product sourcing tracking',
-                'Customer service training investment analytics',
-                'Multi-location store expense management',
-                'Sales performance correlation analysis',
-            ],
-            stats: [
-                { value: '60+', label: 'Retail Features' },
-                { value: '50+', label: 'Product Categories' },
-                { value: '∞', label: 'Store Locations' },
-            ],
+            id: 'retail', title: 'Retail & Sales', subtitle: 'Retail Managers, Sales Reps, Merchandising', icon: '🛒',
+            gradient: 'linear-gradient(135deg, #0d9488, #f59e0b)', primaryColor: '#0d9488',
+            features: ['Seasonal expense planning', 'Inventory sourcing tracking', 'Customer service analytics', 'Multi-location management', 'Sales correlation analysis'],
+            stats: [{ value: '60+', label: 'Features' }, { value: '50+', label: 'Categories' }, { value: '∞', label: 'Stores' }]
         },
         {
-            id: 'aquaculture',
-            title: 'Aquaculture & Marine Farming',
-            subtitle: 'Shrimp Farming, Sea Cucumber, Fish Farming & Export',
-            icon: '🐟',
-            gradient: 'linear-gradient(135deg, #0891b2 0%, #22c55e 100%)',
-            primaryColor: '#0891b2',
-            features: [
-                'Pond & Tank Management Systems',
-                'Water Quality & Environmental Monitoring',
-                'Feed Management & Growth Tracking',
-                'Harvest Yield & Mortality Analytics',
-                'Export Documentation & Compliance',
-            ],
-            stats: [
-                { value: '25+', label: 'Species Tracking' },
-                { value: '360°', label: 'Farm Management' },
-                { value: 'Global', label: 'Export Markets' },
-            ],
+            id: 'aquaculture', title: 'Aquaculture & Marine', subtitle: 'Shrimp, Sea Cucumber, Fish Farming & Export', icon: '🐟',
+            gradient: 'linear-gradient(135deg, #0891b2, #22c55e)', primaryColor: '#0891b2',
+            features: ['Pond & Tank management', 'Water quality monitoring', 'Feed management & FCR', 'Harvest yield analytics', 'Export documentation'],
+            stats: [{ value: '25+', label: 'Species' }, { value: '360°', label: 'Management' }, { value: 'Global', label: 'Export' }]
         },
     ];
 
-interface ProfessionSetupProps {
-    onProfessionSelected: (profession: ProfessionType) => void;
-}
+interface ProfessionSetupProps { onProfessionSelected: (profession: ProfessionType) => void; }
 
 const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected }) => {
     const [selected, setSelected] = useState<ProfessionType | null>(null);
+    const [mounted, setMounted] = useState(false);
 
-    // Check if a profession is already stored
+    useEffect(() => { setMounted(true); }, []);
     useEffect(() => {
         const stored = localStorage.getItem('myTracksyProfession');
-        if (stored) {
-            try {
-                const data = JSON.parse(stored);
-                if (data.profession) {
-                    setSelected(data.profession);
-                }
-            } catch {
-                // ignore
-            }
-        }
+        if (stored) { try { const d = JSON.parse(stored); if (d.profession) setSelected(d.profession); } catch { } }
     }, []);
-
-    const handleSelect = (id: ProfessionType) => {
-        setSelected(id);
-    };
 
     const handleContinue = () => {
         if (!selected) return;
-        const professionProfile = {
-            profession: selected,
-            selectedAt: new Date().toISOString(),
-        };
-        localStorage.setItem('myTracksyProfession', JSON.stringify(professionProfile));
+        localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selected, selectedAt: new Date().toISOString() }));
         onProfessionSelected(selected);
     };
 
     return (
-        <div style={styles.wrapper}>
-            {/* Background */}
-            <div style={styles.bg} />
+        <>
+            <style>{`
+                @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+                .prof-card { background: rgba(255,255,255,0.97); border-radius: 16px; padding: 1.5rem; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; font-family: 'Inter', sans-serif; }
+                .prof-card:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important; }
+                .prof-continue-btn { padding: 14px 48px; border: none; border-radius: 12px; font-size: 15px; font-weight: 650; color: white; background: linear-gradient(135deg, #6366f1, #8b5cf6); font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(99,102,241,0.3); letter-spacing: -0.01em; }
+                .prof-continue-btn:hover { box-shadow: 0 10px 30px rgba(99,102,241,0.4); transform: translateY(-2px); }
+                .prof-continue-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; box-shadow: none; }
+            `}</style>
 
-            <div style={styles.container}>
-                {/* Header */}
-                <div style={styles.header}>
-                    <h1 style={styles.headerTitle}>🎯 Choose Your Professional Path</h1>
-                    <p style={styles.headerSubtitle}>
-                        Select your profession to unlock a customized MyTracksy experience designed specifically for your professional needs.
-                    </p>
-                </div>
+            <div style={{
+                minHeight: '100vh', position: 'relative', overflow: 'hidden',
+                fontFamily: "'Inter', -apple-system, sans-serif",
+            }}>
+                {/* Background */}
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: -1,
+                    background: 'linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%)',
+                }} />
 
-                {/* Grid */}
-                <div style={styles.grid}>
-                    {professions.map((p) => (
-                        <div
-                            key={p.id}
-                            onClick={() => handleSelect(p.id)}
-                            style={{
-                                ...styles.card,
-                                borderColor: selected === p.id ? p.primaryColor : 'transparent',
-                                boxShadow:
-                                    selected === p.id
-                                        ? `0 0 0 4px ${p.primaryColor}33, 0 20px 40px rgba(0,0,0,0.15)`
-                                        : '0 10px 30px rgba(0,0,0,0.08)',
-                                transform: selected === p.id ? 'translateY(-4px)' : 'translateY(0)',
-                            }}
-                        >
-                            {/* Top color bar */}
-                            <div style={{ ...styles.topBar, background: p.gradient }} />
-
-                            {/* Header */}
-                            <div style={styles.cardHeader}>
-                                <div style={{ ...styles.iconCircle, background: p.primaryColor }}>
-                                    <span style={{ fontSize: '1.6rem' }}>{p.icon}</span>
-                                </div>
-                                <div>
-                                    <div style={styles.cardTitle}>{p.title}</div>
-                                    <div style={styles.cardSubtitle}>{p.subtitle}</div>
-                                </div>
-                            </div>
-
-                            {/* Features */}
-                            <ul style={styles.featureList}>
-                                {p.features.map((f, i) => (
-                                    <li key={i} style={styles.featureItem}>
-                                        <span style={{ ...styles.featureDot, background: p.primaryColor }} />
-                                        {f}
-                                    </li>
-                                ))}
-                            </ul>
-
-                            {/* Stats */}
-                            <div style={styles.statsRow}>
-                                {p.stats.map((s, i) => (
-                                    <div key={i} style={styles.stat}>
-                                        <div style={{ ...styles.statValue, color: p.primaryColor }}>{s.value}</div>
-                                        <div style={styles.statLabel}>{s.label}</div>
-                                    </div>
-                                ))}
-                            </div>
+                <div style={{ maxWidth: 1400, margin: '0 auto', padding: '2.5rem 2rem', position: 'relative', zIndex: 1 }}>
+                    {/* Header */}
+                    <div style={{
+                        textAlign: 'center', marginBottom: '2.5rem', color: 'white',
+                        opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)',
+                        transition: 'all 0.8s ease',
+                    }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+                            <div style={{
+                                width: 44, height: 44, borderRadius: 12,
+                                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: '1.3rem', boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
+                            }}>💰</div>
+                            <span style={{ fontSize: 24, fontWeight: 700, letterSpacing: '-0.02em' }}>MyTracksy</span>
                         </div>
-                    ))}
-                </div>
-
-                {/* Selected info & button */}
-                {selected && (
-                    <div style={styles.selectedInfo}>
-                        <h3 style={{ marginBottom: '0.5rem', color: '#1e293b' }}>
-                            {professions.find((p) => p.id === selected)?.title} Dashboard
-                        </h3>
-                        <p style={{ color: '#64748b', marginBottom: '1rem' }}>
-                            Your dashboard will be customized with specialized features, terminology, and tools tailored to your industry.
+                        <h1 style={{
+                            fontSize: '2.25rem', fontWeight: 800, marginBottom: '0.75rem',
+                            letterSpacing: '-0.03em', lineHeight: 1.2,
+                        }}>
+                            Choose Your Professional Path
+                        </h1>
+                        <p style={{ fontSize: 16, opacity: 0.6, maxWidth: 600, margin: '0 auto', lineHeight: 1.6, fontWeight: 400 }}>
+                            Select your profession to unlock a customized experience designed specifically for your industry needs
                         </p>
                     </div>
-                )}
 
-                <div style={styles.actions}>
-                    <button
-                        onClick={handleContinue}
-                        disabled={!selected}
-                        style={{
-                            ...styles.continueBtn,
-                            opacity: selected ? 1 : 0.5,
-                            cursor: selected ? 'pointer' : 'not-allowed',
-                        }}
-                    >
-                        Continue to Dashboard →
-                    </button>
+                    {/* Grid */}
+                    <div style={{
+                        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                        gap: '1.25rem', marginBottom: '2rem',
+                    }}>
+                        {professions.map((p, i) => (
+                            <div key={p.id} onClick={() => setSelected(p.id)} className="prof-card"
+                                style={{
+                                    borderColor: selected === p.id ? p.primaryColor : 'transparent',
+                                    boxShadow: selected === p.id
+                                        ? `0 0 0 3px ${p.primaryColor}33, 0 20px 40px rgba(0,0,0,0.15)`
+                                        : '0 4px 15px rgba(0,0,0,0.06)',
+                                    transform: selected === p.id ? 'translateY(-4px)' : undefined,
+                                    animation: mounted ? `fadeUp 0.5s ease ${i * 0.04}s both` : 'none',
+                                }}>
+                                {/* Top bar */}
+                                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 3, background: p.gradient }} />
+
+                                {/* Header */}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: '1.25rem' }}>
+                                    <div style={{
+                                        width: 48, height: 48, borderRadius: 12, background: p.primaryColor,
+                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                        fontSize: '1.5rem', flexShrink: 0, boxShadow: `0 4px 12px ${p.primaryColor}33`,
+                                    }}>{p.icon}</div>
+                                    <div>
+                                        <div style={{ fontSize: 16, fontWeight: 700, color: '#0f172a', letterSpacing: '-0.02em' }}>{p.title}</div>
+                                        <div style={{ fontSize: 13, color: '#94a3b8', fontWeight: 400 }}>{p.subtitle}</div>
+                                    </div>
+                                </div>
+
+                                {/* Features */}
+                                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 1rem' }}>
+                                    {p.features.map((f, fi) => (
+                                        <li key={fi} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', color: '#475569', fontSize: 13, fontWeight: 400 }}>
+                                            <span style={{ width: 6, height: 6, borderRadius: '50%', background: p.primaryColor, flexShrink: 0, opacity: 0.7 }} />
+                                            {f}
+                                        </li>
+                                    ))}
+                                </ul>
+
+                                {/* Stats */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
+                                    {p.stats.map((s, si) => (
+                                        <div key={si} style={{ textAlign: 'center' }}>
+                                            <div style={{ fontSize: 16, fontWeight: 700, color: p.primaryColor }}>{s.value}</div>
+                                            <div style={{ fontSize: 11, color: '#94a3b8', fontWeight: 400 }}>{s.label}</div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Action */}
+                    <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '2rem' }}>
+                        <button onClick={handleContinue} disabled={!selected} className="prof-continue-btn">
+                            {selected ? `Continue as ${professions.find(p => p.id === selected)?.title} →` : 'Select a profession to continue'}
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+        </>
     );
-};
-
-// --- Inline styles ---
-const styles: Record<string, React.CSSProperties> = {
-    wrapper: {
-        minHeight: '100vh',
-        position: 'relative',
-        overflow: 'hidden',
-    },
-    bg: {
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%)',
-        zIndex: -1,
-    },
-    container: {
-        maxWidth: 1400,
-        margin: '0 auto',
-        padding: '2rem',
-        position: 'relative',
-        zIndex: 1,
-    },
-    header: {
-        textAlign: 'center' as const,
-        marginBottom: '2.5rem',
-        color: 'white',
-    },
-    headerTitle: {
-        fontSize: '2.5rem',
-        fontWeight: 800,
-        marginBottom: '0.75rem',
-        background: 'linear-gradient(45deg, #fff, #f0f9ff)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-    },
-    headerSubtitle: {
-        fontSize: '1.1rem',
-        opacity: 0.9,
-        maxWidth: 700,
-        margin: '0 auto',
-        lineHeight: 1.6,
-    },
-    grid: {
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '2rem',
-    },
-    card: {
-        background: 'rgba(255,255,255,0.97)',
-        borderRadius: 16,
-        padding: '1.75rem',
-        cursor: 'pointer',
-        position: 'relative' as const,
-        overflow: 'hidden',
-        border: '3px solid transparent',
-        transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
-        fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    },
-    topBar: {
-        position: 'absolute' as const,
-        top: 0,
-        left: 0,
-        right: 0,
-        height: 5,
-    },
-    cardHeader: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        marginBottom: '1.25rem',
-    },
-    iconCircle: {
-        width: 52,
-        height: 52,
-        borderRadius: '50%',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexShrink: 0,
-    },
-    cardTitle: {
-        fontSize: '1.25rem',
-        fontWeight: 700,
-        color: '#1e293b',
-    },
-    cardSubtitle: {
-        fontSize: '0.85rem',
-        color: '#64748b',
-    },
-    featureList: {
-        listStyle: 'none',
-        padding: 0,
-        margin: 0,
-        marginBottom: '1.25rem',
-    },
-    featureItem: {
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.6rem',
-        padding: '0.35rem 0',
-        color: '#475569',
-        fontSize: '0.88rem',
-    },
-    featureDot: {
-        width: 7,
-        height: 7,
-        borderRadius: '50%',
-        flexShrink: 0,
-    },
-    statsRow: {
-        display: 'flex',
-        justifyContent: 'space-between',
-        paddingTop: '0.75rem',
-        borderTop: '1px solid #e2e8f0',
-    },
-    stat: {
-        textAlign: 'center' as const,
-    },
-    statValue: {
-        fontSize: '1.1rem',
-        fontWeight: 700,
-    },
-    statLabel: {
-        fontSize: '0.75rem',
-        color: '#94a3b8',
-    },
-    selectedInfo: {
-        background: 'rgba(255,255,255,0.95)',
-        borderRadius: 16,
-        padding: '1.5rem',
-        marginBottom: '1.5rem',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-        animation: 'fadeIn 0.4s ease-out',
-    },
-    actions: {
-        display: 'flex',
-        justifyContent: 'center',
-    },
-    continueBtn: {
-        padding: '0.9rem 2.5rem',
-        border: 'none',
-        borderRadius: 10,
-        fontSize: '1.05rem',
-        fontWeight: 700,
-        color: 'white',
-        background: 'linear-gradient(135deg, #667eea, #764ba2)',
-        boxShadow: '0 6px 20px rgba(102,126,234,0.35)',
-        transition: 'all 0.3s ease',
-    },
 };
 
 export default ProfessionSetup;
