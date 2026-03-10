@@ -3,7 +3,10 @@ import LandingPage from './components/LandingPage';
 import SimpleLogin from './components/SimpleLogin';
 import ProfessionSetup from './components/ProfessionSetup';
 import ProfessionDashboard from './components/dashboards/ProfessionDashboard';
+import ManifestUpdater from './components/ManifestUpdater';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import { ProfessionType } from './contexts/AuthContext';
+import { getSlugFromPath, getRouteBySlug, getRouteByProfession } from './config/professionRoutes';
 import './i18n';
 
 type AppView = 'landing' | 'login' | 'profession' | 'dashboard';
@@ -15,11 +18,46 @@ function App() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [selectedProfession, setSelectedProfession] = useState<ProfessionType | null>(null);
 
-  // Check for stored login on mount
+  // ============ URL-BASED ROUTING ============
+
+  /** Navigate to profession URL */
+  const navigateToProfession = (profession: ProfessionType) => {
+    const route = getRouteByProfession(profession);
+    if (route) {
+      window.history.pushState({}, '', `/${route.slug}`);
+    }
+  };
+
+  /** Navigate to root */
+  const navigateToRoot = () => {
+    window.history.pushState({}, '', '/');
+  };
+
+  // Check URL path + stored login on mount
   useEffect(() => {
+    const slug = getSlugFromPath();
     const storedUser = localStorage.getItem('tracksyUser');
     const storedProfession = localStorage.getItem('myTracksyProfession');
 
+    if (slug) {
+      // URL has a profession slug (e.g., /dr, /lawyer)
+      const route = getRouteBySlug(slug);
+      if (route) {
+        if (storedUser) {
+          // Logged in → go straight to dashboard
+          setCurrentUser(JSON.parse(storedUser));
+          setSelectedProfession(route.profession);
+          setView('dashboard');
+        } else {
+          // Not logged in → show login, remember the profession
+          setSelectedProfession(route.profession);
+          setView('login');
+        }
+        return;
+      }
+    }
+
+    // No profession slug → normal flow
     if (storedUser) {
       setCurrentUser(JSON.parse(storedUser));
       if (storedProfession) {
@@ -27,6 +65,7 @@ function App() {
           const data = JSON.parse(storedProfession);
           if (data.profession) {
             setSelectedProfession(data.profession);
+            navigateToProfession(data.profession);
             setView('dashboard');
           } else {
             setView('profession');
@@ -38,10 +77,31 @@ function App() {
         setView('profession');
       }
     } else {
-      // No stored user — show landing page
       setView('landing');
     }
   }, []);
+
+  // Listen for browser back/forward
+  useEffect(() => {
+    const handlePopState = () => {
+      const slug = getSlugFromPath();
+      if (slug) {
+        const route = getRouteBySlug(slug);
+        if (route && currentUser) {
+          setSelectedProfession(route.profession);
+          setView('dashboard');
+        }
+      } else {
+        if (!currentUser) {
+          setView('landing');
+        }
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [currentUser]);
+
+  // ============ AUTH HANDLERS ============
 
   const handleLogin = (email: string, _password: string) => {
     const user = {
@@ -57,7 +117,15 @@ function App() {
     } catch (error) {
       // Ignore
     }
-    setView('profession');
+
+    // If a profession was pre-selected from URL, go to dashboard
+    if (selectedProfession) {
+      localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selectedProfession }));
+      navigateToProfession(selectedProfession);
+      setView('dashboard');
+    } else {
+      setView('profession');
+    }
   };
 
   const handleRegister = (email: string, _password: string) => {
@@ -74,7 +142,15 @@ function App() {
     } catch (error) {
       // Ignore
     }
-    setView('profession');
+
+    // If a profession was pre-selected from URL, go to dashboard
+    if (selectedProfession) {
+      localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selectedProfession }));
+      navigateToProfession(selectedProfession);
+      setView('dashboard');
+    } else {
+      setView('profession');
+    }
   };
 
   const handleSkipLogin = () => {
@@ -83,7 +159,14 @@ function App() {
     try {
       localStorage.setItem('tracksyUser', JSON.stringify(guestUser));
     } catch { }
-    setView('profession');
+
+    if (selectedProfession) {
+      localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selectedProfession }));
+      navigateToProfession(selectedProfession);
+      setView('dashboard');
+    } else {
+      setView('profession');
+    }
   };
 
   const handleLogout = () => {
@@ -91,13 +174,22 @@ function App() {
     setSelectedProfession(null);
     localStorage.removeItem('tracksyUser');
     localStorage.removeItem('myTracksyProfession');
+    navigateToRoot();
     setView('landing');
   };
 
   const handleChangeProfession = () => {
     setSelectedProfession(null);
     localStorage.removeItem('myTracksyProfession');
+    navigateToRoot();
     setView('profession');
+  };
+
+  const handleProfessionSelected = (profession: ProfessionType) => {
+    setSelectedProfession(profession);
+    localStorage.setItem('myTracksyProfession', JSON.stringify({ profession }));
+    navigateToProfession(profession);
+    setView('dashboard');
   };
 
   // Demo: skip login, go straight to profession dashboard
@@ -109,12 +201,13 @@ function App() {
       localStorage.setItem('tracksyUser', JSON.stringify(demoUser));
       localStorage.setItem('myTracksyProfession', JSON.stringify({ profession }));
     } catch { }
+    navigateToProfession(profession);
     setView('dashboard');
   };
 
   // ============ ROUTING ============
 
-  // 0. Landing page (first visit)
+  // 0. Landing page (first visit, root URL)
   if (view === 'landing') {
     return (
       <LandingPage
@@ -142,22 +235,23 @@ function App() {
   if (view === 'profession') {
     return (
       <ProfessionSetup
-        onProfessionSelected={(profession) => {
-          setSelectedProfession(profession);
-          setView('dashboard');
-        }}
+        onProfessionSelected={handleProfessionSelected}
       />
     );
   }
 
-  // 3. Dashboard
+  // 3. Dashboard with PWA support
   return (
-    <ProfessionDashboard
-      profession={selectedProfession!}
-      userName={currentUser?.name || currentUser?.email || 'User'}
-      onChangeProfession={handleChangeProfession}
-      onLogout={handleLogout}
-    />
+    <>
+      <ManifestUpdater profession={selectedProfession} />
+      <ProfessionDashboard
+        profession={selectedProfession!}
+        userName={currentUser?.name || currentUser?.email || 'User'}
+        onChangeProfession={handleChangeProfession}
+        onLogout={handleLogout}
+      />
+      {selectedProfession && <PWAInstallPrompt profession={selectedProfession} />}
+    </>
   );
 }
 

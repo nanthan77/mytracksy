@@ -46,6 +46,56 @@
         "destination": "/login.html",
         "type": 301
       }
+    ],
+    "rewrites": [
+      {
+        "source": "/dr",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/lawyer",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/engineer",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/biz",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/personal",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/trader",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/auto",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/marketing",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/travel",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/transport",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/retail",
+        "destination": "/index.html"
+      },
+      {
+        "source": "/aqua",
+        "destination": "/index.html"
+      }
     ]
   }
 }
