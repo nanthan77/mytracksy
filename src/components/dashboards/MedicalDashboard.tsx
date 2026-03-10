@@ -8,13 +8,13 @@ import PrescriptionPad from '../PrescriptionPad';
 import TaxSpeedometer from '../TaxSpeedometer';
 import ReceiptScanner from '../ReceiptScanner';
 import AuditorExport from '../AuditorExport';
-import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName } from '../../config/goldenListCategories';
+import TransactionInbox from '../TransactionInbox';
+import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName, isCapitalItem } from '../../config/goldenListCategories';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-    addIncome, addExpense, subscribeIncome, subscribeExpenses,
-    subscribeChanneling, subscribeGovIncomeConfig,
-} from '../../services/doctorFinanceService';
-import { isCapitalItem } from '../../config/goldenListCategories';
+    addTransaction, subscribeTransactions, seedChartOfAccounts,
+    subscribeGovIncomeConfig, toCents, fromCents,
+} from '../../services/accountingCoreService';
 
 interface MedicalDashboardProps {
     userName: string;
@@ -24,6 +24,7 @@ interface MedicalDashboardProps {
 
 const navItems = [
     { id: 'overview', label: 'Dashboard', icon: '📊' },
+    { id: 'inbox', label: 'Inbox', icon: '📥' },
     { id: 'today', label: "Today's Schedule", icon: '🕐' },
     { id: 'quicknotes', label: 'Quick Notes', icon: '📝' },
     { id: 'patients', label: 'Patients', icon: '🧑‍⚕️' },
@@ -128,58 +129,50 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const govAnnual = govMonthly * 12;
     const govAPIT = Math.round(govAnnual * 0.12); // Simplified APIT for demo
 
-    // ===== FIRESTORE REAL-TIME SUBSCRIPTIONS =====
+    // ===== AUTO-SEED CHART OF ACCOUNTS =====
+    useEffect(() => {
+        if (!uid) return;
+        seedChartOfAccounts(uid, 'medical').catch(err =>
+            console.error('Failed to seed chart of accounts:', err)
+        );
+    }, [uid]);
+
+    // ===== FIRESTORE REAL-TIME SUBSCRIPTIONS (Universal) =====
     useEffect(() => {
         if (!uid) return; // Demo mode — keep sample data
 
-        // Subscribe to income from Firestore
-        const unsubIncome = subscribeIncome(uid, (entries) => {
-            if (entries.length > 0) {
-                setInvoices(entries.map(e => ({
-                    id: e.id || '',
+        // Subscribe to cleared income from unified transactions
+        const unsubIncome = subscribeTransactions(uid, (txns) => {
+            if (txns.length > 0) {
+                setInvoices(txns.map(t => ({
+                    id: t.id || '',
                     type: 'income' as const,
-                    amount: e.amount,
-                    description: e.description,
-                    category: e.category,
-                    date: e.date,
-                    status: e.status || 'paid',
+                    amount: fromCents(t.amount_cents),
+                    description: t.description,
+                    category: t.category_name || '',
+                    date: t.date,
+                    status: (t.status === 'cleared' ? 'paid' : 'pending') as any,
                 })));
                 setFirestoreReady(true);
             } else if (!firestoreReady) {
-                // First load with no data — keep sample for demo feel
                 setFirestoreReady(true);
             }
-        });
+        }, { type: 'income', status: 'cleared' });
 
-        // Subscribe to expenses from Firestore
-        const unsubExpenses = subscribeExpenses(uid, (entries) => {
-            if (entries.length > 0) {
-                setExpenses(entries.map(e => ({
-                    id: e.id || '',
+        // Subscribe to cleared expenses from unified transactions
+        const unsubExpenses = subscribeTransactions(uid, (txns) => {
+            if (txns.length > 0) {
+                setExpenses(txns.map(t => ({
+                    id: t.id || '',
                     type: 'expense' as const,
-                    amount: e.amount,
-                    description: e.description,
-                    category: e.category,
-                    date: e.date,
+                    amount: fromCents(t.amount_cents),
+                    description: t.description,
+                    category: t.category_name || '',
+                    date: t.date,
                     status: 'completed',
                 })));
             }
-        });
-
-        // Subscribe to channeling shifts from Firestore
-        const unsubChanneling = subscribeChanneling(uid, (entries) => {
-            if (entries.length > 0) {
-                setChannelingShifts(entries.map(e => ({
-                    id: e.id || '',
-                    hospital: e.hospitalName,
-                    date: e.date,
-                    patients: e.patientsCount,
-                    expected: e.netPayable,
-                    status: e.status,
-                    receivedDate: e.paymentDate,
-                })));
-            }
-        });
+        }, { type: 'expense', status: 'cleared' });
 
         // Subscribe to government income config
         const unsubGov = subscribeGovIncomeConfig(uid, (config) => {
@@ -191,7 +184,6 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         return () => {
             unsubIncome();
             unsubExpenses();
-            unsubChanneling();
             unsubGov();
         };
     }, [uid]);
@@ -249,16 +241,19 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         setInvoices((prev) => [newInvoice, ...prev]);
         setShowInvoiceForm(false);
 
-        // Persist to Firestore if authenticated
+        // Persist to Firestore (Universal Accounting Core)
         if (uid) {
-            addIncome(uid, {
-                description: `${invoice.serviceType} — ${invoice.patientName}`,
-                amount: invoice.amount,
-                category: invoice.serviceType,
-                source: invoice.hospital || '',
+            addTransaction(uid, {
                 date: invoice.date,
-                whtDeducted: Math.round(invoice.amount * 0.05),
-                status: (invoice.status as 'received' | 'pending' | 'overdue') || 'pending',
+                amount_cents: toCents(invoice.amount),
+                type: 'income',
+                status: 'cleared',
+                source: 'manual_entry',
+                vendor: invoice.hospital || '',
+                category_id: '',
+                category_name: invoice.serviceType,
+                description: `${invoice.serviceType} — ${invoice.patientName}`,
+                metadata: { wht_deducted_cents: toCents(Math.round(invoice.amount * 0.05)) },
             }).catch(err => console.error('Failed to save income:', err));
         }
     };
@@ -279,14 +274,19 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         setShowAddExpense(false);
         setExpenseForm({ description: '', amount: 0, category: GOLDEN_LIST[0].name, date: new Date().toISOString().split('T')[0] });
 
-        // Persist to Firestore if authenticated
+        // Persist to Firestore (Universal Accounting Core)
         if (uid) {
-            addExpense(uid, {
-                description: expenseForm.description,
-                amount: expenseForm.amount,
-                category: expenseForm.category,
+            addTransaction(uid, {
                 date: expenseForm.date,
-                isCapitalItem: isCapitalItem(expenseForm.category),
+                amount_cents: toCents(expenseForm.amount),
+                type: 'expense',
+                status: 'cleared',
+                source: 'manual_entry',
+                vendor: '',
+                category_id: '',
+                category_name: expenseForm.category,
+                description: expenseForm.description,
+                metadata: { is_capital_item: isCapitalItem(expenseForm.category) },
             }).catch(err => console.error('Failed to save expense:', err));
         }
     };
@@ -306,6 +306,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         switch (activeNav) {
             case 'overview':
                 return renderOverview();
+            case 'inbox':
+                return <TransactionInbox />;
             case 'today':
                 return renderTodaySchedule();
             case 'quicknotes':
