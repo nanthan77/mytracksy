@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { auth, functions } from '../../shared/firebase/config';
 
@@ -40,6 +40,15 @@ export function useAdminAuth() {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
   }, [resetIdleTimer]);
+
+  // Handle redirect result on page load (Google Sign-In redirect flow)
+  useEffect(() => {
+    getRedirectResult(auth).catch((err) => {
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setState(prev => ({ ...prev, loading: false, error: err.message }));
+      }
+    });
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -84,13 +93,11 @@ export function useAdminAuth() {
     }
   };
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    try {
-      await signInWithPopup(auth, googleProvider);
-    } catch (err: any) {
-      setState(prev => ({ ...prev, loading: false, error: err.message }));
-    }
+    signInWithRedirect(auth, googleProvider);
+    // Page will redirect to Google, then back here.
+    // getRedirectResult above picks up the result on return.
   };
 
   const logout = async () => {
