@@ -6,6 +6,7 @@ const db = getFirestore();
 const auth = getAuth();
 
 const FOUNDER_UID = 'eyuHN6ZeYZgi2fSBM3bmslfzAhX2';
+const FOUNDER_EMAILS = ['ceo@mytracksy.lk', 'nanthan77@gmail.com'];
 
 type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
 
@@ -21,9 +22,11 @@ export async function requireRole(
 
   const uid = context.auth.uid;
   const claims = context.auth.token;
+  const userEmail = context.auth.token.email || '';
 
-  // Founder always has super_admin
-  const role: AdminRole = uid === FOUNDER_UID ? 'super_admin' : (claims.admin_role as AdminRole);
+  // Founder always has super_admin (check both UID and email)
+  const isFounder = uid === FOUNDER_UID || FOUNDER_EMAILS.includes(userEmail);
+  const role: AdminRole = isFounder ? 'super_admin' : (claims.admin_role as AdminRole);
 
   if (!role || !requiredRoles.includes(role)) {
     // Log failed access attempt
@@ -38,7 +41,7 @@ export async function requireRole(
     throw new functions.https.HttpsError('permission-denied', 'Insufficient role');
   }
 
-  const professions: string[] = uid === FOUNDER_UID
+  const professions: string[] = isFounder
     ? ['all']
     : (claims.admin_professions as string[] || []);
 

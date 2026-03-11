@@ -6,6 +6,27 @@ admin.initializeApp();
 const db = admin.firestore();
 
 // ============================================
+// Admin Panel Cloud Functions
+// ============================================
+export { verifyAdminAccess, assignAdminRole, removeAdminRole, listAdminUsers } from './adminRoles';
+export { setAdminClaim, checkAdminStatus } from './adminAuth';
+export { approveDoctor, suspendUser, overrideSubscription, getAdminStats } from './adminActions';
+export { getProfessionStats, getGlobalStats, getProfessionUsers, getAuditLog } from './adminAnalytics';
+
+// ============================================
+// Schedule & Notification Functions
+// ============================================
+export { checkScheduleConflict } from './checkScheduleConflict';
+export { generateSubscriptionInvoice } from './generateSubscriptionInvoice';
+export { handleSubscriptionWebhook } from './handleSubscriptionWebhook';
+export { lifeAdminReminder } from './lifeAdminReminder';
+export { morningBriefing } from './morningBriefing';
+export { processVoiceNote } from './processVoiceNote';
+export { onScheduleEventCreated, onScheduleEventUpdated, onScheduleEventDeleted } from './scheduleTrafficAlert';
+export { sendBulkPush } from './sendPushNotification';
+export { trafficAlertWorker } from './trafficAlertWorker';
+
+// ============================================
 // PayHere Configuration
 // ============================================
 const PAYHERE_MERCHANT_ID = functions.config().payhere?.merchant_id || 'MERCHANT_ID';
