@@ -213,12 +213,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     }}>
                         {!collapsed && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <div style={{
-                                    width: 32, height: 32, borderRadius: 8,
-                                    background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: '0.9rem', boxShadow: '0 2px 8px rgba(99,102,241,0.3)',
-                                }}>💰</div>
+                                <img src="/logos/final logo no lettermy tracksy.png" alt="MyTracksy" style={{ width: 32, height: 32, objectFit: 'contain' }} />
                                 <div>
                                     <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2 }}>MyTracksy</div>
                                     <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>SaaS Finance</div>

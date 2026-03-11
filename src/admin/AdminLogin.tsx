@@ -88,7 +88,7 @@ export default function AdminLogin({ onLogin, error, isLoggedInButNotAdmin }: Ad
         <div style={s.page}>
             <div style={s.card}>
                 <div style={s.logo}>
-                    <div style={s.shield}>🛡️</div>
+                    <img src="/logos/final logo no lettermy tracksy.png" alt="MyTracksy Logo" style={{ width: 64, height: 64, objectFit: 'contain', marginBottom: 8 }} />
                     <h1 style={s.title}>MyTracksy Admin</h1>
                     <p style={s.subtitle}>Super Admin Dashboard</p>
                 </div>

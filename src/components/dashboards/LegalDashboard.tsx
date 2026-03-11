@@ -1,393 +1,1070 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useLiveQuery } from 'dexie-react-hooks';
+import db, { CourtDiaryEntry, TrustTransaction, CaseRecord } from '../../lib/db';
 import DashboardLayout from './DashboardLayout';
-import KPICard from './KPICard';
-import TransactionList, { Transaction } from './TransactionList';
 
+// ─── Props ──────────────────────────────────────────────────────────
 interface LegalDashboardProps {
-    userName: string;
-    onChangeProfession: () => void;
-    onLogout: () => void;
+  userName: string;
+  onChangeProfession: () => void;
+  onLogout: () => void;
 }
 
+// ─── Navigation ─────────────────────────────────────────────────────
 const navItems = [
-    { id: 'overview', label: 'Dashboard', icon: '📊' },
-    { id: 'cases', label: 'Cases & Clients', icon: '📁' },
-    { id: 'court', label: 'Court Calendar', icon: '🏣' },
-    { id: 'documents', label: 'Documents', icon: '📄' },
-    { id: 'billing', label: 'Billing & Time', icon: '⏱️' },
-    { id: 'expenses', label: 'Expenses', icon: '💸' },
-    { id: 'banking', label: 'Banking', icon: '🏦' },
-    { id: 'reports', label: 'Reports', icon: '📋' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
+  { id: 'overview', label: 'Dashboard', icon: '📊' },
+  { id: 'diary', label: 'Court Diary', icon: '📅' },
+  { id: 'cases', label: 'Cases & Clients', icon: '📁' },
+  { id: 'trust', label: 'Trust Accounting', icon: '🏦' },
+  { id: 'ai', label: 'AI Tools', icon: '🤖' },
+  { id: 'documents', label: 'Documents', icon: '📄' },
+  { id: 'billing', label: 'Billing', icon: '💰' },
+  { id: 'reports', label: 'Reports', icon: '📋' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' },
+];
+
+// ─── Constants ──────────────────────────────────────────────────────
+const NAVY = '#0f172a';
+const GOLD = '#f59e0b';
+const WHITE = '#ffffff';
+
+const formatLKR = (amount: number) =>
+  new Intl.NumberFormat('en-LK', { style: 'currency', currency: 'LKR' }).format(amount);
+
+const CASE_TYPE_COLORS: Record<string, string> = {
+  civil: '#6366f1',
+  criminal: '#ef4444',
+  corporate: '#3b82f6',
+  estate: '#8b5cf6',
+  ip: '#f59e0b',
+  family: '#ec4899',
+  labour: '#14b8a6',
+  other: '#64748b',
+};
+
+const TRANSACTION_TYPE_ICONS: Record<string, string> = {
+  retainer_receipt: '💰',
+  appearance_fee: '⚖️',
+  court_stamp: '📜',
+  typist_fee: '✍️',
+  refund: '🔄',
+  transfer: '➡️',
+};
+
+// ─── Sample data ────────────────────────────────────────────────────
+const sampleCases: Partial<CaseRecord>[] = [
+  { id: 1, clientName: 'Mr. Silva', caseTitle: 'Silva vs Perera — Property Dispute', caseNumber: 'DC/COL/2456', caseType: 'civil', court: 'Colombo District Court', judge: 'Hon. Justice Gunawardena', status: 'active', retainerBalance: 75000, totalBilled: 250000, totalPaid: 175000 },
+  { id: 2, clientName: 'ABC Holdings', caseTitle: 'ABC Holdings — Company Registration', caseNumber: 'RGS/2026/045', caseType: 'corporate', court: 'Registrar of Companies', judge: '-', status: 'active', retainerBalance: 50000, totalBilled: 75000, totalPaid: 25000 },
+  { id: 3, clientName: 'Mr. Fernando', caseTitle: 'Fernando — Criminal Defense', caseNumber: 'MC/KDY/1289', caseType: 'criminal', court: 'Kandy Magistrate Court', judge: 'Hon. Magistrate Wijeratne', status: 'active', retainerBalance: 100000, totalBilled: 150000, totalPaid: 50000 },
+  { id: 4, clientName: 'Wijesinghe Family', caseTitle: 'Wijesinghe Estate — Will Probate', caseNumber: 'PROB/COL/089', caseType: 'estate', court: 'Colombo District Court', judge: 'Hon. Justice Perera', status: 'completed', retainerBalance: 0, totalBilled: 120000, totalPaid: 120000 },
+  { id: 5, clientName: 'Tech Lanka Pvt', caseTitle: 'Tech Lanka — IP Protection', caseNumber: 'CHC/201/2026', caseType: 'ip', court: 'Commercial High Court', judge: 'Hon. Justice Perera', status: 'active', retainerBalance: 80000, totalBilled: 180000, totalPaid: 100000 },
+];
+
+const sampleDiary: Partial<CourtDiaryEntry>[] = [
+  { date: '2026-03-18', caseId: 'c1', caseTitle: 'Silva vs Perera', court: 'Colombo District Court', courtNo: '12', time: '10:00 AM', judge: 'Hon. Justice Gunawardena', hearingType: 'trial', status: 'confirmed', courtLocation: 'hulftsdorp' },
+  { date: '2026-03-18', caseId: 'c3', caseTitle: 'Fernando Defense', court: 'Kandy Magistrate Court', courtNo: '5', time: '9:30 AM', judge: 'Hon. Magistrate Wijeratne', hearingType: 'mention', status: 'confirmed', courtLocation: 'outstation' },
+  { date: '2026-03-22', caseId: 'c5', caseTitle: 'Tech Lanka — IP', court: 'Commercial High Court', courtNo: '3', time: '2:00 PM', judge: 'Hon. Justice Perera', hearingType: 'argument', status: 'tentative', courtLocation: 'hulftsdorp' },
+  { date: '2026-04-02', caseId: 'c4', caseTitle: 'Land Registry Appeal', court: 'Court of Appeal', courtNo: '1', time: '11:00 AM', judge: 'TBD', hearingType: 'inquiry', status: 'tentative', courtLocation: 'hulftsdorp' },
+];
+
+const sampleTrustTransactions: Partial<TrustTransaction>[] = [
+  { date: '2026-03-10', clientName: 'ABC Holdings', type: 'retainer_receipt', amount: 75000, description: 'Retainer deposit', account: 'trust' },
+  { date: '2026-03-08', clientName: 'Mr. Silva', type: 'appearance_fee', amount: 50000, description: 'Court appearance — District Court', account: 'operating' },
+  { date: '2026-03-07', clientName: 'Tech Lanka Pvt', type: 'retainer_receipt', amount: 100000, description: 'IP consultation retainer', account: 'trust' },
+  { date: '2026-03-05', clientName: 'Wijesinghe Family', type: 'appearance_fee', amount: 35000, description: 'Probate hearing', account: 'operating' },
+  { date: '2026-03-05', clientName: 'Mr. Silva', type: 'court_stamp', amount: 2500, description: 'Court stamp fees', account: 'operating' },
+  { date: '2026-03-01', clientName: 'Mr. Fernando', type: 'retainer_receipt', amount: 100000, description: 'Defense retainer', account: 'trust' },
 ];
 
 const legalExpenseCategories = [
-    { name: 'Office Rent', icon: '🏢', color: '#6366f1' },
-    { name: 'Staff & Clerks', icon: '👥', color: '#8b5cf6' },
-    { name: 'Court Fees', icon: '⚖️', color: '#ec4899' },
-    { name: 'Research / Journals', icon: '📚', color: '#22c55e' },
-    { name: 'Travel (Court)', icon: '🚗', color: '#f59e0b' },
-    { name: 'Bar Association', icon: '🏛️', color: '#06b6d4' },
-    { name: 'Office Supplies', icon: '📎', color: '#64748b' },
-    { name: 'Insurance', icon: '🛡️', color: '#f97316' },
-];
-
-const sampleCases = [
-    { id: 'c1', name: 'Silva vs Perera — Property Dispute', client: 'Mr. Silva', type: 'Civil', status: 'active', value: 250000, nextHearing: '2026-03-18' },
-    { id: 'c2', name: 'ABC Holdings — Company Registration', client: 'ABC Holdings', type: 'Corporate', status: 'active', value: 75000, nextHearing: '' },
-    { id: 'c3', name: 'Fernando — Criminal Defense', client: 'Mr. Fernando', type: 'Criminal', status: 'active', value: 150000, nextHearing: '2026-03-22' },
-    { id: 'c4', name: 'Wijesinghe Estate — Will Probate', client: 'Wijesinghe Family', type: 'Estate', status: 'completed', value: 120000, nextHearing: '' },
-    { id: 'c5', name: 'Tech Lanka — IP Protection', client: 'Tech Lanka Pvt', type: 'IP Law', status: 'active', value: 180000, nextHearing: '2026-04-02' },
-];
-
-const sampleBillings: Transaction[] = [
-    { id: 'b1', type: 'income', amount: 75000, description: 'Retainer — ABC Holdings', category: 'Corporate', date: '2026-03-10', status: 'paid' },
-    { id: 'b2', type: 'income', amount: 50000, description: 'Court appearance — Silva case', category: 'Civil', date: '2026-03-08', status: 'paid' },
-    { id: 'b3', type: 'income', amount: 35000, description: 'Consultation — IP review', category: 'IP Law', date: '2026-03-07', status: 'pending' },
-    { id: 'b4', type: 'income', amount: 100000, description: 'Settlement — Wijesinghe estate', category: 'Estate', date: '2026-03-05', status: 'paid' },
-    { id: 'b5', type: 'income', amount: 45000, description: 'Defense fee — Fernando case', category: 'Criminal', date: '2026-03-01', status: 'overdue' },
-];
-
-const sampleExpenses: Transaction[] = [
-    { id: 'e1', type: 'expense', amount: 60000, description: 'Office rent — Hulftsdorp', category: 'Office Rent', date: '2026-03-01', status: 'completed' },
-    { id: 'e2', type: 'expense', amount: 85000, description: 'Staff salaries', category: 'Staff & Clerks', date: '2026-03-01', status: 'completed' },
-    { id: 'e3', type: 'expense', amount: 15000, description: 'Court filing fees (3 cases)', category: 'Court Fees', date: '2026-03-05', status: 'completed' },
-    { id: 'e4', type: 'expense', amount: 8500, description: 'Law journal subscriptions', category: 'Research / Journals', date: '2026-03-03', status: 'completed' },
-    { id: 'e5', type: 'expense', amount: 6200, description: 'Transport — Kandy court trip', category: 'Travel (Court)', date: '2026-03-06', status: 'completed' },
-];
-
-const sampleBankAccounts = [
-    { id: 'b1', name: 'Legal Practice A/C', bank: 'Bank of Ceylon', balance: 1850000, type: 'current' },
-    { id: 'b2', name: 'Client Trust A/C', bank: 'Commercial Bank', balance: 720000, type: 'trust' },
-    { id: 'b3', name: 'Savings', bank: 'HNB', balance: 3200000, type: 'savings' },
-];
-
-const courtCalendar = [
-    { id: 'h1', case: 'Silva vs Perera', court: 'Colombo District Court', courtNo: 'DC/COL/2456', date: '2026-03-18', time: '10:00 AM', judge: 'Hon. Justice Gunawardena', status: 'confirmed' as const },
-    { id: 'h2', case: 'Fernando Defense', court: 'Kandy Magistrate Court', courtNo: 'MC/KDY/1289', date: '2026-03-22', time: '9:30 AM', judge: 'Hon. Magistrate Wijeratne', status: 'confirmed' as const },
-    { id: 'h3', case: 'Tech Lanka — IP', court: 'Commercial High Court', courtNo: 'CHC/201/2026', date: '2026-04-02', time: '2:00 PM', judge: 'Hon. Justice Perera', status: 'tentative' as const },
-    { id: 'h4', case: 'Land Registry Appeal', court: 'Court of Appeal', courtNo: 'CA/LA/456', date: '2026-04-10', time: '11:00 AM', judge: 'TBD', status: 'tentative' as const },
+  { name: 'Office Rent', icon: '🏢', color: '#6366f1' },
+  { name: 'Staff & Clerks', icon: '👥', color: '#8b5cf6' },
+  { name: 'Court Fees', icon: '⚖️', color: '#ec4899' },
+  { name: 'Research / Journals', icon: '📚', color: '#22c55e' },
+  { name: 'Travel (Court)', icon: '🚗', color: '#f59e0b' },
+  { name: 'Bar Association', icon: '🏛️', color: '#06b6d4' },
+  { name: 'Office Supplies', icon: '📎', color: '#64748b' },
+  { name: 'Insurance', icon: '🛡️', color: '#f97316' },
 ];
 
 const legalDocuments = [
-    { id: 'd1', name: 'Plaint — Silva vs Perera', type: 'Court Filing', case: 'Silva vs Perera', date: '2026-02-15', status: 'filed' },
-    { id: 'd2', name: 'Power of Attorney — ABC Holdings', type: 'POA', case: 'ABC Holdings', date: '2026-03-01', status: 'active' },
-    { id: 'd3', name: 'Bail Application — Fernando', type: 'Court Filing', case: 'Fernando Defense', date: '2026-03-05', status: 'filed' },
-    { id: 'd4', name: 'Last Will — Wijesinghe Estate', type: 'Probate', case: 'Wijesinghe Estate', date: '2026-01-20', status: 'completed' },
-    { id: 'd5', name: 'Non-Disclosure Agreement — Tech Lanka', type: 'Agreement', case: 'Tech Lanka', date: '2026-03-08', status: 'draft' },
-    { id: 'd6', name: 'Deed of Transfer — Land Sale', type: 'Notarial', case: 'New Matter', date: '2026-03-10', status: 'draft' },
+  { id: 'd1', name: 'Plaint — Silva vs Perera', type: 'Court Filing', case: 'Silva vs Perera', date: '2026-02-15', status: 'filed' },
+  { id: 'd2', name: 'Power of Attorney — ABC Holdings', type: 'POA', case: 'ABC Holdings', date: '2026-03-01', status: 'active' },
+  { id: 'd3', name: 'Bail Application — Fernando', type: 'Court Filing', case: 'Fernando Defense', date: '2026-03-05', status: 'filed' },
+  { id: 'd4', name: 'Last Will — Wijesinghe Estate', type: 'Probate', case: 'Wijesinghe Estate', date: '2026-01-20', status: 'completed' },
+  { id: 'd5', name: 'Non-Disclosure Agreement — Tech Lanka', type: 'Agreement', case: 'Tech Lanka', date: '2026-03-08', status: 'draft' },
+  { id: 'd6', name: 'Deed of Transfer — Land Sale', type: 'Notarial', case: 'New Matter', date: '2026-03-10', status: 'draft' },
 ];
 
-const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfession, onLogout }) => {
-    const [activeNav, setActiveNav] = useState('overview');
-    const [billings] = useState(sampleBillings);
-    const [expenses] = useState(sampleExpenses);
-
-    const totalIncome = billings.reduce((s, t) => s + t.amount, 0);
-    const totalExpenses = expenses.reduce((s, t) => s + t.amount, 0);
-    const netProfit = totalIncome - totalExpenses;
-    const activeCases = sampleCases.filter((c) => c.status === 'active').length;
-    const pendingBills = billings.filter((b) => b.status === 'pending' || b.status === 'overdue').length;
-    const fmt = (n: number) => `LKR ${n.toLocaleString('en-LK')}`;
-
-    const renderContent = () => {
-        switch (activeNav) {
-            case 'overview': return renderOverview();
-            case 'cases': return renderCases();
-            case 'court': return renderCourtCalendar();
-            case 'documents': return renderDocuments();
-            case 'billing': return renderBilling();
-            case 'expenses': return renderExpenses();
-            case 'banking': return renderBanking();
-            case 'reports': return renderReports();
-            case 'settings': return renderSettings();
-            default: return renderOverview();
-        }
-    };
-
-    const renderOverview = () => (
-        <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '0.85rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="💰" label="Revenue" value={fmt(totalIncome)} change="+9.1%" changeType="up" color="#22c55e" />
-                <KPICard icon="💸" label="Expenses" value={fmt(totalExpenses)} changeType="neutral" color="#ef4444" />
-                <KPICard icon="📈" label="Net Profit" value={fmt(netProfit)} change="+14.2%" changeType="up" color="#6366f1" />
-                <KPICard icon="📁" label="Active Cases" value={String(activeCases)} changeType="neutral" color="#3b82f6" />
-                <KPICard icon="⏳" label="Pending Bills" value={String(pendingBills)} change={pendingBills > 0 ? 'Follow up' : 'Clear'} changeType={pendingBills > 0 ? 'down' : 'up'} color="#f59e0b" />
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={cardStyle}>
-                    <h3 style={cardTitle}>📅 Upcoming Hearings</h3>
-                    {sampleCases.filter((c) => c.nextHearing).map((c) => (
-                        <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.6rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                            <div>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{c.name}</div>
-                                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{c.client} · {c.type}</div>
-                            </div>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#6366f1' }}>{c.nextHearing}</span>
-                        </div>
-                    ))}
-                </div>
-                <div style={cardStyle}>
-                    <h3 style={cardTitle}>📂 Revenue by Practice Area</h3>
-                    {[
-                        { name: 'Civil', amount: 250000, pct: 35, color: '#3b82f6' },
-                        { name: 'Corporate', amount: 180000, pct: 25, color: '#8b5cf6' },
-                        { name: 'Criminal', amount: 150000, pct: 20, color: '#ef4444' },
-                        { name: 'Estate / Probate', amount: 120000, pct: 15, color: '#22c55e' },
-                    ].map((a) => (
-                        <div key={a.name} style={{ marginBottom: '0.5rem' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                <span style={{ fontSize: '0.82rem', fontWeight: 500 }}>{a.name}</span>
-                                <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{fmt(a.amount)}</span>
-                            </div>
-                            <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
-                                <div style={{ height: '100%', width: `${a.pct}%`, background: a.color, borderRadius: 3 }} />
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-            <TransactionList transactions={[...billings, ...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
-        </div>
-    );
-
-    const renderCases = () => (
-        <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="📁" label="Active Cases" value={String(activeCases)} changeType="neutral" color="#3b82f6" />
-                <KPICard icon="✅" label="Completed" value={String(sampleCases.filter((c) => c.status === 'completed').length)} changeType="up" color="#22c55e" />
-                <KPICard icon="💰" label="Total Case Value" value={fmt(sampleCases.reduce((s, c) => s + c.value, 0))} changeType="neutral" color="#6366f1" />
-            </div>
-            <div style={cardStyle}>
-                <h3 style={cardTitle}>📁 All Cases</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                    <thead><tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                        {['Case', 'Client', 'Type', 'Value', 'Next Hearing', 'Status'].map((h) => (
-                            <th key={h} style={{ padding: '0.6rem 0.5rem', textAlign: 'left', color: '#64748b', fontWeight: 600, fontSize: '0.78rem' }}>{h}</th>
-                        ))}
-                    </tr></thead>
-                    <tbody>
-                        {sampleCases.map((c) => (
-                            <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '0.6rem 0.5rem', fontWeight: 500 }}>{c.name}</td>
-                                <td style={{ padding: '0.6rem 0.5rem' }}>{c.client}</td>
-                                <td style={{ padding: '0.6rem 0.5rem' }}><span style={{ padding: '2px 8px', borderRadius: 10, background: '#f1f5f9', fontSize: '0.75rem' }}>{c.type}</span></td>
-                                <td style={{ padding: '0.6rem 0.5rem', fontWeight: 600 }}>{fmt(c.value)}</td>
-                                <td style={{ padding: '0.6rem 0.5rem', color: c.nextHearing ? '#6366f1' : '#94a3b8' }}>{c.nextHearing || '—'}</td>
-                                <td style={{ padding: '0.6rem 0.5rem' }}>
-                                    <span style={{ padding: '3px 10px', borderRadius: 10, fontSize: '0.72rem', fontWeight: 600, color: c.status === 'active' ? '#3b82f6' : '#22c55e', background: c.status === 'active' ? 'rgba(59,130,246,0.08)' : 'rgba(34,197,94,0.08)' }}>{c.status}</span>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    );
-
-    const renderBilling = () => (
-        <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="💰" label="Total Billed" value={fmt(totalIncome)} change="+9.1%" changeType="up" color="#22c55e" />
-                <KPICard icon="⏳" label="Pending" value={String(pendingBills)} changeType="neutral" color="#f59e0b" />
-                <KPICard icon="⏱️" label="Billable Hours" value="128 hrs" change="+12%" changeType="up" color="#6366f1" />
-            </div>
-            <TransactionList transactions={billings} title="All Billings" showFilter={false} />
-        </div>
-    );
-
-    /* ========== COURT CALENDAR ========== */
-    const renderCourtCalendar = () => (
-        <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="🏣" label="Upcoming Hearings" value={String(courtCalendar.length)} changeType="neutral" color="#6366f1" />
-                <KPICard icon="✅" label="Confirmed" value={String(courtCalendar.filter(h => h.status === 'confirmed').length)} changeType="up" color="#22c55e" />
-                <KPICard icon="❓" label="Tentative" value={String(courtCalendar.filter(h => h.status === 'tentative').length)} changeType="neutral" color="#f59e0b" />
-                <KPICard icon="📍" label="Courts" value={String(new Set(courtCalendar.map(h => h.court)).size)} changeType="neutral" color="#3b82f6" />
-            </div>
-            <div style={cardStyle}>
-                <h3 style={cardTitle}>🏣 Court Calendar</h3>
-                <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    {courtCalendar.map(h => (
-                        <div key={h.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem 0', borderBottom: '1px solid #f1f5f9' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                <div style={{ width: 44, height: 44, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', background: h.status === 'confirmed' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)', fontSize: '1.2rem' }}>⚖️</div>
-                                <div>
-                                    <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{h.case}</div>
-                                    <div style={{ fontSize: '0.72rem', color: '#64748b' }}>{h.court} · {h.courtNo}</div>
-                                    <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Judge: {h.judge}</div>
-                                </div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                                <div style={{ fontSize: '0.88rem', fontWeight: 600, color: '#6366f1' }}>{h.date}</div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{h.time}</div>
-                                <span style={{ padding: '2px 8px', borderRadius: 8, fontSize: '0.68rem', fontWeight: 600, background: h.status === 'confirmed' ? '#dcfce7' : '#fef3c7', color: h.status === 'confirmed' ? '#22c55e' : '#f59e0b' }}>{h.status}</span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-
-    /* ========== DOCUMENTS ========== */
-    const renderDocuments = () => (
-        <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="📄" label="Total Docs" value={String(legalDocuments.length)} changeType="neutral" color="#6366f1" />
-                <KPICard icon="✅" label="Filed" value={String(legalDocuments.filter(d => d.status === 'filed').length)} changeType="up" color="#22c55e" />
-                <KPICard icon="✏️" label="Drafts" value={String(legalDocuments.filter(d => d.status === 'draft').length)} changeType="neutral" color="#f59e0b" />
-                <KPICard icon="📜" label="Active" value={String(legalDocuments.filter(d => d.status === 'active').length)} changeType="neutral" color="#3b82f6" />
-            </div>
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
-                <button style={{ padding: '0.55rem 1.25rem', border: 'none', borderRadius: 8, background: '#6366f1', color: 'white', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>+ New Document</button>
-                <button style={{ padding: '0.55rem 1.25rem', border: 'none', borderRadius: 8, background: '#3b82f6', color: 'white', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>📤 Upload</button>
-            </div>
-            <div style={cardStyle}>
-                <h3 style={cardTitle}>📄 Legal Documents</h3>
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                    <thead><tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                        {['Document', 'Type', 'Case', 'Date', 'Status'].map(h => (
-                            <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>{h}</th>
-                        ))}
-                    </tr></thead>
-                    <tbody>{legalDocuments.map(d => (
-                        <tr key={d.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                            <td style={{ padding: '0.5rem', fontWeight: 600 }}>{d.name}</td>
-                            <td style={{ padding: '0.5rem' }}><span style={{ padding: '2px 8px', borderRadius: 8, background: '#f1f5f9', fontSize: '0.72rem' }}>{d.type}</span></td>
-                            <td style={{ padding: '0.5rem', color: '#64748b' }}>{d.case}</td>
-                            <td style={{ padding: '0.5rem', color: '#64748b' }}>{d.date}</td>
-                            <td style={{ padding: '0.5rem' }}>
-                                <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 600, color: d.status === 'filed' ? '#22c55e' : d.status === 'active' ? '#3b82f6' : d.status === 'draft' ? '#f59e0b' : '#94a3b8', background: d.status === 'filed' ? '#dcfce7' : d.status === 'active' ? '#dbeafe' : d.status === 'draft' ? '#fef3c7' : '#f1f5f9' }}>{d.status}</span>
-                            </td>
-                        </tr>
-                    ))}</tbody>
-                </table>
-            </div>
-        </div>
-    );
-
-    const renderExpenses = () => (
-        <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                <KPICard icon="💸" label="Total Expenses" value={fmt(totalExpenses)} changeType="neutral" color="#ef4444" />
-                <KPICard icon="📊" label="This Week" value={fmt(21200)} changeType="neutral" color="#6366f1" />
-                <KPICard icon="📉" label="Avg Daily" value={fmt(Math.round(totalExpenses / 30))} changeType="neutral" color="#8b5cf6" />
-            </div>
-            <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
-                <h3 style={cardTitle}>📂 Expense Categories</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-                    {legalExpenseCategories.map((cat) => {
-                        const catTotal = expenses.filter((e) => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
-                        return (
-                            <div key={cat.name} style={{ padding: '0.85rem', background: `${cat.color}08`, borderRadius: 10, border: `1px solid ${cat.color}20`, textAlign: 'center' }}>
-                                <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{cat.icon}</div>
-                                <div style={{ fontSize: '0.78rem', color: '#64748b', marginBottom: 2 }}>{cat.name}</div>
-                                <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{fmt(catTotal)}</div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
-            <TransactionList transactions={expenses} title="All Expenses" showFilter={false} />
-        </div>
-    );
-
-    const renderBanking = () => (
-        <div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginBottom: '1.5rem' }}>
-                {sampleBankAccounts.map((acc) => (
-                    <div key={acc.id} style={{ ...cardStyle, borderTop: `3px solid ${acc.type === 'current' ? '#3b82f6' : acc.type === 'trust' ? '#8b5cf6' : '#22c55e'}` }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                            <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{acc.name}</span>
-                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>{acc.type}</span>
-                        </div>
-                        <div style={{ fontSize: '1.4rem', fontWeight: 700, marginBottom: 4 }}>{fmt(acc.balance)}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{acc.bank}</div>
-                    </div>
-                ))}
-            </div>
-            <div style={{ ...cardStyle, background: 'linear-gradient(135deg, #1e293b, #334155)', color: 'white' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                        <div style={{ fontSize: '0.85rem', opacity: 0.7 }}>Total Balance</div>
-                        <div style={{ fontSize: '2rem', fontWeight: 700, marginTop: 4 }}>{fmt(sampleBankAccounts.reduce((s, a) => s + a.balance, 0))}</div>
-                    </div>
-                    <div style={{ fontSize: '3rem', opacity: 0.3 }}>⚖️</div>
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderReports = () => (
-        <div>
-            <div style={{ ...cardStyle, marginBottom: '1.5rem' }}>
-                <h3 style={cardTitle}>📊 Practice P&L</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <div style={plRow}><span style={{ fontWeight: 600, color: '#22c55e' }}>💰 Revenue</span><span style={{ fontWeight: 700, color: '#22c55e' }}>{fmt(totalIncome)}</span></div>
-                    <div style={{ height: 1, background: '#f1f5f9' }} />
-                    {legalExpenseCategories.map((cat) => {
-                        const t = expenses.filter((e) => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
-                        return t > 0 ? <div key={cat.name} style={plRow}><span style={{ color: '#64748b' }}>{cat.icon} {cat.name}</span><span style={{ color: '#ef4444' }}>({fmt(t)})</span></div> : null;
-                    })}
-                    <div style={{ height: 1, background: '#1e293b' }} />
-                    <div style={plRow}><span style={{ fontWeight: 700 }}>📈 Net Profit</span><span style={{ fontWeight: 700, color: netProfit >= 0 ? '#22c55e' : '#ef4444' }}>{fmt(netProfit)}</span></div>
-                </div>
-            </div>
-            <div style={cardStyle}>
-                <h3 style={cardTitle}>📋 Available Reports</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.75rem' }}>
-                    {[
-                        { name: 'Practice P&L', icon: '📊', desc: 'Revenue & cost breakdown' },
-                        { name: 'Case Summary', icon: '📁', desc: 'Active/completed case stats' },
-                        { name: 'Time & Billing', icon: '⏱️', desc: 'Billable hours report' },
-                        { name: 'Client Revenue', icon: '👥', desc: 'Revenue by client' },
-                        { name: 'Trust Account', icon: '🏦', desc: 'Client trust balances' },
-                        { name: 'Tax (APIT)', icon: '🧾', desc: 'Estimated IRD returns' },
-                    ].map((r) => (
-                        <div key={r.name} style={{ padding: '0.85rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #f1f5f9' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: 4 }}><span>{r.icon}</span><span style={{ fontSize: '0.82rem', fontWeight: 600 }}>{r.name}</span></div>
-                            <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{r.desc}</div>
-                        </div>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-
-    const renderSettings = () => (
-        <div><div style={cardStyle}><h3 style={cardTitle}>⚙️ Legal Practice Settings</h3>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                {[
-                    { label: 'Practice Name', value: 'My Law Practice', icon: '⚖️' },
-                    { label: 'Bar Council Reg #', value: 'BASL/2015/1234', icon: '🏣' },
-                    { label: 'BASL Renewal Due', value: '2026-12-31', icon: '📅' },
-                    { label: 'Notary Public License', value: 'NP/WP/5678 — Active', icon: '📜' },
-                    { label: 'Practice Areas', value: 'Civil, Criminal, Corporate, IP', icon: '📋' },
-                    { label: 'Professional Indemnity', value: 'SLIC Policy — Active', icon: '🛡️' },
-                    { label: 'Trust Account Bank', value: 'Commercial Bank', icon: '🏦' },
-                    { label: 'IRD TIN', value: '987654321', icon: '🔑' },
-                    { label: 'Tax Year', value: '2025/2026 (April – March)', icon: '📅' },
-                    { label: 'Billing Rate', value: 'LKR 5,000/hr', icon: '💰' },
-                ].map((s) => (
-                    <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#f8fafc', borderRadius: 8 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}><span style={{ fontSize: '1.1rem' }}>{s.icon}</span><span style={{ fontSize: '0.88rem', fontWeight: 500 }}>{s.label}</span></div>
-                        <span style={{ fontSize: '0.85rem', color: '#64748b' }}>{s.value}</span>
-                    </div>
-                ))}
-            </div>
-        </div></div>
-    );
-
-    return (
-        <DashboardLayout profession="legal" professionLabel="Legal Professional" professionIcon="⚖️" userName={userName} navItems={navItems} activeNav={activeNav} onNavChange={setActiveNav} onChangeProfession={onChangeProfession} onLogout={onLogout}>
-            {renderContent()}
-        </DashboardLayout>
-    );
+// ─── Reusable style objects ─────────────────────────────────────────
+const cardStyle: React.CSSProperties = {
+  background: WHITE, borderRadius: 12, padding: 20,
+  boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9',
+};
+const cardTitle: React.CSSProperties = {
+  margin: '0 0 12px', fontSize: 15, fontWeight: 650, color: NAVY,
+};
+const inputStyle: React.CSSProperties = {
+  width: '100%', padding: '10px 12px', borderRadius: 8,
+  border: '1px solid #e2e8f0', fontSize: 14, fontFamily: 'inherit',
+  outline: 'none', boxSizing: 'border-box',
+};
+const selectStyle: React.CSSProperties = { ...inputStyle, background: WHITE };
+const labelStyle: React.CSSProperties = {
+  fontSize: 13, fontWeight: 600, color: '#475569', marginBottom: 4, display: 'block',
+};
+const primaryBtn: React.CSSProperties = {
+  padding: '10px 20px', borderRadius: 8, border: 'none',
+  background: NAVY, color: WHITE, fontSize: 14, fontWeight: 600,
+  cursor: 'pointer', fontFamily: 'inherit',
+};
+const secondaryBtn: React.CSSProperties = {
+  padding: '10px 20px', borderRadius: 8, border: '1px solid #e2e8f0',
+  background: WHITE, color: '#475569', fontSize: 14, fontWeight: 500,
+  cursor: 'pointer', fontFamily: 'inherit',
+};
+const badgeBase: React.CSSProperties = {
+  display: 'inline-block', padding: '2px 10px', borderRadius: 20,
+  fontSize: 11, fontWeight: 650, textTransform: 'capitalize' as const,
+};
+const modalOverlay: React.CSSProperties = {
+  position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+  display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000,
+};
+const modalBox: React.CSSProperties = {
+  background: WHITE, borderRadius: 16, padding: 24,
+  width: '90%', maxWidth: 500, maxHeight: '80vh', overflowY: 'auto',
 };
 
-const cardStyle: React.CSSProperties = { background: 'white', borderRadius: 12, padding: '1.25rem', boxShadow: '0 1px 3px rgba(0,0,0,0.06)', border: '1px solid #f1f5f9' };
-const cardTitle: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontWeight: 600, color: '#1e293b' };
-const plRow: React.CSSProperties = { display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.9rem', padding: '0.25rem 0' };
+// =====================================================================
+// LegalDashboard Component
+// =====================================================================
+const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfession, onLogout }) => {
+  const [activeTab, setActiveTab] = useState('overview');
+  const [isRecording, setIsRecording] = useState(false);
+  const [showAddDiary, setShowAddDiary] = useState(false);
+  const [showAddCase, setShowAddCase] = useState(false);
+  const [showAddTransaction, setShowAddTransaction] = useState(false);
+
+  // Form states
+  const [newDiary, setNewDiary] = useState({
+    date: '', caseId: '', court: '', courtNo: '', time: '', judge: '',
+    hearingType: 'mention' as const, courtLocation: 'hulftsdorp' as const,
+  });
+  const [newCase, setNewCase] = useState({
+    clientName: '', caseTitle: '', caseNumber: '', caseType: 'civil' as const, court: '', judge: '',
+  });
+  const [newTransaction, setNewTransaction] = useState({
+    clientName: '', type: 'appearance_fee' as const, amount: 0, description: '', account: 'operating' as const,
+  });
+
+  // Settings
+  const [baslNumber, setBaslNumber] = useState('');
+  const [notaryLicense, setNotaryLicense] = useState('');
+  const [indemnityInsurance, setIndemnityInsurance] = useState('');
+  const [tinNumber, setTinNumber] = useState('');
+
+  // Wake lock ref
+  const wakeLockRef = useRef<WakeLockSentinel | null>(null);
+
+  // Load saved settings
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('legalSettings');
+      if (saved) {
+        const s = JSON.parse(saved);
+        setBaslNumber(s.baslNumber || '');
+        setNotaryLicense(s.notaryLicense || '');
+        setIndemnityInsurance(s.indemnityInsurance || '');
+        setTinNumber(s.tinNumber || '');
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  // ─── UserId & Live Queries ──────────────────────────────────────
+  const storedUser = localStorage.getItem('tracksyUser');
+  const userId = storedUser ? JSON.parse(storedUser)?.uid : '';
+
+  const courtDiary = useLiveQuery(
+    () => db.court_diary.where({ userId }).toArray(),
+    [userId],
+  ) || [];
+
+  const trustTransactions = useLiveQuery(
+    () => db.trust_transactions.where({ userId }).toArray(),
+    [userId],
+  ) || [];
+
+  const caseRecords = useLiveQuery(
+    () => db.case_records.where({ userId }).toArray(),
+    [userId],
+  ) || [];
+
+  // Display data — fall back to samples
+  const displayDiary = courtDiary.length > 0 ? courtDiary : sampleDiary as CourtDiaryEntry[];
+  const displayCases = caseRecords.length > 0 ? caseRecords : sampleCases as CaseRecord[];
+  const displayTransactions = trustTransactions.length > 0 ? trustTransactions : sampleTrustTransactions as TrustTransaction[];
+
+  // ─── Computed Values ────────────────────────────────────────────
+  const trustBalance = displayTransactions
+    .filter(t => t.account === 'trust')
+    .reduce((s, t) => s + (t.type === 'refund' ? -t.amount : t.amount), 0);
+
+  const operatingIncome = displayTransactions
+    .filter(t => t.account === 'operating')
+    .reduce((s, t) => s + t.amount, 0);
+
+  const activeCasesCount = displayCases.filter(c => c.status === 'active').length;
+
+  // Conflict detection: same-date entries with different courtLocation
+  const getConflictDates = () => {
+    const dateMap: Record<string, Set<string>> = {};
+    displayDiary.forEach(d => {
+      if (!dateMap[d.date]) dateMap[d.date] = new Set();
+      if (d.courtLocation) dateMap[d.date].add(d.courtLocation);
+    });
+    return Object.entries(dateMap)
+      .filter(([, locations]) => locations.size > 1)
+      .map(([date]) => date);
+  };
+
+  // ─── Dexie Add Functions ────────────────────────────────────────
+  const handleAddDiary = async () => {
+    await db.court_diary.add({
+      ...newDiary,
+      caseTitle: newDiary.caseId,
+      notes: '',
+      status: 'confirmed',
+      sync_status: 'pending',
+      userId,
+      createdAt: Date.now(),
+    } as CourtDiaryEntry);
+    setShowAddDiary(false);
+    setNewDiary({ date: '', caseId: '', court: '', courtNo: '', time: '', judge: '', hearingType: 'mention', courtLocation: 'hulftsdorp' });
+  };
+
+  const handleAddCase = async () => {
+    await db.case_records.add({
+      ...newCase,
+      status: 'active',
+      retainerBalance: 0,
+      totalBilled: 0,
+      totalPaid: 0,
+      sync_status: 'pending',
+      userId,
+      createdAt: Date.now(),
+    } as CaseRecord);
+    setShowAddCase(false);
+    setNewCase({ clientName: '', caseTitle: '', caseNumber: '', caseType: 'civil', court: '', judge: '' });
+  };
+
+  const handleAddTransaction = async () => {
+    await db.trust_transactions.add({
+      ...newTransaction,
+      date: new Date().toISOString().slice(0, 10),
+      clientId: '',
+      category: '',
+      sync_status: 'pending',
+      userId,
+      createdAt: Date.now(),
+    } as TrustTransaction);
+    setShowAddTransaction(false);
+    setNewTransaction({ clientName: '', type: 'appearance_fee', amount: 0, description: '', account: 'operating' });
+  };
+
+  // ─── Wake Lock for Voice Recorder ───────────────────────────────
+  const toggleRecording = async () => {
+    if (!isRecording) {
+      setIsRecording(true);
+      try {
+        if ('wakeLock' in navigator) {
+          wakeLockRef.current = await (navigator as any).wakeLock.request('screen');
+        }
+      } catch { /* ignore */ }
+    } else {
+      setIsRecording(false);
+      try {
+        if (wakeLockRef.current) {
+          await wakeLockRef.current.release();
+          wakeLockRef.current = null;
+        }
+      } catch { /* ignore */ }
+    }
+  };
+
+  // ─── Settings Save ──────────────────────────────────────────────
+  const handleSaveSettings = () => {
+    localStorage.setItem('legalSettings', JSON.stringify({
+      baslNumber, notaryLicense, indemnityInsurance, tinNumber,
+    }));
+    alert('Settings saved successfully.');
+  };
+
+  // =================================================================
+  // TAB RENDERERS
+  // =================================================================
+
+  // ─── OVERVIEW TAB ───────────────────────────────────────────────
+  const renderOverview = () => {
+    const todayDiary = displayDiary.slice(0, 3);
+    return (
+      <div>
+        {/* Wallet Cards Row */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+          <div style={{
+            flex: '1 1 280px', padding: 20, borderRadius: 14,
+            background: '#f8fafc', border: '1px solid #e2e8f0',
+          }}>
+            <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500, marginBottom: 4 }}>Client Retainers Held in Trust</div>
+            <div style={{ fontSize: 28, fontWeight: 750, color: NAVY, letterSpacing: '-0.02em' }}>{formatLKR(trustBalance)}</div>
+            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Trust Account</div>
+          </div>
+          <div style={{
+            flex: '1 1 280px', padding: 20, borderRadius: 14,
+            background: '#f0fdf4', border: '1px solid #bbf7d0',
+          }}>
+            <div style={{ fontSize: 13, color: '#16a34a', fontWeight: 500, marginBottom: 4 }}>My Taxable Operating Income</div>
+            <div style={{ fontSize: 28, fontWeight: 750, color: '#15803d', letterSpacing: '-0.02em' }}>{formatLKR(operatingIncome)}</div>
+            <div style={{ fontSize: 11, color: '#86efac', marginTop: 4 }}>Operating Account</div>
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+          <button
+            onClick={() => { setNewTransaction({ ...newTransaction, type: 'appearance_fee', account: 'operating' }); setShowAddTransaction(true); }}
+            style={{ ...primaryBtn, background: NAVY, display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span>⚖️</span> Log Appearance Fee
+          </button>
+          <button
+            onClick={() => { setNewTransaction({ ...newTransaction, type: 'court_stamp', account: 'operating' }); setShowAddTransaction(true); }}
+            style={{ ...primaryBtn, background: '#475569', display: 'flex', alignItems: 'center', gap: 6 }}
+          >
+            <span>📜</span> Log Out-of-Pocket Expense
+          </button>
+        </div>
+
+        {/* Today's Court Diary */}
+        <div style={{ ...cardStyle, marginBottom: 20 }}>
+          <h3 style={cardTitle}>📅 Today's Court Diary</h3>
+          {todayDiary.length === 0 ? (
+            <div style={{ padding: 16, textAlign: 'center', color: '#94a3b8', fontSize: 14 }}>No upcoming hearings</div>
+          ) : (
+            todayDiary.map((entry, i) => (
+              <div key={i} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '12px 0', borderBottom: i < todayDiary.length - 1 ? '1px solid #f1f5f9' : 'none',
+              }}>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{entry.caseTitle}</div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                    {entry.court} &middot; Court {entry.courtNo} &middot; {entry.time}
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#6366f1' }}>{entry.date}</div>
+                  <span style={{
+                    ...badgeBase,
+                    color: entry.status === 'confirmed' ? '#22c55e' : GOLD,
+                    background: entry.status === 'confirmed' ? '#dcfce7' : '#fef3c7',
+                  }}>{entry.status}</span>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* Bottom Row: Active Cases + Token Balance */}
+        <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+          <div style={{ ...cardStyle, flex: '1 1 200px', textAlign: 'center' }}>
+            <div style={{ fontSize: 40, marginBottom: 4 }}>📁</div>
+            <div style={{ fontSize: 28, fontWeight: 750, color: NAVY }}>{activeCasesCount}</div>
+            <div style={{ fontSize: 13, color: '#64748b', fontWeight: 500 }}>Active Cases</div>
+          </div>
+          <div style={{
+            ...cardStyle, flex: '1 1 200px', textAlign: 'center',
+            background: `linear-gradient(135deg, ${GOLD}15, ${GOLD}08)`,
+            border: `1px solid ${GOLD}30`,
+          }}>
+            <div style={{ fontSize: 40, marginBottom: 4 }}>🪙</div>
+            <div style={{ fontSize: 28, fontWeight: 750, color: '#92400e' }}>45</div>
+            <div style={{ fontSize: 13, color: '#b45309', fontWeight: 500 }}>Tokens Available</div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // ─── COURT DIARY TAB ────────────────────────────────────────────
+  const renderDiary = () => {
+    const conflictDates = getConflictDates();
+
+    // Group diary entries by date
+    const grouped: Record<string, typeof displayDiary> = {};
+    displayDiary.forEach(entry => {
+      if (!grouped[entry.date]) grouped[entry.date] = [];
+      grouped[entry.date].push(entry);
+    });
+    const sortedDates = Object.keys(grouped).sort();
+
+    const hearingTypeColors: Record<string, string> = {
+      trial: '#ef4444', mention: '#3b82f6', inquiry: '#8b5cf6',
+      support: '#22c55e', argument: '#f59e0b', judgment: '#ec4899', other: '#64748b',
+    };
+
+    return (
+      <div>
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: NAVY }}>📅 Court Diary</h2>
+          <button onClick={() => setShowAddDiary(true)} style={primaryBtn}>+ Add Hearing</button>
+        </div>
+
+        {/* Conflict Alert */}
+        {conflictDates.map(date => (
+          <div key={date} style={{
+            padding: '12px 16px', borderRadius: 10, marginBottom: 12,
+            background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b',
+            fontSize: 13, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8,
+          }}>
+            <span style={{ fontSize: 16 }}>⚠️</span>
+            Travel Conflict Detected — You have hearings at both Hulftsdorp and Outstation courts on {date}
+          </div>
+        ))}
+
+        {/* Diary Entries Grouped by Date */}
+        {sortedDates.map(date => (
+          <div key={date} style={{ marginBottom: 20 }}>
+            <div style={{
+              fontSize: 13, fontWeight: 700, color: '#6366f1', marginBottom: 8,
+              padding: '6px 12px', background: '#eef2ff', borderRadius: 8, display: 'inline-block',
+            }}>{date}</div>
+
+            {grouped[date].map((entry, i) => (
+              <div key={i} style={{
+                ...cardStyle, marginBottom: 10,
+                borderLeft: `3px solid ${hearingTypeColors[entry.hearingType] || '#64748b'}`,
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
+                  <div style={{ flex: '1 1 200px' }}>
+                    <div style={{ fontSize: 15, fontWeight: 650, color: NAVY, marginBottom: 4 }}>{entry.caseTitle}</div>
+                    <div style={{ fontSize: 13, color: '#475569', marginBottom: 2 }}>{entry.court} &middot; Court No. {entry.courtNo}</div>
+                    <div style={{ fontSize: 12, color: '#64748b' }}>Judge: {entry.judge}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{entry.time}</div>
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                      <span style={{
+                        ...badgeBase,
+                        color: hearingTypeColors[entry.hearingType] || '#64748b',
+                        background: `${hearingTypeColors[entry.hearingType] || '#64748b'}18`,
+                      }}>{entry.hearingType}</span>
+                      <span style={{
+                        ...badgeBase,
+                        color: entry.status === 'confirmed' ? '#22c55e' : GOLD,
+                        background: entry.status === 'confirmed' ? '#dcfce7' : '#fef3c7',
+                      }}>{entry.status}</span>
+                      <span style={{
+                        ...badgeBase, fontSize: 10,
+                        color: entry.courtLocation === 'hulftsdorp' ? '#6366f1' : '#f97316',
+                        background: entry.courtLocation === 'hulftsdorp' ? '#eef2ff' : '#fff7ed',
+                      }}>{entry.courtLocation === 'hulftsdorp' ? '🏛️ Hulftsdorp' : '🚗 Outstation'}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+  // ─── CASES & CLIENTS TAB ────────────────────────────────────────
+  const renderCases = () => (
+    <div>
+      {/* Header */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: NAVY }}>📁 Cases & Clients</h2>
+        <button onClick={() => setShowAddCase(true)} style={primaryBtn}>+ New Case</button>
+      </div>
+
+      {/* Case Cards Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 16 }}>
+        {displayCases.map((c, i) => {
+          const typeColor = CASE_TYPE_COLORS[c.caseType] || '#64748b';
+          return (
+            <div key={c.id || i} style={{
+              ...cardStyle, borderTop: `3px solid ${typeColor}`,
+              transition: 'box-shadow 0.2s ease',
+            }}>
+              <div style={{ marginBottom: 12 }}>
+                <div style={{ fontSize: 15, fontWeight: 650, color: NAVY, marginBottom: 4 }}>{c.caseTitle}</div>
+                <div style={{ fontSize: 12, color: '#64748b' }}>{c.caseNumber}</div>
+              </div>
+              <div style={{ fontSize: 13, color: '#475569', marginBottom: 4 }}>
+                <span style={{ fontWeight: 500 }}>Client:</span> {c.clientName}
+              </div>
+              <div style={{ fontSize: 13, color: '#475569', marginBottom: 10 }}>
+                <span style={{ fontWeight: 500 }}>Court:</span> {c.court}
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <span style={{
+                    ...badgeBase, color: typeColor, background: `${typeColor}15`,
+                  }}>{c.caseType}</span>
+                  <span style={{
+                    ...badgeBase,
+                    color: c.status === 'active' ? '#3b82f6' : c.status === 'completed' ? '#22c55e' : '#f59e0b',
+                    background: c.status === 'active' ? '#dbeafe' : c.status === 'completed' ? '#dcfce7' : '#fef3c7',
+                  }}>{c.status}</span>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontSize: 11, color: '#94a3b8' }}>Retainer Balance</div>
+                  <div style={{ fontSize: 14, fontWeight: 700, color: c.retainerBalance > 0 ? '#22c55e' : '#94a3b8' }}>
+                    {formatLKR(c.retainerBalance)}
+                  </div>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // ─── TRUST ACCOUNTING TAB ───────────────────────────────────────
+  const renderTrust = () => (
+    <div>
+      <h2 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 700, color: NAVY }}>🏦 Trust Accounting</h2>
+
+      {/* Summary Cards */}
+      <div style={{ display: 'flex', gap: 16, marginBottom: 20, flexWrap: 'wrap' }}>
+        <div style={{ ...cardStyle, flex: '1 1 240px', borderLeft: '4px solid #6366f1' }}>
+          <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Total Trust Balance</div>
+          <div style={{ fontSize: 24, fontWeight: 750, color: NAVY }}>{formatLKR(trustBalance)}</div>
+        </div>
+        <div style={{ ...cardStyle, flex: '1 1 240px', borderLeft: '4px solid #22c55e' }}>
+          <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Total Operating Income</div>
+          <div style={{ fontSize: 24, fontWeight: 750, color: '#15803d' }}>{formatLKR(operatingIncome)}</div>
+        </div>
+      </div>
+
+      {/* Generate Fee Note */}
+      <div style={{ marginBottom: 16, display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+        <button onClick={() => setShowAddTransaction(true)} style={primaryBtn}>+ Add Transaction</button>
+        <button onClick={() => alert('Fee Note generation — Coming Soon')} style={secondaryBtn}>📄 Generate Fee Note</button>
+      </div>
+
+      {/* Transaction List */}
+      <div style={cardStyle}>
+        <h3 style={cardTitle}>Recent Transactions</h3>
+        {displayTransactions.map((txn, i) => {
+          const isIncome = txn.type === 'retainer_receipt';
+          const icon = TRANSACTION_TYPE_ICONS[txn.type] || '💼';
+          return (
+            <div key={txn.id || i} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '12px 0', borderBottom: i < displayTransactions.length - 1 ? '1px solid #f1f5f9' : 'none',
+              flexWrap: 'wrap', gap: 8,
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: '1 1 200px' }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  background: isIncome ? '#f0fdf4' : '#f8fafc',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+                  flexShrink: 0,
+                }}>{icon}</div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{txn.description}</div>
+                  <div style={{ fontSize: 12, color: '#64748b' }}>{txn.date} &middot; {txn.clientName}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                <span style={{
+                  ...badgeBase, fontSize: 10,
+                  color: '#6366f1', background: '#eef2ff',
+                }}>{txn.type.replace(/_/g, ' ')}</span>
+                <span style={{
+                  ...badgeBase, fontSize: 10,
+                  color: txn.account === 'trust' ? '#8b5cf6' : '#3b82f6',
+                  background: txn.account === 'trust' ? '#f5f3ff' : '#eff6ff',
+                }}>{txn.account}</span>
+                <div style={{
+                  fontSize: 15, fontWeight: 700, minWidth: 100, textAlign: 'right',
+                  color: isIncome ? '#22c55e' : '#ef4444',
+                }}>
+                  {isIncome ? '+' : '-'}{formatLKR(txn.amount)}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // ─── AI TOOLS TAB ───────────────────────────────────────────────
+  const renderAI = () => {
+    const aiTools = [
+      { icon: '📝', title: 'Draft Letter of Demand', desc: 'Generate a professional Letter of Demand', tokens: 1 },
+      { icon: '👁️', title: 'Vision AI for Deeds', desc: 'Extract title details from scanned faded deeds', tokens: 3 },
+      { icon: '📚', title: 'Judgment Summarizer', desc: 'Summarize Supreme Court Judgments', tokens: 5 },
+    ];
+
+    return (
+      <div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 8 }}>
+          <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: NAVY }}>🤖 AI-Powered Legal Tools</h2>
+          <span style={{
+            padding: '6px 14px', borderRadius: 20, fontSize: 13, fontWeight: 650,
+            background: `linear-gradient(135deg, ${GOLD}, #d97706)`, color: WHITE,
+          }}>🪙 45 Tokens</span>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 16 }}>
+          {aiTools.map((tool, i) => (
+            <div key={i} style={{
+              ...cardStyle, display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+              border: `1px solid ${GOLD}30`, position: 'relative', overflow: 'hidden',
+            }}>
+              <div>
+                <div style={{ fontSize: 32, marginBottom: 10 }}>{tool.icon}</div>
+                <div style={{ fontSize: 16, fontWeight: 650, color: NAVY, marginBottom: 6 }}>{tool.title}</div>
+                <div style={{ fontSize: 13, color: '#64748b', marginBottom: 12, lineHeight: 1.5 }}>{tool.desc}</div>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: '#92400e' }}>🪙 {tool.tokens} Token{tool.tokens > 1 ? 's' : ''}</span>
+                <span style={{
+                  ...badgeBase, background: `${GOLD}20`, color: '#92400e', fontSize: 11,
+                }}>Coming Soon</span>
+              </div>
+              <button disabled style={{
+                ...primaryBtn, width: '100%', marginTop: 12, opacity: 0.5, cursor: 'not-allowed',
+                background: '#94a3b8',
+              }}>Coming Soon</button>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // ─── DOCUMENTS TAB ──────────────────────────────────────────────
+  const renderDocuments = () => {
+    const statusColors: Record<string, { color: string; bg: string }> = {
+      filed: { color: '#22c55e', bg: '#dcfce7' },
+      active: { color: '#3b82f6', bg: '#dbeafe' },
+      draft: { color: '#f59e0b', bg: '#fef3c7' },
+      completed: { color: '#8b5cf6', bg: '#f5f3ff' },
+    };
+
+    return (
+      <div>
+        <h2 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 700, color: NAVY }}>📄 Documents</h2>
+        <div style={cardStyle}>
+          {legalDocuments.map((doc, i) => {
+            const sc = statusColors[doc.status] || { color: '#64748b', bg: '#f1f5f9' };
+            return (
+              <div key={doc.id} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '14px 0',
+                borderBottom: i < legalDocuments.length - 1 ? '1px solid #f1f5f9' : 'none',
+                flexWrap: 'wrap', gap: 8,
+              }}>
+                <div style={{ flex: '1 1 200px' }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: NAVY }}>{doc.name}</div>
+                  <div style={{ fontSize: 12, color: '#64748b', marginTop: 2 }}>
+                    {doc.case} &middot; {doc.date}
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  <span style={{
+                    ...badgeBase, color: '#475569', background: '#f1f5f9',
+                  }}>{doc.type}</span>
+                  <span style={{
+                    ...badgeBase, color: sc.color, background: sc.bg,
+                  }}>{doc.status}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  // ─── BILLING TAB ────────────────────────────────────────────────
+  const renderBilling = () => {
+    const totalBilled = displayCases.reduce((s, c) => s + c.totalBilled, 0);
+    const totalPaid = displayCases.reduce((s, c) => s + c.totalPaid, 0);
+    const outstanding = totalBilled - totalPaid;
+
+    return (
+      <div>
+        <h2 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 700, color: NAVY }}>💰 Billing & Invoicing</h2>
+
+        {/* Summary */}
+        <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+          <div style={{ ...cardStyle, flex: '1 1 180px', textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Total Billed</div>
+            <div style={{ fontSize: 22, fontWeight: 750, color: NAVY }}>{formatLKR(totalBilled)}</div>
+          </div>
+          <div style={{ ...cardStyle, flex: '1 1 180px', textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Total Received</div>
+            <div style={{ fontSize: 22, fontWeight: 750, color: '#22c55e' }}>{formatLKR(totalPaid)}</div>
+          </div>
+          <div style={{ ...cardStyle, flex: '1 1 180px', textAlign: 'center' }}>
+            <div style={{ fontSize: 13, color: '#64748b', marginBottom: 4 }}>Outstanding</div>
+            <div style={{ fontSize: 22, fontWeight: 750, color: outstanding > 0 ? '#ef4444' : '#22c55e' }}>{formatLKR(outstanding)}</div>
+          </div>
+        </div>
+
+        <div style={{
+          ...cardStyle, textAlign: 'center', padding: 40, color: '#94a3b8',
+        }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>🧾</div>
+          <div style={{ fontSize: 16, fontWeight: 600, color: '#64748b' }}>Billing & Invoicing</div>
+          <div style={{ fontSize: 13, marginTop: 4 }}>Coming in next update</div>
+        </div>
+      </div>
+    );
+  };
+
+  // ─── REPORTS TAB ────────────────────────────────────────────────
+  const renderReports = () => (
+    <div>
+      <h2 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 700, color: NAVY }}>📋 Reports</h2>
+      <div style={{
+        ...cardStyle, textAlign: 'center', padding: 40, color: '#94a3b8',
+      }}>
+        <div style={{ fontSize: 40, marginBottom: 12 }}>📊</div>
+        <div style={{ fontSize: 16, fontWeight: 600, color: '#64748b' }}>Reports</div>
+        <div style={{ fontSize: 13, marginTop: 4 }}>Coming in next update</div>
+      </div>
+    </div>
+  );
+
+  // ─── SETTINGS TAB ───────────────────────────────────────────────
+  const renderSettings = () => (
+    <div>
+      <h2 style={{ margin: '0 0 16px', fontSize: 20, fontWeight: 700, color: NAVY }}>⚙️ Legal Practice Settings</h2>
+
+      <div style={{ ...cardStyle, marginBottom: 20 }}>
+        <h3 style={cardTitle}>Professional Details</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <div>
+            <label style={labelStyle}>BASL Registration Number</label>
+            <input
+              style={inputStyle}
+              placeholder="e.g. BASL/2015/1234"
+              value={baslNumber}
+              onChange={e => setBaslNumber(e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Notary Public License Number</label>
+            <input
+              style={inputStyle}
+              placeholder="e.g. NP/WP/5678"
+              value={notaryLicense}
+              onChange={e => setNotaryLicense(e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>Professional Indemnity Insurance</label>
+            <input
+              style={inputStyle}
+              placeholder="e.g. SLIC Policy No."
+              value={indemnityInsurance}
+              onChange={e => setIndemnityInsurance(e.target.value)}
+            />
+          </div>
+          <div>
+            <label style={labelStyle}>IRD TIN Number</label>
+            <input
+              style={inputStyle}
+              placeholder="e.g. 987654321"
+              value={tinNumber}
+              onChange={e => setTinNumber(e.target.value)}
+            />
+          </div>
+          <button onClick={handleSaveSettings} style={primaryBtn}>Save Settings</button>
+        </div>
+      </div>
+
+      {/* Expense Categories (display only) */}
+      <div style={cardStyle}>
+        <h3 style={cardTitle}>Expense Categories</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+          {legalExpenseCategories.map(cat => (
+            <div key={cat.name} style={{
+              display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
+              borderRadius: 10, background: `${cat.color}08`, border: `1px solid ${cat.color}20`,
+            }}>
+              <span style={{ fontSize: 20 }}>{cat.icon}</span>
+              <span style={{ fontSize: 13, fontWeight: 500, color: '#475569' }}>{cat.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // =================================================================
+  // Tab Router
+  // =================================================================
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'overview': return renderOverview();
+      case 'diary': return renderDiary();
+      case 'cases': return renderCases();
+      case 'trust': return renderTrust();
+      case 'ai': return renderAI();
+      case 'documents': return renderDocuments();
+      case 'billing': return renderBilling();
+      case 'reports': return renderReports();
+      case 'settings': return renderSettings();
+      default: return renderOverview();
+    }
+  };
+
+  // =================================================================
+  // MODALS
+  // =================================================================
+
+  const renderDiaryModal = () => (
+    <div style={modalOverlay} onClick={() => setShowAddDiary(false)}>
+      <div style={modalBox} onClick={e => e.stopPropagation()}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: NAVY }}>📅 Add Court Hearing</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Date</label>
+            <input type="date" style={inputStyle} value={newDiary.date}
+              onChange={e => setNewDiary({ ...newDiary, date: e.target.value })} />
+          </div>
+          <div>
+            <label style={labelStyle}>Case Title / ID</label>
+            <input style={inputStyle} placeholder="Case reference"
+              value={newDiary.caseId} onChange={e => setNewDiary({ ...newDiary, caseId: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Court</label>
+              <input style={inputStyle} placeholder="e.g. Colombo District Court"
+                value={newDiary.court} onChange={e => setNewDiary({ ...newDiary, court: e.target.value })} />
+            </div>
+            <div style={{ flex: '0 0 100px' }}>
+              <label style={labelStyle}>Court No.</label>
+              <input style={inputStyle} placeholder="e.g. 12"
+                value={newDiary.courtNo} onChange={e => setNewDiary({ ...newDiary, courtNo: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Time</label>
+              <input style={inputStyle} placeholder="e.g. 10:00 AM"
+                value={newDiary.time} onChange={e => setNewDiary({ ...newDiary, time: e.target.value })} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Judge</label>
+              <input style={inputStyle} placeholder="Hon. Justice..."
+                value={newDiary.judge} onChange={e => setNewDiary({ ...newDiary, judge: e.target.value })} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Hearing Type</label>
+              <select style={selectStyle} value={newDiary.hearingType}
+                onChange={e => setNewDiary({ ...newDiary, hearingType: e.target.value as any })}>
+                <option value="mention">Mention</option>
+                <option value="trial">Trial</option>
+                <option value="inquiry">Inquiry</option>
+                <option value="argument">Argument</option>
+                <option value="support">Support</option>
+                <option value="judgment">Judgment</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Court Location</label>
+              <select style={selectStyle} value={newDiary.courtLocation}
+                onChange={e => setNewDiary({ ...newDiary, courtLocation: e.target.value as any })}>
+                <option value="hulftsdorp">Hulftsdorp</option>
+                <option value="outstation">Outstation</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+          <button onClick={() => setShowAddDiary(false)} style={secondaryBtn}>Cancel</button>
+          <button onClick={handleAddDiary} style={primaryBtn}>Save Hearing</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderCaseModal = () => (
+    <div style={modalOverlay} onClick={() => setShowAddCase(false)}>
+      <div style={modalBox} onClick={e => e.stopPropagation()}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: NAVY }}>📁 Add New Case</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Client Name</label>
+            <input style={inputStyle} placeholder="e.g. Mr. Perera"
+              value={newCase.clientName} onChange={e => setNewCase({ ...newCase, clientName: e.target.value })} />
+          </div>
+          <div>
+            <label style={labelStyle}>Case Title</label>
+            <input style={inputStyle} placeholder="e.g. Perera vs Silva — Land Dispute"
+              value={newCase.caseTitle} onChange={e => setNewCase({ ...newCase, caseTitle: e.target.value })} />
+          </div>
+          <div>
+            <label style={labelStyle}>Case Number</label>
+            <input style={inputStyle} placeholder="e.g. DC/COL/9999"
+              value={newCase.caseNumber} onChange={e => setNewCase({ ...newCase, caseNumber: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Case Type</label>
+              <select style={selectStyle} value={newCase.caseType}
+                onChange={e => setNewCase({ ...newCase, caseType: e.target.value as any })}>
+                <option value="civil">Civil</option>
+                <option value="criminal">Criminal</option>
+                <option value="corporate">Corporate</option>
+                <option value="estate">Estate / Probate</option>
+                <option value="ip">IP Law</option>
+                <option value="family">Family</option>
+                <option value="labour">Labour</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Court</label>
+            <input style={inputStyle} placeholder="e.g. Colombo District Court"
+              value={newCase.court} onChange={e => setNewCase({ ...newCase, court: e.target.value })} />
+          </div>
+          <div>
+            <label style={labelStyle}>Judge</label>
+            <input style={inputStyle} placeholder="Hon. Justice..."
+              value={newCase.judge} onChange={e => setNewCase({ ...newCase, judge: e.target.value })} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+          <button onClick={() => setShowAddCase(false)} style={secondaryBtn}>Cancel</button>
+          <button onClick={handleAddCase} style={primaryBtn}>Save Case</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderTransactionModal = () => (
+    <div style={modalOverlay} onClick={() => setShowAddTransaction(false)}>
+      <div style={modalBox} onClick={e => e.stopPropagation()}>
+        <h3 style={{ margin: '0 0 16px', fontSize: 18, fontWeight: 700, color: NAVY }}>🏦 Add Transaction</h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+          <div>
+            <label style={labelStyle}>Client Name</label>
+            <input style={inputStyle} placeholder="e.g. Mr. Silva"
+              value={newTransaction.clientName} onChange={e => setNewTransaction({ ...newTransaction, clientName: e.target.value })} />
+          </div>
+          <div style={{ display: 'flex', gap: 12 }}>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Transaction Type</label>
+              <select style={selectStyle} value={newTransaction.type}
+                onChange={e => setNewTransaction({ ...newTransaction, type: e.target.value as any })}>
+                <option value="appearance_fee">Appearance Fee</option>
+                <option value="court_stamp">Court Stamp</option>
+                <option value="typist_fee">Typist Fee</option>
+                <option value="retainer_receipt">Retainer Receipt</option>
+                <option value="refund">Refund</option>
+                <option value="transfer">Transfer</option>
+              </select>
+            </div>
+            <div style={{ flex: 1 }}>
+              <label style={labelStyle}>Account</label>
+              <select style={selectStyle} value={newTransaction.account}
+                onChange={e => setNewTransaction({ ...newTransaction, account: e.target.value as any })}>
+                <option value="operating">Operating</option>
+                <option value="trust">Trust</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label style={labelStyle}>Amount (LKR)</label>
+            <input type="number" style={inputStyle} placeholder="0"
+              value={newTransaction.amount || ''} onChange={e => setNewTransaction({ ...newTransaction, amount: Number(e.target.value) })} />
+          </div>
+          <div>
+            <label style={labelStyle}>Description</label>
+            <input style={inputStyle} placeholder="e.g. Court appearance — District Court"
+              value={newTransaction.description} onChange={e => setNewTransaction({ ...newTransaction, description: e.target.value })} />
+          </div>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+          <button onClick={() => setShowAddTransaction(false)} style={secondaryBtn}>Cancel</button>
+          <button onClick={handleAddTransaction} style={primaryBtn}>Save Transaction</button>
+        </div>
+      </div>
+    </div>
+  );
+
+  // =================================================================
+  // RENDER
+  // =================================================================
+  return (
+    <DashboardLayout
+      profession="legal"
+      professionLabel="LexTracksy"
+      professionIcon="⚖️"
+      userName={userName}
+      navItems={navItems}
+      activeNav={activeTab}
+      onNavChange={setActiveTab}
+      onChangeProfession={onChangeProfession}
+      onLogout={onLogout}
+    >
+      {/* Tab content */}
+      {renderTabContent()}
+
+      {/* FAB Voice Recorder */}
+      <div style={{ position: 'fixed', bottom: 24, right: 24, zIndex: 1000 }}>
+        <button
+          onClick={toggleRecording}
+          style={{
+            width: 56, height: 56, borderRadius: '50%',
+            border: 'none', cursor: 'pointer',
+            background: isRecording
+              ? '#ef4444'
+              : `linear-gradient(135deg, ${GOLD}, #d97706)`,
+            color: WHITE, fontSize: 22,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: isRecording
+              ? '0 4px 20px rgba(239,68,68,0.45)'
+              : '0 4px 20px rgba(245,158,11,0.35)',
+            transition: 'all 0.3s ease',
+            animation: isRecording ? 'pulse-recording 1.5s ease-in-out infinite' : 'none',
+          }}
+          title={isRecording ? 'Stop Recording' : 'Start Voice Note'}
+        >
+          {isRecording ? '⏹️' : '🎙️'}
+        </button>
+        <style>{`
+          @keyframes pulse-recording {
+            0%, 100% { box-shadow: 0 4px 20px rgba(239,68,68,0.45); transform: scale(1); }
+            50% { box-shadow: 0 4px 30px rgba(239,68,68,0.7); transform: scale(1.08); }
+          }
+        `}</style>
+      </div>
+
+      {/* Modals */}
+      {showAddDiary && renderDiaryModal()}
+      {showAddCase && renderCaseModal()}
+      {showAddTransaction && renderTransactionModal()}
+    </DashboardLayout>
+  );
+};
 
 export default LegalDashboard;

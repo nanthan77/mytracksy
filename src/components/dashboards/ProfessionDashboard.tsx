@@ -12,6 +12,7 @@ import TravelDashboard from './TravelDashboard';
 import TransportationDashboard from './TransportationDashboard';
 import RetailDashboard from './RetailDashboard';
 import AquacultureDashboard from './AquacultureDashboard';
+import CreatorDashboard from '../CreatorDashboard';
 
 interface ProfessionDashboardProps {
     profession: ProfessionType;
@@ -134,6 +135,16 @@ const ProfessionDashboard: React.FC<ProfessionDashboardProps> = ({
         case 'aquaculture':
             return (
                 <AquacultureDashboard
+                    userName={userName}
+                    onChangeProfession={onChangeProfession}
+                    onLogout={onLogout}
+                />
+            );
+
+        case 'creator':
+            return (
+                <CreatorDashboard
+                    sidebarCollapsed={false}
                     userName={userName}
                     onChangeProfession={onChangeProfession}
                     onLogout={onLogout}

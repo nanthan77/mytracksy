@@ -25,11 +25,12 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
     {
         slug: 'legal',
         profession: 'legal',
-        name: 'MyTracksy Legal',
-        shortName: 'Legal Tracksy',
+        name: 'LexTracksy',
+        shortName: 'LexTracksy',
         icon: '⚖️',
-        themeColor: '#6366f1',
-        description: 'Legal practice management — Cases, billing, client tracking',
+        themeColor: '#0f172a',
+        description: 'AI-Powered Legal Practice Management for Sri Lankan Attorneys-at-Law',
+        dedicatedPwa: true,
     },
     {
         slug: 'engineering',

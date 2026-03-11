@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { doc, getDoc, setDoc, collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { getPricingForProfession } from '../config/pricingConfig';
+import { ProfessionType } from '../contexts/AuthContext';
 
 interface SubData {
-    tier: 'free' | 'pro';
+    tier: 'free' | 'pro' | 'chambers';
     status: string;
     current_period_end?: any;
     provider?: string;
@@ -27,15 +29,66 @@ interface UsageQuota {
 
 const FREE_QUOTA = 5;
 
+/** Profession-specific registration field config */
+const REGISTRATION_FIELDS: Record<string, { icon: string; label: string; placeholder: string; firestoreKey: string; description: string }> = {
+    medical: { icon: '🏥', label: 'SLMC Registration Number', placeholder: 'e.g. 28475', firestoreKey: 'slmc_number', description: 'Required for tax-deductible invoice generation' },
+    legal: { icon: '⚖️', label: 'BASL Registration Number', placeholder: 'e.g. 12345', firestoreKey: 'basl_number', description: 'Bar Association of Sri Lanka registration' },
+};
+
+/** Profession-specific Pro features */
+const PRO_FEATURES: Record<string, [string, string][]> = {
+    medical: [
+        ['🎙️', 'Unlimited AI Voice-to-Text Clinical Vault'],
+        ['🤖', 'Zero-Touch Accounting: Bank Email Auto-Sync'],
+        ['📊', 'Automated IRD Tax Estimator & Auditor Export'],
+        ['👥', 'Assistant Login Portal for clinic staff'],
+        ['📅', 'Smart Traffic Alerts & Schedule Optimizer'],
+        ['📱', 'Priority Support & Early Access to Features'],
+    ],
+    legal: [
+        ['⚖️', 'Trust vs Operating Accounting with 1-Click Fee Notes'],
+        ['📋', 'Unlimited AI Voice Case Minutes (English & Sinhala)'],
+        ['🔍', 'Conflict of Interest Scanner'],
+        ['🤖', '50 AI Tokens/month (Demand Letters, Judgment Summaries)'],
+        ['📊', 'Automated IRD Tax Estimator & Auditor Export'],
+        ['📱', 'Priority Support & Early Access to Features'],
+    ],
+};
+
+/** Default features for professions without custom lists */
+const DEFAULT_PRO_FEATURES: [string, string][] = [
+    ['🎙️', 'Unlimited AI Voice Notes'],
+    ['🤖', 'Smart Automation Tools'],
+    ['📊', 'Advanced Reports & Analytics'],
+    ['👥', 'Multi-User Access'],
+    ['📅', 'Priority Support'],
+    ['📱', 'Early Access to New Features'],
+];
+
+/** Detect current profession from localStorage */
+function detectProfession(): ProfessionType {
+    try {
+        const stored = localStorage.getItem('myTracksyProfession');
+        if (stored) {
+            const data = JSON.parse(stored);
+            if (data.profession) return data.profession as ProfessionType;
+        }
+    } catch { }
+    return 'individual';
+}
+
 export default function SubscriptionManager() {
     const { currentUser } = useAuth();
     const [sub, setSub] = useState<SubData | null>(null);
     const [quota, setQuota] = useState<UsageQuota | null>(null);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
-    const [slmcNumber, setSlmcNumber] = useState('');
+    const [regNumber, setRegNumber] = useState('');
     const [loading, setLoading] = useState(true);
     const [activating, setActivating] = useState(false);
-    const [savingSlmc, setSavingSlmc] = useState(false);
+    const [savingReg, setSavingReg] = useState(false);
+    const profession = detectProfession();
+    const pricing = getPricingForProfession(profession);
+    const regField = REGISTRATION_FIELDS[profession];
 
     useEffect(() => {
         if (currentUser?.uid) loadData();
@@ -62,9 +115,11 @@ export default function SubscriptionManager() {
             const invoiceSnap = await getDocs(invoiceQuery);
             setInvoices(invoiceSnap.docs.map(d => d.data() as Invoice));
 
-            // SLMC
+            // Professional registration number
             const userSnap = await getDoc(doc(db, 'users', currentUser.uid));
-            if (userSnap.exists()) setSlmcNumber(userSnap.data().slmc_number || '');
+            if (userSnap.exists() && regField) {
+                setRegNumber(userSnap.data()[regField.firestoreKey] || '');
+            }
         } catch (err) {
             console.error('Error loading subscription data:', err);
         } finally {
@@ -77,15 +132,15 @@ export default function SubscriptionManager() {
         alert('Payment integration coming soon! Contact support@mytracksy.lk for early access.');
     };
 
-    const handleSaveSlmc = async () => {
-        if (!currentUser?.uid || !slmcNumber.trim()) return;
-        setSavingSlmc(true);
+    const handleSaveRegNumber = async () => {
+        if (!currentUser?.uid || !regNumber.trim() || !regField) return;
+        setSavingReg(true);
         try {
-            await setDoc(doc(db, 'users', currentUser.uid), { slmc_number: slmcNumber.trim() }, { merge: true });
+            await setDoc(doc(db, 'users', currentUser.uid), { [regField.firestoreKey]: regNumber.trim() }, { merge: true });
         } catch (err) {
-            console.error('SLMC save error:', err);
+            console.error('Registration save error:', err);
         } finally {
-            setSavingSlmc(false);
+            setSavingReg(false);
         }
     };
 
@@ -93,7 +148,7 @@ export default function SubscriptionManager() {
         return <div style={{ padding: '2rem', textAlign: 'center', color: '#a5b4fc' }}>Loading subscription...</div>;
     }
 
-    const isPro = sub?.tier === 'pro' && sub?.status === 'active';
+    const isPro = (sub?.tier === 'pro' || sub?.tier === 'chambers') && sub?.status === 'active';
     const monthId = `${new Date().getFullYear()}_${String(new Date().getMonth() + 1).padStart(2, '0')}`;
     const used = quota?.month_id === monthId ? quota.ai_voice_notes_used : 0;
     const pct = isPro ? 0 : Math.min((used / FREE_QUOTA) * 100, 100);
@@ -129,7 +184,10 @@ export default function SubscriptionManager() {
                 </div>
 
                 <h3 style={{ color: '#fff', fontSize: '1.25rem', margin: '0 0 0.25rem' }}>
-                    {isPro ? 'MyTracksy Pro' : 'MyTracksy Free'}
+                    {isPro
+                        ? (sub?.tier === 'chambers' ? 'The Chambers Plan' : pricing.tiers.find(t => t.tierKey === 'pro')?.name || 'Pro Plan')
+                        : (pricing.tiers.find(t => t.tierKey === 'free')?.name || 'Free Plan')
+                    }
                 </h3>
                 <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0 }}>
                     {isPro
@@ -195,18 +253,34 @@ export default function SubscriptionManager() {
                     textAlign: 'center',
                 }}>
                     <h4 style={{ color: '#c7d2fe', fontSize: '0.95rem', margin: '0 0 0.5rem' }}>
-                        🚀 Upgrade to Pro
+                        🚀 Upgrade to {pricing.tiers.find(t => t.tierKey === 'pro')?.name || 'Pro'}
                     </h4>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                        <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem' }}>
-                            <div style={{ color: '#fff', fontWeight: 700 }}>LKR 2,900</div>
-                            <div style={{ color: '#94a3b8', fontSize: '0.7rem' }}>per month</div>
+                    {pricing.tiers.filter(t => t.tierKey !== 'free').map((tier) => (
+                        <div key={tier.id} style={{
+                            background: tier.highlighted ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+                            borderRadius: '0.75rem',
+                            padding: '0.75rem',
+                            marginBottom: '0.5rem',
+                            border: tier.highlighted ? '1px solid rgba(139,92,246,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                        }}>
+                            <div style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                                {tier.name} {tier.badge && <span style={{ fontSize: '0.65rem', color: '#6ee7b7' }}>({tier.badge})</span>}
+                            </div>
+                            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                                <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', padding: '0.35rem 0.6rem' }}>
+                                    <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>LKR {tier.monthlyPrice.toLocaleString()}</div>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem' }}>per month</div>
+                                </div>
+                                <div style={{ background: 'rgba(99,102,241,0.2)', borderRadius: '0.5rem', padding: '0.35rem 0.6rem', border: '1px solid rgba(139,92,246,0.3)' }}>
+                                    <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>LKR {tier.annualPrice.toLocaleString()}</div>
+                                    <div style={{ color: '#6ee7b7', fontSize: '0.65rem' }}>per year (SAVE {Math.round((1 - tier.annualPrice / (tier.monthlyPrice * 12)) * 100)}%)</div>
+                                </div>
+                            </div>
+                            {tier.aiTokens > 0 && (
+                                <div style={{ color: '#a5b4fc', fontSize: '0.7rem' }}>🤖 {tier.aiTokens} AI Tokens/month</div>
+                            )}
                         </div>
-                        <div style={{ background: 'rgba(99,102,241,0.2)', borderRadius: '0.5rem', padding: '0.5rem 0.75rem', border: '1px solid rgba(139,92,246,0.4)' }}>
-                            <div style={{ color: '#fff', fontWeight: 700 }}>LKR 25,000</div>
-                            <div style={{ color: '#6ee7b7', fontSize: '0.7rem' }}>per year (SAVE 28%)</div>
-                        </div>
-                    </div>
+                    ))}
                     <div style={{ color: '#6ee7b7', fontSize: '0.75rem', marginBottom: '0.75rem' }}>
                         🧾 100% Tax Deductible — auto-logged as expense
                     </div>
@@ -225,58 +299,60 @@ export default function SubscriptionManager() {
                             fontSize: '0.9rem',
                         }}
                     >
-                        {'🚀 Upgrade to Pro'}
+                        {'🚀 Upgrade Now'}
                     </button>
                 </div>
             )}
 
-            {/* SLMC Number */}
-            <div style={{
-                background: '#1e293b',
-                borderRadius: '0.75rem',
-                padding: '1rem',
-                marginBottom: '1rem',
-                border: '1px solid rgba(255,255,255,0.1)',
-            }}>
-                <label style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
-                    🏥 SLMC Registration Number
-                </label>
-                <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: '0 0 0.5rem' }}>
-                    Required for tax-deductible invoice generation
-                </p>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <input
-                        value={slmcNumber}
-                        onChange={e => setSlmcNumber(e.target.value)}
-                        placeholder="e.g. 28475"
-                        style={{
-                            flex: 1,
-                            padding: '0.6rem 0.75rem',
-                            background: 'rgba(255,255,255,0.05)',
-                            border: '1px solid rgba(255,255,255,0.15)',
-                            borderRadius: '0.5rem',
-                            color: '#fff',
-                            fontSize: '0.9rem',
-                        }}
-                    />
-                    <button
-                        onClick={handleSaveSlmc}
-                        disabled={savingSlmc}
-                        style={{
-                            padding: '0.6rem 1rem',
-                            background: '#4338ca',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '0.5rem',
-                            cursor: 'pointer',
-                            fontWeight: 600,
-                            fontSize: '0.8rem',
-                        }}
-                    >
-                        {savingSlmc ? '...' : 'Save'}
-                    </button>
+            {/* Professional Registration Number (only for professions with registration fields) */}
+            {regField && (
+                <div style={{
+                    background: '#1e293b',
+                    borderRadius: '0.75rem',
+                    padding: '1rem',
+                    marginBottom: '1rem',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                }}>
+                    <label style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 600, display: 'block', marginBottom: '0.5rem' }}>
+                        {regField.icon} {regField.label}
+                    </label>
+                    <p style={{ color: '#94a3b8', fontSize: '0.7rem', margin: '0 0 0.5rem' }}>
+                        {regField.description}
+                    </p>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input
+                            value={regNumber}
+                            onChange={e => setRegNumber(e.target.value)}
+                            placeholder={regField.placeholder}
+                            style={{
+                                flex: 1,
+                                padding: '0.6rem 0.75rem',
+                                background: 'rgba(255,255,255,0.05)',
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                borderRadius: '0.5rem',
+                                color: '#fff',
+                                fontSize: '0.9rem',
+                            }}
+                        />
+                        <button
+                            onClick={handleSaveRegNumber}
+                            disabled={savingReg}
+                            style={{
+                                padding: '0.6rem 1rem',
+                                background: '#4338ca',
+                                color: '#fff',
+                                border: 'none',
+                                borderRadius: '0.5rem',
+                                cursor: 'pointer',
+                                fontWeight: 600,
+                                fontSize: '0.8rem',
+                            }}
+                        >
+                            {savingReg ? '...' : 'Save'}
+                        </button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Invoice history */}
             <div style={{
@@ -343,14 +419,7 @@ export default function SubscriptionManager() {
                 <h4 style={{ color: '#c7d2fe', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
                     {isPro ? '✅ Your Pro Features' : '🔒 Pro Features Include'}
                 </h4>
-                {[
-                    ['🎙️', 'Unlimited AI Voice-to-Text Clinical Vault'],
-                    ['🤖', 'Zero-Touch Accounting: Bank Email Auto-Sync'],
-                    ['📊', 'Automated IRD Tax Estimator & Auditor Export'],
-                    ['👥', 'Assistant Login Portal for clinic staff'],
-                    ['📅', 'Smart Traffic Alerts & Schedule Optimizer'],
-                    ['📱', 'Priority Support & Early Access to Features'],
-                ].map(([icon, text], i) => (
+                {(PRO_FEATURES[profession] || DEFAULT_PRO_FEATURES).map(([icon, text], i) => (
                     <div key={i} style={{
                         display: 'flex',
                         alignItems: 'center',

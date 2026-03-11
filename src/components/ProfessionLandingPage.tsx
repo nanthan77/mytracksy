@@ -3,6 +3,7 @@ import { Helmet } from 'react-helmet-async';
 import { PROFESSION_ROUTES, ProfessionRouteConfig } from '../config/professionRoutes';
 import DoctorLandingPage from './DoctorLandingPage';
 import CreatorLandingPage from './CreatorLandingPage';
+import LawyerLandingPage from './LawyerLandingPage';
 
 interface ProfessionLandingPageProps {
     slug: string;
@@ -229,6 +230,11 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
     // Creator gets a fully custom landing page
     if (slug === 'creator') {
         return <CreatorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    // Lawyer gets a fully custom landing page (LexTracksy)
+    if (slug === 'legal') {
+        return <LawyerLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
     }
 
     const [mounted, setMounted] = useState(false);

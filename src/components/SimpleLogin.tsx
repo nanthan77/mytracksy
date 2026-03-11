@@ -84,19 +84,7 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
         }}>
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <div style={{
-              display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 8,
-            }}>
-              <div style={{
-                width: 40, height: 40, borderRadius: 12,
-                background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                fontSize: '1.2rem', boxShadow: '0 4px 12px rgba(99,102,241,0.3)',
-              }}>💰</div>
-              <span style={{ fontSize: '1.5rem', fontWeight: 700, color: 'white', letterSpacing: '-0.02em' }}>
-                MyTracksy
-              </span>
-            </div>
+            <img src="/logos/logo final tag.png" alt="MyTracksy - Institutional Financial Intelligence" style={{ height: 72, objectFit: 'contain', marginBottom: 8 }} />
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, margin: 0, fontWeight: 400 }}>
               Professional finance management for Sri Lanka
             </p>

@@ -92,6 +92,13 @@ const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected,
     const [selected, setSelected] = useState<ProfessionType | null>(null);
     const [mounted, setMounted] = useState(false);
 
+    // Creator specific state
+    const [creatorData, setCreatorData] = useState({
+        primaryPlatform: '',
+        receivesForeignIncome: false,
+        tinNumber: ''
+    });
+
     useEffect(() => { setMounted(true); }, []);
     useEffect(() => {
         const stored = localStorage.getItem('myTracksyProfession');
@@ -100,7 +107,13 @@ const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected,
 
     const handleContinue = () => {
         if (!selected) return;
-        localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selected, selectedAt: new Date().toISOString() }));
+
+        const payload: any = { profession: selected, selectedAt: new Date().toISOString() };
+        if (selected === 'creator') {
+            payload.creatorSettings = creatorData;
+        }
+
+        localStorage.setItem('myTracksyProfession', JSON.stringify(payload));
         onProfessionSelected(selected);
     };
 
@@ -219,10 +232,71 @@ const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected,
                         ))}
                     </div>
 
+                    {/* Creator Onboarding Fields */}
+                    {selected === 'creator' && (
+                        <div style={{ maxWidth: 800, margin: '0 auto 2rem', padding: '2rem', background: 'rgba(24, 24, 27, 0.95)', border: '1px solid rgba(234, 179, 8, 0.3)', borderRadius: 16, animation: 'fadeUp 0.4s ease' }}>
+                            <h3 style={{ fontSize: 20, fontWeight: 700, color: '#facc15', marginBottom: 24, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span>🎥</span> Creator Tax & Compliance Setup
+                            </h3>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+                                <div>
+                                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 8 }}>Primary Platform</label>
+                                    <select
+                                        value={creatorData.primaryPlatform}
+                                        onChange={e => setCreatorData({ ...creatorData, primaryPlatform: e.target.value })}
+                                        style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 15 }}
+                                    >
+                                        <option value="" disabled>Select your main platform...</option>
+                                        <option value="youtube">YouTube</option>
+                                        <option value="tiktok">TikTok</option>
+                                        <option value="instagram">Instagram</option>
+                                        <option value="freelance">Freelance / Fiverr / Upwork</option>
+                                    </select>
+                                </div>
+
+                                <div style={{ background: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 8, border: '1px solid rgba(255,255,255,0.05)' }}>
+                                    <label style={{ display: 'flex', alignItems: 'flex-start', gap: 12, cursor: 'pointer' }}>
+                                        <input
+                                            type="checkbox"
+                                            checked={creatorData.receivesForeignIncome}
+                                            onChange={e => setCreatorData({ ...creatorData, receivesForeignIncome: e.target.checked })}
+                                            style={{ width: 18, height: 18, marginTop: 2, accentColor: '#eab308' }}
+                                        />
+                                        <div>
+                                            <div style={{ fontSize: 15, fontWeight: 600, color: '#fff', marginBottom: 4 }}>I receive foreign income (USD/EUR) into a local bank</div>
+                                            <div style={{ fontSize: 13, color: '#a1a1aa', lineHeight: 1.5 }}>
+                                                Crucial: Sri Lanka now taxes foreign income at 5%. Selecting this unlocks our Service Export exemptions scanner to ensure your AdSense/Upwork income is taxed correctly, preventing standard high bracket taxation by the IRD.
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+
+                                <div>
+                                    <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: '#a1a1aa', marginBottom: 8 }}>Tax Identification Number (TIN)</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Enter your TIN for corporate invoicing (e.g., 2XXXXXXXXXX)"
+                                        value={creatorData.tinNumber}
+                                        onChange={e => setCreatorData({ ...creatorData, tinNumber: e.target.value })}
+                                        style={{ width: '100%', padding: '12px 16px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8, color: '#fff', fontSize: 15 }}
+                                    />
+                                    <div style={{ fontSize: 12, color: '#71717a', marginTop: 6 }}>Brands (like Keells, Daraz) require this on invoices before paying you.</div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Action */}
                     <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '2rem' }}>
-                        <button onClick={handleContinue} disabled={!selected} className="prof-continue-btn">
-                            {selected ? `Continue as ${professions.find(p => p.id === selected)?.title} →` : 'Select a profession to continue'}
+                        <button
+                            onClick={handleContinue}
+                            disabled={!selected || (selected === 'creator' && !creatorData.primaryPlatform)}
+                            className="prof-continue-btn"
+                        >
+                            {selected === 'creator' && !creatorData.primaryPlatform
+                                ? 'Complete setup above'
+                                : selected ? `Continue as ${professions.find(p => p.id === selected)?.title} →` : 'Select a profession to continue'}
                         </button>
                     </div>
                 </div>

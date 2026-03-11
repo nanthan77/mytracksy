@@ -51,7 +51,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 <meta property="og:url" content="https://mytracksy.lk/medical" />
                 <meta property="og:title" content="MyTracksy Medical | Clinic & Tax Software for Sri Lankan Doctors" />
                 <meta property="og:description" content="Automate your channeling revenue, clinical notes, and IRD tax compliance seamlessly." />
-                <meta property="og:image" content="https://mytracksy.lk/assets/hero-doctor.png" />
+                <meta property="og:image" content="https://mytracksy.web.app/logos/logo final tag.png" />
 
                 {/* JSON-LD Schema Markup */}
                 <script type="application/ld+json">
@@ -124,12 +124,8 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     <div className="lt-i" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', gap: 16 }}>
                             <button onClick={onBack} className="btn-secondary" style={{ padding: '8px 16px', fontSize: 13 }}>← Back to Platform</button>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg, #0ea5e9, #6366f1)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(14,165,233,0.15)' }}>
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                        <path d="M12 4v16m-8-8h16" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
-                                    </svg>
-                                </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                                <img src="/logos/final logo no lettermy tracksy.png" alt="MyTracksy Logo" style={{ width: 38, height: 38, objectFit: 'contain' }} />
                                 <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em' }}>Medical <sup style={{ fontSize: 10, color: '#0ea5e9', fontWeight: 700 }}>PRO</sup></span>
                             </div>
                         </div>
@@ -631,8 +627,9 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     <div className="lt-i">
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 80 }}>
                             <div style={{ gridColumn: 'span 2' }}>
-                                <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.04em', marginBottom: 16 }}>
-                                    MyTracksy <span style={{ color: '#0ea5e9' }}>Medical Professionals</span>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                                    <img src="/logos/logo final tag.png" alt="MyTracksy - Institutional Financial Intelligence" style={{ height: 48, objectFit: 'contain' }} />
+                                    <span style={{ fontSize: 20, fontWeight: 800, color: '#0ea5e9' }}>Medical</span>
                                 </div>
                                 <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.7, maxWidth: 350 }}>
                                     The definitive financial architecture platform utilized by leading doctors and surgeons across Sri Lanka.

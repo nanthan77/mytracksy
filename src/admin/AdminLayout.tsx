@@ -180,7 +180,10 @@ export default function AdminLayout({ user, onLogout }: AdminLayoutProps) {
                 ...(isMobile && !sidebarOpen ? s.sidebarMobileHidden : {}),
             }}>
                 <div style={s.logo}>
-                    <h1 style={s.logoText}>🛡️ MyTracksy</h1>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+                        <img src="/logos/final logo no lettermy tracksy.png" alt="MyTracksy Logo" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                        <h1 style={s.logoText}>MyTracksy</h1>
+                    </div>
                     <p style={s.logoSub}>SUPER ADMIN</p>
                 </div>
 
