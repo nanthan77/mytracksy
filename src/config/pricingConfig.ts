@@ -117,9 +117,68 @@ const legalPricing: ProfessionPricing = {
   tokenStore: { price: 1500, tokens: 100 },
 };
 
+const aquaculturePricing: ProfessionPricing = {
+  profession: 'aquaculture',
+  tiers: [
+    {
+      id: 'aqua-free',
+      name: 'Free Trial',
+      monthlyPrice: 0,
+      annualPrice: 0,
+      features: [
+        '2 Ponds / 1 Cycle',
+        'Voice Logging (5/month)',
+        'Basic Pond P&L',
+        'Offline Mode',
+      ],
+      aiTokens: 0,
+      tierKey: 'free',
+    },
+    {
+      id: 'aqua-pro',
+      name: 'Single Farm',
+      monthlyPrice: 3900,
+      annualPrice: 39000,
+      features: [
+        'Up to 5 Ponds',
+        'Unlimited Voice AI Logs',
+        'Feed Inventory & FCR Tracker',
+        'Harvest Delivery Notes (PDF)',
+        'Pond-by-Pond Profitability',
+        'Cloud Backup & Sync',
+        '1 Admin Login',
+      ],
+      aiTokens: 50,
+      badge: 'Ideal for Individual Farmers',
+      highlighted: true,
+      tierKey: 'pro',
+    },
+    {
+      id: 'aqua-hatchery',
+      name: 'Commercial Hatchery',
+      monthlyPrice: 14900,
+      annualPrice: 149000,
+      features: [
+        'Unlimited Ponds',
+        'Multi-Farm God Mode',
+        'Sub-logins for Farm Managers',
+        'Export Harvest Ledger (USD/LKR)',
+        'NAQDA & Bank Loan Reports',
+        '250 AI Tokens/month',
+        'Dedicated Account Manager',
+      ],
+      aiTokens: 250,
+      highlighted: false,
+      tierKey: 'chambers',
+    },
+  ],
+  tokenStore: { price: 1500, tokens: 100 },
+};
+
 const pricingRegistry: Partial<Record<ProfessionType, ProfessionPricing>> = {
   medical: medicalPricing,
   legal: legalPricing,
+  aquaculture: aquaculturePricing,
 };
 
 export function getPricingForProfession(profession: ProfessionType): ProfessionPricing {

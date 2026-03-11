@@ -4,6 +4,9 @@ import { PROFESSION_ROUTES, ProfessionRouteConfig } from '../config/professionRo
 import DoctorLandingPage from './DoctorLandingPage';
 import CreatorLandingPage from './CreatorLandingPage';
 import LawyerLandingPage from './LawyerLandingPage';
+import EngineerLandingPage from './EngineerLandingPage';
+import BizTracksyLanding from './BizTracksyLanding';
+import AquaLandingPage from './AquaLandingPage';
 
 interface ProfessionLandingPageProps {
     slug: string;
@@ -237,6 +240,21 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
         return <LawyerLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
     }
 
+    // Business gets a fully custom landing page (BizTracksy)
+    if (slug === 'business') {
+        return <BizTracksyLanding onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    // Engineer gets a fully custom landing page (EngiTracksy)
+    if (slug === 'engineering') {
+        return <EngineerLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    // Aquaculture gets a fully custom landing page (AquaTracksy)
+    if (slug === 'aquaculture') {
+        return <AquaLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
     const [mounted, setMounted] = useState(false);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const [navSolid, setNavSolid] = useState(false);
@@ -285,44 +303,97 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
         { q: 'Where is my financial data stored?', a: `All your ${routeName} data stays 100% on your device. We comply with Sri Lankan PDPA regulations. No personal or financial data is ever stored on our servers.` },
         { q: 'Can I switch plans anytime?', a: 'Yes. Upgrade, downgrade, or cancel anytime. No lock-in contracts. Your data remains safe regardless of plan changes.' },
         { q: 'Does it work without internet?', a: 'Absolutely. MyTracksy works fully offline as a PWA. Your data syncs automatically when you reconnect.' },
-        { q: `Is it built specifically for ${routeShortName}?`, a: `Yes. Every feature, category, report, and tax calculation is tailored for the ${slug === 'personal' ? 'personal finance' : routeName.replace('MyTracksy ', '')} profession in Sri Lanka.` },
+        { q: `Is it built specifically for ${routeShortName}?`, a: `Yes. Every feature, category, report, and tax calculation is tailored for the ${slug === 'individual' ? 'personal finance' : routeName.replace('MyTracksy ', '')} profession in Sri Lanka.` },
+    ];
+
+    const professionOgImages: Record<string, string> = {
+        individual: 'https://mytracksy.lk/assets/professions/profession_personal_1773215331363.png',
+        trading: 'https://mytracksy.lk/assets/professions/profession_trader_1773215186011.png',
+        automotive: 'https://mytracksy.lk/assets/professions/profession_auto_1773215201791.png',
+        marketing: 'https://mytracksy.lk/assets/professions/profession_marketing_1773215238062.png',
+        travel: 'https://mytracksy.lk/assets/professions/profession_travel_1773215259443.png',
+        transportation: 'https://mytracksy.lk/assets/professions/profession_transport_1773215278251.png',
+        retail: 'https://mytracksy.lk/assets/professions/profession_retail_1773215293921.png',
+        aquaculture: 'https://mytracksy.lk/assets/professions/profession_aquaculture_1773215316236.png',
+    };
+
+    const structuredData = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: `MyTracksy ${routeShortName}`,
+            url: `https://mytracksy.lk/${slug}`,
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web, Android, iOS',
+            image: professionOgImages[slug] || 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            description: `MyTracksy helps Sri Lankan ${routeShortName} professionals manage income, expenses, tax-ready exports, and profession-specific workflows in one fast PWA.`,
+            offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'LKR',
+            },
+            publisher: {
+                '@type': 'Organization',
+                name: 'MyTracksy',
+                url: 'https://mytracksy.lk/',
+                logo: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            },
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'MyTracksy',
+                    item: 'https://mytracksy.lk/',
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: routeShortName,
+                    item: `https://mytracksy.lk/${slug}`,
+                },
+            ],
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqItems.map((faq) => ({
+                '@type': 'Question',
+                name: faq.q,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: faq.a,
+                },
+            })),
+        },
     ];
     return (
         <>
             <Helmet>
-                <title>MyTracksy {routeShortName} | Best Financial Software for {routeName}s in Sri Lanka</title>
-                <meta name="description" content={`AI-powered tracking and financial management software specifically designed for ${routeShortName} professionals in Sri Lanka. Manage expenses, billing, and taxes effortlessly.`} />
+                <title>MyTracksy {routeShortName} | Financial Software for Sri Lankan {routeShortName} Professionals</title>
+                <meta name="description" content={`MyTracksy helps Sri Lankan ${routeShortName} professionals manage income, expenses, tax-ready exports, billing, and profession-specific workflows from one fast web app and PWA.`} />
                 <meta name="keywords" content={`${slug} software sri lanka, ${routeShortName} management app, professional billing software, sri lanka tax tracker`} />
+                <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+                <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
                 <link rel="canonical" href={`https://mytracksy.lk/${slug}`} />
 
-                {/* Open Graph / Social */}
                 <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="MyTracksy" />
                 <meta property="og:url" content={`https://mytracksy.lk/${slug}`} />
-                <meta property="og:title" content={`MyTracksy ${routeShortName} | Financial Software for Sri Lankan Professionals`} />
-                <meta property="og:description" content={`Automate tracking, expenses, and tax compliance seamlessly for ${routeName}s.`} />
-                <meta property="og:image" content={`https://mytracksy.lk/assets/hero-${slug}.png`} />
+                <meta property="og:title" content={`MyTracksy ${routeShortName} | Financial Software for Sri Lankan ${routeShortName} Professionals`} />
+                <meta property="og:description" content={`Track income, expenses, tax-ready exports, and daily workflows for Sri Lankan ${routeShortName} professionals in one app.`} />
+                <meta property="og:image" content={professionOgImages[slug] || 'https://mytracksy.lk/logos/mytracksy-logo.png'} />
+                <meta property="og:image:alt" content={`${routeShortName} page on MyTracksy`} />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content={`MyTracksy ${routeShortName} | Financial Software for Sri Lankan ${routeShortName} Professionals`} />
+                <meta name="twitter:description" content={`Track income, expenses, tax-ready exports, and daily workflows for Sri Lankan ${routeShortName} professionals in one app.`} />
+                <meta name="twitter:image" content={professionOgImages[slug] || 'https://mytracksy.lk/logos/mytracksy-logo.png'} />
 
-                {/* JSON-LD Schema Markup */}
                 <script type="application/ld+json">
-                    {`
-                        {
-                            "@context": "https://schema.org",
-                            "@type": "SoftwareApplication",
-                            "name": "MyTracksy ${routeShortName}",
-                            "applicationCategory": "BusinessApplication",
-                            "operatingSystem": "Web, Android, iOS",
-                            "description": "AI-powered financial tracking and management software for ${routeShortName} professionals in Sri Lanka.",
-                            "offers": {
-                                "@type": "Offer",
-                                "price": "0",
-                                "priceCurrency": "LKR"
-                            },
-                            "author": {
-                                "@type": "Organization",
-                                "name": "SafeNetCreations"
-                            }
-                        }
-                    `}
+                    {JSON.stringify(structuredData)}
                 </script>
             </Helmet>
 
@@ -373,7 +444,7 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
                             <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>← All Professions</button>
                             <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <div style={{ width: 32, height: 32, borderRadius: 9, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem' }}>{routeIcon}</div>
+                                <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ width: 32, height: 32, objectFit: 'contain' }} />
                                 <span style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>{routeShortName}</span>
                             </div>
                         </div>
@@ -586,39 +657,6 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
                             </div>
                         </div>
                     </div>
-                    {/* Dynamic FAQ JSON-LD Schema */}
-                    <Helmet>
-                        <script type="application/ld+json">
-                            {`
-                                {
-                                  "@context": "https://schema.org",
-                                  "@type": "FAQPage",
-                                  "mainEntity": [{
-                                    "@type": "Question",
-                                    "name": "Is MyTracksy suitable for Sri Lankan ${routeShortName} tax calculations?",
-                                    "acceptedAnswer": {
-                                      "@type": "Answer",
-                                      "text": "Yes. MyTracksy categorizes all your professional income and localized business expenses into a clean format directly aligned with Inland Revenue Department (IRD) requirements for seamless APIT/PAYE processing."
-                                    }
-                                  }, {
-                                    "@type": "Question",
-                                    "name": "Does the app work offline?",
-                                    "acceptedAnswer": {
-                                      "@type": "Answer",
-                                      "text": "Absolutely. MyTracksy is a PWA built with an offline-first architecture. You can log all your data without an active internet connection, and the system will automatically sync when you reconnect."
-                                    }
-                                  }, {
-                                    "@type": "Question",
-                                    "name": "Is my financial data secure?",
-                                    "acceptedAnswer": {
-                                      "@type": "Answer",
-                                      "text": "Yes. We adhere strictly to the Sri Lanka PDPA No. 9 of 2022. Your sensitive financial data utilizes bank-grade encryption and remains strictly confidential."
-                                    }
-                                  }]
-                                }
-                            `}
-                        </script>
-                    </Helmet>
                 </section>
 
                 {/* ===== CTA ===== */}
@@ -645,7 +683,7 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
                 <footer style={{ padding: '48px 24px', background: '#0f172a', color: 'rgba(255,255,255,0.5)', fontSize: 13, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                     <div className="pp-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <div style={{ width: 28, height: 28, borderRadius: 8, background: color, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', boxShadow: `0 4px 12px ${color}30` }}>{routeIcon}</div>
+                            <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ width: 28, height: 28, objectFit: 'contain' }} />
                             <span style={{ fontWeight: 700, color: '#fff', fontSize: 14, letterSpacing: '-0.01em' }}>{routeShortName}</span>
                         </div>
                         <div>© 2026 MyTracksy. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: color, textDecoration: 'none', fontWeight: 700 }}>SafeNetCreations</a></div>
