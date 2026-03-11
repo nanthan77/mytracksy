@@ -273,12 +273,15 @@ function App() {
 
   // 0.5 Profession-specific landing page (SaaS style)
   if (view === 'professionLanding' && professionLandingSlug) {
+    const route = getRouteBySlug(professionLandingSlug);
+    const landingProfession = route ? route.profession : null;
+
     return (
       <Suspense fallback={<LoadingFallback />}>
+        {landingProfession && <ManifestUpdater profession={landingProfession} />}
         <ProfessionLandingPage
           slug={professionLandingSlug}
           onGetStarted={() => {
-            const route = getRouteBySlug(professionLandingSlug);
             if (route) {
               setSelectedProfession(route.profession);
             }
@@ -291,6 +294,7 @@ function App() {
             setView('landing');
           }}
         />
+        {landingProfession && <PWAInstallPrompt profession={landingProfession} />}
       </Suspense>
     );
   }
