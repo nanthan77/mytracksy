@@ -6,13 +6,13 @@ import { useAdminAuthContext } from './AdminAuthContext';
 
 export default function AdminLogin() {
   const { login, loginWithGoogle, loading, error, user, role } = useAdminAuthContext();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-  // Redirect to dashboard if already authenticated
+  // Redirect to dashboard if already authenticated (AFTER all hooks)
   if (user && role) {
     return <Navigate to="/" replace />;
   }
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
