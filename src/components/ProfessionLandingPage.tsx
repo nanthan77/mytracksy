@@ -30,7 +30,7 @@ const professionContent: Record<string, {
         useCases: ['Private Practice', 'Hospital Channeling', 'Multi-Clinic Management', 'Specialist Practice', 'Medical Lab Owners'],
         testimonialQuote: 'MyTracksy replaced my Excel sheets and my accountant\'s monthly headaches. Everything is on my phone now.',
         testimonialAuthor: 'Dr. K. Perera, Cardiologist — Colombo',
-    }, lawyer: {
+    }, legal: {
         headline: 'Financial Management Built for Lawyers',
         subline: 'Track case billing, retainer fees, court expenses, and client payments. Stay compliant with Bar Association and IRD requirements.',
         features: [
@@ -46,7 +46,7 @@ const professionContent: Record<string, {
         testimonialQuote: 'Finally, a finance app that understands legal billing. Case-based tracking changed everything for my practice.',
         testimonialAuthor: 'Attorney M. Silva, Civil Law — Kandy',
     },
-    engineer: {
+    engineering: {
         headline: 'Financial Management Built for Engineers',
         subline: 'Track project budgets, site expenses, material costs, and consultant payments. Engineering project finances made crystal clear.',
         features: [
@@ -61,7 +61,7 @@ const professionContent: Record<string, {
         useCases: ['Civil Engineer', 'Structural Consultant', 'Quantity Surveyor', 'MEP Engineer', 'Project Manager'],
         testimonialQuote: 'Tracking 5 sites used to be chaos. Now I see every project\'s P&L on my phone before the morning meeting.',
         testimonialAuthor: 'Eng. R. Fernando, Civil — Gampaha',
-    }, biz: {
+    }, business: {
         headline: 'Financial Management Built for Business Owners',
         subline: 'Multi-company accounting, invoicing, inventory, and cash flow management. Run your entire business from one dashboard.',
         features: [
@@ -77,7 +77,7 @@ const professionContent: Record<string, {
         testimonialQuote: 'Managing 3 companies used to need 3 accountants. MyTracksy gives me one dashboard for everything.',
         testimonialAuthor: 'Amal J., Business Owner — Colombo',
     },
-    trader: {
+    trading: {
         headline: 'Financial Management Built for Traders',
         subline: 'Track buy/sell transactions, calculate profit margins, manage inventory, and monitor market positions in real-time.',
         features: [
@@ -92,7 +92,7 @@ const professionContent: Record<string, {
         useCases: ['Wholesale Trader', 'Import Dealer', 'Commodity Trader', 'Online Reseller', 'Distributor'],
         testimonialQuote: 'I know my margin on every item in seconds. No more guessing on pricing during negotiations.',
         testimonialAuthor: 'Nimal S., Wholesale Trader — Pettah',
-    }, auto: {
+    }, automotive: {
         headline: 'Financial Management Built for Automotive',
         subline: 'Track service jobs, parts inventory, mechanic wages, and customer billing. Workshop management made effortless.',
         features: [
@@ -139,7 +139,7 @@ const professionContent: Record<string, {
         testimonialQuote: 'Seasonal revenue planning became so much easier. I can see which tours actually make money now.',
         testimonialAuthor: 'Ruwan K., Travel Agency Owner — Kandy',
     },
-    transport: {
+    transportation: {
         headline: 'Financial Management Built for Transport & Fleet',
         subline: 'Track trip revenue, fuel costs, driver wages, and vehicle maintenance. Fleet profitability at your fingertips.',
         features: [
@@ -170,7 +170,7 @@ const professionContent: Record<string, {
         testimonialQuote: 'Daily reconciliation used to take an hour. Now it takes 5 minutes. My accountant is actually happy.',
         testimonialAuthor: 'Saman L., Retail Shop Owner — Galle',
     },
-    aqua: {
+    aquaculture: {
         headline: 'Financial Management Built for Aquaculture',
         subline: 'Track pond costs, feed expenses, harvest revenue, and farm profitability. Aquaculture finance made simple.',
         features: [
@@ -186,7 +186,7 @@ const professionContent: Record<string, {
         testimonialQuote: 'Feed cost tracking per pond helped me reduce waste by 20%. That\'s real money saved every cycle.',
         testimonialAuthor: 'Dinesh W., Shrimp Farmer — Chilaw',
     },
-    personal: {
+    individual: {
         headline: 'Personal Finance Made Simple',
         subline: 'Track your income, expenses, savings goals, and investments. Your complete personal financial dashboard.',
         features: [
@@ -205,7 +205,7 @@ const professionContent: Record<string, {
 };
 const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onGetStarted, onLogin, onBack }) => {
     // Doctor gets a fully custom landing page
-    if (slug === 'dr') {
+    if (slug === 'medical') {
         return <DoctorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
     }
 
@@ -233,7 +233,7 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
 
     const route = PROFESSION_ROUTES.find(r => r.slug === slug);
     const content = professionContent[slug];
-    if (slug !== 'dr' && (!route || !content)) return <div style={{ padding: 100, textAlign: 'center' }}>Profession not found. <button onClick={onBack}>Go Back</button></div>;
+    if (slug !== 'medical' && (!route || !content)) return <div style={{ padding: 100, textAlign: 'center' }}>Profession not found. <button onClick={onBack}>Go Back</button></div>;
 
     const color = route?.themeColor || '#10b981';
     const routeName = route?.name || 'MyTracksy';

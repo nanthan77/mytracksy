@@ -44,11 +44,11 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 <title>MyTracksy Medical | Best Clinic & Tax Software for Doctors in Sri Lanka</title>
                 <meta name="description" content="The ultimate AI-powered clinic management and tax automation software designed specifically for Sri Lankan doctors. Automate your private practice revenue, clinical notes, and IRD tax compliance." />
                 <meta name="keywords" content="doctor software sri lanka, clinic management system, medical billing software, sri lanka doctor tax, private channeling software, AI clinical notes sinhala tamil" />
-                <link rel="canonical" href="https://mytracksy.lk/dr" />
+                <link rel="canonical" href="https://mytracksy.lk/medical" />
 
                 {/* Open Graph / Social */}
                 <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://mytracksy.lk/dr" />
+                <meta property="og:url" content="https://mytracksy.lk/medical" />
                 <meta property="og:title" content="MyTracksy Medical | Clinic & Tax Software for Sri Lankan Doctors" />
                 <meta property="og:description" content="Automate your channeling revenue, clinical notes, and IRD tax compliance seamlessly." />
                 <meta property="og:image" content="https://mytracksy.lk/assets/hero-doctor.png" />

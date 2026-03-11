@@ -39,18 +39,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
     }, []);
 
     const professions: { iconMatch: string; name: string; color: string; gradient: string; type: ProfessionType; slug: string; tagline: string }[] = [
-        { iconMatch: 'profession_doctor', name: 'Healthcare & Medical', color: '#0ea5e9', gradient: 'linear-gradient(135deg,#0ea5e9,#0284c7)', type: 'medical', slug: 'dr', tagline: 'Unified practice & revenue orchestration' },
-        { iconMatch: 'profession_lawyer', name: 'Legal Practices', color: '#6366f1', gradient: 'linear-gradient(135deg,#6366f1,#4f46e5)', type: 'legal', slug: 'lawyer', tagline: 'Streamlined trust accounting & billing' },
-        { iconMatch: 'profession_business', name: 'Corporate Business', color: '#10b981', gradient: 'linear-gradient(135deg,#10b981,#059669)', type: 'business', slug: 'biz', tagline: 'Multi-entity financial governance' },
-        { iconMatch: 'profession_engineer', name: 'Engineering Firms', color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#d97706)', type: 'engineering', slug: 'engineer', tagline: 'Intelligent project budget management' },
-        { iconMatch: 'profession_trader', name: 'Trading & Markets', color: '#ef4444', gradient: 'linear-gradient(135deg,#ef4444,#dc2626)', type: 'trading', slug: 'trader', tagline: 'Real-time equity margin & analytics' },
-        { iconMatch: 'profession_auto', name: 'Automotive Networks', color: '#64748b', gradient: 'linear-gradient(135deg,#64748b,#475569)', type: 'automotive', slug: 'auto', tagline: 'End-to-end workshop inventory control' },
+        { iconMatch: 'profession_doctor', name: 'Healthcare & Medical', color: '#0ea5e9', gradient: 'linear-gradient(135deg,#0ea5e9,#0284c7)', type: 'medical', slug: 'medical', tagline: 'Unified practice & revenue orchestration' },
+        { iconMatch: 'profession_lawyer', name: 'Legal Practices', color: '#6366f1', gradient: 'linear-gradient(135deg,#6366f1,#4f46e5)', type: 'legal', slug: 'legal', tagline: 'Streamlined trust accounting & billing' },
+        { iconMatch: 'profession_business', name: 'Corporate Business', color: '#10b981', gradient: 'linear-gradient(135deg,#10b981,#059669)', type: 'business', slug: 'business', tagline: 'Multi-entity financial governance' },
+        { iconMatch: 'profession_engineer', name: 'Engineering Firms', color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#d97706)', type: 'engineering', slug: 'engineering', tagline: 'Intelligent project budget management' },
+        { iconMatch: 'profession_trader', name: 'Trading & Markets', color: '#ef4444', gradient: 'linear-gradient(135deg,#ef4444,#dc2626)', type: 'trading', slug: 'trading', tagline: 'Real-time equity margin & analytics' },
+        { iconMatch: 'profession_auto', name: 'Automotive Networks', color: '#64748b', gradient: 'linear-gradient(135deg,#64748b,#475569)', type: 'automotive', slug: 'automotive', tagline: 'End-to-end workshop inventory control' },
         { iconMatch: 'profession_marketing', name: 'Marketing Agencies', color: '#ec4899', gradient: 'linear-gradient(135deg,#ec4899,#db2777)', type: 'marketing', slug: 'marketing', tagline: 'Automated campaign ROI optimization' },
         { iconMatch: 'profession_travel', name: 'Travel & Tourism', color: '#06b6d4', gradient: 'linear-gradient(135deg,#06b6d4,#0891b2)', type: 'travel', slug: 'travel', tagline: 'Comprehensive booking ledger systems' },
-        { iconMatch: 'profession_transport', name: 'Logistics & Fleet', color: '#d97706', gradient: 'linear-gradient(135deg,#d97706,#b45309)', type: 'transportation', slug: 'transport', tagline: 'Optimized fleet telematics & fuel tracking' },
+        { iconMatch: 'profession_transport', name: 'Logistics & Fleet', color: '#d97706', gradient: 'linear-gradient(135deg,#d97706,#b45309)', type: 'transportation', slug: 'transportation', tagline: 'Optimized fleet telematics & fuel tracking' },
         { iconMatch: 'profession_retail', name: 'Retail Commerce', color: '#16a34a', gradient: 'linear-gradient(135deg,#16a34a,#15803d)', type: 'retail', slug: 'retail', tagline: 'Integrated multi-location POS oversight' },
-        { iconMatch: 'profession_aquaculture', name: 'Aquaculture Sector', color: '#0284c7', gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', type: 'aquaculture', slug: 'aqua', tagline: 'Advanced harvest yield modeling' },
-        { iconMatch: 'profession_personal', name: 'Private Wealth', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)', type: 'individual', slug: 'personal', tagline: 'Secure personal wealth architecture' },
+        { iconMatch: 'profession_aquaculture', name: 'Aquaculture Sector', color: '#0284c7', gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', type: 'aquaculture', slug: 'aquaculture', tagline: 'Advanced harvest yield modeling' },
+        { iconMatch: 'profession_personal', name: 'Private Wealth', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)', type: 'individual', slug: 'individual', tagline: 'Secure personal wealth architecture' },
     ];
 
     // Find the correct image files since they have timestamps

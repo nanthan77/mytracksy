@@ -12,7 +12,7 @@ export interface ProfessionRouteConfig {
 
 export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
     {
-        slug: 'dr',
+        slug: 'medical',
         profession: 'medical',
         name: 'MyTracksy Doctor',
         shortName: 'Dr Tracksy',
@@ -21,7 +21,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Doctor\'s personal assistant — Schedule, prescriptions, voice notes',
     },
     {
-        slug: 'lawyer',
+        slug: 'legal',
         profession: 'legal',
         name: 'MyTracksy Legal',
         shortName: 'Legal Tracksy',
@@ -30,7 +30,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Legal practice management — Cases, billing, client tracking',
     },
     {
-        slug: 'engineer',
+        slug: 'engineering',
         profession: 'engineering',
         name: 'MyTracksy Engineer',
         shortName: 'Eng Tracksy',
@@ -39,7 +39,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Engineering project tracking — Projects, budgets, site logs',
     },
     {
-        slug: 'biz',
+        slug: 'business',
         profession: 'business',
         name: 'MyTracksy Business',
         shortName: 'Biz Tracksy',
@@ -48,7 +48,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Business management — Multi-company, invoicing, analytics',
     },
     {
-        slug: 'personal',
+        slug: 'individual',
         profession: 'individual',
         name: 'MyTracksy Personal',
         shortName: 'My Tracksy',
@@ -57,7 +57,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Personal finance — Expenses, savings, budget goals',
     },
     {
-        slug: 'trader',
+        slug: 'trading',
         profession: 'trading',
         name: 'MyTracksy Trader',
         shortName: 'Trade Tracksy',
@@ -66,7 +66,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Trading & inventory — Buy/sell tracking, profit margins',
     },
     {
-        slug: 'auto',
+        slug: 'automotive',
         profession: 'automotive',
         name: 'MyTracksy Auto',
         shortName: 'Auto Tracksy',
@@ -93,7 +93,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Travel agency — Bookings, commissions, tour packages',
     },
     {
-        slug: 'transport',
+        slug: 'transportation',
         profession: 'transportation',
         name: 'MyTracksy Transport',
         shortName: 'Trans Tracksy',
@@ -111,7 +111,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Retail shop — POS, inventory, supplier management',
     },
     {
-        slug: 'aqua',
+        slug: 'aquaculture',
         profession: 'aquaculture',
         name: 'MyTracksy Aqua',
         shortName: 'Aqua Tracksy',

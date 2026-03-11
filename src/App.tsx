@@ -79,7 +79,7 @@ function App() {
     const storedProfession = localStorage.getItem('myTracksyProfession');
 
     if (slug) {
-      // URL has a profession slug (e.g., /dr, /lawyer)
+      // URL has a profession slug (e.g., /medical, /legal)
       const route = getRouteBySlug(slug);
       if (route) {
         if (storedUser) {
