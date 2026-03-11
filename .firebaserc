@@ -1,0 +1,13 @@
+{
+  "projects": {
+    "default": "tracksy-8e30c"
+  },
+  "targets": {
+    "tracksy-8e30c": {
+      "hosting": {
+        "main": ["tracksy-8e30c"],
+        "admin": ["mytracksy-admin"]
+      }
+    }
+  }
+}
