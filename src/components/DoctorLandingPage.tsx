@@ -154,23 +154,36 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 </nav>
 
                 {/* Hero Section */}
-                <header style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', paddingTop: 120, paddingBottom: 80, position: 'relative', overflow: 'hidden', background: 'radial-gradient(circle at top right, rgba(14,165,233,0.08) 0%, transparent 60%), radial-gradient(circle at bottom left, rgba(59,130,246,0.05) 0%, transparent 60%)' }}>
-                    <div style={{ position: 'absolute', top: '10%', right: '5%', width: 500, height: 500, background: 'linear-gradient(135deg, #e0f2fe, #f8fafc)', borderRadius: '50%', filter: 'blur(80px)', zIndex: -1, animation: 'float-slow 20s ease-in-out infinite' }} />
-                    <div style={{ position: 'absolute', bottom: '10%', left: '5%', width: 400, height: 400, background: 'linear-gradient(135deg, #f0f9ff, #f8fafc)', borderRadius: '50%', filter: 'blur(60px)', zIndex: -1, animation: 'float-slow 25s ease-in-out infinite reverse' }} />
+                <header style={{
+                    minHeight: '100vh',
+                    display: 'flex',
+                    alignItems: 'center',
+                    paddingTop: 120,
+                    paddingBottom: 80,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backgroundImage: 'radial-gradient(circle at center, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.95) 100%), url("/assets/healthcare/sri_lankan_doctors_hero_bg.png")',
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundAttachment: 'fixed',
+                    color: '#fff'
+                }}>
+                    <div style={{ position: 'absolute', top: '10%', right: '5%', width: 500, height: 500, background: 'linear-gradient(135deg, rgba(14,165,233,0.3), rgba(99,102,241,0.2))', borderRadius: '50%', filter: 'blur(100px)', zIndex: 0, animation: 'float-slow 20s ease-in-out infinite' }} />
+                    <div style={{ position: 'absolute', bottom: '10%', left: '5%', width: 400, height: 400, background: 'linear-gradient(135deg, rgba(56,189,248,0.2), rgba(125,211,252,0.1))', borderRadius: '50%', filter: 'blur(80px)', zIndex: 0, animation: 'float-slow 25s ease-in-out infinite reverse' }} />
 
                     <div className="lt-i">
                         <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '55% 45%', gap: '4rem', alignItems: 'center' }}>
                             <div style={{ zIndex: 2 }}>
-                                <div className="sr" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 99, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.15)', color: '#0284c7', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 24 }}>
+                                <div className="sr" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 99, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', color: '#38bdf8', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 24, backdropFilter: 'blur(10px)' }}>
                                     <span style={{ fontSize: 16 }}>🇱🇰</span> Built Exclusively for Sri Lankan Medical Professionals
                                 </div>
 
-                                <h1 className="sr lt-h1" style={{ fontSize: '4rem', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24, color: '#0f172a' }}>
+                                <h1 className="sr lt-h1" style={{ fontSize: '4rem', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24, color: '#f8fafc' }}>
                                     You Mastered Medicine. <br />
-                                    <span style={{ color: '#0ea5e9' }}>Let Us Handle The Accounting.</span>
+                                    <span style={{ color: '#38bdf8' }}>Let Us Handle The Accounting.</span>
                                 </h1>
 
-                                <p className="sr" style={{ fontSize: 18, color: '#475569', lineHeight: 1.7, marginBottom: 36, maxWidth: 600 }}>
+                                <p className="sr" style={{ fontSize: 18, color: '#cbd5e1', lineHeight: 1.7, marginBottom: 36, maxWidth: 600 }}>
                                     Juggling Government ward rounds, evening channeling, and complex IRD taxes? MyTracksy is the ultimate <strong>Cash Management & Accounting app</strong> designed specifically for Sri Lankan junior doctors and solo practitioners. Track your private income, manage clinic expenses, and instantly share standard financial reports with your auditor. Start with our powerful free accounting tier.
                                 </p>
 
@@ -183,13 +196,13 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                     </button>
                                 </div>
 
-                                <div className="sr" style={{ fontSize: 13, color: '#64748b', fontWeight: 600, transitionDelay: '0.2s', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ color: '#10b981' }}>✓</span> No App Store required. 100% Tax-Deductible Professional Software.
+                                <div className="sr" style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600, transitionDelay: '0.2s', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ color: '#34d399' }}>✓</span> No App Store required. 100% Tax-Deductible Professional Software.
                                 </div>
                             </div>
 
                             <div className="hero-image sr" style={{ position: 'relative', transitionDelay: '0.2s', zIndex: 2 }}>
-                                <div style={{ background: '#0f172a', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 40px 100px -20px rgba(14,165,233,0.25), 0 20px 40px -20px rgba(0,0,0,0.2)', padding: '8px', position: 'relative', overflow: 'hidden' }}>
+                                <div style={{ background: 'rgba(15,23,42,0.8)', backdropFilter: 'blur(20px)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.5), 0 20px 40px -20px rgba(14,165,233,0.2)', padding: '8px', position: 'relative', overflow: 'hidden' }}>
                                     <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', marginBottom: 12, paddingLeft: 12, paddingTop: 8 }}>
                                         <div style={{ display: 'flex', gap: 8 }}>
                                             <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444' }} />
