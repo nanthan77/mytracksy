@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Box, Card, CardContent, TextField, Button, Typography, Alert, CircularProgress } from '@mui/material';
+import { Box, Card, CardContent, TextField, Button, Typography, Alert, CircularProgress, Divider } from '@mui/material';
+import GoogleIcon from '@mui/icons-material/Google';
 import { useAdminAuth } from './useAdminAuth';
 
 export default function AdminLogin() {
-  const { login, loading, error } = useAdminAuth();
+  const { login, loginWithGoogle, loading, error } = useAdminAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
@@ -29,9 +30,25 @@ export default function AdminLogin() {
 
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
 
+          <Button
+            fullWidth
+            variant="outlined"
+            size="large"
+            startIcon={<GoogleIcon />}
+            onClick={loginWithGoogle}
+            disabled={loading}
+            sx={{ py: 1.5, mb: 2, textTransform: 'none', fontWeight: 600 }}
+          >
+            {loading ? <CircularProgress size={24} /> : 'Sign in with Google'}
+          </Button>
+
+          <Divider sx={{ my: 2 }}>
+            <Typography variant="caption" color="text.secondary">or use email</Typography>
+          </Divider>
+
           <form onSubmit={handleSubmit}>
             <TextField fullWidth label="Email" type="email" value={email}
-              onChange={e => setEmail(e.target.value)} margin="normal" required autoFocus />
+              onChange={e => setEmail(e.target.value)} margin="normal" required />
             <TextField fullWidth label="Password" type="password" value={password}
               onChange={e => setPassword(e.target.value)} margin="normal" required />
             <Button fullWidth type="submit" variant="contained" size="large"

@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signOut, User } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { auth, functions } from '../../shared/firebase/config';
+
+const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({ prompt: 'select_account' });
 
 type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
 
@@ -81,6 +84,15 @@ export function useAdminAuth() {
     }
   };
 
+  const loginWithGoogle = async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err: any) {
+      setState(prev => ({ ...prev, loading: false, error: err.message }));
+    }
+  };
+
   const logout = async () => {
     await signOut(auth);
     setState({ user: null, role: null, professions: [], loading: false, error: null });
@@ -102,5 +114,5 @@ export function useAdminAuth() {
     return state.professions.includes(professionId);
   };
 
-  return { ...state, login, logout, hasPermission, hasProfessionAccess };
+  return { ...state, login, loginWithGoogle, logout, hasPermission, hasProfessionAccess };
 }
