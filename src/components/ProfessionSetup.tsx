@@ -80,9 +80,9 @@ const professions: {
         },
     ];
 
-interface ProfessionSetupProps { onProfessionSelected: (profession: ProfessionType) => void; }
+interface ProfessionSetupProps { onProfessionSelected: (profession: ProfessionType) => void; onBackToHome?: () => void; }
 
-const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected }) => {
+const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected, onBackToHome }) => {
     const [selected, setSelected] = useState<ProfessionType | null>(null);
     const [mounted, setMounted] = useState(false);
 
@@ -126,6 +126,19 @@ const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected 
                         opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(20px)',
                         transition: 'all 0.8s ease',
                     }}>
+                        {onBackToHome && (
+                            <button onClick={onBackToHome} style={{
+                                position: 'absolute', top: '1.5rem', left: '2rem',
+                                background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
+                                borderRadius: 10, padding: '8px 18px', color: 'white', fontSize: 14,
+                                fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit',
+                                backdropFilter: 'blur(8px)', transition: 'all 0.2s',
+                                display: 'flex', alignItems: 'center', gap: 6,
+                            }}
+                                onMouseOver={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.2)'; }}
+                                onMouseOut={e => { (e.target as HTMLElement).style.background = 'rgba(255,255,255,0.1)'; }}
+                            >← Back to Home</button>
+                        )}
                         <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                             <div style={{
                                 width: 44, height: 44, borderRadius: 12,

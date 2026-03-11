@@ -3,6 +3,7 @@ import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import AdminApp from './AdminApp';
+import { AdminAuthProvider } from './auth/AdminAuthContext';
 
 const darkTheme = createTheme({
   palette: {
@@ -25,7 +26,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <BrowserRouter>
-        <AdminApp />
+        <AdminAuthProvider>
+          <AdminApp />
+        </AdminAuthProvider>
       </BrowserRouter>
     </ThemeProvider>
   </React.StrictMode>

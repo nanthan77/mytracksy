@@ -11,8 +11,14 @@ import AuditorExport from '../AuditorExport';
 import TransactionInbox from '../TransactionInbox';
 import AIVoiceVault from '../AIVoiceVault';
 import MorningBriefing from '../MorningBriefing';
+import SmartScheduler from '../SmartScheduler';
+import LifeAdmin from '../LifeAdmin';
+import BiometricGate from '../BiometricGate';
+import SubscriptionGate from '../SubscriptionGate';
+import SubscriptionManager from '../SubscriptionManager';
 import { GOLDEN_LIST, autoCategorizeDr, getCategoryByName, isCapitalItem } from '../../config/goldenListCategories';
 import { useAuth } from '../../context/AuthContext';
+import { useTokenWallet, TOKEN_PACKAGES, TokenPackage } from '../../hooks/useTokenWallet';
 import {
     addTransaction, subscribeTransactions, seedChartOfAccounts,
     subscribeGovIncomeConfig, toCents, fromCents,
@@ -42,6 +48,10 @@ const navItems = [
     { id: 'reports', label: 'Reports', icon: '📋' },
     { id: 'export', label: 'Auditor Export', icon: '📦' },
     { id: 'voicevault', label: 'Voice Vault', icon: '🎙️', premium: true },
+    { id: 'scheduler', label: 'Smart Scheduler', icon: '📅', premium: true },
+    { id: 'lifeadmin', label: 'Life Admin', icon: '📋', premium: true },
+    { id: 'wallet', label: 'Token Wallet', icon: '🪙' },
+    { id: 'subscription', label: 'Subscription', icon: '⭐' },
     { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
@@ -204,6 +214,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const [showAddShift, setShowAddShift] = useState(false);
     const [shiftForm, setShiftForm] = useState({ hospital: channelingData[0].hospital, date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
 
+    const walletData = useTokenWallet(uid || '');
+
     const handleVoiceAction = (action: ParsedVoiceAction) => {
         const now = new Date();
         const timeStr = now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' });
@@ -315,7 +327,17 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             case 'briefing':
                 return <MorningBriefing />;
             case 'voicevault':
-                return <AIVoiceVault />;
+                return (
+                    <BiometricGate sectionName="Voice Vault" sectionIcon="🎙️">
+                        <SubscriptionGate featureName="AI Voice Vault" featureIcon="🎙️">
+                            <AIVoiceVault />
+                        </SubscriptionGate>
+                    </BiometricGate>
+                );
+            case 'scheduler':
+                return <SmartScheduler />;
+            case 'lifeadmin':
+                return <LifeAdmin />;
             case 'today':
                 return renderTodaySchedule();
             case 'quicknotes':
@@ -329,9 +351,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             case 'appointments':
                 return renderAppointments();
             case 'income':
-                return renderIncome();
+                return <BiometricGate sectionName="Income & Invoices" sectionIcon="💰">{renderIncome()}</BiometricGate>;
             case 'expenses':
-                return renderExpenses();
+                return <BiometricGate sectionName="Expenses" sectionIcon="💸">{renderExpenses()}</BiometricGate>;
             case 'tax':
                 return <TaxSpeedometer annualPrivateIncome={privateAnnual} annualGovIncome={govAnnual} annualExpenses={totalExpenses * 12} whtDeducted={totalWHT} />;
             case 'receipts':
@@ -342,8 +364,12 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 return renderReports();
             case 'export':
                 return <AuditorExport invoices={invoices} expenses={expenses} />;
+            case 'wallet':
+                return renderWallet();
             case 'settings':
                 return renderSettings();
+            case 'subscription':
+                return <SubscriptionManager />;
             default:
                 return renderOverview();
         }
@@ -386,8 +412,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         {govSchedule.map((s, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', position: 'relative' }}>
                                 <div style={{ position: 'absolute', left: -22, width: 12, height: 12, borderRadius: '50%', background: s.status === 'completed' ? '#22c55e' : '#e2e8f0', border: '2px solid white', boxShadow: '0 0 0 2px ' + (s.status === 'completed' ? '#22c55e' : '#e2e8f0') }} />
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#94a3b8', minWidth: 65 }}>{s.time}</div>
-                                <div style={{ fontSize: 14, fontWeight: 500, color: s.status === 'completed' ? '#94a3b8' : '#1e293b', textDecoration: s.status === 'completed' ? 'line-through' : 'none' }}>{s.activity}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#64748b', minWidth: 65 }}>{s.time}</div>
+                                <div style={{ fontSize: 14.5, fontWeight: 500, color: s.status === 'completed' ? '#64748b' : '#1e293b', textDecoration: s.status === 'completed' ? 'line-through' : 'none' }}>{s.activity}</div>
                                 {s.status === 'completed' && <span style={{ fontSize: 11, background: '#dcfce7', color: '#22c55e', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>✓ Done</span>}
                             </div>
                         ))}
@@ -397,7 +423,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         {privateSchedule.map((s, i) => (
                             <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 0', position: 'relative' }}>
                                 <div style={{ position: 'absolute', left: -22, width: 12, height: 12, borderRadius: '50%', background: s.status === 'active' ? '#f59e0b' : s.status === 'completed' ? '#22c55e' : '#e2e8f0', border: '2px solid white', boxShadow: '0 0 0 2px ' + (s.status === 'active' ? '#f59e0b' : '#e2e8f0'), animation: s.status === 'active' ? 'voicePulse 2s infinite' : 'none' }} />
-                                <div style={{ fontSize: 12, fontWeight: 700, color: s.status === 'active' ? '#f59e0b' : '#94a3b8', minWidth: 65 }}>{s.time}</div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: s.status === 'active' ? '#d97706' : '#64748b', minWidth: 65 }}>{s.time}</div>
                                 <div style={{ fontSize: 14, fontWeight: s.status === 'active' ? 700 : 500, color: s.status === 'active' ? '#1e293b' : '#64748b' }}>{s.activity}</div>
                                 {'patients' in s && <span style={{ fontSize: 11, background: 'rgba(99,102,241,0.08)', color: '#6366f1', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>{(s as any).patients} patients</span>}
                                 {s.status === 'active' && <span style={{ fontSize: 11, background: '#fef3c7', color: '#f59e0b', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>🔴 NOW</span>}
@@ -439,7 +465,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         <input value={noteText} onChange={e => setNoteText(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') addNote(); }} placeholder="Type a note or use the mic button →" style={{ flex: 1, padding: '10px 14px', border: '1.5px solid #e2e8f0', borderRadius: 10, fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
                         <button onClick={addNote} style={{ padding: '10px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white', border: 'none', borderRadius: 10, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>+ Add</button>
                     </div>
-                    <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 6 }}>💡 Tip: Use the floating 🎤 button to add notes by voice — say "Note: BP 140 over 90"</div>
+                    <div style={{ fontSize: 13, color: '#64748b', marginTop: 8 }}>💡 Tip: Use the floating 🎤 button to add notes by voice — say "Note: BP 140 over 90"</div>
                 </div>
 
                 {/* Notes List */}
@@ -453,17 +479,17 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                     <div style={{ width: 36, height: 36, borderRadius: 10, background: `${nt.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, flexShrink: 0 }}>{nt.icon}</div>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontSize: 14, fontWeight: 500, color: '#1e293b', lineHeight: 1.5 }}>{note.text}</div>
-                                        <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 4, display: 'flex', gap: 12 }}>
+                                        <div style={{ fontSize: 13, color: '#64748b', marginTop: 5, display: 'flex', gap: 12 }}>
                                             <span>🕐 {note.time}</span>
                                             {note.patient && <span>🧑‍⚕️ {note.patient}</span>}
                                             <span style={{ background: `${nt.color}15`, color: nt.color, padding: '1px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 }}>{note.type}</span>
                                         </div>
                                     </div>
-                                    <button onClick={() => setQuickNotes(prev => prev.filter(n => n.id !== note.id))} style={{ background: 'none', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: 14, padding: 4 }}>✕</button>
+                                    <button onClick={() => setQuickNotes(prev => prev.filter(n => n.id !== note.id))} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 16, padding: 4, fontWeight: 600 }}>✕</button>
                                 </div>
                             );
                         })}
-                        {quickNotes.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: '#94a3b8', fontSize: 13 }}>No notes yet. Use voice or type above to add notes.</div>}
+                        {quickNotes.length === 0 && <div style={{ padding: 24, textAlign: 'center', color: '#64748b', fontSize: 14 }}>No notes yet. Use voice or type above to add notes.</div>}
                     </div>
                 </div>
             </div>
@@ -491,19 +517,19 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>MoH Base Salary</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>MoH Base Salary</div>
                                 <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(govSalary)}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>DAT Allowance</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>DAT Allowance</div>
                                 <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(datAllowance)}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>APIT Deducted (Monthly)</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>APIT Deducted (Monthly)</div>
                                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(Math.round(govAPIT / 12))}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>Net Take-Home</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Net Take-Home</div>
                                 <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{fmt(govNetMonthly)}</div>
                             </div>
                         </div>
@@ -517,19 +543,19 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>Channeling/Clinic</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Channeling/Clinic</div>
                                 <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(totalIncome)}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>WHT Deducted (5%)</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>WHT Deducted (5%)</div>
                                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(Math.round(totalIncome * 0.05))}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>Practice Expenses</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Practice Expenses</div>
                                 <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(totalExpenses)}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 11, opacity: 0.7 }}>Net Private Income</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Net Private Income</div>
                                 <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{fmt(privateNet - Math.round(totalIncome * 0.05) - totalExpenses)}</div>
                             </div>
                         </div>
@@ -592,7 +618,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                             <div style={{ width: 16, height: `${incomeH[i]}%`, background: 'linear-gradient(to top, #22c55e, #4ade80)', borderRadius: 4 }} />
                                             <div style={{ width: 16, height: `${expenseH[i]}%`, background: 'linear-gradient(to top, #ef4444, #f87171)', borderRadius: 4 }} />
                                         </div>
-                                        <span style={{ fontSize: '0.7rem', color: '#94a3b8' }}>{month}</span>
+                                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{month}</span>
                                     </div>
                                 );
                             })}
@@ -648,7 +674,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                     <thead><tr style={{ borderBottom: '2px solid #e2e8f0' }}>
                         {['Name', 'NIC', 'Phone', 'Age', 'Blood', 'Allergies', 'Last Visit', 'Visits'].map(h => (
-                            <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>{h}</th>
+                            <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#475569', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{h}</th>
                         ))}
                     </tr></thead>
                     <tbody>{samplePatients.map(p => (
@@ -657,8 +683,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                             <td style={{ padding: '0.5rem', color: '#6366f1', fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.nic}</td>
                             <td style={{ padding: '0.5rem' }}>{p.phone}</td>
                             <td style={{ padding: '0.5rem' }}>{p.age}</td>
-                            <td style={{ padding: '0.5rem' }}><span style={{ padding: '2px 8px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 700, background: '#fef2f2', color: '#ef4444' }}>{p.blood}</span></td>
-                            <td style={{ padding: '0.5rem', color: p.allergies !== 'None' ? '#ef4444' : '#94a3b8', fontWeight: p.allergies !== 'None' ? 600 : 400 }}>{p.allergies}</td>
+                            <td style={{ padding: '0.5rem' }}><span style={{ padding: '2px 8px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, background: '#fef2f2', color: '#dc2626' }}>{p.blood}</span></td>
+                            <td style={{ padding: '0.5rem', color: p.allergies !== 'None' ? '#ef4444' : '#64748b', fontWeight: p.allergies !== 'None' ? 600 : 400 }}>{p.allergies}</td>
                             <td style={{ padding: '0.5rem', color: '#64748b' }}>{p.lastVisit}</td>
                             <td style={{ padding: '0.5rem', fontWeight: 600, color: '#6366f1' }}>{p.visits}</td>
                         </tr>
@@ -809,7 +835,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                         <thead><tr style={{ borderBottom: '2px solid #e2e8f0' }}>
                             {['Hospital/Clinic', 'Day', 'Time', 'Fee', 'Doctor Share', 'Hospital Share', 'Avg Patients'].map(h => (
-                                <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>{h}</th>
+                                <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#475569', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{h}</th>
                             ))}
                         </tr></thead>
                         <tbody>{channelingData.map(c => (
@@ -819,7 +845,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                 <td style={{ padding: '0.5rem', color: '#6366f1' }}>{c.time}</td>
                                 <td style={{ padding: '0.5rem', fontWeight: 600 }}>{fmt(c.fee)}</td>
                                 <td style={{ padding: '0.5rem', color: '#22c55e', fontWeight: 600 }}>{fmt(c.doctorShare)}</td>
-                                <td style={{ padding: '0.5rem', color: '#94a3b8' }}>{fmt(c.hospitalShare)}</td>
+                                <td style={{ padding: '0.5rem', color: '#64748b' }}>{fmt(c.hospitalShare)}</td>
                                 <td style={{ padding: '0.5rem', fontWeight: 600, color: '#3b82f6' }}>{c.avgPatients}</td>
                             </tr>
                         ))}</tbody>
@@ -872,7 +898,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{a.patient}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{a.type} · {a.time}</div>
+                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{a.type} · {a.time}</div>
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
@@ -883,7 +909,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                     const icons: Record<string, string> = { arrived: '👋', completed: '✅', 'no-show': '❌' };
                                     return (
                                         <button key={s} onClick={() => setAppointmentStatuses(prev => ({ ...prev, [a.id]: s }))}
-                                            style={{ padding: '3px 8px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 600, cursor: 'pointer', border: isActive ? 'none' : '1px solid #e2e8f0', background: isActive ? `${colors[s]}15` : 'white', color: isActive ? colors[s] : '#94a3b8' }}>
+                                            style={{ padding: '5px 10px', borderRadius: 7, fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: isActive ? 'none' : '1px solid #e2e8f0', background: isActive ? `${colors[s]}15` : '#f8fafc', color: isActive ? colors[s] : '#64748b', transition: 'all 0.15s' }}>
                                             {icons[s]} {s}
                                         </button>
                                     );
@@ -899,9 +925,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         <div key={a.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.6rem 0', borderBottom: '1px solid #f1f5f9' }}>
                             <div>
                                 <div style={{ fontSize: '0.85rem', fontWeight: 500 }}>{a.patient} — <span style={{ color: '#6366f1' }}>{a.type}</span></div>
-                                <div style={{ fontSize: '0.72rem', color: '#94a3b8' }}>{a.hospital} · {a.date} · {a.time}</div>
+                                <div style={{ fontSize: '0.84rem', color: '#64748b' }}>{a.hospital} · {a.date} · {a.time}</div>
                             </div>
-                            <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 600, background: a.status === 'confirmed' ? '#dcfce7' : '#fef3c7', color: a.status === 'confirmed' ? '#22c55e' : '#f59e0b' }}>{a.status}</span>
+                            <span style={{ padding: '3px 10px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 600, background: a.status === 'confirmed' ? '#dcfce7' : '#fef3c7', color: a.status === 'confirmed' ? '#16a34a' : '#d97706' }}>{a.status}</span>
                         </div>
                     ))}
                 </div>
@@ -935,7 +961,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         { name: 'Consultancy', amount: 45000, color: '#06b6d4' },
                     ].map((src) => (
                         <div key={src.name} style={{ padding: '0.75rem', background: `${src.color}08`, borderRadius: 10, border: `1px solid ${src.color}20` }}>
-                            <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: 4 }}>{src.name}</div>
+                            <div style={{ fontSize: '0.875rem', color: '#475569', marginBottom: 5, fontWeight: 500 }}>{src.name}</div>
                             <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{fmt(src.amount)}</div>
                         </div>
                     ))}
@@ -981,10 +1007,10 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                                         <span style={{ fontSize: 20 }}>{cat.icon}</span>
                                         <span style={{ fontSize: 13, fontWeight: 700, color: '#1e293b' }}>{cat.name}</span>
-                                        {cat.isCapitalItem && <span style={{ fontSize: 10, background: '#f59e0b', color: 'white', padding: '1px 6px', borderRadius: 4, fontWeight: 600 }}>DEPRECIATION</span>}
+                                        {cat.isCapitalItem && <span style={{ fontSize: 11, background: '#f59e0b', color: 'white', padding: '2px 8px', borderRadius: 5, fontWeight: 700 }}>DEPRECIATION</span>}
                                     </div>
-                                    <div style={{ fontSize: 11, color: '#64748b', marginBottom: 4, fontStyle: 'italic' }}>{cat.taxNote}</div>
-                                    <div style={{ fontSize: 11, color: '#94a3b8' }}>e.g. {cat.examples.slice(0, 3).join(', ')}</div>
+                                    <div style={{ fontSize: 12.5, color: '#475569', marginBottom: 5, fontStyle: 'italic' }}>{cat.taxNote}</div>
+                                    <div style={{ fontSize: 12.5, color: '#64748b' }}>e.g. {cat.examples.slice(0, 3).join(', ')}</div>
                                 </div>
                             ))}
                         </div>
@@ -1072,9 +1098,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                             return (
                                 <div key={cat.name} style={{ padding: '0.85rem', background: `${cat.color}08`, borderRadius: 10, border: `1px solid ${cat.color}20`, textAlign: 'center', cursor: 'pointer', transition: 'transform 0.2s' }} title={golden?.taxNote || ''}>
                                     <div style={{ fontSize: '1.5rem', marginBottom: 4 }}>{cat.icon}</div>
-                                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginBottom: 2 }}>{cat.name}</div>
+                                    <div style={{ fontSize: '0.84rem', color: '#475569', marginBottom: 3 }}>{cat.name}</div>
                                     <div style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e293b' }}>{fmt(catTotal)}</div>
-                                    {golden?.isCapitalItem && <div style={{ fontSize: 9, color: '#f59e0b', fontWeight: 600, marginTop: 2 }}>📐 DEPRECIATION</div>}
+                                    {golden?.isCapitalItem && <div style={{ fontSize: 11, color: '#d97706', fontWeight: 700, marginTop: 3, letterSpacing: '0.02em' }}>📐 DEPRECIATION</div>}
                                 </div>
                             );
                         })}
@@ -1096,10 +1122,10 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     <div key={acc.id} style={{ ...cardStyle, borderTop: `3px solid ${acc.type === 'savings' ? '#22c55e' : acc.type === 'current' ? '#6366f1' : '#f59e0b'}` }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
                             <span style={{ fontSize: '0.82rem', fontWeight: 600, color: '#1e293b' }}>{acc.name}</span>
-                            <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase' }}>{acc.type}</span>
+                            <span style={{ fontSize: '0.8rem', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.04em', fontWeight: 600 }}>{acc.type}</span>
                         </div>
                         <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>{fmt(acc.balance)}</div>
-                        <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{acc.bank}</div>
+                        <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{acc.bank}</div>
                     </div>
                 ))}
             </div>
@@ -1132,7 +1158,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                 </div>
                                 <div>
                                     <div style={{ fontSize: '0.88rem', fontWeight: 500 }}>{chq.party}</div>
-                                    <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{chq.number} · {chq.date}</div>
+                                    <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{chq.number} · {chq.date}</div>
                                 </div>
                             </div>
                             <div style={{ textAlign: 'right' }}>
@@ -1140,7 +1166,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                     {chq.type === 'received' ? '+' : '-'}{fmt(chq.amount)}
                                 </div>
                                 <div style={{
-                                    fontSize: '0.7rem', fontWeight: 600, padding: '2px 8px', borderRadius: 10, display: 'inline-block',
+                                    fontSize: '0.8rem', fontWeight: 600, padding: '3px 10px', borderRadius: 10, display: 'inline-block',
                                     color: chq.status === 'cleared' ? '#22c55e' : '#f59e0b',
                                     background: chq.status === 'cleared' ? 'rgba(34,197,94,0.1)' : 'rgba(245,158,11,0.1)',
                                 }}>
@@ -1166,7 +1192,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         <span style={{ fontWeight: 700, color: '#22c55e' }}>{fmt(totalIncome)}</span>
                     </div>
                     <div style={{ height: 1, background: '#f1f5f9' }} />
-                    <div style={{ fontSize: '0.82rem', fontWeight: 600, color: '#94a3b8', margin: '0.25rem 0' }}>EXPENSES</div>
+                    <div style={{ fontSize: '0.875rem', fontWeight: 700, color: '#64748b', margin: '0.375rem 0', letterSpacing: '0.03em' }}>EXPENSES</div>
                     {medicalExpenseCategories.map((cat) => {
                         const catTotal = expenses.filter((e) => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
                         if (catTotal === 0) return null;
@@ -1190,15 +1216,15 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 <h3 style={cardTitle}>🧾 Tax Summary (Estimated)</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', padding: '0.5rem 0' }}>
                     <div style={{ textAlign: 'center', padding: '1rem', background: '#f8fafc', borderRadius: 10 }}>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>Gross Income</div>
+                        <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: 6 }}>Gross Income</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{fmt(totalIncome)}</div>
                     </div>
                     <div style={{ textAlign: 'center', padding: '1rem', background: '#f8fafc', borderRadius: 10 }}>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>Deductible Expenses</div>
+                        <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: 6 }}>Deductible Expenses</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: 700 }}>{fmt(totalExpenses)}</div>
                     </div>
                     <div style={{ textAlign: 'center', padding: '1rem', background: 'rgba(99,102,241,0.05)', borderRadius: 10, border: '1px solid rgba(99,102,241,0.15)' }}>
-                        <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginBottom: 4 }}>Taxable Income (Est.)</div>
+                        <div style={{ fontSize: '0.875rem', color: '#64748b', marginBottom: 6 }}>Taxable Income (Est.)</div>
                         <div style={{ fontSize: '1.25rem', fontWeight: 700, color: '#6366f1' }}>{fmt(netProfit)}</div>
                     </div>
                 </div>
@@ -1224,7 +1250,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                 <span style={{ fontSize: '1.1rem' }}>{r.icon}</span>
                                 <span style={{ fontSize: '0.88rem', fontWeight: 600 }}>{r.name}</span>
                             </div>
-                            <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{r.desc}</div>
+                            <div style={{ fontSize: '0.85rem', color: '#64748b' }}>{r.desc}</div>
                         </div>
                     ))}
                 </div>
@@ -1233,6 +1259,150 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     );
 
     /* ========== SETTINGS ========== */
+    /* ========== TOKEN WALLET ========== */
+    const renderWallet = () => (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {/* Balance Card */}
+            <div style={{
+                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%)',
+                borderRadius: 16, padding: '2rem', color: 'white',
+                boxShadow: '0 4px 20px rgba(245,158,11,0.3)',
+            }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <div>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 500, opacity: 0.9, marginBottom: 6 }}>Token Balance</div>
+                        <div style={{ fontSize: '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1 }}>
+                            🪙 {walletData.tokenBalance.toLocaleString()}
+                        </div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.8, marginTop: 8 }}>
+                            Total spent: LKR {walletData.totalSpentLKR.toLocaleString()}
+                        </div>
+                    </div>
+                    <div style={{ textAlign: 'right' }}>
+                        {walletData.savedCard ? (
+                            <div style={{ background: 'rgba(255,255,255,0.2)', borderRadius: 10, padding: '8px 14px' }}>
+                                <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>Saved Card</div>
+                                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>
+                                    {walletData.savedCard.type} •••• {walletData.savedCard.masked}
+                                </div>
+                            </div>
+                        ) : (
+                            <button onClick={() => window.open('https://wallet.mytracksy.lk/link-card', '_blank')} style={{
+                                background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
+                                color: 'white', borderRadius: 10, padding: '8px 16px', cursor: 'pointer',
+                                fontSize: '0.8rem', fontWeight: 600,
+                            }}>
+                                🔗 Link Card
+                            </button>
+                        )}
+                    </div>
+                </div>
+                {walletData.lastTopUp && (
+                    <div style={{ marginTop: 16, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.2)', fontSize: '0.8rem', opacity: 0.85 }}>
+                        Last top-up: {walletData.lastTopUp.tokens} tokens (LKR {walletData.lastTopUp.amount.toLocaleString()}) — {new Date(walletData.lastTopUp.date).toLocaleDateString()}
+                    </div>
+                )}
+                {walletData.tokenBalance <= 10 && (
+                    <div style={{
+                        marginTop: 12, background: 'rgba(220,38,38,0.3)', borderRadius: 8,
+                        padding: '8px 12px', fontSize: '0.8rem', fontWeight: 600,
+                    }}>
+                        ⚠️ Low balance! Top up to continue using premium features.
+                    </div>
+                )}
+            </div>
+
+            {/* Buy Tokens */}
+            <div style={cardStyle}>
+                <h3 style={cardTitle}>💳 Buy Token Packages</h3>
+                <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>
+                    Tokens are used for AI features. Purchase via web portal to avoid app store fees.
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.75rem' }}>
+                    {TOKEN_PACKAGES.map((pkg: TokenPackage) => (
+                        <div key={pkg.id} onClick={() => walletData.oneClickPurchase(pkg.id)} style={{
+                            padding: '1.25rem', borderRadius: 12, cursor: 'pointer',
+                            border: pkg.popular ? '2px solid #6366f1' : '1px solid #e2e8f0',
+                            background: pkg.popular ? 'linear-gradient(135deg, #eef2ff, #e0e7ff)' : '#f8fafc',
+                            transition: 'all 0.2s', position: 'relative',
+                        }}>
+                            {pkg.popular && (
+                                <div style={{
+                                    position: 'absolute', top: -10, right: 12,
+                                    background: '#6366f1', color: 'white', fontSize: '0.65rem',
+                                    fontWeight: 700, padding: '2px 10px', borderRadius: 20,
+                                    textTransform: 'uppercase', letterSpacing: '0.05em',
+                                }}>Popular</div>
+                            )}
+                            <div style={{ fontSize: '1.5rem', fontWeight: 800, color: '#0f172a', marginBottom: 4 }}>
+                                {pkg.tokens.toLocaleString()}
+                            </div>
+                            <div style={{ fontSize: '0.8rem', color: '#475569', fontWeight: 500, marginBottom: 8 }}>tokens</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#6366f1' }}>
+                                LKR {pkg.price_lkr.toLocaleString()}
+                            </div>
+                            {pkg.savings && (
+                                <div style={{ fontSize: '0.7rem', color: '#059669', fontWeight: 600, marginTop: 4 }}>{pkg.savings}</div>
+                            )}
+                            <div style={{
+                                marginTop: 10, fontSize: '0.75rem', color: '#64748b',
+                            }}>
+                                LKR {(pkg.price_lkr / pkg.tokens).toFixed(0)}/token
+                            </div>
+                        </div>
+                    ))}
+                </div>
+                <div style={{ marginTop: '1rem', padding: '0.75rem', background: '#fffbeb', borderRadius: 8, fontSize: '0.78rem', color: '#92400e', border: '1px solid #fde68a' }}>
+                    💡 <strong>Tax tip:</strong> Token purchases for medical AI tools may qualify as deductible expenses under &quot;IT/Software&quot; category (S.32 ITA).
+                </div>
+            </div>
+
+            {/* Auto-Reload Settings */}
+            <div style={cardStyle}>
+                <h3 style={cardTitle}>🔄 Auto-Reload</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                        <div>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Auto-Reload</div>
+                            <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Automatically top up when balance is low</div>
+                        </div>
+                        <button onClick={() => walletData.toggleAutoReload(!walletData.autoReloadEnabled)} style={{
+                            width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
+                            background: walletData.autoReloadEnabled ? '#6366f1' : '#cbd5e1',
+                            position: 'relative', transition: 'background 0.3s',
+                        }}>
+                            <div style={{
+                                width: 20, height: 20, borderRadius: '50%', background: 'white',
+                                position: 'absolute', top: 3,
+                                left: walletData.autoReloadEnabled ? 25 : 3,
+                                transition: 'left 0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+                            }} />
+                        </button>
+                    </div>
+                    {walletData.autoReloadEnabled && (
+                        <>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Reload when below</span>
+                                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6366f1' }}>{walletData.autoReloadThreshold} tokens</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Reload package</span>
+                                <span style={{ fontSize: '0.875rem', fontWeight: 600, color: '#6366f1' }}>
+                                    {TOKEN_PACKAGES.find(p => p.id === walletData.autoReloadPackage)?.label || '100 Tokens'}
+                                </span>
+                            </div>
+                        </>
+                    )}
+                    {!walletData.savedCard && walletData.autoReloadEnabled && (
+                        <div style={{ padding: '0.75rem', background: '#fef2f2', borderRadius: 8, fontSize: '0.8rem', color: '#991b1b', border: '1px solid #fecaca' }}>
+                            ⚠️ Link a card first to enable auto-reload. <a href="https://wallet.mytracksy.lk/link-card" target="_blank" rel="noreferrer" style={{ color: '#6366f1', fontWeight: 600 }}>Link now →</a>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+
     const renderSettings = () => (
         <div>
             <div style={cardStyle}>
@@ -1250,12 +1420,34 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         { label: 'Tax Year', value: '2025/2026 (April – March)', icon: '📋' },
                         { label: 'IRD TIN', value: 'Not set — required for APIT', icon: '🔑' },
                     ].map((s) => (
-                        <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.75rem', background: '#f8fafc', borderRadius: 8 }}>
+                        <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <span style={{ fontSize: '1.1rem' }}>{s.icon}</span>
-                                <span style={{ fontSize: '0.88rem', fontWeight: 500 }}>{s.label}</span>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>{s.label}</span>
                             </div>
-                            <span style={{ fontSize: '0.85rem', color: s.value.includes('Not set') || s.value.includes('pending') ? '#f59e0b' : '#64748b' }}>{s.value}</span>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: s.value.includes('Not set') || s.value.includes('pending') ? '#dc2626' : '#334155' }}>{s.value}</span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* Wallet Settings */}
+            <div style={{ ...cardStyle, marginTop: '1.25rem' }}>
+                <h3 style={cardTitle}>🪙 Wallet & Billing</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0.5rem 0' }}>
+                    {[
+                        { label: 'Token Balance', value: `${walletData.tokenBalance} tokens`, icon: '🪙' },
+                        { label: 'Saved Payment Card', value: walletData.savedCard ? `${walletData.savedCard.type} •••• ${walletData.savedCard.masked}` : 'Not linked', icon: '💳' },
+                        { label: 'Auto-Reload', value: walletData.autoReloadEnabled ? 'Enabled' : 'Disabled', icon: '🔄' },
+                        { label: 'Total Spent', value: `LKR ${walletData.totalSpentLKR.toLocaleString()}`, icon: '💰' },
+                        { label: 'Tax Deductible (IT/Software)', value: `LKR ${walletData.totalSpentLKR.toLocaleString()} — claim under S.32`, icon: '🧾' },
+                    ].map((s) => (
+                        <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                                <span style={{ fontSize: '1.1rem' }}>{s.icon}</span>
+                                <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>{s.label}</span>
+                            </div>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: s.value.includes('Not linked') || s.value.includes('Disabled') ? '#dc2626' : '#334155' }}>{s.value}</span>
                         </div>
                     ))}
                 </div>
@@ -1275,6 +1467,8 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 onNavChange={setActiveNav}
                 onChangeProfession={onChangeProfession}
                 onLogout={onLogout}
+                tokenBalance={walletData.tokenBalance}
+                onWalletClick={() => setActiveNav('wallet')}
             >
                 {renderContent()}
             </DashboardLayout>
@@ -1292,59 +1486,64 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     );
 };
 
-/* Shared inline styles */
+/* Shared inline styles — enhanced for readability */
 const cardStyle: React.CSSProperties = {
     background: 'white',
-    borderRadius: 12,
-    padding: '1.25rem',
-    boxShadow: '0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04)',
-    border: '1px solid #f1f5f9',
+    borderRadius: 14,
+    padding: '1.5rem',
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03)',
+    border: '1px solid #e2e8f0',
 };
 
 const cardTitle: React.CSSProperties = {
-    margin: '0 0 0.75rem',
-    fontSize: '1rem',
-    fontWeight: 600,
-    color: '#1e293b',
+    margin: '0 0 1rem',
+    fontSize: '1.05rem',
+    fontWeight: 700,
+    color: '#0f172a',
+    letterSpacing: '-0.01em',
 };
 
 const labelStyle: React.CSSProperties = {
-    fontSize: '0.82rem',
+    fontSize: '0.875rem',
     fontWeight: 600,
-    color: '#475569',
+    color: '#334155',
     display: 'block',
-    marginBottom: 4,
+    marginBottom: 6,
 };
 
 const inputStyle: React.CSSProperties = {
     width: '100%',
-    padding: '0.55rem 0.75rem',
+    padding: '0.625rem 0.875rem',
     border: '1.5px solid #e2e8f0',
-    borderRadius: 8,
-    fontSize: '0.88rem',
+    borderRadius: 10,
+    fontSize: '0.9375rem',
     outline: 'none',
     fontFamily: 'inherit',
     boxSizing: 'border-box',
+    color: '#1e293b',
+    transition: 'border-color 0.2s',
 };
 
 const plRow: React.CSSProperties = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    fontSize: '0.9rem',
-    padding: '0.25rem 0',
+    fontSize: '0.9375rem',
+    padding: '0.375rem 0',
 };
 
 const actionBtn = (color: string): React.CSSProperties => ({
-    padding: '0.55rem 1.25rem',
+    padding: '0.625rem 1.25rem',
     border: 'none',
-    borderRadius: 8,
+    borderRadius: 10,
     background: color,
     color: 'white',
-    fontSize: '0.85rem',
+    fontSize: '0.875rem',
     fontWeight: 600,
     cursor: 'pointer',
     boxShadow: `0 2px 8px ${color}40`,
+    letterSpacing: '-0.01em',
+    transition: 'all 0.2s',
 });
 
 export default MedicalDashboard;

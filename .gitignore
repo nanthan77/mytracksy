@@ -104,3 +104,8 @@ temp/
 .firebaserc
 firebase-debug.log
 firestore-debug.log
+# Additional ignores
+build-admin/
+dev-dist/
+.skills/
+functions/lib/

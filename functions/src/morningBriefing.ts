@@ -19,7 +19,7 @@ export const morningBriefing = onSchedule(
         region: "asia-south1",
         timeZone: "Asia/Colombo",
         memory: "256MiB",
-        timeoutSeconds: 60,
+        timeoutSeconds: 300,
     },
     async () => {
         logger.info("🌅 Running Morning Briefing generation...");
@@ -36,73 +36,90 @@ export const morningBriefing = onSchedule(
         const yesterdayEnd = new Date(yesterday);
         yesterdayEnd.setHours(23, 59, 59, 999);
 
-        // Find all users who have clinical_notes (active users)
-        const usersSnap = await db.collection("users").listDocuments();
+        // Process users in batches to handle scale
+        const BATCH_SIZE = 100;
+        let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+        let hasMore = true;
         let totalBriefings = 0;
 
-        for (const userDoc of usersSnap) {
-            const userId = userDoc.id;
+        while (hasMore) {
+            let usersQuery = db.collection("users").limit(BATCH_SIZE);
+            if (lastDoc) {
+                usersQuery = usersQuery.startAfter(lastDoc);
+            }
+            const usersSnap = await usersQuery.get();
 
-            try {
-                // Get all uncompleted action items with due_date <= today
-                const notesSnap = await db
-                    .collection(`users/${userId}/clinical_notes`)
-                    .where("status", "==", "processed")
-                    .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(yesterdayStart))
-                    .where("createdAt", "<=", admin.firestore.Timestamp.fromDate(yesterdayEnd))
-                    .get();
+            if (usersSnap.empty || usersSnap.docs.length < BATCH_SIZE) {
+                hasMore = false;
+            }
+            if (!usersSnap.empty) {
+                lastDoc = usersSnap.docs[usersSnap.docs.length - 1];
+            }
 
-                if (notesSnap.empty) continue;
+            for (const userDocSnap of usersSnap.docs) {
+                const userId = userDocSnap.id;
 
-                const briefingItems: any[] = [];
-
-                for (const noteDoc of notesSnap.docs) {
-                    const noteData = noteDoc.data();
-
-                    // Get action items for this note
-                    const actionsSnap = await noteDoc.ref
-                        .collection("action_items")
-                        .where("is_completed", "==", false)
+                try {
+                    // Get all uncompleted action items with due_date <= today
+                    const notesSnap = await db
+                        .collection(`users/${userId}/clinical_notes`)
+                        .where("status", "==", "processed")
+                        .where("createdAt", ">=", admin.firestore.Timestamp.fromDate(yesterdayStart))
+                        .where("createdAt", "<=", admin.firestore.Timestamp.fromDate(yesterdayEnd))
                         .get();
 
-                    for (const actionDoc of actionsSnap.docs) {
-                        const action = actionDoc.data();
-                        briefingItems.push({
-                            actionId: actionDoc.id,
-                            noteId: noteDoc.id,
-                            task: action.task,
-                            urgency: action.urgency,
-                            due_date: action.due_date,
-                            patient: noteData.patient_identifier || "Unknown",
-                            tags: noteData.tags || [],
-                            is_rare_case: noteData.is_rare_case || false,
-                        });
+                    if (notesSnap.empty) continue;
+
+                    const briefingItems: any[] = [];
+
+                    for (const noteDoc of notesSnap.docs) {
+                        const noteData = noteDoc.data();
+
+                        // Get action items for this note
+                        const actionsSnap = await noteDoc.ref
+                            .collection("action_items")
+                            .where("is_completed", "==", false)
+                            .get();
+
+                        for (const actionDoc of actionsSnap.docs) {
+                            const action = actionDoc.data();
+                            briefingItems.push({
+                                actionId: actionDoc.id,
+                                noteId: noteDoc.id,
+                                task: action.task,
+                                urgency: action.urgency,
+                                due_date: action.due_date,
+                                patient: noteData.patient_identifier || "Unknown",
+                                tags: noteData.tags || [],
+                                is_rare_case: noteData.is_rare_case || false,
+                            });
+                        }
                     }
+
+                    if (briefingItems.length === 0) continue;
+
+                    // Sort by urgency: today > tomorrow > this_week > routine
+                    const urgencyOrder: Record<string, number> = { today: 0, tomorrow: 1, this_week: 2, routine: 3 };
+                    briefingItems.sort((a, b) =>
+                        (urgencyOrder[a.urgency] ?? 4) - (urgencyOrder[b.urgency] ?? 4)
+                    );
+
+                    // Save briefing document
+                    await db.doc(`users/${userId}/briefings/${today}`).set({
+                        date: today,
+                        items: briefingItems,
+                        total_items: briefingItems.length,
+                        urgent_count: briefingItems.filter(i => i.urgency === "today").length,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                        is_read: false,
+                    });
+
+                    totalBriefings++;
+                    logger.info(`📋 Created briefing for user ${userId}: ${briefingItems.length} items`);
+
+                } catch (err) {
+                    logger.error(`Failed to create briefing for user ${userId}:`, err);
                 }
-
-                if (briefingItems.length === 0) continue;
-
-                // Sort by urgency: today > tomorrow > this_week > routine
-                const urgencyOrder: Record<string, number> = { today: 0, tomorrow: 1, this_week: 2, routine: 3 };
-                briefingItems.sort((a, b) =>
-                    (urgencyOrder[a.urgency] ?? 4) - (urgencyOrder[b.urgency] ?? 4)
-                );
-
-                // Save briefing document
-                await db.doc(`users/${userId}/briefings/${today}`).set({
-                    date: today,
-                    items: briefingItems,
-                    total_items: briefingItems.length,
-                    urgent_count: briefingItems.filter(i => i.urgency === "today").length,
-                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
-                    is_read: false,
-                });
-
-                totalBriefings++;
-                logger.info(`📋 Created briefing for user ${userId}: ${briefingItems.length} items`);
-
-            } catch (err) {
-                logger.error(`Failed to create briefing for user ${userId}:`, err);
             }
         }
 

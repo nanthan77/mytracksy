@@ -94,6 +94,57 @@ service cloud.firestore {
       match /pending_notes/{noteId} {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
+
+      // ─── Schedule (Smart Scheduler) ────────────────────────────
+      match /schedule/{eventId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Life Admin Tasks ──────────────────────────────────────
+      match /life_admin/{taskId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Saved Hospital Locations ──────────────────────────────
+      match /saved_locations/{locationId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Traffic Alerts (written by Cloud Functions) ───────────
+      match /traffic_alerts/{alertId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Subscription (server-managed, client read-only) ────
+      match /subscription/{subId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Only Cloud Functions / admin SDK can write subscriptions
+        allow write: if false;
+      }
+
+      // ─── Usage Quotas (server-managed, client read-only) ────
+      match /usage_quotas/{quotaId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Only Cloud Functions can increment quotas
+        allow write: if false;
+      }
+
+      // ─── App Invoices (server-managed, client read-only) ────
+      match /app_invoices/{invoiceId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Only Cloud Functions can create invoices
+        allow write: if false;
+      }
+
+      // ─── Families (shared access) ──────────────────────────
+      match /families/{familyId} {
+        allow read: if request.auth != null
+                     && (request.auth.uid == userId
+                         || request.auth.uid in resource.data.member_uids);
+        allow write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Legacy collections (backward compat, read-only) ─────
       match /income/{docId} {
         allow read: if request.auth != null && request.auth.uid == userId;
       }

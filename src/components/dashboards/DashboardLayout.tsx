@@ -14,11 +14,13 @@ interface DashboardLayoutProps {
     onChangeProfession: () => void;
     onLogout: () => void;
     children: React.ReactNode;
+    tokenBalance?: number;
+    onWalletClick?: () => void;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     professionLabel, professionIcon, userName, navItems, activeNav,
-    onNavChange, onChangeProfession, onLogout, children,
+    onNavChange, onChangeProfession, onLogout, children, tokenBalance, onWalletClick,
 }) => {
     const [collapsed, setCollapsed] = useState(false);
     const w = collapsed ? 68 : 260;
@@ -26,16 +28,18 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     return (
         <>
             <style>{`
-                .sidebar-nav-btn { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: none; background: transparent; color: rgba(255,255,255,0.5); border-radius: 10px; cursor: pointer; font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 450; text-align: left; width: 100%; white-space: nowrap; transition: all 0.2s ease; letter-spacing: -0.01em; }
-                .sidebar-nav-btn:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.75); }
-                .sidebar-nav-btn.active { background: rgba(99,102,241,0.12); color: #a5b4fc; font-weight: 550; }
+                .sidebar-nav-btn { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: none; background: transparent; color: rgba(255,255,255,0.7); border-radius: 10px; cursor: pointer; font-size: 14px; font-family: 'Inter', sans-serif; font-weight: 450; text-align: left; width: 100%; white-space: nowrap; transition: all 0.2s ease; letter-spacing: -0.01em; }
+                .sidebar-nav-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+                .sidebar-nav-btn.active { background: rgba(99,102,241,0.15); color: #c7d2fe; font-weight: 550; }
                 .sidebar-nav-btn.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 20px; background: #6366f1; border-radius: 0 3px 3px 0; }
-                .sidebar-footer-btn { width: 100%; padding: 8px 12px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.06); color: rgba(255,255,255,0.5); border-radius: 8px; cursor: pointer; font-size: 12.5px; font-family: 'Inter', sans-serif; font-weight: 450; text-align: left; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
-                .sidebar-footer-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
+                .sidebar-footer-btn { width: 100%; padding: 8px 12px; background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); border-radius: 8px; cursor: pointer; font-size: 12.5px; font-family: 'Inter', sans-serif; font-weight: 450; text-align: left; transition: all 0.2s ease; display: flex; align-items: center; gap: 8px; }
+                .sidebar-footer-btn:hover { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.9); }
                 .sidebar-footer-btn.logout:hover { background: rgba(239,68,68,0.08); color: #f87171; border-color: rgba(239,68,68,0.15); }
                 .topbar-search { padding: 8px 14px 8px 36px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px; font-family: 'Inter', sans-serif; color: #475569; width: 240px; outline: none; transition: all 0.2s ease; background: #f8fafc; }
                 .topbar-search:focus { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.08); background: white; }
-                .topbar-search::placeholder { color: #94a3b8; }
+                .topbar-search::placeholder { color: #64748b; }
+                @keyframes pulse-red { 0%, 100% { background: #ef4444; } 50% { background: #f87171; } }
+                .wallet-low-indicator { animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
             `}</style>
 
             <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Inter', -apple-system, sans-serif", background: '#f8fafc' }}>
@@ -63,13 +67,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 }}>💰</div>
                                 <div>
                                     <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2 }}>MyTracksy</div>
-                                    <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)', fontWeight: 400, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>SaaS Finance</div>
+                                    <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>SaaS Finance</div>
                                 </div>
                             </div>
                         )}
                         <button onClick={() => setCollapsed(!collapsed)} style={{
                             background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.06)',
-                            color: 'rgba(255,255,255,0.5)', width: 28, height: 28, borderRadius: 7,
+                            color: 'rgba(255,255,255,0.7)', width: 28, height: 28, borderRadius: 7,
                             cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: 12, transition: 'all 0.2s ease', flexShrink: 0,
                         }} title={collapsed ? 'Expand' : 'Collapse'}>
@@ -105,7 +109,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 }}>{userName.charAt(0).toUpperCase()}</div>
                                 <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{userName}</div>
-                                    <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.35)' }}>{professionLabel}</div>
+                                    <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>{professionLabel}</div>
                                 </div>
                             </div>
                             <button onClick={onChangeProfession} className="sidebar-footer-btn">
@@ -151,6 +155,25 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                     background: '#ef4444', borderRadius: '50%', border: '2px solid white',
                                 }} />
                             </div>
+                            {/* Wallet Balance */}
+                            {tokenBalance !== undefined && (
+                                <button onClick={onWalletClick} style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px',
+                                    borderRadius: 20, background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                    color: 'white', fontSize: 12, fontWeight: 600, border: 'none',
+                                    cursor: 'pointer', boxShadow: '0 2px 8px rgba(245,158,11,0.25)',
+                                    position: 'relative', transition: 'all 0.2s ease',
+                                }}>
+                                    🪙
+                                    <span>{tokenBalance} tokens</span>
+                                    {tokenBalance <= 10 && (
+                                        <div className="wallet-low-indicator" style={{
+                                            position: 'absolute', top: -2, right: -2, width: 8, height: 8,
+                                            borderRadius: '50%', border: '2px solid white',
+                                        }} />
+                                    )}
+                                </button>
+                            )}
                             {/* Profession badge */}
                             <span style={{
                                 display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 14px',

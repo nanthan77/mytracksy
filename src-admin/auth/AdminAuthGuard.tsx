@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
-import { useAdminAuth } from './useAdminAuth';
+import { useAdminAuthContext } from './AdminAuthContext';
 
 type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
 
@@ -13,7 +13,7 @@ interface Props {
 }
 
 export default function AdminAuthGuard({ children, requiredRoles, requiredPermission, requiredProfession }: Props) {
-  const { user, role, loading, hasPermission, hasProfessionAccess } = useAdminAuth();
+  const { user, role, loading, hasPermission, hasProfessionAccess } = useAdminAuthContext();
 
   if (loading) {
     return (

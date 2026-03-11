@@ -1,10 +1,16 @@
 import React, { useState } from 'react';
+import { Navigate } from 'react-router-dom';
 import { Box, Card, CardContent, TextField, Button, Typography, Alert, CircularProgress, Divider } from '@mui/material';
 import GoogleIcon from '@mui/icons-material/Google';
-import { useAdminAuth } from './useAdminAuth';
+import { useAdminAuthContext } from './AdminAuthContext';
 
 export default function AdminLogin() {
-  const { login, loginWithGoogle, loading, error } = useAdminAuth();
+  const { login, loginWithGoogle, loading, error, user, role } = useAdminAuthContext();
+
+  // Redirect to dashboard if already authenticated
+  if (user && role) {
+    return <Navigate to="/" replace />;
+  }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 

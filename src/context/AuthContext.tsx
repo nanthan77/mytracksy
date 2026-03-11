@@ -43,34 +43,28 @@ export const useAuth = () => {
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [useMockAuth] = useState(true); // Switch this to use Firebase auth
+  const [useMockAuth] = useState(false); // Production: use real Firebase auth
 
   const login = async (email: string, password: string) => {
     try {
-      console.log('AuthContext: Attempting login with email:', email);
       if (useMockAuth) {
-        const result = await mockAuth.signInWithEmailAndPassword(email, password);
-        console.log('AuthContext: Mock login successful for user:', result.user.uid);
+        await mockAuth.signInWithEmailAndPassword(email, password);
       } else {
-        const result = await signInWithEmailAndPassword(auth, email, password);
-        console.log('AuthContext: Firebase login successful for user:', result.user.uid);
+        await signInWithEmailAndPassword(auth, email, password);
       }
     } catch (error) {
-      console.error('AuthContext: Login error:', error);
+      console.error('AuthContext: Login failed');
       throw error;
     }
   };
 
   const register = async (email: string, password: string, displayName: string) => {
     try {
-      console.log('AuthContext: Creating user with email:', email);
       if (useMockAuth) {
         const { user } = await mockAuth.createUserWithEmailAndPassword(email, password);
-        console.log('AuthContext: Mock user created, updating profile...');
         await mockAuth.updateProfile(user, { displayName });
-        
+
         // Create user document in mock Firestore
-        console.log('AuthContext: Creating user document in mock Firestore...');
         await mockFirestore.setDoc('users', user.uid, {
           uid: user.uid,
           email: user.email,
@@ -80,11 +74,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         });
       } else {
         const { user } = await createUserWithEmailAndPassword(auth, email, password);
-        console.log('AuthContext: Firebase user created, updating profile...');
         await updateProfile(user, { displayName });
-        
+
         // Create user document in Firestore
-        console.log('AuthContext: Creating user document in Firestore...');
         await setDoc(doc(db, 'users', user.uid), {
           uid: user.uid,
           email: user.email,
@@ -93,9 +85,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           updatedAt: new Date()
         });
       }
-      console.log('AuthContext: Registration complete');
     } catch (error) {
-      console.error('AuthContext: Registration error:', error);
+      console.error('AuthContext: Registration failed');
       throw error;
     }
   };
@@ -110,8 +101,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const resetPassword = async (email: string) => {
     if (useMockAuth) {
-      // Mock password reset - just log it
-      console.log('Mock password reset for:', email);
+      // Mock password reset
       return Promise.resolve();
     } else {
       await sendPasswordResetEmail(auth, email);
@@ -153,8 +143,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
     
     if (useMockAuth) {
-      // Mock password update - just log it
-      console.log('Mock password update for user:', currentUser.uid);
+      // Mock password update
       return Promise.resolve();
     } else {
       if (!auth.currentUser) {
@@ -204,11 +193,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubscribe = mockAuth.onAuthStateChanged(async (mockUser: MockUser | null) => {
         try {
           if (mockUser) {
-            console.log('AuthContext: Mock auth state changed - user logged in:', mockUser.uid);
             // Get additional user data from mock Firestore
             const userDoc = await mockFirestore.getDoc('users', mockUser.uid);
             const userData = userDoc.exists() ? userDoc.data() : null;
-            
+
             const user: User = {
               uid: mockUser.uid,
               email: mockUser.email,
@@ -216,13 +204,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               photoURL: mockUser.photoURL || userData?.photoURL || undefined
             };
             setCurrentUser(user);
-            console.log('AuthContext: Mock user state set:', user);
           } else {
-            console.log('AuthContext: Mock auth state changed - user logged out');
             setCurrentUser(null);
           }
         } catch (error) {
-          console.error('AuthContext: Error in mock auth state change:', error);
+          console.error('AuthContext: Mock auth state change failed');
           setCurrentUser(null);
         } finally {
           setLoading(false);
@@ -233,11 +219,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser: FirebaseUser | null) => {
         try {
           if (firebaseUser) {
-            console.log('AuthContext: Auth state changed - user logged in:', firebaseUser.uid);
             // Get additional user data from Firestore
             const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
             const userData = userDoc.data();
-            
+
             const user: User = {
               uid: firebaseUser.uid,
               email: firebaseUser.email!,
@@ -245,13 +230,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               photoURL: firebaseUser.photoURL || userData?.photoURL || undefined
             };
             setCurrentUser(user);
-            console.log('AuthContext: User state set:', user);
           } else {
-            console.log('AuthContext: Auth state changed - user logged out');
             setCurrentUser(null);
           }
         } catch (error) {
-          console.error('AuthContext: Error in auth state change:', error);
+          console.error('AuthContext: Auth state change failed');
           setCurrentUser(null);
         } finally {
           setLoading(false);

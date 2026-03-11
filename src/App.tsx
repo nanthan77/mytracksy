@@ -271,6 +271,10 @@ function App() {
     return (
       <ProfessionSetup
         onProfessionSelected={handleProfessionSelected}
+        onBackToHome={() => {
+          handleLogout();
+          setView('landing');
+        }}
       />
     );
   }

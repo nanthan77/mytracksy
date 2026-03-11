@@ -2,7 +2,7 @@ import React from 'react';
 import { AppBar, Toolbar, IconButton, Typography, Box, Chip, Button } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
 import LogoutIcon from '@mui/icons-material/Logout';
-import { useAdminAuth } from '../../auth/useAdminAuth';
+import { useAdminAuthContext } from '../../auth/AdminAuthContext';
 import { DRAWER_WIDTH } from './AdminSidebar';
 
 interface AdminHeaderProps {
@@ -18,7 +18,7 @@ const ROLE_LABELS: Record<string, { label: string; color: 'error' | 'primary' | 
 };
 
 export default function AdminHeader({ onMenuClick, title }: AdminHeaderProps) {
-  const { user, role, logout } = useAdminAuth();
+  const { user, role, logout } = useAdminAuthContext();
 
   const roleInfo = role ? ROLE_LABELS[role] : null;
 

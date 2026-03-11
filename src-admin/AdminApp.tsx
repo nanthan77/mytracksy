@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { useAdminAuth } from './auth/useAdminAuth';
+import { useAdminAuthContext } from './auth/AdminAuthContext';
 import AdminLogin from './auth/AdminLogin';
 import AdminAuthGuard from './auth/AdminAuthGuard';
 import SuperAdminLayout from './layouts/SuperAdminLayout';
@@ -22,7 +22,7 @@ import ProfessionAnalytics from './profession/ProfessionAnalytics';
 import ProfessionSettings from './profession/ProfessionSettings';
 
 export default function AdminApp() {
-  const { role, professions } = useAdminAuth();
+  const { role, professions } = useAdminAuthContext();
 
   const getDefaultRedirect = () => {
     if (role === 'super_admin') return '/';

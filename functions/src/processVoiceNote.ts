@@ -13,12 +13,31 @@
  */
 
 import { onObjectFinalized } from "firebase-functions/v2/storage";
+import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions/v2";
 import * as admin from "firebase-admin";
 import OpenAI from "openai";
 import * as fs from "fs";
 import * as os from "os";
 import * as path from "path";
+import { verifyProOrCheckQuota } from "./subscriptionGuard";
+
+const OPENAI_API_KEY = defineSecret("OPENAI_API_KEY");
+
+async function withRetry<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            return await fn();
+        } catch (error: any) {
+            if (attempt === retries) throw error;
+            const isRetryable = error.status === 429 || error.status === 500 || error.status === 503 || error.code === 'ECONNRESET';
+            if (!isRetryable) throw error;
+            logger.warn(`⚠️ OpenAI attempt ${attempt}/${retries} failed, retrying in ${delay}ms...`);
+            await new Promise(r => setTimeout(r, delay * attempt));
+        }
+    }
+    throw new Error("Retry exhausted");
+}
 
 // ─── Config ─────────────────────────────────────────────────────
 
@@ -90,6 +109,7 @@ export const processVoiceNote = onObjectFinalized(
         region: "asia-south1",  // Mumbai — lowest latency for Sri Lanka
         memory: "512MiB",
         timeoutSeconds: 120,
+        secrets: [OPENAI_API_KEY],
         // Only trigger for pending_audio paths
     },
     async (event) => {
@@ -124,6 +144,26 @@ export const processVoiceNote = onObjectFinalized(
 
         try {
             // ════════════════════════════════════════════════════
+            //  STEP 0: Check subscription / quota
+            // ════════════════════════════════════════════════════
+
+            logger.info("🔑 Checking subscription quota...");
+            try {
+                const quotaResult = await verifyProOrCheckQuota(userId, "ai_voice_note");
+                logger.info(`✅ Quota check passed: tier=${quotaResult.tier}, remaining=${quotaResult.remaining ?? '∞'}`);
+            } catch (quotaErr: any) {
+                logger.warn(`🚫 Quota exceeded for user ${userId}: ${quotaErr.message}`);
+                await noteRef.set({
+                    status: "quota_exceeded",
+                    error_message: quotaErr.message || "Monthly AI limit reached. Upgrade to Pro.",
+                    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                // Clean up the audio file even when quota blocked
+                try { await storage.file(filePath).delete(); } catch { /* ok */ }
+                return;
+            }
+
+            // ════════════════════════════════════════════════════
             //  STEP 1: Download audio to /tmp
             // ════════════════════════════════════════════════════
 
@@ -140,16 +180,16 @@ export const processVoiceNote = onObjectFinalized(
             logger.info("🔊 Transcribing with Whisper...");
 
             const openai = new OpenAI({
-                apiKey: process.env.OPENAI_API_KEY,
+                apiKey: OPENAI_API_KEY.value(),
             });
 
-            const transcription = await openai.audio.transcriptions.create({
+            const transcription = await withRetry(() => openai.audio.transcriptions.create({
                 file: fs.createReadStream(tmpFile),
                 model: "whisper-1",
                 language: "en",
                 prompt: WHISPER_PROMPT,
                 response_format: "text",
-            });
+            }));
 
             const rawTranscript = typeof transcription === "string"
                 ? transcription
@@ -163,7 +203,7 @@ export const processVoiceNote = onObjectFinalized(
 
             logger.info("🧠 Structuring with GPT-4o-mini...");
 
-            const structuredResponse = await openai.chat.completions.create({
+            const structuredResponse = await withRetry(() => openai.chat.completions.create({
                 model: "gpt-4o-mini",
                 response_format: { type: "json_object" },
                 messages: [
@@ -173,9 +213,9 @@ export const processVoiceNote = onObjectFinalized(
                         content: `Analyze this raw clinical voice transcript and return structured JSON:\n\n---\n${rawTranscript}\n---\n\nReturn JSON with: patient_identifier, clinical_summary, action_items (array of {task, urgency}), tags (array of #hashtags), is_rare_case (boolean).`
                     }
                 ],
-                temperature: 0.1,  // Low temp for accuracy
+                temperature: 0.1,
                 max_tokens: 1000,
-            });
+            }));
 
             const structuredText = structuredResponse.choices[0]?.message?.content;
             if (!structuredText) throw new Error("GPT-4o-mini returned empty response");
