@@ -20,7 +20,7 @@ import { auth, db } from '../config/firebase';
 export type ProfessionType =
   | 'medical' | 'legal' | 'engineering' | 'business'
   | 'individual' | 'trading' | 'automotive' | 'marketing'
-  | 'travel' | 'transportation' | 'retail' | 'aquaculture';
+  | 'travel' | 'transportation' | 'retail' | 'aquaculture' | 'creator';
 
 // Sri Lankan user profile interface
 export interface UserProfile {

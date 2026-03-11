@@ -275,6 +275,7 @@ function App() {
   if (view === 'professionLanding' && professionLandingSlug) {
     const route = getRouteBySlug(professionLandingSlug);
     const landingProfession = route ? route.profession : null;
+    const showDedicatedInstall = Boolean(route?.dedicatedPwa && landingProfession);
 
     return (
       <Suspense fallback={<LoadingFallback />}>
@@ -294,7 +295,7 @@ function App() {
             setView('landing');
           }}
         />
-        {landingProfession && <PWAInstallPrompt profession={landingProfession} />}
+        {showDedicatedInstall && <PWAInstallPrompt profession={landingProfession!} />}
       </Suspense>
     );
   }
@@ -330,6 +331,7 @@ function App() {
   }
 
   // 3. Dashboard with PWA support
+  const selectedRoute = selectedProfession ? getRouteByProfession(selectedProfession) : undefined;
   return (
     <Suspense fallback={<LoadingFallback />}>
       <NetworkStatusBar />
@@ -340,7 +342,7 @@ function App() {
         onChangeProfession={handleChangeProfession}
         onLogout={handleLogout}
       />
-      {selectedProfession && <PWAInstallPrompt profession={selectedProfession} />}
+      {selectedProfession && selectedRoute?.dedicatedPwa && <PWAInstallPrompt profession={selectedProfession} layoutContext="dashboard" />}
     </Suspense>
   );
 }

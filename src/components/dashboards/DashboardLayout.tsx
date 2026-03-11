@@ -1,7 +1,24 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ProfessionType } from '../../contexts/AuthContext';
+import { useIsCompactMobile } from './useIsCompactMobile';
 
 interface NavItem { id: string; label: string; icon: string; }
+
+interface MobileTabItem {
+    id: string;
+    label: string;
+    icon: string;
+}
+
+interface MobileShellConfig {
+    enabled?: boolean;
+    tabs: MobileTabItem[];
+    activeTab: string;
+    onTabChange: (id: string) => void;
+    activeTitle: string;
+    activeSubtitle?: string;
+    headerAction?: React.ReactNode;
+}
 
 interface DashboardLayoutProps {
     profession: ProfessionType;
@@ -16,14 +33,153 @@ interface DashboardLayoutProps {
     children: React.ReactNode;
     tokenBalance?: number;
     onWalletClick?: () => void;
+    mobileShell?: MobileShellConfig;
 }
 
 const DashboardLayout: React.FC<DashboardLayoutProps> = ({
     professionLabel, professionIcon, userName, navItems, activeNav,
-    onNavChange, onChangeProfession, onLogout, children, tokenBalance, onWalletClick,
+    onNavChange, onChangeProfession, onLogout, children, tokenBalance, onWalletClick, mobileShell,
 }) => {
     const [collapsed, setCollapsed] = useState(false);
-    const w = collapsed ? 68 : 260;
+    const isCompactMobile = useIsCompactMobile();
+    const sidebarWidth = collapsed ? 68 : 260;
+    const activeNavItem = useMemo(
+        () => navItems.find(n => n.id === activeNav) || navItems[0],
+        [activeNav, navItems]
+    );
+    const showMobileShell = Boolean(mobileShell?.enabled && isCompactMobile);
+
+    if (showMobileShell && mobileShell) {
+        return (
+            <>
+                <style>{`
+                    @keyframes pulse-red { 0%, 100% { background: #ef4444; } 50% { background: #f87171; } }
+                    .wallet-low-indicator { animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+                    .mobile-tab-btn {
+                        border: none;
+                        background: transparent;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 4px;
+                        color: #94a3b8;
+                        min-width: 0;
+                        min-height: 56px;
+                        width: 100%;
+                        padding: 8px 6px;
+                        border-radius: 18px;
+                        transition: all 0.2s ease;
+                        font-family: 'Inter', sans-serif;
+                    }
+                    .mobile-tab-btn.active {
+                        color: #0f172a;
+                        background: linear-gradient(135deg, rgba(14,165,233,0.14), rgba(99,102,241,0.1));
+                    }
+                `}</style>
+
+                <div style={{
+                    minHeight: '100vh',
+                    background: 'linear-gradient(180deg, #f8fbff 0%, #eef4ff 34%, #f8fafc 100%)',
+                    fontFamily: "'Inter', -apple-system, sans-serif",
+                    color: '#0f172a',
+                }}>
+                    <header style={{
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 120,
+                        paddingTop: 'calc(var(--safe-area-top) + 12px)',
+                        background: 'rgba(248,251,255,0.88)',
+                        backdropFilter: 'blur(16px)',
+                        WebkitBackdropFilter: 'blur(16px)',
+                        borderBottom: '1px solid rgba(226,232,240,0.85)',
+                    }}>
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: 12,
+                            padding: '12px 16px 14px',
+                        }}>
+                            <div style={{ minWidth: 0 }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: '#0ea5e9', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                                    {professionIcon} {professionLabel}
+                                </div>
+                                <h1 style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 750, letterSpacing: '-0.03em', color: '#0f172a' }}>
+                                    {mobileShell.activeTitle}
+                                </h1>
+                                <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 2 }}>
+                                    {mobileShell.activeSubtitle || `${userName} • native mobile mode`}
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+                                {tokenBalance !== undefined && (
+                                    <button onClick={onWalletClick} style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: 5, padding: '7px 12px',
+                                        borderRadius: 999, background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                                        color: 'white', fontSize: 12, fontWeight: 700, border: 'none',
+                                        cursor: 'pointer', boxShadow: '0 6px 18px rgba(245,158,11,0.22)',
+                                        position: 'relative',
+                                    }}>
+                                        🪙 {tokenBalance}
+                                        {tokenBalance <= 10 && (
+                                            <span className="wallet-low-indicator" style={{
+                                                position: 'absolute', top: -1, right: -1, width: 8, height: 8,
+                                                borderRadius: '50%', border: '2px solid white',
+                                            }} />
+                                        )}
+                                    </button>
+                                )}
+                                {mobileShell.headerAction}
+                            </div>
+                        </div>
+                    </header>
+
+                    <main style={{
+                        padding: '14px 14px calc(108px + var(--safe-area-bottom))',
+                    }}>
+                        {children}
+                    </main>
+
+                    <nav style={{
+                        position: 'fixed',
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        zIndex: 140,
+                        padding: '10px 12px calc(var(--safe-area-bottom) + 10px)',
+                        background: 'rgba(255,255,255,0.94)',
+                        backdropFilter: 'blur(20px)',
+                        WebkitBackdropFilter: 'blur(20px)',
+                        borderTop: '1px solid rgba(226,232,240,0.9)',
+                        boxShadow: '0 -12px 30px rgba(15,23,42,0.08)',
+                    }}>
+                        <div style={{
+                            display: 'grid',
+                            gridTemplateColumns: `repeat(${mobileShell.tabs.length}, minmax(0, 1fr))`,
+                            gap: 8,
+                        }}>
+                            {mobileShell.tabs.map(tab => {
+                                const active = mobileShell.activeTab === tab.id;
+                                return (
+                                    <button
+                                        key={tab.id}
+                                        className={`mobile-tab-btn ${active ? 'active' : ''}`}
+                                        onClick={() => mobileShell.onTabChange(tab.id)}
+                                        aria-current={active ? 'page' : undefined}
+                                    >
+                                        <span style={{ fontSize: 18, lineHeight: 1 }}>{tab.icon}</span>
+                                        <span style={{ fontSize: 11.5, fontWeight: active ? 700 : 600 }}>{tab.label}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </nav>
+                </div>
+            </>
+        );
+    }
 
     return (
         <>
@@ -43,15 +199,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
             `}</style>
 
             <div style={{ display: 'flex', minHeight: '100vh', fontFamily: "'Inter', -apple-system, sans-serif", background: '#f8fafc' }}>
-                {/* Sidebar */}
                 <aside style={{
-                    position: 'fixed', top: 0, left: 0, height: '100vh', width: w,
+                    position: 'fixed', top: 0, left: 0, height: '100vh', width: sidebarWidth,
                     background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 40%, #1e293b 100%)',
                     color: 'white', display: 'flex', flexDirection: 'column', zIndex: 100,
                     transition: 'width 0.3s cubic-bezier(0.4,0,0.2,1)', overflowX: 'hidden',
                     borderRight: '1px solid rgba(255,255,255,0.04)',
                 }}>
-                    {/* Logo area */}
                     <div style={{
                         padding: collapsed ? '20px 12px' : '20px 20px', display: 'flex', alignItems: 'center',
                         justifyContent: collapsed ? 'center' : 'space-between', minHeight: 72,
@@ -81,7 +235,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         </button>
                     </div>
 
-                    {/* Nav */}
                     <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
                         {navItems.map(item => (
                             <button key={item.id} onClick={() => onNavChange(item.id)}
@@ -94,10 +247,8 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         ))}
                     </nav>
 
-                    {/* Footer */}
                     {!collapsed && (
                         <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 6 }}>
-                            {/* User badge */}
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
                                 background: 'rgba(255,255,255,0.04)', borderRadius: 10, marginBottom: 4,
@@ -122,9 +273,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     )}
                 </aside>
 
-                {/* Main */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: w, transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
-                    {/* Top Bar */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: sidebarWidth, transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)' }}>
                     <header style={{
                         height: 64, background: 'rgba(255,255,255,0.8)', backdropFilter: 'blur(12px)',
                         WebkitBackdropFilter: 'blur(12px)',
@@ -134,17 +283,15 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <h1 style={{ fontSize: 17, fontWeight: 650, color: '#0f172a', margin: 0, letterSpacing: '-0.02em' }}>
-                                {navItems.find(n => n.id === activeNav)?.icon}{' '}
-                                {navItems.find(n => n.id === activeNav)?.label}
+                                {activeNavItem?.icon}{' '}
+                                {activeNavItem?.label}
                             </h1>
                         </div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                            {/* Search */}
                             <div style={{ position: 'relative' }}>
                                 <span style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', fontSize: 14, color: '#94a3b8' }}>🔍</span>
                                 <input className="topbar-search" type="text" placeholder="Search..." />
                             </div>
-                            {/* Notifications */}
                             <div style={{
                                 width: 36, height: 36, borderRadius: 10, background: '#f1f5f9',
                                 display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -155,7 +302,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                     background: '#ef4444', borderRadius: '50%', border: '2px solid white',
                                 }} />
                             </div>
-                            {/* Wallet Balance */}
                             {tokenBalance !== undefined && (
                                 <button onClick={onWalletClick} style={{
                                     display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 14px',
@@ -174,7 +320,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                     )}
                                 </button>
                             )}
-                            {/* Profession badge */}
                             <span style={{
                                 display: 'inline-flex', alignItems: 'center', gap: 5, padding: '5px 14px',
                                 borderRadius: 20, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
@@ -186,7 +331,6 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         </div>
                     </header>
 
-                    {/* Content */}
                     <main style={{ flex: 1, padding: 24 }}>{children}</main>
                 </div>
             </div>

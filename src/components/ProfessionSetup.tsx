@@ -78,6 +78,12 @@ const professions: {
             features: ['Pond & Tank management', 'Water quality monitoring', 'Feed management & FCR', 'Harvest yield analytics', 'Export documentation'],
             stats: [{ value: '25+', label: 'Species' }, { value: '360°', label: 'Management' }, { value: 'Global', label: 'Export' }]
         },
+        {
+            id: 'creator', title: 'Digital Creator', subtitle: 'YouTubers, Streamers, Content Creators', icon: '🎥',
+            gradient: 'linear-gradient(135deg, #a16207, #ca8a04)', primaryColor: '#eab308',
+            features: ['Foreign income tracking (USD to LKR)', '5% Sri Lanka Tax Calculator', 'Sponsorship & AdSense tracking', 'Equipment depreciation', 'Production expense management'],
+            stats: [{ value: 'Multi', label: 'Currency' }, { value: '5%', label: 'Tax Calc' }, { value: 'Auto', label: 'Tracking' }]
+        },
     ];
 
 interface ProfessionSetupProps { onProfessionSelected: (profession: ProfessionType) => void; onBackToHome?: () => void; }

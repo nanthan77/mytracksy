@@ -4,16 +4,21 @@ import { getRouteByProfession } from '../config/professionRoutes';
 
 interface PWAInstallPromptProps {
     profession: ProfessionType;
+    layoutContext?: 'default' | 'dashboard';
 }
 
-export default function PWAInstallPrompt({ profession }: PWAInstallPromptProps) {
+export default function PWAInstallPrompt({ profession, layoutContext = 'default' }: PWAInstallPromptProps) {
     const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
     const [showBanner, setShowBanner] = useState(false);
     const [installed, setInstalled] = useState(false);
 
     const config = getRouteByProfession(profession);
+    const dismissKey = config ? `pwa-install-dismissed:${config.slug}` : 'pwa-install-dismissed';
+    const isMedicalDashboard = layoutContext === 'dashboard' && profession === 'medical';
 
     useEffect(() => {
+        if (!config?.dedicatedPwa) return;
+
         // Check if already installed
         if (window.matchMedia('(display-mode: standalone)').matches) {
             setInstalled(true);
@@ -21,7 +26,7 @@ export default function PWAInstallPrompt({ profession }: PWAInstallPromptProps) 
         }
 
         // Check if user dismissed before
-        const dismissed = localStorage.getItem('pwa-install-dismissed');
+        const dismissed = localStorage.getItem(dismissKey);
         if (dismissed) {
             const dismissedAt = parseInt(dismissed, 10);
             // Show again after 7 days
@@ -48,7 +53,7 @@ export default function PWAInstallPrompt({ profession }: PWAInstallPromptProps) 
             window.removeEventListener('beforeinstallprompt', handler);
             clearTimeout(timer);
         };
-    }, [installed]);
+    }, [config?.dedicatedPwa, dismissKey, installed]);
 
     const handleInstall = async () => {
         if (deferredPrompt) {
@@ -64,17 +69,17 @@ export default function PWAInstallPrompt({ profession }: PWAInstallPromptProps) 
 
     const handleDismiss = () => {
         setShowBanner(false);
-        localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+        localStorage.setItem(dismissKey, Date.now().toString());
     };
 
-    if (!showBanner || installed || !config) return null;
+    if (!showBanner || installed || !config?.dedicatedPwa || !config) return null;
 
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
 
     return (
         <div style={{
             position: 'fixed',
-            bottom: 0,
+            bottom: isMedicalDashboard ? 'calc(var(--safe-area-bottom) + 88px)' : 0,
             left: 0,
             right: 0,
             zIndex: 9999,

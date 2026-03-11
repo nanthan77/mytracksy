@@ -212,13 +212,8 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                     </div>
 
                                     <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 16, background: '#000' }}>
-                                        {/*
-                                          REPLACE YOUR_YOUTUBE_VIDEO_ID below with your actual YouTube video ID.
-                                          Example: If your YouTube URL is https://youtube.com/watch?v=abc123xyz
-                                          then use "abc123xyz" as the ID in both places below.
-                                        */}
                                         <iframe
-                                            src="https://www.youtube.com/embed/YOUR_YOUTUBE_VIDEO_ID?autoplay=1&mute=1&loop=1&playlist=YOUR_YOUTUBE_VIDEO_ID&controls=0&showinfo=0&rel=0&modestbranding=1"
+                                            src="https://www.youtube.com/embed/mId3maCwHXg?autoplay=1&mute=1&loop=1&playlist=mId3maCwHXg&controls=0&showinfo=0&rel=0&modestbranding=1"
                                             style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
                                             allow="autoplay; encrypted-media"
                                             allowFullScreen

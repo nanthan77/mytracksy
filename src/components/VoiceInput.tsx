@@ -20,6 +20,10 @@ interface VoiceInputProps {
     position?: 'float' | 'inline';
     /** Placeholder for the text fallback input */
     placeholder?: string;
+    floatingOffset?: {
+        bottom?: number;
+        right?: number;
+    };
 }
 
 // ─── Smart parser ────────────────────────────────────────────────
@@ -107,7 +111,12 @@ function parseVoiceInput(text: string): ParsedVoiceAction {
 }
 
 // ─── Component ───────────────────────────────────────────────────
-const VoiceInput: React.FC<VoiceInputProps> = ({ onAction, position = 'float', placeholder = 'Tap mic or type...' }) => {
+const VoiceInput: React.FC<VoiceInputProps> = ({
+    onAction,
+    position = 'float',
+    placeholder = 'Tap mic or type...',
+    floatingOffset,
+}) => {
     const [isListening, setIsListening] = useState(false);
     const [transcript, setTranscript] = useState('');
     const [parsedAction, setParsedAction] = useState<ParsedVoiceAction | null>(null);
@@ -213,6 +222,9 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onAction, position = 'float', p
     };
 
     const fmt = (n: number) => `LKR ${n.toLocaleString('en-LK')}`;
+    const fabBottom = floatingOffset?.bottom ?? 28;
+    const fabRight = floatingOffset?.right ?? 28;
+    const panelBottom = fabBottom + 72;
 
     // ─── Floating button + panel ──────────────────────────────
     if (position === 'float') {
@@ -221,11 +233,11 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onAction, position = 'float', p
                 <style>{`
                     @keyframes voicePulse { 0% { box-shadow: 0 0 0 0 rgba(99,102,241,0.5); } 70% { box-shadow: 0 0 0 20px rgba(99,102,241,0); } 100% { box-shadow: 0 0 0 0 rgba(99,102,241,0); } }
                     @keyframes voiceWave { 0%,100% { height: 8px; } 50% { height: 24px; } }
-                    .voice-fab { position: fixed; bottom: 28px; right: 28px; z-index: 9999; width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: all 0.3s ease; font-family: 'Inter', sans-serif; }
+                    .voice-fab { position: fixed; z-index: 9999; width: 60px; height: 60px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: all 0.3s ease; font-family: 'Inter', sans-serif; }
                     .voice-fab:hover { transform: scale(1.08); }
                     .voice-fab.idle { background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; box-shadow: 0 6px 24px rgba(99,102,241,0.4); }
                     .voice-fab.listening { background: linear-gradient(135deg, #ef4444, #f97316); color: white; animation: voicePulse 1.5s infinite; }
-                    .voice-panel { position: fixed; bottom: 100px; right: 28px; z-index: 9998; width: 380px; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05); overflow: hidden; font-family: 'Inter', sans-serif; }
+                    .voice-panel { position: fixed; z-index: 9998; width: 380px; background: white; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.05); overflow: hidden; font-family: 'Inter', sans-serif; }
                 `}</style>
 
                 {/* Floating Mic Button */}
@@ -236,6 +248,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onAction, position = 'float', p
                         else if (showPanel && !isListening) { setShowPanel(false); }
                         else { startListening(); }
                     }}
+                    style={{ bottom: fabBottom, right: fabRight }}
                     title={isListening ? 'Stop recording' : 'Voice command'}
                 >
                     {isListening ? '⏹' : '🎤'}
@@ -243,7 +256,7 @@ const VoiceInput: React.FC<VoiceInputProps> = ({ onAction, position = 'float', p
 
                 {/* Panel */}
                 {showPanel && (
-                    <div className="voice-panel">
+                    <div className="voice-panel" style={{ bottom: panelBottom, right: fabRight, width: floatingOffset ? 'min(380px, calc(100vw - 24px))' : 380 }}>
                         {/* Header */}
                         <div style={{ padding: '16px 20px', background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>

@@ -8,6 +8,7 @@ export interface ProfessionRouteConfig {
     icon: string;
     themeColor: string;
     description: string;
+    dedicatedPwa?: boolean;
 }
 
 export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
@@ -19,6 +20,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         icon: '🩺',
         themeColor: '#0ea5e9',
         description: 'Doctor\'s personal assistant — Schedule, prescriptions, voice notes',
+        dedicatedPwa: true,
     },
     {
         slug: 'legal',
@@ -118,6 +120,15 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         icon: '🐟',
         themeColor: '#0284c7',
         description: 'Aquaculture — Pond management, harvest tracking, feed logs',
+    },
+    {
+        slug: 'creator',
+        profession: 'creator',
+        name: 'MyTracksy Creator',
+        shortName: 'Creator Tracksy',
+        icon: '🎥',
+        themeColor: '#facc15',
+        description: 'Digital Creator — Foreign income tracking, 5% tax calculator, sponsorships',
     },
 ];
 

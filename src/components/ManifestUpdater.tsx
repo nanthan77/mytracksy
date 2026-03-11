@@ -34,6 +34,16 @@ const PROFESSION_SHORTCUTS: Record<string, Array<{ name: string; short_name: str
     ],
 };
 
+const SHORTCUT_ICON_MAP: Record<string, string> = {
+    voicevault: '/icons/voice-shortcut.png',
+    briefing: '/icons/analytics-shortcut.png',
+    scheduler: '/icons/business-shortcut.png',
+    income: '/icons/business-shortcut.png',
+    reports: '/icons/analytics-shortcut.png',
+    expenses: '/icons/business-shortcut.png',
+    default: '/icons/icon-192.png',
+};
+
 function generateManifest(config: ProfessionRouteConfig): string {
     const shortcuts = (PROFESSION_SHORTCUTS[config.profession] || [
         { name: 'Voice Command', short_name: 'Voice', description: 'Quick voice input', icon: '🎙️', action: 'voice' },
@@ -43,7 +53,7 @@ function generateManifest(config: ProfessionRouteConfig): string {
         short_name: s.short_name,
         description: s.description,
         url: `/${config.slug}?action=${s.action}`,
-        icons: [{ src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' }],
+        icons: [{ src: SHORTCUT_ICON_MAP[s.action] || SHORTCUT_ICON_MAP.default, sizes: '192x192', type: 'image/png' }],
     }));
 
     const manifest = {
@@ -52,13 +62,14 @@ function generateManifest(config: ProfessionRouteConfig): string {
         description: config.description,
         start_url: `/${config.slug}`,
         display: 'standalone',
+        display_override: ['standalone', 'browser'],
         background_color: '#0f172a',
         theme_color: config.themeColor,
         orientation: 'portrait-primary',
-        scope: '/',
+        scope: `/${config.slug}`,
         lang: 'en-LK',
         dir: 'ltr',
-        id: `tracksy-${config.slug}`,
+        id: `/${config.slug}`,
         icons: [
             {
                 src: '/icons/icon-192.png',
@@ -75,6 +86,9 @@ function generateManifest(config: ProfessionRouteConfig): string {
         ],
         categories: ['finance', 'productivity', 'business'],
         shortcuts,
+        launch_handler: {
+            client_mode: 'navigate-existing',
+        },
         share_target: {
             action: `/${config.slug}?action=share`,
             method: 'POST',

@@ -186,6 +186,22 @@ const professionContent: Record<string, {
         testimonialQuote: 'Feed cost tracking per pond helped me reduce waste by 20%. That\'s real money saved every cycle.',
         testimonialAuthor: 'Dinesh W., Shrimp Farmer — Chilaw',
     },
+    creator: {
+        headline: 'Financial Management Built for Creators',
+        subline: 'Track AdSense, sponsorships, equipment costs, and calculate the new 5% Sri Lankan tax on foreign income automatically.',
+        features: [
+            { icon: '🎥', title: 'AdSense & Platform Revenue', desc: 'Track income from YouTube, TikTok, Patreon, and Twitch.' },
+            { icon: '💵', title: 'Foreign Income Tax', desc: 'Auto-calculate the 5% Sri Lankan tax on USD/foreign earnings.' },
+            { icon: '🤝', title: 'Sponsorship Tracking', desc: 'Manage branded deals, deliverables, and outstanding invoices.' },
+            { icon: '📸', title: 'Equipment Depreciation', desc: 'Track cameras, PCs, and gear expenses for tax deductions.' },
+            { icon: '🌍', title: 'Multi-Currency', desc: 'Handle USD/EUR income with daily LKR conversion rates.' },
+            { icon: '🔒', title: 'Creator Privacy', desc: 'Your analytics and revenue data stay strictly on your device.' },
+        ],
+        demoDesc: 'See how a Colombo YouTuber tracks $4,500 monthly AdSense, manages 5 sponsorships, and calculates their 5% foreign income tax.',
+        useCases: ['YouTubers', 'Streamers', 'Influencers', 'Freelance Editors', 'Podcasters'],
+        testimonialQuote: 'The 5% foreign income tax calculation alone saved me hours of accountant fees. It\'s perfectly built for SL creators.',
+        testimonialAuthor: 'Kaveesha M., Tech YouTuber — Colombo',
+    },
     individual: {
         headline: 'Personal Finance Made Simple',
         subline: 'Track your income, expenses, savings goals, and investments. Your complete personal financial dashboard.',
