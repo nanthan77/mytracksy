@@ -250,6 +250,7 @@ function App() {
 
   // Handle profession tile click → show profession landing page
   const handleProfessionPage = (slug: string) => {
+    window.history.pushState({}, '', `/${slug}`);
     setProfessionLandingSlug(slug);
     setView('professionLanding');
   };
@@ -285,6 +286,7 @@ function App() {
           }}
           onLogin={() => setView('login')}
           onBack={() => {
+            window.history.pushState({}, '', '/');
             setProfessionLandingSlug(null);
             setView('landing');
           }}
