@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { PROFESSION_ROUTES, ProfessionRouteConfig } from '../config/professionRoutes';
 import DoctorLandingPage from './DoctorLandingPage';
+import CreatorLandingPage from './CreatorLandingPage';
 
 interface ProfessionLandingPageProps {
     slug: string;
@@ -223,6 +224,11 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
     // Doctor gets a fully custom landing page
     if (slug === 'medical') {
         return <DoctorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    // Creator gets a fully custom landing page
+    if (slug === 'creator') {
+        return <CreatorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
     }
 
     const [mounted, setMounted] = useState(false);
