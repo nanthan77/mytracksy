@@ -1,15 +1,19 @@
 import { useState, useEffect } from 'react';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from './services/firebase';
 import LandingPage from './components/LandingPage';
+import ProfessionLandingPage from './components/ProfessionLandingPage';
 import SimpleLogin from './components/SimpleLogin';
 import ProfessionSetup from './components/ProfessionSetup';
 import ProfessionDashboard from './components/dashboards/ProfessionDashboard';
 import ManifestUpdater from './components/ManifestUpdater';
 import PWAInstallPrompt from './components/PWAInstallPrompt';
+import NetworkStatusBar from './components/NetworkStatusBar';
 import { ProfessionType } from './contexts/AuthContext';
 import { getSlugFromPath, getRouteBySlug, getRouteByProfession } from './config/professionRoutes';
 import './i18n';
 
-type AppView = 'landing' | 'login' | 'profession' | 'dashboard';
+type AppView = 'landing' | 'professionLanding' | 'login' | 'profession' | 'dashboard';
 
 function App() {
   const [view, setView] = useState<AppView>('landing');
@@ -17,6 +21,7 @@ function App() {
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [selectedProfession, setSelectedProfession] = useState<ProfessionType | null>(null);
+  const [professionLandingSlug, setProfessionLandingSlug] = useState<string | null>(null);
 
   // ============ URL-BASED ROUTING ============
 
@@ -103,58 +108,60 @@ function App() {
 
   // ============ AUTH HANDLERS ============
 
-  const handleLogin = (email: string, _password: string) => {
-    const user = {
-      email: email || 'user@tracksy.lk',
-      name: 'Tracksy User',
-      uid: Date.now().toString()
-    };
-    setCurrentUser(user);
+  const handleLogin = async (email: string, password: string) => {
+    setLoginLoading(true);
     setLoginError('');
-    setLoginLoading(false);
     try {
+      const result = await signInWithEmailAndPassword(auth, email, password);
+      const user = {
+        email: result.user.email || email,
+        name: result.user.displayName || email.split('@')[0],
+        uid: result.user.uid
+      };
+      setCurrentUser(user);
       localStorage.setItem('tracksyUser', JSON.stringify(user));
-    } catch (error) {
-      // Ignore
-    }
-
-    // If a profession was pre-selected from URL, go to dashboard
-    if (selectedProfession) {
-      localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selectedProfession }));
-      navigateToProfession(selectedProfession);
-      setView('dashboard');
-    } else {
-      setView('profession');
+      if (selectedProfession) {
+        localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selectedProfession }));
+        navigateToProfession(selectedProfession);
+        setView('dashboard');
+      } else {
+        setView('profession');
+      }
+    } catch (error: any) {
+      setLoginError(error.message || 'Login failed');
+    } finally {
+      setLoginLoading(false);
     }
   };
 
-  const handleRegister = (email: string, _password: string) => {
-    const user = {
-      email: email || 'user@tracksy.lk',
-      name: 'New User',
-      uid: Date.now().toString()
-    };
-    setCurrentUser(user);
+  const handleRegister = async (email: string, password: string) => {
+    setLoginLoading(true);
     setLoginError('');
-    setLoginLoading(false);
     try {
+      const result = await createUserWithEmailAndPassword(auth, email, password);
+      const user = {
+        email: result.user.email || email,
+        name: result.user.displayName || email.split('@')[0],
+        uid: result.user.uid
+      };
+      setCurrentUser(user);
       localStorage.setItem('tracksyUser', JSON.stringify(user));
-    } catch (error) {
-      // Ignore
-    }
-
-    // If a profession was pre-selected from URL, go to dashboard
-    if (selectedProfession) {
-      localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selectedProfession }));
-      navigateToProfession(selectedProfession);
-      setView('dashboard');
-    } else {
-      setView('profession');
+      if (selectedProfession) {
+        localStorage.setItem('myTracksyProfession', JSON.stringify({ profession: selectedProfession }));
+        navigateToProfession(selectedProfession);
+        setView('dashboard');
+      } else {
+        setView('profession');
+      }
+    } catch (error: any) {
+      setLoginError(error.message || 'Registration failed');
+    } finally {
+      setLoginLoading(false);
     }
   };
 
   const handleSkipLogin = () => {
-    const guestUser = { email: 'guest@tracksy.lk', name: 'Guest User', uid: 'guest' };
+    const guestUser = { email: 'guest@tracksy.lk', name: 'Guest User', uid: 'guest_' + Date.now() };
     setCurrentUser(guestUser);
     try {
       localStorage.setItem('tracksyUser', JSON.stringify(guestUser));
@@ -194,7 +201,7 @@ function App() {
 
   // Demo: skip login, go straight to profession dashboard
   const handleDemoProfession = (profession: ProfessionType) => {
-    const demoUser = { email: 'demo@tracksy.lk', name: 'Demo User', uid: 'demo-' + profession };
+    const demoUser = { email: 'demo@tracksy.lk', name: 'Demo User', uid: 'demo_' + Date.now() };
     setCurrentUser(demoUser);
     setSelectedProfession(profession);
     try {
@@ -207,6 +214,12 @@ function App() {
 
   // ============ ROUTING ============
 
+  // Handle profession tile click → show profession landing page
+  const handleProfessionPage = (slug: string) => {
+    setProfessionLandingSlug(slug);
+    setView('professionLanding');
+  };
+
   // 0. Landing page (first visit, root URL)
   if (view === 'landing') {
     return (
@@ -214,6 +227,28 @@ function App() {
         onGetStarted={() => setView('login')}
         onLogin={() => setView('login')}
         onDemoProfession={handleDemoProfession}
+        onProfessionPage={handleProfessionPage}
+      />
+    );
+  }
+
+  // 0.5 Profession-specific landing page (SaaS style)
+  if (view === 'professionLanding' && professionLandingSlug) {
+    return (
+      <ProfessionLandingPage
+        slug={professionLandingSlug}
+        onGetStarted={() => {
+          const route = getRouteBySlug(professionLandingSlug);
+          if (route) {
+            setSelectedProfession(route.profession);
+          }
+          setView('login');
+        }}
+        onLogin={() => setView('login')}
+        onBack={() => {
+          setProfessionLandingSlug(null);
+          setView('landing');
+        }}
       />
     );
   }
@@ -243,6 +278,7 @@ function App() {
   // 3. Dashboard with PWA support
   return (
     <>
+      <NetworkStatusBar />
       <ManifestUpdater profession={selectedProfession} />
       <ProfessionDashboard
         profession={selectedProfession!}

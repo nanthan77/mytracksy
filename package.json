@@ -5,7 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:admin": "vite --config vite.admin.config.ts",
     "build": "vite build",
+    "build:admin": "vite build --config vite.admin.config.ts",
+    "build:all": "npm run build && npm run build:admin",
+    "deploy": "npm run build:all && firebase deploy",
     "preview": "vite preview",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "test": "vitest"
@@ -35,6 +39,14 @@
     "react-router-dom": "^6.20.1",
     "react-speech-recognition": "^4.0.1",
     "recharts": "^3.0.2",
+    "vite-plugin-pwa": "^1.2.0",
+    "workbox-background-sync": "^7.4.0",
+    "workbox-cacheable-response": "^7.4.0",
+    "workbox-expiration": "^7.4.0",
+    "workbox-precaching": "^7.4.0",
+    "workbox-routing": "^7.4.0",
+    "workbox-strategies": "^7.4.0",
+    "workbox-window": "^7.4.0",
     "xlsx": "^0.18.5",
     "yup": "^1.4.0"
   },
