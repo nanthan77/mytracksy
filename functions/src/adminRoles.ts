@@ -173,11 +173,13 @@ export const verifyAdminAccess = functions.region('asia-south1').https.onCall(
       timestamp: FieldValue.serverTimestamp(),
     });
 
-    // Update last_login
-    await db.collection('admin_users').doc(result.uid).update({
+    // Update last_login (use set+merge so it works even if doc doesn't exist yet)
+    await db.collection('admin_users').doc(result.uid).set({
       last_login: FieldValue.serverTimestamp(),
       last_login_ip: context.rawRequest?.ip || 'unknown',
-    });
+      role: result.role,
+      status: 'active',
+    }, { merge: true });
 
     return {
       role: result.role,
