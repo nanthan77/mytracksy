@@ -167,11 +167,11 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                                 <h1 className="sr lt-h1" style={{ fontSize: '4rem', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24, color: '#0f172a' }}>
                                     You Mastered Medicine. <br />
-                                    <span style={{ color: '#0ea5e9' }}>Let AI Master Your Admin.</span>
+                                    <span style={{ color: '#0ea5e9' }}>Let Us Handle The Accounting.</span>
                                 </h1>
 
                                 <p className="sr" style={{ fontSize: 18, color: '#475569', lineHeight: 1.7, marginBottom: 36, maxWidth: 600 }}>
-                                    Juggling Government ward rounds, evening channeling, and complex IRD taxes? MyTracksy is the first AI-powered super-app designed for the chaotic, dual-income lifestyle of the Sri Lankan doctor. Dictate clinical notes in "Singlish," automate your tax deductions, and reclaim 20 hours of your life every month.
+                                    Juggling Government ward rounds, evening channeling, and complex IRD taxes? MyTracksy is the ultimate <strong>Cash Management & Accounting app</strong> designed specifically for Sri Lankan junior doctors and solo practitioners. Track your private income, manage clinic expenses, and instantly share standard financial reports with your auditor. Start with our powerful free accounting tier.
                                 </p>
 
                                 <div className="hero-btns sr" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', transitionDelay: '0.1s', marginBottom: 16 }}>
@@ -221,20 +221,20 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 <section id="platform" style={{ padding: '120px 0', background: '#f1f5f9', position: 'relative' }}>
                     <div className="lt-i">
                         <div className="sr" style={{ textAlign: 'center', marginBottom: 80 }}>
-                            <h2 style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>SaaS Architecture Designed For Clinicians</h2>
+                            <h2 style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Accounting Designed specifically For Clinicians</h2>
                             <p style={{ fontSize: 18, color: '#475569', maxWidth: 700, margin: '0 auto', lineHeight: 1.7 }}>
-                                Discard legacy ledgers and complex accounting software. Automate clinical documentation, unearth missing hospital deposits, and effortlessly compile RAMIS-ready tax exports.
+                                Discard legacy ledgers and complex accounting software. Manage your single-clinic bookkeeping, track your daily cash flow, and effortlessly compile RAMIS-ready tax exports. <strong>Core accounting is free forever.</strong>
                             </p>
                         </div>
 
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 40 }}>
                             <div className="glass-card sr" style={{ padding: 40 }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(14,165,233,0.4)', border: '1px solid rgba(14,165,233,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_prescription_billing_1773217275109.png" alt="Clinical AI Voice vault" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_prescription_billing_1773217275109.png" alt="Solo Practitioner Bookkeeping" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
-                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Clinical AI Voice Vault</h3>
+                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Solo Practice Bookkeeping</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
-                                    Dictate notes in a hybrid of English and localized terminology. Our proprietary cognitive engine structures the data instantly. Offline-first architecture ensures functionality deep within concrete hospital corridors.
+                                    Perfect for Junior Doctors and solo practitioners. Track incoming cash from private channels, log traveling expenses, and keep your daily clinic cash register perfectly balanced, all from your phone.
                                 </p>
                             </div>
 
@@ -242,7 +242,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(16,185,129,0.4)', border: '1px solid rgba(16,185,129,0.2)', overflow: 'hidden' }}>
                                     <img src="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png" alt="Zero-Touch Bank Sync" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
-                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Zero-Touch Revenue Tracking</h3>
+                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Zero-Touch Bank Integrations</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
                                     Establish automated email forwarding protocols from your banking institutions. The matrix reads securely forwarded alerts to log private channeling deposits instantly, exposing missing payments effortlessly.
                                 </p>
@@ -250,11 +250,11 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                             <div className="glass-card sr" style={{ padding: 40, transitionDelay: '200ms' }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(139,92,246,0.4)', border: '1px solid rgba(139,92,246,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_tax_compliance_1773217329017.png" alt="Tax Compliance Engine" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_tax_compliance_1773217329017.png" alt="Auditor Export Engine" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
-                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Live IRD Tax Instrumentation</h3>
+                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>1-Click Auditor Excel Exports</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
-                                    Live telemetry of your APIT, PAYE, and aggregate income tax brackets. Instantly export ISO-standard documentation for your Chartered Accountant at financial year-end.
+                                    Stop sending shoeboxes of receipts. Automatically compile clean, formatted Excel sheets of your income and expenses, complete with tax telemetry, ready to pass directly to your Auditor at financial year-end.
                                 </p>
                             </div>
                         </div>
