@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signInWithRedirect, getRedirectResult, GoogleAuthProvider, signOut, User } from 'firebase/auth';
+import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
 import { httpsCallable } from 'firebase/functions';
 import { auth, functions } from '../../shared/firebase/config';
 
@@ -41,21 +41,14 @@ export function useAdminAuth() {
     };
   }, [resetIdleTimer]);
 
-  // Handle redirect result on page load (Google Sign-In redirect flow)
-  useEffect(() => {
-    getRedirectResult(auth).catch((err) => {
-      if (err.code !== 'auth/popup-closed-by-user') {
-        setState(prev => ({ ...prev, loading: false, error: err.message }));
-      }
-    });
-  }, []);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (!user) {
         setState({ user: null, role: null, professions: [], loading: false, error: null });
         return;
       }
+
+      setState(prev => ({ ...prev, user, loading: true, error: null }));
 
       try {
         const verifyAccess = httpsCallable<void, { role: AdminRole; professions: string[] }>(
@@ -71,8 +64,9 @@ export function useAdminAuth() {
         });
         resetIdleTimer();
       } catch (err: any) {
+        await signOut(auth);
         setState({
-          user,
+          user: null,
           role: null,
           professions: [],
           loading: false,
@@ -93,11 +87,14 @@ export function useAdminAuth() {
     }
   };
 
-  const loginWithGoogle = () => {
+  const loginWithGoogle = async () => {
     setState(prev => ({ ...prev, loading: true, error: null }));
-    signInWithRedirect(auth, googleProvider);
-    // Page will redirect to Google, then back here.
-    // getRedirectResult above picks up the result on return.
+    try {
+      await signInWithPopup(auth, googleProvider);
+      // onAuthStateChanged will handle the rest
+    } catch (err: any) {
+      setState(prev => ({ ...prev, loading: false, error: err.message }));
+    }
   };
 
   const logout = async () => {
