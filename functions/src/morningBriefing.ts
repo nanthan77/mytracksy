@@ -12,10 +12,11 @@
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { logger } from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import { addColomboDays, getColomboDateKey, getColomboDayRange } from "./timezoneUtils";
 
 export const morningBriefing = onSchedule(
     {
-        schedule: "30 1 * * *",  // 6:30 AM IST = 01:00 UTC
+        schedule: "30 6 * * *",
         region: "asia-south1",
         timeZone: "Asia/Colombo",
         memory: "256MiB",
@@ -26,15 +27,10 @@ export const morningBriefing = onSchedule(
 
         const db = admin.firestore();
         const now = new Date();
-        const today = now.toISOString().split("T")[0]; // 2026-03-10
+        const today = getColomboDateKey(now);
 
-        // Get yesterday boundaries
-        const yesterday = new Date(now);
-        yesterday.setDate(yesterday.getDate() - 1);
-        const yesterdayStart = new Date(yesterday);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterdayEnd = new Date(yesterday);
-        yesterdayEnd.setHours(23, 59, 59, 999);
+        const yesterday = addColomboDays(now, -1);
+        const { start: yesterdayStart, end: yesterdayEnd } = getColomboDayRange(yesterday);
 
         // Process users in batches to handle scale
         const BATCH_SIZE = 100;

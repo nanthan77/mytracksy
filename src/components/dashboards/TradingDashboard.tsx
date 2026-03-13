@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
+import { useRouteNav } from '../../hooks/useRouteNav';
 
 interface Props { userName: string; onChangeProfession: () => void; onLogout: () => void; }
 
@@ -66,7 +67,8 @@ const cs: React.CSSProperties = { background: 'white', borderRadius: 12, padding
 const ct: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontWeight: 600, color: '#1e293b' };
 
 const TradingDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogout }) => {
-    const [activeNav, setActiveNav] = useState('overview');
+    const validNavIds = useMemo(() => navItems.map(n => n.id), []);
+    const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
     const portfolioValue = holdings.reduce((s, h) => s + h.qty * h.currentPrice, 0);
     const portfolioCost = holdings.reduce((s, h) => s + h.qty * h.avgPrice, 0);
     const unrealizedPL = portfolioValue - portfolioCost;

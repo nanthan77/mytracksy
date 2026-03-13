@@ -7,6 +7,13 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>MyTracksy - Advanced Login Portal</title>
+    <link rel="icon" type="image/png" href="/logos/mytracksy-logo.png" />
+    <link rel="apple-touch-icon" href="/logos/mytracksy-logo.png" />
+    <script>
+        if (window.location.pathname.endsWith('/login.html')) {
+            window.location.replace('/login');
+        }
+    </script>
     <style>
         * {
             margin: 0;
@@ -522,9 +529,9 @@
         
         <!-- Logo Section -->
         <div class="logo-section">
-            <div class="logo">💰</div>
+            <div class="logo" style="background:none;"><img src="/logos/mytracksy-logo.png" alt="MyTracksy" style="height:80px;object-fit:contain;"></div>
             <div class="logo-text" data-translate="app_name">MyTracksy</div>
-            <div class="logo-subtitle" data-translate="app_subtitle">Advanced Financial Intelligence</div>
+            <div class="logo-subtitle" data-translate="app_subtitle">Professional finance management</div>
         </div>
         
         <!-- Auto-Login Notice (hidden by default) -->
@@ -692,7 +699,7 @@
         const translations = {
             en: {
                 app_name: "MyTracksy",
-                app_subtitle: "Advanced Financial Intelligence",
+                app_subtitle: "Professional finance management",
                 login_tab: "Login",
                 register_tab: "Register",
                 email_label: "Email Address",
@@ -722,7 +729,7 @@
             },
             si: {
                 app_name: "මයිට්‍රැක්සි",
-                app_subtitle: "උසස් මුදල් බුද්ධිය",
+                app_subtitle: "වෘත්තීය මූල්‍ය කළමනාකරණය",
                 login_tab: "ප්‍රවේශය",
                 register_tab: "ලියාපදිංචිය",
                 email_label: "විද්‍යුත් ලිපිනය",
@@ -752,7 +759,7 @@
             },
             ta: {
                 app_name: "மைட்ராக்ஸி",
-                app_subtitle: "மேம்பட்ட நிதி அறிவு",
+                app_subtitle: "தொழில்முறை நிதி மேலாண்மை",
                 login_tab: "உள்நுழைவு",
                 register_tab: "பதிவு",
                 email_label: "மின்னஞ்சல் முகவரி",

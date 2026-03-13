@@ -3,24 +3,84 @@ import React, { useState, useEffect } from 'react';
 interface SimpleLoginProps {
   onLogin: (email: string, password: string) => void;
   onRegister: (email: string, password: string) => void;
+  onGoogleSignIn?: () => void;
+  onForgotPassword?: (email: string) => Promise<void> | void;
   onSkipLogin?: () => void;
+  onBack?: () => void;
+  contextLabel?: string;
   loading?: boolean;
   error?: string;
 }
 
-const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLogin, loading, error }) => {
+type LegalDoc = 'terms' | 'privacy' | null;
+
+const LEGAL_COPY: Record<Exclude<LegalDoc, null>, { title: string; summary: string[] }> = {
+  terms: {
+    title: 'Terms of Use',
+    summary: [
+      'MyTracksy provides finance and workflow tools for Sri Lankan professionals and businesses.',
+      'You are responsible for the accuracy of the financial data, invoices, and operational records you enter.',
+      'Subscription, tax, and payment workflows may depend on third-party providers and local regulatory changes.',
+    ],
+  },
+  privacy: {
+    title: 'Privacy Policy',
+    summary: [
+      'MyTracksy is designed around privacy-first handling and Firebase-secured app infrastructure.',
+      'Profession and usage data may be stored to provide dashboards, subscriptions, reminders, and AI workflows.',
+      'Users remain responsible for managing any regulated personal or client data they upload into the platform.',
+    ],
+  },
+};
+
+const SimpleLogin: React.FC<SimpleLoginProps> = ({
+  onLogin, onRegister, onGoogleSignIn, onForgotPassword, onSkipLogin, onBack, contextLabel, loading, error,
+}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isRegistering, setIsRegistering] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [localMessage, setLocalMessage] = useState('');
+  const [localMessageTone, setLocalMessageTone] = useState<'error' | 'success'>('error');
+  const [legalDoc, setLegalDoc] = useState<LegalDoc>(null);
 
   useEffect(() => { setMounted(true); }, []);
+  useEffect(() => {
+    if (error) {
+      setLocalMessage('');
+    }
+  }, [error]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    setLocalMessage('');
     if (isRegistering) onRegister(email, password);
     else onLogin(email, password);
   };
+
+  const handleForgotPassword = async () => {
+    if (!onForgotPassword) return;
+    if (!email.trim()) {
+      setResetSent(false);
+      setLocalMessageTone('error');
+      setLocalMessage('Enter your email first, then request the reset link.');
+      return;
+    }
+
+    try {
+      await onForgotPassword(email.trim());
+      setLocalMessageTone('success');
+      setLocalMessage('Password reset email sent. Check your inbox.');
+      setResetSent(true);
+      setTimeout(() => setResetSent(false), 5000);
+    } catch {
+      setResetSent(false);
+    }
+  };
+
+  const message = localMessage || error;
+  const legalContent = legalDoc ? LEGAL_COPY[legalDoc] : null;
 
   return (
     <>
@@ -43,6 +103,8 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
         .login-btn-google:hover { background: white; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .login-link { color: rgba(165,180,252,0.9); cursor: pointer; font-weight: 500; font-size: 14px; transition: color 0.2s; border: none; background: none; font-family: 'Inter', sans-serif; }
         .login-link:hover { color: #a5b4fc; text-decoration: underline; }
+        .login-modal-backdrop { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.72); backdrop-filter: blur(8px); z-index: 20; display: flex; align-items: center; justify-content: center; padding: 24px; }
+        .login-modal { width: min(560px, 100%); border-radius: 20px; background: rgba(15,23,42,0.96); border: 1px solid rgba(255,255,255,0.08); box-shadow: 0 24px 60px rgba(0,0,0,0.42); color: white; }
       `}</style>
 
       <div style={{
@@ -82,11 +144,32 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
           opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(24px)',
           transition: 'all 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
         }}>
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="login-link"
+              style={{
+                position: 'absolute',
+                top: 20,
+                left: 20,
+                padding: '8px 12px',
+                borderRadius: 10,
+                background: 'rgba(255,255,255,0.05)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: 'rgba(255,255,255,0.78)',
+                textDecoration: 'none',
+              }}
+            >
+              ← Back
+            </button>
+          )}
+
           {/* Logo */}
           <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-            <img src="/logos/logo final tag.png" alt="MyTracksy - Institutional Financial Intelligence" style={{ height: 72, objectFit: 'contain', marginBottom: 8 }} />
+            <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ height: 72, objectFit: 'contain', marginBottom: 8 }} />
             <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 14, margin: 0, fontWeight: 400 }}>
-              Professional finance management for Sri Lanka
+              {contextLabel ? `${contextLabel} sign-in and onboarding` : 'Professional finance management for Sri Lanka'}
             </p>
           </div>
 
@@ -115,7 +198,10 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
                 Email address
               </label>
               <input className="login-input" type="email" value={email}
-                onChange={e => setEmail(e.target.value)} placeholder="you@company.lk" required />
+                onChange={e => {
+                  setEmail(e.target.value);
+                  if (localMessageTone === 'error') setLocalMessage('');
+                }} placeholder="you@company.lk" required />
             </div>
 
             {/* Password */}
@@ -124,21 +210,25 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
                 <label style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.55)', letterSpacing: '0.02em' }}>
                   Password
                 </label>
-                {!isRegistering && (
-                  <button type="button" className="login-link" style={{ fontSize: 12 }}>Forgot?</button>
+                {!isRegistering && onForgotPassword && (
+                  <button type="button" className="login-link" style={{ fontSize: 12 }} onClick={handleForgotPassword}>{resetSent ? 'Reset email sent!' : 'Forgot?'}</button>
                 )}
               </div>
               <input className="login-input" type="password" value={password}
-                onChange={e => setPassword(e.target.value)} placeholder="••••••••" required />
+                onChange={e => {
+                  setPassword(e.target.value);
+                  if (localMessageTone === 'error') setLocalMessage('');
+                }} placeholder="••••••••" required />
             </div>
 
             {/* Error */}
-            {error && (
+            {message && (
               <div style={{
-                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                background: localMessageTone === 'success' && !error ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                border: localMessageTone === 'success' && !error ? '1px solid rgba(34,197,94,0.2)' : '1px solid rgba(239,68,68,0.2)',
                 borderRadius: 10, padding: '10px 14px', marginBottom: '1rem',
-                color: '#fca5a5', fontSize: 13, fontWeight: 500,
-              }}>{error}</div>
+                color: localMessageTone === 'success' && !error ? '#86efac' : '#fca5a5', fontSize: 13, fontWeight: 500,
+              }}>{message}</div>
             )}
 
             {/* Submit */}
@@ -159,10 +249,12 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
             </div>
 
             {/* Google */}
-            <button type="button" className="login-btn login-btn-google" style={{ marginBottom: 12 }}>
-              <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
-              Google
-            </button>
+            {onGoogleSignIn && (
+              <button type="button" className="login-btn login-btn-google" style={{ marginBottom: 12 }} onClick={onGoogleSignIn}>
+                <svg width="18" height="18" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" /></svg>
+                Google
+              </button>
+            )}
 
             {/* Demo */}
             {onSkipLogin && (
@@ -172,9 +264,9 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
             )}
           </form>
 
-          {/* Terms */}
+            {/* Terms */}
           <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(255,255,255,0.25)', marginTop: '1.5rem', lineHeight: 1.5, marginBottom: 0 }}>
-            By continuing, you agree to our <button className="login-link" style={{ fontSize: 11 }}>Terms</button> and <button className="login-link" style={{ fontSize: 11 }}>Privacy Policy</button>
+            By continuing, you agree to our <button type="button" className="login-link" style={{ fontSize: 11 }} onClick={() => setLegalDoc('terms')}>Terms</button> and <button type="button" className="login-link" style={{ fontSize: 11 }} onClick={() => setLegalDoc('privacy')}>Privacy Policy</button>
           </p>
         </div>
 
@@ -185,8 +277,8 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
         }}>
           {[
             { icon: '🔒', text: '256-bit Encryption' },
-            { icon: '🛡️', text: 'GDPR Compliant' },
-            { icon: '✅', text: 'SOC2 Certified' },
+            { icon: '🛡️', text: 'PDPA Compliant' },
+            { icon: '☁️', text: 'Firebase Secured' },
           ].map(b => (
             <div key={b.text} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
               <span style={{ fontSize: 14 }}>{b.icon}</span>
@@ -195,6 +287,30 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({ onLogin, onRegister, onSkipLo
           ))}
         </div>
       </div>
+
+      {legalContent && (
+        <div className="login-modal-backdrop" onClick={() => setLegalDoc(null)}>
+          <div className="login-modal" onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: '22px 24px', borderBottom: '1px solid rgba(255,255,255,0.08)', display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700 }}>{legalContent.title}</div>
+                <div style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)', marginTop: 4 }}>Summary for MyTracksy account access</div>
+              </div>
+              <button type="button" onClick={() => setLegalDoc(null)} className="login-link" style={{ fontSize: 20, color: 'rgba(255,255,255,0.5)' }}>✕</button>
+            </div>
+            <div style={{ padding: 24, display: 'grid', gap: 14 }}>
+              {legalContent.summary.map((paragraph) => (
+                <p key={paragraph} style={{ margin: 0, fontSize: 14, lineHeight: 1.7, color: 'rgba(255,255,255,0.82)' }}>
+                  {paragraph}
+                </p>
+              ))}
+              <div style={{ padding: 14, borderRadius: 14, background: 'rgba(99,102,241,0.12)', color: '#c7d2fe', fontSize: 13.5, lineHeight: 1.65 }}>
+                For full legal text or compliance questions, contact the MyTracksy team before onboarding regulated client data.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 };

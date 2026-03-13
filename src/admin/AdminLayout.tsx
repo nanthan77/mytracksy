@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { User } from 'firebase/auth';
 import AdminDashboard from './AdminDashboard';
-import DoctorDirectory from './DoctorDirectory';
+import UserDirectory from './DoctorDirectory';
 import TaxEngineEditor from './TaxEngineEditor';
 import AIUsageMonitor from './AIUsageMonitor';
 import PushNotificationSender from './PushNotificationSender';
@@ -15,11 +15,11 @@ interface AdminLayoutProps {
     onLogout: () => void;
 }
 
-type AdminPage = 'dashboard' | 'doctors' | 'tax' | 'ai' | 'push';
+type AdminPage = 'dashboard' | 'users' | 'tax' | 'ai' | 'push';
 
 const navItems: { id: AdminPage; label: string; icon: string }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'doctors', label: 'Doctors', icon: '🏥' },
+    { id: 'users', label: 'Users', icon: '👥' },
     { id: 'tax', label: 'Tax Engine', icon: '🧾' },
     { id: 'ai', label: 'AI Monitor', icon: '🤖' },
     { id: 'push', label: 'Push Alerts', icon: '📢' },
@@ -32,7 +32,7 @@ export default function AdminLayout({ user, onLogout }: AdminLayoutProps) {
     const renderPage = () => {
         switch (activePage) {
             case 'dashboard': return <AdminDashboard />;
-            case 'doctors': return <DoctorDirectory />;
+            case 'users': return <UserDirectory />;
             case 'tax': return <TaxEngineEditor />;
             case 'ai': return <AIUsageMonitor />;
             case 'push': return <PushNotificationSender />;
@@ -181,7 +181,7 @@ export default function AdminLayout({ user, onLogout }: AdminLayoutProps) {
             }}>
                 <div style={s.logo}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-                        <img src="/logos/final logo no lettermy tracksy.png" alt="MyTracksy Logo" style={{ width: 36, height: 36, objectFit: 'contain' }} />
+                        <img src="/logos/mytracksy-logo.png" alt="MyTracksy Logo" style={{ width: 36, height: 36, objectFit: 'contain' }} />
                         <h1 style={s.logoText}>MyTracksy</h1>
                     </div>
                     <p style={s.logoSub}>SUPER ADMIN</p>

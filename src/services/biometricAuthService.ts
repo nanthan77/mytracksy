@@ -4,14 +4,18 @@
  * Uses Web Authentication API (WebAuthn) for FaceID/Fingerprint.
  * Graceful fallback to PIN for unsupported browsers.
  *
+ * H5: Credentials stored in Firestore (users/{uid}/settings/biometric),
+ *     only ephemeral session flag remains in localStorage.
+ *
  * - isBiometricAvailable() — check platform support
  * - enrollBiometric()      — register fingerprint/face
  * - authenticateBiometric() — challenge before accessing locked sections
  * - PIN fallback for older devices
  */
 
-const CREDENTIAL_KEY = 'tracksy_biometric_credential';
-const PIN_KEY = 'tracksy_pin_hash';
+import { doc, getDoc, setDoc, deleteDoc } from 'firebase/firestore';
+import { db, auth } from '../config/firebase';
+
 const SESSION_KEY = 'tracksy_biometric_session';
 const SESSION_DURATION = 15 * 60 * 1000; // 15 minutes
 
@@ -22,8 +26,24 @@ export interface BiometricStatus {
     method: 'biometric' | 'pin' | 'none';
 }
 
+/** Returns the Firestore doc ref for the current user's biometric settings */
+function getBiometricDocRef(userId: string) {
+    return doc(db, 'users', userId, 'settings', 'biometric');
+}
+
+interface BiometricDoc {
+    credentialId?: string;
+    pinHash?: string;
+    pinSalt?: string;
+    method: 'biometric' | 'pin' | 'none';
+    enrolledAt: string;
+}
+
 class BiometricAuthService {
     private static instance: BiometricAuthService;
+    // In-memory cache to avoid repeated Firestore reads in a single session
+    private cachedDoc: BiometricDoc | null = null;
+    private cachedUid: string | null = null;
 
     static getInstance(): BiometricAuthService {
         if (!BiometricAuthService.instance) {
@@ -32,36 +52,81 @@ class BiometricAuthService {
         return BiometricAuthService.instance;
     }
 
+    private getUid(): string {
+        const uid = auth.currentUser?.uid;
+        if (!uid) throw new Error('[BiometricAuth] No authenticated user');
+        return uid;
+    }
+
+    /** Fetch biometric doc from Firestore (cached per uid per session) */
+    private async loadDoc(uid: string): Promise<BiometricDoc | null> {
+        if (this.cachedUid === uid && this.cachedDoc) return this.cachedDoc;
+        try {
+            const snap = await getDoc(getBiometricDocRef(uid));
+            if (snap.exists()) {
+                this.cachedDoc = snap.data() as BiometricDoc;
+                this.cachedUid = uid;
+                return this.cachedDoc;
+            }
+        } catch (e) {
+            console.warn('[BiometricAuth] Firestore read failed:', e);
+        }
+        this.cachedDoc = null;
+        this.cachedUid = uid;
+        return null;
+    }
+
+    private async saveDoc(uid: string, data: BiometricDoc): Promise<void> {
+        await setDoc(getBiometricDocRef(uid), data);
+        this.cachedDoc = data;
+        this.cachedUid = uid;
+    }
+
+    /** Invalidate cache (call after unenroll or when user changes) */
+    clearCache(): void {
+        this.cachedDoc = null;
+        this.cachedUid = null;
+    }
+
     // ─── Availability Check ────────────────────────────────────────
 
     async isBiometricAvailable(): Promise<boolean> {
         try {
             if (!window.PublicKeyCredential) return false;
-
-            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-            return available;
+            return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
         } catch {
             return false;
         }
     }
 
-    isEnrolled(): boolean {
-        return !!localStorage.getItem(CREDENTIAL_KEY) || !!localStorage.getItem(PIN_KEY);
+    async isEnrolled(): Promise<boolean> {
+        try {
+            const uid = this.getUid();
+            const d = await this.loadDoc(uid);
+            return d !== null && d.method !== 'none';
+        } catch {
+            return false;
+        }
     }
 
-    getMethod(): 'biometric' | 'pin' | 'none' {
-        if (localStorage.getItem(CREDENTIAL_KEY)) return 'biometric';
-        if (localStorage.getItem(PIN_KEY)) return 'pin';
-        return 'none';
+    async getMethod(): Promise<'biometric' | 'pin' | 'none'> {
+        try {
+            const uid = this.getUid();
+            const d = await this.loadDoc(uid);
+            return d?.method ?? 'none';
+        } catch {
+            return 'none';
+        }
     }
 
     async getStatus(): Promise<BiometricStatus> {
         const available = await this.isBiometricAvailable();
+        const method = await this.getMethod();
         return {
             available,
-            enrolled: this.isEnrolled(),
+            enrolled: method !== 'none',
             sessionActive: this.isSessionActive(),
-            method: this.getMethod(),
+            method,
         };
     }
 
@@ -89,7 +154,7 @@ class BiometricAuthService {
                         { alg: -257, type: 'public-key' },  // RS256
                     ],
                     authenticatorSelection: {
-                        authenticatorAttachment: 'platform', // Must be device biometric (FaceID, Touch ID)
+                        authenticatorAttachment: 'platform',
                         userVerification: 'required',
                         residentKey: 'preferred',
                     },
@@ -99,9 +164,13 @@ class BiometricAuthService {
             }) as PublicKeyCredential | null;
 
             if (credential) {
-                // Store credential ID for future authentication
                 const credId = this.bufferToBase64(credential.rawId);
-                localStorage.setItem(CREDENTIAL_KEY, credId);
+                // H5: Store credential in Firestore, not localStorage
+                await this.saveDoc(userId, {
+                    credentialId: credId,
+                    method: 'biometric',
+                    enrolledAt: new Date().toISOString(),
+                });
                 this.startSession();
                 return true;
             }
@@ -114,8 +183,15 @@ class BiometricAuthService {
 
     async enrollPIN(pin: string): Promise<boolean> {
         try {
-            const hash = await this.hashPIN(pin);
-            localStorage.setItem(PIN_KEY, hash);
+            const uid = this.getUid();
+            const { hash, salt } = await this.hashPIN(pin);
+            // H5: Store PIN hash in Firestore, not localStorage
+            await this.saveDoc(uid, {
+                pinHash: hash,
+                pinSalt: salt,
+                method: 'pin',
+                enrolledAt: new Date().toISOString(),
+            });
             this.startSession();
             return true;
         } catch (err) {
@@ -128,8 +204,9 @@ class BiometricAuthService {
 
     async authenticateBiometric(): Promise<boolean> {
         try {
-            const credId = localStorage.getItem(CREDENTIAL_KEY);
-            if (!credId) return false;
+            const uid = this.getUid();
+            const d = await this.loadDoc(uid);
+            if (!d?.credentialId) return false;
 
             const challenge = crypto.getRandomValues(new Uint8Array(32));
 
@@ -138,7 +215,7 @@ class BiometricAuthService {
                     challenge,
                     allowCredentials: [
                         {
-                            id: this.base64ToBuffer(credId),
+                            id: this.base64ToBuffer(d.credentialId),
                             type: 'public-key',
                             transports: ['internal'],
                         },
@@ -161,11 +238,12 @@ class BiometricAuthService {
 
     async authenticatePIN(pin: string): Promise<boolean> {
         try {
-            const storedHash = localStorage.getItem(PIN_KEY);
-            if (!storedHash) return false;
+            const uid = this.getUid();
+            const d = await this.loadDoc(uid);
+            if (!d?.pinHash || !d?.pinSalt) return false;
 
-            const hash = await this.hashPIN(pin);
-            if (hash === storedHash) {
+            const { hash } = await this.hashPIN(pin, d.pinSalt);
+            if (hash === d.pinHash) {
                 this.startSession();
                 return true;
             }
@@ -175,7 +253,7 @@ class BiometricAuthService {
         }
     }
 
-    // ─── Session Management ────────────────────────────────────────
+    // ─── Session Management (ephemeral — localStorage is acceptable) ──
 
     isSessionActive(): boolean {
         const session = localStorage.getItem(SESSION_KEY);
@@ -199,25 +277,49 @@ class BiometricAuthService {
 
     extendSession(): void {
         if (this.isSessionActive()) {
-            this.startSession(); // Reset timer
+            this.startSession();
         }
     }
 
     // ─── Unenroll ──────────────────────────────────────────────────
 
-    unenroll(): void {
-        localStorage.removeItem(CREDENTIAL_KEY);
-        localStorage.removeItem(PIN_KEY);
+    async unenroll(): Promise<void> {
+        try {
+            const uid = this.getUid();
+            await deleteDoc(getBiometricDocRef(uid));
+        } catch (e) {
+            console.warn('[BiometricAuth] Firestore delete failed:', e);
+        }
         localStorage.removeItem(SESSION_KEY);
+        this.clearCache();
     }
 
     // ─── Helpers ───────────────────────────────────────────────────
 
-    private async hashPIN(pin: string): Promise<string> {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(pin + 'tracksy_salt_v1');
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        return this.bufferToBase64(hashBuffer);
+    private async hashPIN(pin: string, existingSalt?: string): Promise<{ hash: string; salt: string }> {
+        const salt = existingSalt ?? this.bufferToBase64(crypto.getRandomValues(new Uint8Array(32)).buffer);
+
+        // PBKDF2 with 600,000 iterations — OWASP recommended for banking-level security
+        const keyMaterial = await crypto.subtle.importKey(
+            'raw',
+            new TextEncoder().encode(pin),
+            'PBKDF2',
+            false,
+            ['deriveBits']
+        );
+
+        const derived = await crypto.subtle.deriveBits(
+            {
+                name: 'PBKDF2',
+                salt: this.base64ToBuffer(salt),
+                iterations: 600000,
+                hash: 'SHA-256',
+            },
+            keyMaterial,
+            256
+        );
+
+        return { hash: this.bufferToBase64(derived), salt };
     }
 
     private bufferToBase64(buffer: ArrayBuffer): string {

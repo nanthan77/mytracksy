@@ -54,35 +54,69 @@ export function containsFullNames(text: string): boolean {
 
 // ─── AES-GCM Encryption ─────────────────────────────────────────
 
-const ENCRYPTION_KEY_NAME = 'tracksy_pdpa_key';
+const ENCRYPTION_DB_NAME = 'TracksyKeyStore';
+const ENCRYPTION_STORE_NAME = 'keys';
+const ENCRYPTION_KEY_ID = 'pdpa_master';
 
 /**
- * Generate or retrieve the encryption key for local medical data.
- * Key is stored in localStorage as a JWK (JSON Web Key).
- * In production, this should use a key derived from the user's biometric.
+ * M4: Encryption key stored in IndexedDB (opaque CryptoKey, non-exportable).
+ * IndexedDB is same-origin scoped and not accessible via XSS document.cookie tricks.
+ * The key is generated as non-extractable, so it cannot be read even by JS on the page.
  */
-async function getEncryptionKey(): Promise<CryptoKey> {
-    const storedKey = localStorage.getItem(ENCRYPTION_KEY_NAME);
+function openKeyStore(): Promise<IDBDatabase> {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(ENCRYPTION_DB_NAME, 1);
+        request.onupgradeneeded = () => {
+            const db = request.result;
+            if (!db.objectStoreNames.contains(ENCRYPTION_STORE_NAME)) {
+                db.createObjectStore(ENCRYPTION_STORE_NAME, { keyPath: 'id' });
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+    });
+}
 
-    if (storedKey) {
-        try {
-            const jwk = JSON.parse(storedKey);
-            return await crypto.subtle.importKey('jwk', jwk, { name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
-        } catch {
-            // Key corrupted, generate new one
-        }
+async function getEncryptionKey(): Promise<CryptoKey> {
+    const db = await openKeyStore();
+
+    // Try to retrieve existing key
+    const existing = await new Promise<CryptoKey | null>((resolve) => {
+        const tx = db.transaction(ENCRYPTION_STORE_NAME, 'readonly');
+        const store = tx.objectStore(ENCRYPTION_STORE_NAME);
+        const req = store.get(ENCRYPTION_KEY_ID);
+        req.onsuccess = () => {
+            const record = req.result;
+            resolve(record?.key ?? null);
+        };
+        req.onerror = () => resolve(null);
+    });
+
+    if (existing) {
+        db.close();
+        return existing;
     }
 
-    // Generate new AES-256-GCM key
+    // Generate new AES-256-GCM key (non-extractable for security)
     const key = await crypto.subtle.generateKey(
         { name: 'AES-GCM', length: 256 },
-        true,
+        false, // M4: non-extractable — key material cannot be read by JS
         ['encrypt', 'decrypt']
     );
 
-    // Store as JWK
-    const jwk = await crypto.subtle.exportKey('jwk', key);
-    localStorage.setItem(ENCRYPTION_KEY_NAME, JSON.stringify(jwk));
+    // Store CryptoKey object directly in IndexedDB (structured clone preserves it)
+    await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(ENCRYPTION_STORE_NAME, 'readwrite');
+        const store = tx.objectStore(ENCRYPTION_STORE_NAME);
+        store.put({ id: ENCRYPTION_KEY_ID, key, createdAt: Date.now() });
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+    });
+
+    db.close();
+
+    // Migrate: remove any legacy localStorage key
+    try { localStorage.removeItem('tracksy_pdpa_key'); } catch { /* ignore */ }
 
     return key;
 }

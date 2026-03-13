@@ -13,14 +13,14 @@ export default function PWAInstallPrompt({ profession, layoutContext = 'default'
     const [installed, setInstalled] = useState(false);
 
     const config = getRouteByProfession(profession);
-    const dismissKey = config ? `pwa-install-dismissed:${config.slug}` : 'pwa-install-dismissed';
-    const isMedicalDashboard = layoutContext === 'dashboard' && profession === 'medical';
+    const dismissKey = config ? `pwa-install-dismissed:v2:${config.slug}` : 'pwa-install-dismissed:v2';
+    const isDedicatedDashboard = layoutContext === 'dashboard' && Boolean(config?.dedicatedPwa);
 
     useEffect(() => {
         if (!config?.dedicatedPwa) return;
 
         // Check if already installed
-        if (window.matchMedia('(display-mode: standalone)').matches) {
+        if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true) {
             setInstalled(true);
             return;
         }
@@ -41,13 +41,12 @@ export default function PWAInstallPrompt({ profession, layoutContext = 'default'
 
         window.addEventListener('beforeinstallprompt', handler);
 
-        // Also show banner after 5 seconds even if event hasn't fired (for iOS)
+        // Also show banner after a short delay even if the prompt event hasn't fired yet.
         const timer = setTimeout(() => {
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            if (isIOS && !installed) {
+            if (!installed) {
                 setShowBanner(true);
             }
-        }, 5000);
+        }, 3000);
 
         return () => {
             window.removeEventListener('beforeinstallprompt', handler);
@@ -79,7 +78,7 @@ export default function PWAInstallPrompt({ profession, layoutContext = 'default'
     return (
         <div style={{
             position: 'fixed',
-            bottom: isMedicalDashboard ? 'calc(var(--safe-area-bottom) + 88px)' : 0,
+            bottom: isDedicatedDashboard ? 'calc(var(--safe-area-bottom) + 88px)' : 0,
             left: 0,
             right: 0,
             zIndex: 9999,
@@ -132,13 +131,15 @@ export default function PWAInstallPrompt({ profession, layoutContext = 'default'
                 }}>
                     {isIOS
                         ? 'Tap Share ⬆ then "Add to Home Screen"'
-                        : 'Add to your home screen for quick access'
+                        : deferredPrompt
+                            ? 'Add to your home screen for quick access'
+                            : 'Use your browser menu and tap "Install app"'
                     }
                 </div>
             </div>
 
             {/* Actions */}
-            {!isIOS && (
+            {!isIOS && deferredPrompt && (
                 <button
                     onClick={handleInstall}
                     style={{

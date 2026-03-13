@@ -1,6 +1,37 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function hasActivePaidTier(userId) {
+      return isOwner(userId)
+        && exists(/databases/$(database)/documents/users/$(userId)/subscription/current)
+        && get(/databases/$(database)/documents/users/$(userId)/subscription/current).data.status == 'active'
+        && get(/databases/$(database)/documents/users/$(userId)/subscription/current).data.tier in ['pro', 'chambers'];
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  BIZTRACKSY (MULTI-ENTITY ERP)
+    // ════════════════════════════════════════════════════════════
+    match /companies/{companyId} {
+      // Members or owner can read
+      allow read: if request.auth != null && 
+                  (request.auth.uid == resource.data.ownerId || request.auth.uid in resource.data.members.keys());
+      
+      // Only owner can create
+      allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
+      // Only owner can update company details
+      allow update: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      
+      // Sub-collections under company (e.g., /companies/{companyId}/invoices/{invoiceId})
+      match /{document=**} {
+        allow read, write: if request.auth != null && 
+                           (request.auth.uid == get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId || 
+                            request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.members.keys());
+      }
+    }
 
     // ════════════════════════════════════════════════════════════
     //  USER DOCUMENT
@@ -23,10 +54,15 @@ service cloud.firestore {
       match /transactions/{transactionId} {
         allow read: if request.auth != null && request.auth.uid == userId;
 
-        // Allow create for manual sources
+        // Allow create for manual sources — M1: validate data types & ranges
         allow create: if request.auth != null
                       && request.auth.uid == userId
-                      && request.resource.data.source in ['manual_entry', 'voice_ai', 'receipt_scan'];
+                      && request.resource.data.source in ['manual_entry', 'voice_ai', 'receipt_scan']
+                      && request.resource.data.amount_cents is int
+                      && request.resource.data.amount_cents >= 0
+                      && request.resource.data.amount_cents <= 99999999
+                      && request.resource.data.description is string
+                      && request.resource.data.description.size() <= 500;
 
         // Allow update — but protect email_auto_sync fields
         allow update: if request.auth != null
@@ -52,7 +88,10 @@ service cloud.firestore {
 
       // ─── Settings ─────────────────────────────────────────────
       match /settings/{settingId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null
+                     && request.auth.uid == userId
+                     && request.resource.size < 1048576; // 1MB max doc size
       }
 
       // ─── Clinical Notes (Voice Vault) ──────────────────────────
@@ -68,9 +107,11 @@ service cloud.firestore {
                       && request.auth.uid == userId
                       && request.resource.data.status == 'uploading';
 
-        // Users can only update media_urls and status for client-side changes
+        // M3: Users can only update media_urls, status, and updated_at
         allow update: if request.auth != null
-                      && request.auth.uid == userId;
+                      && request.auth.uid == userId
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['media_urls', 'status', 'updated_at']);
 
         // Action items sub-collection
         match /action_items/{actionId} {
@@ -105,9 +146,277 @@ service cloud.firestore {
         allow read, write: if request.auth != null && request.auth.uid == userId;
       }
 
+      // ─── Court Diary (Legal Profession) ────────────────────────
+      match /court_diary/{entryId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.court is string
+                      && request.resource.data.date is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Trust Transactions (Legal Profession) ─────────────────
+      match /trust_transactions/{txId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.amount is number
+                      && request.resource.data.amount >= 0
+                      && request.resource.data.amount <= 99999999
+                      && request.resource.size < 1048576;
+        // Protect amount field on update (like core transactions)
+        allow update: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.size < 1048576;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Case Records (Legal Profession) ───────────────────────
+      match /case_records/{caseId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.clientName is string
+                      && request.resource.data.caseTitle is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Legal Practice Settings ───────────────────────────────
+      match /legal_settings/{settingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null
+                     && request.auth.uid == userId
+                     && request.resource.size < 1048576;
+      }
+
+      // ─── Engineering Projects (EngiTracksy) ────────────────────
+      match /engineering_projects/{projectId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.name is string
+                      && request.resource.data.client is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── BOQ Items (EngiTracksy) ──────────────────────────────
+      match /boq_items/{itemId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.item is string
+                      && request.resource.data.qty is number;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Site Inspections (EngiTracksy) ────────────────────────
+      match /site_inspections/{inspectionId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.date is string
+                      && request.resource.data.findings is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Baas / Subcontractor Ledger (EngiTracksy) ─────────────
+      match /baas_ledger/{entryId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.baasName is string
+                      && request.resource.data.amount is number
+                      && request.resource.data.amount >= 0;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Retention Records (EngiTracksy) ───────────────────────
+      match /retention_records/{recordId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.retentionAmount is number
+                      && request.resource.data.retentionAmount >= 0;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Engineering Practice Settings ─────────────────────────
+      match /engineering_settings/{settingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null
+                     && request.auth.uid == userId
+                     && request.resource.size < 1048576;
+      }
+
+      // ─── Aquaculture Tables (AquaTracksy) ─────────────────────
+      match /aqua_ponds/{pondId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.name is string
+                      && request.resource.data.species is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /aqua_feed_logs/{logId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.feedType is string
+                      && request.resource.data.quantity is number;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /aqua_water_logs/{logId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.ph is number;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /aqua_harvest_sales/{saleId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.species is string
+                      && request.resource.data.quantity is number;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /aqua_expenses/{expenseId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.amount is number
+                      && request.resource.data.amount >= 0;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /aquaculture_settings/{settingId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null
+                     && request.auth.uid == userId
+                     && request.resource.size < 1048576;
+      }
+
+      // ─── Creator Collections (CreatorTracksy) ─────────────────
+      match /creator_brand_deals/{dealId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.brand is string
+                      && request.resource.data.platform is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /creator_gear_items/{itemId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.name is string
+                      && request.resource.data.purchaseCost is number;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /creator_revenue/{revId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.amount is number
+                      && request.resource.data.source is string;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /creator_expenses/{expenseId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null
+                      && request.auth.uid == userId
+                      && request.resource.data.amount is number
+                      && request.resource.data.amount >= 0;
+        allow update: if request.auth != null && request.auth.uid == userId;
+        allow delete: if request.auth != null && request.auth.uid == userId;
+      }
+
+      match /creator_settings/{settingId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+
+      // ─── Studios / Photography Collections (LensTracksy) ─────
+      match /studio_events/{eventId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+                      && request.resource.data.clientName is string
+                      && request.resource.data.eventDate is string
+                      && request.resource.data.location is string
+                      && request.resource.data.packageName is string
+                      && request.resource.data.totalValue is number
+                      && request.resource.data.totalValue >= 0;
+        allow update, delete: if isOwner(userId);
+      }
+
+      match /studio_milestones/{milestoneId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+                      && request.resource.data.eventId is string
+                      && request.resource.data.title is string
+                      && request.resource.data.amount is number
+                      && request.resource.data.amount >= 0
+                      && request.resource.data.dueDate is string;
+        allow update, delete: if isOwner(userId);
+      }
+
+      match /studio_expenses/{expenseId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+                      && request.resource.data.eventId is string
+                      && request.resource.data.payeeName is string
+                      && request.resource.data.amount is number
+                      && request.resource.data.amount >= 0
+                      && request.resource.data.date is string;
+        allow update, delete: if isOwner(userId);
+      }
+
+      match /studio_assets/{assetId} {
+        allow read: if isOwner(userId);
+        allow create: if isOwner(userId)
+                      && request.resource.data.itemName is string
+                      && request.resource.data.purchaseDate is string
+                      && request.resource.data.purchasePrice is number
+                      && request.resource.data.purchasePrice >= 0;
+        allow update, delete: if isOwner(userId);
+      }
+
+      match /studio_ai_drafts/{draftId} {
+        allow read: if isOwner(userId);
+        allow create, update, delete: if hasActivePaidTier(userId)
+                                      && request.resource.data.type in ['contract', 'voice', 'diplomat']
+                                      && request.resource.data.prompt is string
+                                      && request.resource.data.result is string;
+      }
+
       // ─── Saved Hospital Locations ──────────────────────────────
       match /saved_locations/{locationId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow write: if request.auth != null
+                     && request.auth.uid == userId
+                     && request.resource.size < 1048576;
       }
 
       // ─── Traffic Alerts (written by Cloud Functions) ───────────
@@ -126,6 +435,20 @@ service cloud.firestore {
       match /usage_quotas/{quotaId} {
         allow read: if request.auth != null && request.auth.uid == userId;
         // Only Cloud Functions can increment quotas
+        allow write: if false;
+      }
+
+      // ─── Token Wallet (server-managed, client read-only) ────
+      match /wallet/{walletId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Only Cloud Functions can modify wallet balance
+        allow write: if false;
+      }
+
+      // ─── Payment Methods (server-managed, client read-only) ────
+      match /payment_methods/{methodId} {
+        allow read: if request.auth != null && request.auth.uid == userId;
+        // Only Cloud Functions can save payment methods
         allow write: if false;
       }
 
@@ -157,6 +480,22 @@ service cloud.firestore {
       match /channeling/{docId} {
         allow read: if request.auth != null && request.auth.uid == userId;
       }
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  M2: Admin Audit Log — append-only, admin-readable
+    // ════════════════════════════════════════════════════════════
+    match /admin_audit_log/{logId} {
+      // Only admins can read the audit trail
+      allow read: if request.auth != null
+                   && request.auth.token.admin == true;
+      // Any authenticated admin can create log entries (append-only)
+      allow create: if request.auth != null
+                    && request.auth.token.admin == true
+                    && request.resource.data.keys().hasAll(['action', 'adminUid', 'timestamp'])
+                    && request.resource.data.adminUid == request.auth.uid;
+      // No updates or deletes — audit log is immutable
+      allow update, delete: if false;
     }
 
     // ════════════════════════════════════════════════════════════

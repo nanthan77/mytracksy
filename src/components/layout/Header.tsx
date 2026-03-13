@@ -80,9 +80,16 @@ const Header: React.FC = () => {
     <>
       <AppBar position="static" elevation={0}>
         <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1, fontWeight: 600 }}>
-            MyTracksy
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
+            <img
+              src="/logos/mytracksy-logo.png"
+              alt="MyTracksy Logo"
+              style={{ width: 36, height: 36, objectFit: 'contain' }}
+            />
+            <Typography variant="h6" component="div" sx={{ fontWeight: 600 }}>
+              MyTracksy
+            </Typography>
+          </Box>
           
           {currentUser && (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>

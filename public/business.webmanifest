@@ -1,0 +1,100 @@
+{
+  "id": "/business",
+  "name": "MyTracksy Business",
+  "short_name": "Biz Tracksy",
+  "description": "Compact business command center for POS, invoicing, collections, tax control, and AI operations.",
+  "start_url": "/business",
+  "scope": "/business",
+  "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "background_color": "#071713",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "lang": "en-LK",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Business HQ",
+      "short_name": "Home",
+      "description": "Open the business control center",
+      "url": "/business?action=overview",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Pocket POS",
+      "short_name": "Sales",
+      "description": "Open POS and sales tools",
+      "url": "/business?action=sales",
+      "icons": [
+        {
+          "src": "/icons/business-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Invoices",
+      "short_name": "Invoices",
+      "description": "Open invoicing and collections",
+      "url": "/business?action=invoices",
+      "icons": [
+        {
+          "src": "/icons/analytics-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Receivables",
+      "short_name": "Cash",
+      "description": "Open debtor recovery and PDC vault",
+      "url": "/business?action=receivables",
+      "icons": [
+        {
+          "src": "/icons/sms-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Tax Control",
+      "short_name": "Tax",
+      "description": "Open VAT and filing controls",
+      "url": "/business?action=tax",
+      "icons": [
+        {
+          "src": "/icons/voice-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}

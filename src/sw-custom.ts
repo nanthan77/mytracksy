@@ -19,8 +19,26 @@ import { BackgroundSyncPlugin } from 'workbox-background-sync';
 
 declare const self: ServiceWorkerGlobalScope;
 
+// ─── M5: Scope restriction — only handle same-origin + trusted CDN requests ───
+const ALLOWED_ORIGINS = [
+    self.location.origin,
+    'https://fonts.googleapis.com',
+    'https://fonts.gstatic.com',
+];
+const ALLOWED_FIREBASE_PATTERNS = [
+    /\.firestore\.googleapis\.com$/,
+    /\.firebaseio\.com$/,
+];
+
+/** Returns true if the URL is within the service worker's allowed scope */
+function isAllowedOrigin(url: URL): boolean {
+    if (ALLOWED_ORIGINS.includes(url.origin)) return true;
+    return ALLOWED_FIREBASE_PATTERNS.some((p) => p.test(url.hostname));
+}
+
 // ─── Precache all build assets (injected by Workbox at build time) ───
-precacheAndRoute(self.__WB_MANIFEST);
+const manifest = self.__WB_MANIFEST || [];
+precacheAndRoute(manifest);
 cleanupOutdatedCaches();
 
 // ─── SPA Navigation Fallback ─────────────────────────────────────
@@ -159,6 +177,15 @@ self.addEventListener('message', (event) => {
                 client.postMessage({ type: 'TRIGGER_SYNC' });
             });
         });
+    }
+});
+
+// ─── M5: Global fetch filter — ignore requests outside allowed scope ───
+self.addEventListener('fetch', (event) => {
+    const url = new URL(event.request.url);
+    if (!isAllowedOrigin(url)) {
+        // Let the browser handle it natively — don't cache or intercept
+        return;
     }
 });
 

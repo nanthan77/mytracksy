@@ -23,20 +23,12 @@ export default function AdminApp() {
             if (firebaseUser) {
                 setUser(firebaseUser);
 
-                // 1. Founder UID bypass (hardcoded)
-                const FOUNDER_UIDS = ['eyuHN6ZeYZgi2fSBM3bmslfzAhX2'];
-                if (FOUNDER_UIDS.includes(firebaseUser.uid)) {
-                    setIsAdmin(true);
-                    setLoading(false);
-                    return;
-                }
-
-                // 2. Check admin custom claim
+                // 1. Check admin custom claim (primary method)
                 const token = await firebaseUser.getIdTokenResult(true);
                 if (token.claims.admin === true) {
                     setIsAdmin(true);
                 } else {
-                    // 3. Fallback: check Firestore admin list
+                    // 2. Fallback: check Firestore admin list
                     try {
                         const adminDoc = await getDoc(doc(db, 'system_settings', 'admin_users'));
                         if (adminDoc.exists()) {
@@ -61,7 +53,8 @@ export default function AdminApp() {
         try {
             await signInWithEmailAndPassword(auth, email, password);
         } catch (err: any) {
-            setLoginError(err.message || 'Login failed');
+            // L4: Generic error message to prevent account enumeration
+            setLoginError('Invalid email or password');
         }
     };
 

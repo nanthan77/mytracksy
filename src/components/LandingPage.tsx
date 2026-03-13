@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Helmet } from 'react-helmet-async';
 import { ProfessionType } from '../contexts/AuthContext';
 
 interface LandingPageProps {
@@ -7,6 +8,25 @@ interface LandingPageProps {
     onDemoProfession: (profession: ProfessionType) => void;
     onProfessionPage?: (slug: string) => void;
 }
+
+const MAIN_LANDING_FAQS = [
+    {
+        question: 'What is MyTracksy and who is it built for?',
+        answer: 'MyTracksy is a Sri Lankan professional finance platform built for medical, legal, engineering, business, creator, and other profession-specific workflows. It combines income tracking, expenses, tax-ready exports, and profession-aware operational tools in one web app and PWA.',
+    },
+    {
+        question: 'Can MyTracksy work on mobile as a fast installable web app?',
+        answer: 'Yes. MyTracksy supports mobile-first PWA installs so professionals can open their workspace from the home screen, work with fast app-like navigation, and keep critical workflows close at hand.',
+    },
+    {
+        question: 'Does MyTracksy support Sri Lankan tax and compliance workflows?',
+        answer: 'Yes. MyTracksy is designed around Sri Lankan business and professional workflows, including expense categorization, auditor-friendly exports, and profession-specific reporting needs.',
+    },
+    {
+        question: 'Which MyTracksy profession page should I start with?',
+        answer: 'Start with the landing page for your profession. The medical, business, creator, and photography studio routes now have the most specialized installable mobile experiences, each with its own workflow shell and PWA identity.',
+    },
+];
 
 const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProfessionPage }) => {
     const [navSolid, setNavSolid] = useState(false);
@@ -42,7 +62,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
         { iconMatch: 'profession_doctor', name: 'Healthcare & Medical', color: '#0ea5e9', gradient: 'linear-gradient(135deg,#0ea5e9,#0284c7)', type: 'medical', slug: 'medical', tagline: 'Unified practice & revenue orchestration' },
         { iconMatch: 'profession_lawyer', name: 'Legal Practices', color: '#6366f1', gradient: 'linear-gradient(135deg,#6366f1,#4f46e5)', type: 'legal', slug: 'legal', tagline: 'Streamlined trust accounting & billing' },
         { iconMatch: 'profession_business', name: 'Corporate Business', color: '#10b981', gradient: 'linear-gradient(135deg,#10b981,#059669)', type: 'business', slug: 'business', tagline: 'Multi-entity financial governance' },
-        { iconMatch: 'profession_engineer', name: 'Engineering Firms', color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#d97706)', type: 'engineering', slug: 'engineering', tagline: 'Intelligent project budget management' },
+        { iconMatch: 'profession_engineer', name: 'Civil & Architectural Firms', color: '#f59e0b', gradient: 'linear-gradient(135deg,#f59e0b,#d97706)', type: 'engineering', slug: 'engineering', tagline: 'BOQ variance & subcontractor ledgers' },
         { iconMatch: 'profession_trader', name: 'Trading & Markets', color: '#ef4444', gradient: 'linear-gradient(135deg,#ef4444,#dc2626)', type: 'trading', slug: 'trading', tagline: 'Real-time equity margin & analytics' },
         { iconMatch: 'profession_auto', name: 'Automotive Networks', color: '#64748b', gradient: 'linear-gradient(135deg,#64748b,#475569)', type: 'automotive', slug: 'automotive', tagline: 'End-to-end workshop inventory control' },
         { iconMatch: 'profession_marketing', name: 'Marketing Agencies', color: '#ec4899', gradient: 'linear-gradient(135deg,#ec4899,#db2777)', type: 'marketing', slug: 'marketing', tagline: 'Automated campaign ROI optimization' },
@@ -51,34 +71,107 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
         { iconMatch: 'profession_retail', name: 'Retail Commerce', color: '#16a34a', gradient: 'linear-gradient(135deg,#16a34a,#15803d)', type: 'retail', slug: 'retail', tagline: 'Integrated multi-location POS oversight' },
         { iconMatch: 'profession_aquaculture', name: 'Aquaculture Sector', color: '#0284c7', gradient: 'linear-gradient(135deg,#0284c7,#0369a1)', type: 'aquaculture', slug: 'aquaculture', tagline: 'Advanced harvest yield modeling' },
         { iconMatch: 'profession_personal', name: 'Private Wealth', color: '#8b5cf6', gradient: 'linear-gradient(135deg,#8b5cf6,#7c3aed)', type: 'individual', slug: 'individual', tagline: 'Secure personal wealth architecture' },
+        { iconMatch: 'icon_creator', name: 'Digital Creators', color: '#a855f7', gradient: 'linear-gradient(135deg,#a855f7,#7e22ce)', type: 'creator', slug: 'creator', tagline: 'Multi-currency SaaS for Content Creators' },
+        { iconMatch: 'profession_studios', name: 'Wedding Studios', color: '#b45309', gradient: 'linear-gradient(135deg,#b45309,#78350f)', type: 'studios', slug: 'studios', tagline: 'Free solo plan, milestone billing, crew profit, and gear tax vaults' },
     ];
 
-    // Find the correct image files since they have timestamps
+    const iconMap: Record<string, string> = {
+        profession_aquaculture: '/assets/professions/profession_aquaculture_1773215316236.png',
+        profession_auto: '/assets/professions/profession_auto_1773215201791.png',
+        profession_business: '/assets/professions/profession_business_1773215155357.png',
+        profession_doctor: '/assets/professions/profession_doctor_1773215125010.png',
+        profession_engineer: '/assets/professions/profession_engineer_1773215171114.png',
+        profession_lawyer: '/assets/professions/profession_lawyer_1773215139946.png',
+        profession_marketing: '/assets/professions/profession_marketing_1773215238062.png',
+        profession_personal: '/assets/professions/profession_personal_1773215331363.png',
+        profession_retail: '/assets/professions/profession_retail_1773215293921.png',
+        profession_studios: '/assets/professions/profession_studios.svg',
+        profession_trader: '/assets/professions/profession_trader_1773215186011.png',
+        profession_transport: '/assets/professions/profession_transport_1773215278251.png',
+        profession_travel: '/assets/professions/profession_travel_1773215259443.png',
+    };
+
     const getIconUrl = (matchData: string) => {
-        const files = [
-            'profession_aquaculture_1773215316236.png',
-            'profession_auto_1773215201791.png',
-            'profession_business_1773215155357.png',
-            'profession_doctor_1773215125010.png',
-            'profession_engineer_1773215171114.png',
-            'profession_lawyer_1773215139946.png',
-            'profession_marketing_1773215238062.png',
-            'profession_personal_1773215331363.png',
-            'profession_retail_1773215293921.png',
-            'profession_trader_1773215186011.png',
-            'profession_transport_1773215278251.png',
-            'profession_travel_1773215259443.png'
-        ];
-        const match = files.find(f => f.startsWith(matchData));
-        return match ? `/assets/professions/${match}` : '';
+        return iconMap[matchData] || '';
     };
 
     const handleProfessionClick = (slug: string) => {
         if (onProfessionPage) { onProfessionPage(slug); } else { window.location.href = `/${slug}`; }
     };
 
+    const landingStructuredData = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'MyTracksy',
+            url: 'https://mytracksy.lk/',
+            applicationCategory: 'BusinessApplication',
+            operatingSystem: 'Web, Android, iOS',
+            image: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            description: 'MyTracksy is a profession-specific finance and operations platform for Sri Lankan professionals and businesses, including medical, legal, business, creator, and photography studios.',
+            offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'LKR',
+            },
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'ItemList',
+            name: 'MyTracksy profession landing pages',
+            itemListElement: professions.map((profession, index) => ({
+                '@type': 'ListItem',
+                position: index + 1,
+                name: profession.name,
+                url: `https://mytracksy.lk/${profession.slug}`,
+            })),
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: MAIN_LANDING_FAQS.map((faq) => ({
+                '@type': 'Question',
+                name: faq.question,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: faq.answer,
+                },
+            })),
+        },
+    ];
+
     return (
         <>
+            <Helmet>
+                <title>MyTracksy | Professional Finance & Workflow Software for Sri Lankan Businesses</title>
+                <meta
+                    name="description"
+                    content="MyTracksy helps Sri Lankan professionals manage income, expenses, tax-ready exports, and profession-specific workflows across medical, legal, engineering, business, creator, photography studio, and other sectors."
+                />
+                <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+                <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+                <link rel="canonical" href="https://mytracksy.lk/" />
+                <link rel="preload" as="image" href="/assets/hero-main.png" />
+                <meta property="og:type" content="website" />
+                <meta property="og:url" content="https://mytracksy.lk/" />
+                <meta property="og:title" content="MyTracksy | Professional Finance & Workflow Software for Sri Lankan Businesses" />
+                <meta
+                    property="og:description"
+                    content="Profession-specific finance, tax-ready exports, and operational workflows for Sri Lankan medical, legal, business, engineering, creator, and photography studio teams."
+                />
+                <meta property="og:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+                <meta property="og:image:alt" content="MyTracksy logo" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="MyTracksy | Professional Finance & Workflow Software for Sri Lankan Businesses" />
+                <meta
+                    name="twitter:description"
+                    content="Profession-specific finance, tax-ready exports, and operational workflows for Sri Lankan medical, legal, business, engineering, creator, and photography studio teams."
+                />
+                <meta name="twitter:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+                <script type="application/ld+json">
+                    {JSON.stringify(landingStructuredData)}
+                </script>
+            </Helmet>
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
                 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -124,13 +217,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                 {/* Enterprise Navbar */}
                 <nav className={`lt-nav ${navSolid ? 'lt-nav-s' : ''}`}>
                     <div className="lt-i" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12, cursor: 'pointer' }}>
-                            <div style={{ width: 42, height: 42, borderRadius: 12, background: 'linear-gradient(135deg, #0f172a, #3b82f6)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 8px 16px rgba(15,23,42,0.15)' }}>
-                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6M12 4v10M8 8l4-4 4 4" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                                </svg>
-                            </div>
-                            <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em' }}>MyTracksy <sup style={{ fontSize: 11, color: '#3b82f6', fontWeight: 700 }}>ENTERPRISE</sup></span>
+                        <div style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                            <img
+                                src="/logos/mytracksy-logo.png"
+                                alt="MyTracksy"
+                                style={{ width: 164, height: 52, objectFit: 'contain', objectPosition: 'left center', display: 'block' }}
+                            />
                         </div>
                         <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
                             {['Platform', 'Solutions', 'Security', 'Enterprise'].map((link) => {
@@ -202,7 +294,14 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                                             <div style={{ width: 12, height: 12, borderRadius: '50%', background: '#22c55e' }} />
                                         </div>
                                     </div>
-                                    <img src="/assets/hero-main.png" alt="MyTracksy Financial Dashboard" style={{ width: '100%', borderRadius: 24, display: 'block' }} />
+                                    <img
+                                        src="/assets/hero-main.png"
+                                        alt="MyTracksy financial dashboard for Sri Lankan professionals"
+                                        loading="eager"
+                                        fetchPriority="high"
+                                        decoding="async"
+                                        style={{ width: '100%', borderRadius: 24, display: 'block' }}
+                                    />
                                 </div>
                             </div>
                         </div>
@@ -218,7 +317,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                         <div className="sr" style={{ textAlign: 'center', marginBottom: 80 }}>
                             <h2 style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Industry-Specific Cognitive Engines</h2>
                             <p style={{ fontSize: 18, color: '#475569', maxWidth: 700, margin: '0 auto', lineHeight: 1.7 }}>
-                                Generic accounting fails modern enterprise. MyTracksy deploys 12 distinct operational modules, meticulously architected around the unique regulatory and functional requirements of your sector.
+                                Generic accounting fails modern enterprise. MyTracksy deploys distinct operational modules for every major Sri Lankan workflow, meticulously architected around the unique regulatory and functional requirements of your sector.
                             </p>
                         </div>
 
@@ -228,7 +327,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                                     <div style={{ position: 'absolute', top: 0, right: 0, width: 120, height: 120, background: prof.gradient, opacity: 0.05, borderRadius: '0 0 0 100%', pointerEvents: 'none' }} />
 
                                     <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24, boxShadow: `0 12px 30px -10px ${prof.color}40`, border: `1px solid ${prof.color}20`, overflow: 'hidden' }}>
-                                        <img src={getIconUrl(prof.iconMatch)} alt={prof.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        {getIconUrl(prof.iconMatch) ? (
+                                            <img
+                                                src={getIconUrl(prof.iconMatch)}
+                                                alt={prof.name}
+                                                loading="lazy"
+                                                decoding="async"
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        ) : (
+                                            <span style={{ fontSize: 40 }}>{prof.iconMatch === 'icon_creator' ? '🎥' : prof.iconMatch === 'profession_studios' ? '📸' : '📊'}</span>
+                                        )}
                                     </div>
 
                                     <h3 style={{ fontSize: 19, fontWeight: 800, color: '#0f172a', marginBottom: 12, letterSpacing: '-0.02em' }}>{prof.name}</h3>
@@ -269,6 +378,39 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                     </div>
                 </section>
 
+                <section id="faq" style={{ padding: '100px 0', background: '#ffffff', borderTop: '1px solid rgba(15,23,42,0.05)' }}>
+                    <div className="lt-i">
+                        <div className="sr" style={{ textAlign: 'center', marginBottom: 56 }}>
+                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 99, background: 'rgba(14,165,233,0.08)', border: '1px solid rgba(14,165,233,0.12)', color: '#0369a1', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 20 }}>
+                                Search-ready answers
+                            </div>
+                            <h2 style={{ fontSize: '2.9rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 18 }}>
+                                Questions Search Engines And AI Crawlers Can Understand
+                            </h2>
+                            <p style={{ fontSize: 18, color: '#475569', maxWidth: 760, margin: '0 auto', lineHeight: 1.75 }}>
+                                Clear answers for Google, AI overviews, assistants, and direct visitors evaluating whether MyTracksy fits their profession and workflow.
+                            </p>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24 }}>
+                            {MAIN_LANDING_FAQS.map((faq, index) => (
+                                <article
+                                    key={faq.question}
+                                    className="glass-card sr"
+                                    style={{ padding: 28, transitionDelay: `${index * 60}ms`, background: '#ffffff' }}
+                                >
+                                    <h3 style={{ fontSize: 19, fontWeight: 750, color: '#0f172a', marginBottom: 12, letterSpacing: '-0.02em' }}>
+                                        {faq.question}
+                                    </h3>
+                                    <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.75 }}>
+                                        {faq.answer}
+                                    </p>
+                                </article>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+
                 {/* Final CTA */}
                 <section id="enterprise" style={{ padding: '120px 0', background: 'linear-gradient(135deg, #f1f5f9 0%, #ffffff 100%)', textAlign: 'center' }}>
                     <div className="lt-i">
@@ -294,8 +436,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                     <div className="lt-i">
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 80 }}>
                             <div style={{ gridColumn: 'span 2' }}>
-                                <div style={{ fontSize: 24, fontWeight: 900, color: '#0f172a', letterSpacing: '-0.04em', marginBottom: 16 }}>
-                                    MyTracksy <span style={{ color: '#3b82f6' }}>Enterprise</span>
+                                <div style={{ display: 'flex', alignItems: 'center', marginBottom: 16 }}>
+                                    <img
+                                        src="/logos/mytracksy-logo.png"
+                                        alt="MyTracksy"
+                                        style={{ width: 172, height: 56, objectFit: 'contain', objectPosition: 'left center', display: 'block' }}
+                                    />
                                 </div>
                                 <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.7, maxWidth: 350 }}>
                                     The definitive financial architecture platform utilized by leading professionals across Sri Lanka.

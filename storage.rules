@@ -65,12 +65,10 @@ service firebase.storage {
     }
     
     // Admin-only access (for system maintenance)
+    // H3: Uses Custom Claims instead of hardcoded email whitelist
     match /admin/{allPaths=**} {
-      allow read, write: if request.auth != null 
-                         && request.auth.token.email in [
-                           'admin@tracksy.lk',
-                           'support@tracksy.lk'
-                         ];
+      allow read, write: if request.auth != null
+                         && request.auth.token.admin == true;
     }
     
     // Default deny rule (security fallback)

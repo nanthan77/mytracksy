@@ -1,4 +1,11 @@
-import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
+/**
+ * Gemini AI Service — Client-Side Proxy
+ *
+ * SECURITY: All Gemini API calls are routed through Cloud Functions.
+ * The API key is NEVER exposed in the browser bundle.
+ * This service provides a client interface + local fallback parsing.
+ */
+import { getFunctions, httpsCallable } from 'firebase/functions';
 
 export interface VoiceCommandResult {
   amount: number;
@@ -18,107 +25,54 @@ export interface ExpenseContext {
 }
 
 export class GeminiService {
-  private genAI: GoogleGenerativeAI;
-  private model: GenerativeModel;
-
-  constructor() {
-    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-      console.warn('Gemini API key not configured. Voice enhancement features will be limited.');
-      this.genAI = null as any;
-      this.model = null as any;
-      return;
-    }
-    
-    this.genAI = new GoogleGenerativeAI(apiKey);
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-pro' });
-  }
+  private functions = getFunctions();
 
   async processVoiceCommand(
-    transcript: string, 
+    transcript: string,
     context: ExpenseContext
   ): Promise<VoiceCommandResult> {
-    if (!this.model) {
-      // Fallback to basic parsing when Gemini is not available
-      return this.fallbackProcessing(transcript, context);
-    }
-
     try {
-      const prompt = this.buildPrompt(transcript, context);
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      return this.parseGeminiResponse(text, transcript);
-    } catch (error) {
-      console.error('Gemini API error:', error);
-      return this.fallbackProcessing(transcript, context);
-    }
-  }
+      const processCommand = httpsCallable(this.functions, 'processGeminiVoiceCommand');
+      const result = await processCommand({
+        transcript,
+        language: context.userLanguage,
+        recentCategories: context.recentCategories,
+        commonMerchants: context.commonMerchants,
+        currency: context.currency
+      });
 
-  private buildPrompt(transcript: string, context: ExpenseContext): string {
-    return `
-You are an AI assistant for a Sri Lankan expense tracking app. Parse this voice command and extract expense information.
-
-Voice Input: "${transcript}"
-User Language: ${context.userLanguage}
-Currency: ${context.currency}
-Recent Categories: ${context.recentCategories.join(', ')}
-
-Extract:
-1. Amount (in LKR, convert if needed)
-2. Category (Food, Transport, Shopping, Bills, etc.)
-3. Description
-4. Date (default to today if not specified)
-5. Confidence score (0-1)
-
-Support these languages:
-- English: "I spent 500 rupees on coffee"
-- Sinhala: "මම කෝපි එකට රුපියල් 500ක් වියදම් කළා"
-- Tamil: "நான் காப்பிக்கு 500 ரூபாய் செலவழித்தேன்"
-
-Respond in this exact JSON format:
-{
-  "amount": number,
-  "category": "string",
-  "description": "string",
-  "date": "YYYY-MM-DD",
-  "confidence": number,
-  "language": "en|si|ta"
-}
-    `;
-  }
-
-  private parseGeminiResponse(response: string, originalTranscript: string): VoiceCommandResult {
-    try {
-      // Extract JSON from response
-      const jsonMatch = response.match(/\{[\s\S]*\}/);
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]);
-      
+      const data = result.data as any;
       return {
-        amount: parsed.amount || 0,
-        category: parsed.category || 'Miscellaneous',
-        description: parsed.description || originalTranscript,
-        date: parsed.date ? new Date(parsed.date) : new Date(),
-        confidence: parsed.confidence || 0.5,
-        language: parsed.language || 'en',
-        rawTranscript: originalTranscript
+        amount: data.amount || 0,
+        category: data.category || 'Miscellaneous',
+        description: data.description || transcript,
+        date: data.date ? new Date(data.date) : new Date(),
+        confidence: data.confidence || 0.5,
+        language: data.language || 'en',
+        rawTranscript: transcript
       };
     } catch (error) {
-      console.error('Failed to parse Gemini response:', error);
-      return this.fallbackProcessing(originalTranscript, {} as ExpenseContext);
+      console.error('Cloud Function Gemini error, using fallback:', error);
+      return this.fallbackProcessing(transcript, context);
+    }
+  }
+
+  async categorizeExpense(description: string, amount: number): Promise<string> {
+    try {
+      const categorize = httpsCallable(this.functions, 'categorizeExpenseWithGemini');
+      const result = await categorize({ description, amount });
+      return (result.data as any).category || this.fallbackCategorization(description, amount);
+    } catch (error) {
+      console.error('Cloud Function categorization error, using fallback:', error);
+      return this.fallbackCategorization(description, amount);
     }
   }
 
   private fallbackProcessing(transcript: string, context: ExpenseContext): VoiceCommandResult {
-    // Basic regex-based parsing as fallback
+    // Basic regex-based parsing as fallback when Cloud Function is unavailable
     const amountPatterns = [
       /(\d+(?:,\d{3})*(?:\.\d{2})?)\s*(?:rupees|රුපියල්|ரூபாய்|lkr|rs)/i,
-      /(?:rupees|රුපියල්|ரூபாய්|lkr|rs)\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i
+      /(?:rupees|රුපියල්|ரூபாய்|lkr|rs)\s*(\d+(?:,\d{3})*(?:\.\d{2})?)/i
     ];
 
     let amount = 0;
@@ -131,7 +85,7 @@ Respond in this exact JSON format:
     }
 
     // Basic category detection
-    const categoryKeywords = {
+    const categoryKeywords: Record<string, string[]> = {
       'Food': ['food', 'lunch', 'dinner', 'coffee', 'කෑම', 'ආහාර', 'உணவு', 'காப்பி'],
       'Transport': ['taxi', 'bus', 'uber', 'බස්', 'ටැක්සි', 'பஸ்', 'டாக்ஸி'],
       'Shopping': ['shopping', 'buy', 'purchase', 'කරන්න', 'வாங்க', 'கடை'],
@@ -162,54 +116,20 @@ Respond in this exact JSON format:
     };
   }
 
-  async categorizeExpense(description: string, amount: number): Promise<string> {
-    if (!this.model) {
-      return this.fallbackCategorization(description, amount);
-    }
-
-    try {
-      const prompt = `
-Categorize this Sri Lankan expense:
-Description: "${description}"
-Amount: LKR ${amount}
-
-Choose the best category from:
-- Food & Dining
-- Transport
-- Shopping
-- Bills & Utilities
-- Healthcare
-- Entertainment
-- Education
-- Religious/Donations
-- Family Support
-- Business Expenses
-
-Respond with just the category name.
-      `;
-
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text().trim();
-    } catch (error) {
-      console.error('Categorization error:', error);
-      return this.fallbackCategorization(description, amount);
-    }
-  }
-
   private fallbackCategorization(description: string, amount: number): string {
     const desc = description.toLowerCase();
-    
+
     if (desc.includes('food') || desc.includes('lunch') || desc.includes('coffee')) return 'Food & Dining';
     if (desc.includes('taxi') || desc.includes('bus') || desc.includes('uber')) return 'Transport';
     if (desc.includes('electricity') || desc.includes('water') || desc.includes('bill')) return 'Bills & Utilities';
     if (amount > 50000) return 'Major Purchase';
-    
+
     return 'Miscellaneous';
   }
 
   isAvailable(): boolean {
-    return this.model !== null;
+    // Always available — Cloud Function handles AI, fallback handles offline
+    return true;
   }
 }
 

@@ -1,14 +1,14 @@
 /**
- * lifeAdminReminder — Scheduled Cloud Function (Gen 2)
+ * lifeAdminReminder — Scheduled Cloud Function (Gen 1)
  *
  * Runs daily at 8:00 AM Sri Lanka time.
  * Checks all users' life_admin tasks and sends FCM reminders
  * at 30 days, 7 days, and 1 day before due date.
  */
 
-import { onSchedule } from "firebase-functions/v2/scheduler";
-import { logger } from "firebase-functions/v2";
+import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
+import { addColomboDays, getColomboDateKey } from "./timezoneUtils";
 
 // Reminder intervals in days
 const REMINDER_DAYS = [30, 7, 1];
@@ -131,28 +131,25 @@ export const SRI_LANKAN_TEMPLATES = [
     },
 ];
 
-export const lifeAdminReminder = onSchedule(
-    {
-        schedule: "0 2 * * *",   // 8:00 AM IST = 02:30 UTC → use 02:00 close enough
-        region: "asia-south1",
-        timeZone: "Asia/Colombo",
-        memory: "256MiB",
+export const lifeAdminReminder = functions
+    .region("asia-south1")
+    .runWith({
+        memory: "256MB",
         timeoutSeconds: 120,
-    },
-    async () => {
-        logger.info("📅 Running Life Admin reminder check...");
+    })
+    .pubsub.schedule("0 8 * * *")
+    .timeZone("Asia/Colombo")
+    .onRun(async () => {
+        functions.logger.info("📅 Running Life Admin reminder check...");
 
         const db = admin.firestore();
         const now = new Date();
 
         // Build target dates (30, 7, 1 days from now)
-        const targetDates = REMINDER_DAYS.map(days => {
-            const target = new Date(now);
-            target.setDate(target.getDate() + days);
-            // Normalize to start of day in IST
-            target.setHours(0, 0, 0, 0);
-            return { days, date: target };
-        });
+        const targetDates = REMINDER_DAYS.map(days => ({
+            days,
+            key: getColomboDateKey(addColomboDays(now, days)),
+        }));
 
         const usersSnap = await db.collection("users").listDocuments();
         let totalReminders = 0;
@@ -181,15 +178,10 @@ export const lifeAdminReminder = onSchedule(
                     if (!dueDate || isNaN(dueDate.getTime())) continue;
 
                     // Check if due date matches any reminder interval
-                    for (const { days, date: targetDate } of targetDates) {
-                        const dueDateNorm = new Date(dueDate);
-                        dueDateNorm.setHours(0, 0, 0, 0);
+                    const dueDateKey = getColomboDateKey(dueDate);
 
-                        const diffMs = dueDateNorm.getTime() - targetDate.getTime();
-                        const diffDays = Math.abs(diffMs / (1000 * 60 * 60 * 24));
-
-                        // Match if within 12 hours (to handle timezone drift)
-                        if (diffDays < 0.5) {
+                    for (const { days, key } of targetDates) {
+                        if (dueDateKey === key) {
                             const urgency = days === 1 ? "🔴 TOMORROW"
                                 : days === 7 ? "🟠 In 7 days"
                                     : "🟡 In 30 days";
@@ -217,15 +209,15 @@ export const lifeAdminReminder = onSchedule(
                             });
 
                             totalReminders++;
-                            logger.info(`📬 Sent ${days}-day reminder for "${task.title}" to ${userId}`);
+                            functions.logger.info(`📬 Sent ${days}-day reminder for "${task.title}" to ${userId}`);
                         }
                     }
                 }
             } catch (err) {
-                logger.error(`Failed to process life admin for ${userId}:`, err);
+                functions.logger.error(`Failed to process life admin for ${userId}:`, err);
             }
         }
 
-        logger.info(`📅 Life Admin complete: ${totalReminders} reminders sent.`);
-    }
-);
+        functions.logger.info(`📅 Life Admin complete: ${totalReminders} reminders sent.`);
+        return null;
+    });

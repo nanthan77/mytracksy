@@ -1,4 +1,5 @@
 import * as functions from 'firebase-functions';
+import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
 
@@ -27,11 +28,44 @@ export { sendBulkPush } from './sendPushNotification';
 export { trafficAlertWorker } from './trafficAlertWorker';
 
 // ============================================
-// PayHere Configuration
+// Gemini AI Functions (server-side only — API key never exposed to clients)
 // ============================================
-const PAYHERE_MERCHANT_ID = functions.config().payhere?.merchant_id || 'MERCHANT_ID';
-const PAYHERE_APP_SECRET = functions.config().payhere?.app_secret || 'APP_SECRET';
-const PAYHERE_APP_ID = functions.config().payhere?.app_id || 'APP_ID';
+export { processGeminiVoiceCommand, categorizeExpenseWithGemini } from './processGeminiCommand';
+
+// ============================================
+// Tourism Tracking Functions
+// ============================================
+export { logTourTransaction, logActivityBooking } from './tourismTracking';
+
+// ============================================
+// Legal Profession Functions
+// ============================================
+export { courtHearingReminder, processLegalAIQuery } from './legalFunctions';
+
+// ============================================
+// Engineering Profession Functions (EngiTracksy)
+// ============================================
+export { boqVarianceAlert, processEngineeringAI } from './engineeringFunctions';
+
+// ============================================
+// Aquaculture Profession Functions (AquaTracksy)
+// ============================================
+export { waterQualityAlert, processAquacultureAI } from './aquacultureFunctions';
+
+// ============================================
+// Creator Profession Functions (CreatorTracksy)
+// ============================================
+export { brandDealReminder, processCreatorAI } from './creatorFunctions';
+
+// ============================================
+// PayHere Configuration — using defineSecret (params)
+// Set via: firebase functions:secrets:set PAYHERE_MERCHANT_ID
+//          firebase functions:secrets:set PAYHERE_APP_SECRET
+//          firebase functions:secrets:set PAYHERE_APP_ID
+// ============================================
+const PAYHERE_MERCHANT_ID = defineSecret('PAYHERE_MERCHANT_ID');
+const PAYHERE_APP_SECRET = defineSecret('PAYHERE_APP_SECRET');
+const PAYHERE_APP_ID = defineSecret('PAYHERE_APP_ID');
 const PAYHERE_CHARGE_URL = 'https://www.payhere.lk/pay/api/charging/charge';
 const PAYHERE_TOKEN_URL = 'https://www.payhere.lk/pay/api/v1/oauth/token';
 
@@ -49,9 +83,22 @@ const TOKEN_PACKAGES: Record<string, { tokens: number; price_lkr: number; label:
 //    Saves the customer_token when doctor
 //    first links their card via web portal
 // ============================================
-export const handlePayHerePreapproval = functions.https.onRequest(async (req, res) => {
+export const handlePayHerePreapproval = functions.runWith({ secrets: [PAYHERE_MERCHANT_ID, PAYHERE_APP_SECRET, PAYHERE_APP_ID] }).https.onRequest(async (req, res) => {
+  // H8: CORS — only allow PayHere webhook origin
+  res.set('Access-Control-Allow-Origin', 'https://www.payhere.lk');
+  res.set('Access-Control-Allow-Methods', 'POST');
+  res.set('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') { res.status(204).send(''); return; }
+
   if (req.method !== 'POST') {
     res.status(405).send('Method not allowed');
+    return;
+  }
+
+  // H7: Guard against missing PayHere config (secrets are available at runtime via .value())
+  if (!PAYHERE_MERCHANT_ID.value() || !PAYHERE_APP_SECRET.value()) {
+    console.error('[PayHere Webhook] PayHere secrets not set — refusing to process');
+    res.status(500).send('Server misconfiguration');
     return;
   }
 
@@ -80,7 +127,7 @@ export const handlePayHerePreapproval = functions.https.onRequest(async (req, re
         payhere_amount +
         payhere_currency +
         status_code +
-        crypto.createHash('md5').update(PAYHERE_APP_SECRET).digest('hex').toUpperCase()
+        crypto.createHash('md5').update(PAYHERE_APP_SECRET.value()).digest('hex').toUpperCase()
       )
       .digest('hex')
       .toUpperCase();
@@ -169,7 +216,7 @@ export const handlePayHerePreapproval = functions.https.onRequest(async (req, re
 //    Doctor taps "Buy Now" in the app
 //    Charges saved card instantly via PayHere
 // ============================================
-export const oneClickTopUp = functions.https.onCall(async (data, context) => {
+export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHERE_APP_SECRET] }).https.onCall(async (data, context) => {
   // Verify authentication
   if (!context.auth) {
     throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
@@ -198,11 +245,11 @@ export const oneClickTopUp = functions.https.onCall(async (data, context) => {
   try {
     // Step 1: Get PayHere access token
     const fetch = (await import('node-fetch')).default;
-    
+
     const tokenResponse = await fetch(PAYHERE_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `grant_type=client_credentials&app_id=${PAYHERE_APP_ID}&app_secret=${PAYHERE_APP_SECRET}`,
+      body: `grant_type=client_credentials&app_id=${PAYHERE_APP_ID.value()}&app_secret=${PAYHERE_APP_SECRET.value()}`,
     });
     const tokenData = await tokenResponse.json() as any;
 
@@ -299,7 +346,7 @@ export const oneClickTopUp = functions.https.onCall(async (data, context) => {
 //    Checks all users with auto-reload ON
 //    and balance below threshold
 // ============================================
-export const processAutoReloads = functions.pubsub
+export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHERE_APP_SECRET] }).pubsub
   .schedule('every 60 minutes')
   .timeZone('Asia/Colombo')
   .onRun(async () => {
@@ -346,7 +393,7 @@ export const processAutoReloads = functions.pubsub
             const tokenResponse = await fetch(PAYHERE_TOKEN_URL, {
               method: 'POST',
               headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: `grant_type=client_credentials&app_id=${PAYHERE_APP_ID}&app_secret=${PAYHERE_APP_SECRET}`,
+              body: `grant_type=client_credentials&app_id=${PAYHERE_APP_ID.value()}&app_secret=${PAYHERE_APP_SECRET.value()}`,
             });
             const tokenData = await tokenResponse.json() as any;
 
@@ -452,7 +499,7 @@ export const processAutoReloads = functions.pubsub
                     },
                   });
                 }
-              } catch {}
+              } catch { }
 
               failed++;
               console.log(`[Auto-Reload] ❌ User ${userId}: Card declined`);
@@ -524,3 +571,30 @@ export const spendTokens = functions.https.onCall(async (data, context) => {
     };
   });
 });
+
+// ============================================
+// 5. BizTracksy: Corporate Invoice Generator
+//    Generates a PDF and logs Accounts Receivable
+// ============================================
+export const generateCorporateInvoice = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const { companyId, customerId, items, taxData } = data;
+
+  // TODO: Implement actual PDF generation and Firestore transaction
+  // - Add invoice doc to /companies/{companyId}/invoices
+  // - Deduct stock from /companies/{companyId}/inventory
+  // - Sync to central ledger
+
+  console.log(`[BizTracksy] Stub: Generating corporate invoice for company ${companyId}`);
+
+  return {
+    success: true,
+    invoiceId: `INV-${Date.now()}`,
+    pdfUrl: 'mock_url_until_implemented',
+    message: 'Corporate Invoice generated (Stub)',
+  };
+});
+

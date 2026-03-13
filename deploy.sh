@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # MyTracksy Deployment Script
+# H9: Project ID is read from .firebaserc — never hardcoded here.
 echo "🚀 Starting MyTracksy deployment..."
 
 # Check if Firebase CLI is logged in
@@ -9,9 +10,9 @@ if ! firebase projects:list > /dev/null 2>&1; then
     exit 1
 fi
 
-# Set the correct project
-echo "📋 Setting Firebase project..."
-firebase use tracksy-8e30c
+# Use the project configured in .firebaserc (do NOT hardcode project IDs)
+echo "📋 Using Firebase project from .firebaserc..."
+firebase use default
 
 # Verify files exist
 echo "✅ Verifying files..."
@@ -33,7 +34,4 @@ firebase deploy --only hosting
 
 echo "✅ Deployment complete!"
 echo ""
-echo "🌐 Test URLs:"
-echo "   https://tracksy-8e30c.web.app/"
-echo "   https://tracksy-8e30c.web.app/aquaculture-dashboard.html"
-echo "   https://mytracksy.com/aquaculture-dashboard.html"
+echo "🌐 Check your Firebase console for live URLs."

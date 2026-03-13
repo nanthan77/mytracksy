@@ -20,8 +20,11 @@ import {
     TravelMode,
     TrafficModel,
 } from "@googlemaps/google-maps-services-js";
+import { getExpectedTaskAudience, verifyCloudTaskOidcToken } from "./cloudTaskAuth";
 
 const GOOGLE_MAPS_API_KEY = defineSecret("GOOGLE_MAPS_API_KEY");
+const PROJECT_ID = process.env.GCLOUD_PROJECT || process.env.GCP_PROJECT || "";
+const TASK_SERVICE_ACCOUNT = PROJECT_ID ? `${PROJECT_ID}@appspot.gserviceaccount.com` : undefined;
 
 // 10-minute parking/walking buffer for Sri Lankan hospitals
 const BUFFER_MINUTES = 10;
@@ -49,12 +52,15 @@ export const trafficAlertWorker = onRequest(
             return;
         }
 
-        // Verify Cloud Tasks OIDC token
-        const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            logger.error("❌ Missing or invalid authorization header");
-            res.status(401).send("Unauthorized");
-            return;
+        if (process.env.FUNCTIONS_EMULATOR !== "true") {
+            try {
+                const audience = getExpectedTaskAudience(req);
+                await verifyCloudTaskOidcToken(req.headers.authorization, audience, TASK_SERVICE_ACCOUNT);
+            } catch (error: any) {
+                logger.error("❌ Cloud Tasks token verification failed", error);
+                res.status(401).send("Unauthorized");
+                return;
+            }
         }
 
         const payload: TrafficPayload = req.body;

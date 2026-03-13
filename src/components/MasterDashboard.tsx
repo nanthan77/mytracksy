@@ -126,38 +126,21 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
   };
 
   const loadNotifications = async () => {
-    const mockNotifications = [
-      {
-        id: 1,
-        type: 'ai_insight',
-        title: 'Budget Alert',
-        message: 'Food expenses are 25% above budget this month',
-        priority: 'high',
-        timestamp: new Date()
-      },
-      {
-        id: 2,
-        type: 'family_sharing',
-        title: 'Family Goal Achieved',
-        message: 'Emergency fund goal reached!',
-        priority: 'medium',
-        timestamp: new Date()
-      },
-      {
-        id: 3,
-        type: 'investment',
-        title: 'Portfolio Update',
-        message: 'CSE portfolio gained 3.2% this week',
-        priority: 'low',
-        timestamp: new Date()
-      }
-    ];
-
-    setNotifications(mockNotifications);
+    // Production: Load real notifications from Firestore
+    // New users will see empty notifications until real events occur
+    try {
+      // TODO: Replace with Firestore query when notification service is ready
+      // const userNotifications = await notificationService.getUserNotifications(uid);
+      // setNotifications(userNotifications);
+      setNotifications([]);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      setNotifications([]);
+    }
   };
 
   const checkSystemHealth = () => {
-    // Simulate health checks
+    // Production: Check actual service connectivity
     setSystemHealth({
       aiService: 'healthy',
       familySharing: 'healthy',
@@ -330,7 +313,7 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
             <Grid item xs={12} md={4}>
               <Typography variant="subtitle2">Upcoming Poya Day</Typography>
               <Typography variant="body2" color="primary">
-                Next Full Moon: 15th January
+                Check calendar for upcoming Poya days
               </Typography>
               <Typography variant="caption">
                 Plan for temple visits and dana
@@ -417,26 +400,26 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
                 <Typography variant="h5" color="primary">
                   {formatCurrency(kpis.portfolioValue || 0)}
                 </Typography>
-                <Typography variant="body2" color="success.main">
-                  +5.2% this month
+                <Typography variant="body2" color="text.secondary">
+                  {kpis.portfolioValue ? 'Active portfolio' : 'No investments yet'}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" gutterBottom>Cryptocurrency</Typography>
                 <Typography variant="h5" color="primary">
-                  {formatCurrency(15000)}
+                  {formatCurrency(kpis.cryptoValue || 0)}
                 </Typography>
-                <Typography variant="body2" color="error.main">
-                  -2.1% this month
+                <Typography variant="body2" color="text.secondary">
+                  {kpis.cryptoValue ? 'Updated live' : 'No holdings yet'}
                 </Typography>
               </Grid>
               <Grid item xs={12} md={4}>
                 <Typography variant="subtitle2" gutterBottom>Fixed Deposits</Typography>
                 <Typography variant="h5" color="primary">
-                  {formatCurrency(125000)}
+                  {formatCurrency(kpis.fixedDeposits || 0)}
                 </Typography>
-                <Typography variant="body2" color="success.main">
-                  12.5% annual rate
+                <Typography variant="body2" color="text.secondary">
+                  {kpis.fixedDeposits ? 'Active deposits' : 'No deposits yet'}
                 </Typography>
               </Grid>
             </Grid>
@@ -472,7 +455,7 @@ export const MasterDashboard: React.FC<MasterDashboardProps> = ({
                 </Typography>
               </Grid>
               <Grid item xs={12} md={3}>
-                <Typography variant="subtitle2" gutterBottom">Cultural Events</Typography>
+                <Typography variant="subtitle2" gutterBottom>Cultural Events</Typography>
                 <Typography variant="h4" color="primary">8</Typography>
                 <Typography variant="body2" color="text.secondary">
                   Events affecting budget

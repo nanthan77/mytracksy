@@ -265,6 +265,9 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
 
                 @media (max-width: 768px) {
                     .lex-nav-links { display: none !important; }
+                    .lex-nav-back { display: none !important; }
+                    .lex-nav-right-full { display: none !important; }
+                    .lex-nav-right-mobile { display: flex !important; }
                     .lex-hero-headline { font-size: 2.4rem !important; }
                     .lex-hero-sub { font-size: 16px !important; }
                     .lex-hero-ctas { flex-direction: column; align-items: stretch; }
@@ -292,6 +295,7 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <button
                                 onClick={onBack}
+                                className="lex-nav-back"
                                 style={{
                                     background: 'rgba(255,255,255,0.1)',
                                     color: WHITE,
@@ -340,8 +344,8 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                             ))}
                         </div>
 
-                        {/* Right: Login + CTA */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        {/* Right: Login + CTA (Desktop) */}
+                        <div className="lex-nav-right-full" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <span
                                 onClick={onLogin}
                                 style={{ fontSize: 14, fontWeight: 600, color: WHITE, cursor: 'pointer', opacity: 0.85 }}
@@ -366,6 +370,16 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                             >
                                 Start Free Trial
                             </button>
+                        </div>
+
+                        {/* Right: Mobile compact nav */}
+                        <div className="lex-nav-right-mobile" style={{ display: 'none', alignItems: 'center', gap: 10 }}>
+                            <span onClick={onLogin} style={{ color: WHITE, fontWeight: 600, fontSize: 14, cursor: 'pointer', opacity: 0.85 }}>Sign In</span>
+                            <button onClick={onGetStarted} style={{
+                                background: GOLD, color: NAVY, border: 'none',
+                                padding: '8px 18px', borderRadius: 99, fontWeight: 700, fontSize: 13,
+                                cursor: 'pointer', fontFamily: FONT_BODY,
+                            }}>Start Free</button>
                         </div>
                     </div>
                 </nav>
@@ -484,6 +498,35 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                             alignItems: 'center', gap: 8, justifyContent: 'center',
                         }}>
                             <span style={{ color: '#34d399' }}>✓</span> No credit card required. Works offline from day one.
+                        </div>
+
+                        {/* Inline PWA Install Link */}
+                        <div className="sr" style={{ marginTop: 20, display: 'flex', justifyContent: 'center' }}>
+                            <button
+                                onClick={onGetStarted}
+                                style={{
+                                    background: 'rgba(245, 158, 11, 0.1)',
+                                    border: `1px solid rgba(245, 158, 11, 0.3)`,
+                                    borderRadius: 99,
+                                    padding: '10px 24px',
+                                    color: GOLD_LIGHT,
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    transition: 'all 0.3s ease',
+                                    fontFamily: FONT_BODY,
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.18)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)'; }}
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                📲 Free App — Install Now
+                            </button>
                         </div>
                     </div>
                 </header>

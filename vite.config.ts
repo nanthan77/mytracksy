@@ -8,13 +8,30 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/*.svg', 'icons/*.png', 'offline.html'],
-      // Use injectManifest for custom sw.js control
+      includeAssets: [
+        'icons/icon-32.png',
+        'icons/icon-72.png',
+        'icons/icon-96.png',
+        'icons/icon-120.png',
+        'icons/icon-128.png',
+        'icons/icon-144.png',
+        'icons/icon-152.png',
+        'icons/icon-180.png',
+        'icons/icon-192.png',
+        'icons/icon-384.png',
+        'icons/icon-512.png',
+        'icons/analytics-shortcut.png',
+        'icons/business-shortcut.png',
+        'icons/sms-shortcut.png',
+        'icons/voice-shortcut.png',
+        'offline.html',
+      ],
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw-custom.ts',
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,png,svg,ico,woff2}'],
+        globIgnores: ['icons/mytrackdy logo profesional.png', 'icons/logo no tag.png'],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
       },
       devOptions: {

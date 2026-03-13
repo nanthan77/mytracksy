@@ -113,6 +113,9 @@ export class EnterpriseApiService {
   private requestQueue: Array<{id: string; request: any; priority: number}> = [];
 
   // Sri Lankan bank APIs configuration
+  // SECURITY WARNING: OAuth client IDs/secrets below are PLACEHOLDER values only.
+  // In production, all bank OAuth flows MUST happen server-side via Cloud Functions.
+  // NEVER store real client secrets in frontend code or localStorage.
   private sriLankanBanks: Map<string, SriLankanBankApi> = new Map([
     ['CB', {
       bankCode: 'CB',
@@ -704,16 +707,23 @@ export class EnterpriseApiService {
     // Monitor API endpoint health and performance
   }
 
+  // SECURITY: Use cryptographically secure random generation for all keys/secrets
+  private generateSecureHex(byteLength: number): string {
+    const array = new Uint8Array(byteLength);
+    crypto.getRandomValues(array);
+    return Array.from(array, b => b.toString(16).padStart(2, '0')).join('');
+  }
+
   private generateApiKey(): string {
-    return `tracksy_${Date.now()}_${Math.random().toString(36).substr(2, 16)}`;
+    return `mtk_${this.generateSecureHex(32)}`;
   }
 
   private generateSecret(): string {
-    return Math.random().toString(36).substr(2, 32);
+    return `whsec_${this.generateSecureHex(32)}`;
   }
 
   private generateRequestId(): string {
-    return `req_${Date.now()}_${Math.random().toString(36).substr(2, 8)}`;
+    return `req_${Date.now()}_${this.generateSecureHex(8)}`;
   }
 
   private generateMockBankData(endpoint: string): any {
@@ -828,17 +838,21 @@ export class EnterpriseApiService {
   }
 
   private saveApiConfiguration(): void {
+    // SECURITY: Do NOT persist API keys, webhooks, or bank credentials in localStorage.
+    // localStorage is accessible to any XSS attack on this domain.
+    // TODO: Migrate to server-side storage via Cloud Functions + Firestore.
     try {
-      const config = {
-        apiKeys: Array.from(this.apiKeys.entries()),
-        webhooks: Array.from(this.webhooks.entries()),
-        bankIntegrations: Array.from(this.bankIntegrations.entries()),
-        accountingIntegrations: Array.from(this.accountingIntegrations.entries())
+      // Only persist non-sensitive metadata (no secrets, tokens, or credentials)
+      const safeConfig = {
+        apiKeyIds: Array.from(this.apiKeys.keys()),
+        webhookIds: Array.from(this.webhooks.keys()),
+        bankCodes: Array.from(this.bankIntegrations.keys()),
+        accountingIds: Array.from(this.accountingIntegrations.keys())
       };
-      
-      localStorage.setItem('enterprise-api-config', JSON.stringify(config));
+
+      localStorage.setItem('enterprise-api-config-ids', JSON.stringify(safeConfig));
     } catch (error) {
-      console.error('Error saving API configuration:', error);
+      console.error('Error saving API configuration metadata:', error);
     }
   }
 

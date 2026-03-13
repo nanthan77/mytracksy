@@ -13,8 +13,8 @@
  */
 
 import { onObjectFinalized } from "firebase-functions/v2/storage";
-import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions/v2";
+import { defineSecret } from "firebase-functions/params";
 import * as admin from "firebase-admin";
 import OpenAI from "openai";
 import * as fs from "fs";
@@ -105,16 +105,14 @@ const GPT_JSON_SCHEMA = {
 
 export const processVoiceNote = onObjectFinalized(
     {
-        // Gen 2 options
-        region: "asia-south1",  // Mumbai — lowest latency for Sri Lanka
-        memory: "512MiB",
+        region: "asia-south1",
         timeoutSeconds: 120,
+        memory: "512MiB",
         secrets: [OPENAI_API_KEY],
-        // Only trigger for pending_audio paths
     },
     async (event) => {
         const filePath = event.data.name;    // e.g. users/abc123/pending_audio/note001.m4a
-        const bucket = event.data.bucket;
+        const bucketName = event.data.bucket;
 
         // ── Guard: only process pending_audio .m4a files ──
         if (!filePath || !filePath.includes("/pending_audio/") || !filePath.endsWith(".m4a")) {
@@ -130,7 +128,7 @@ export const processVoiceNote = onObjectFinalized(
         logger.info(`🎙️ Processing voice note: ${filePath}`, { userId, fileId });
 
         const db = admin.firestore();
-        const storage = admin.storage().bucket(bucket);
+        const storage = admin.storage().bucket(bucketName);
         const noteRef = db.doc(`users/${userId}/clinical_notes/${fileId}`);
 
         // Set initial status
@@ -301,7 +299,7 @@ export const processVoiceNote = onObjectFinalized(
             try { fs.unlinkSync(tmpFile); } catch { /* ok */ }
         }
     }
-);
+    );
 
 // ─── Helpers ────────────────────────────────────────────────────
 

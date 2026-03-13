@@ -7,9 +7,51 @@ interface DoctorLandingPageProps {
     onBack: () => void;
 }
 
+const MEDICAL_FAQS = [
+    {
+        question: 'Is MyTracksy Medical suitable for IRD tax work in Sri Lanka?',
+        answer: 'MyTracksy Medical exports channeling income, clinic costs, travel, subscriptions, and practice expenses into auditor-friendly formats aligned with Sri Lankan IRD workflows and tax review needs.',
+    },
+    {
+        question: 'Does the voice workflow support Sinhala, Tamil, and mixed medical speech?',
+        answer: 'The clinical voice workflow is designed for Sri Lankan usage patterns, including Sinhala, Tamil, English, and mixed speech patterns often used in local medical environments.',
+    },
+    {
+        question: 'Is patient and practice data handled with PDPA-conscious safeguards?',
+        answer: 'MyTracksy Medical is designed around privacy-first handling, bank-grade protection patterns, and Sri Lankan PDPA-conscious workflows so doctors can manage practice operations with stronger data discipline.',
+    },
+    {
+        question: 'Can doctors use MyTracksy Medical in wards or clinics with weak internet?',
+        answer: 'MyTracksy Medical is built as a progressive web app, so doctors can continue using key workflows on mobile and keep app-like access from the home screen even when connectivity is unreliable.',
+    },
+];
+
 const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onLogin, onBack }) => {
     const [navSolid, setNavSolid] = useState(false);
     const [billingCycle, setBillingCycle] = useState<'annual' | 'monthly'>('annual');
+    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [isInstalled, setIsInstalled] = useState(false);
+    const [showIOSGuide, setShowIOSGuide] = useState(false);
+
+    const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone;
+
+    useEffect(() => {
+        if (isStandalone) { setIsInstalled(true); return; }
+        const handler = (e: any) => { e.preventDefault(); setDeferredPrompt(e); };
+        window.addEventListener('beforeinstallprompt', handler);
+        window.addEventListener('appinstalled', () => setIsInstalled(true));
+        return () => window.removeEventListener('beforeinstallprompt', handler);
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (isIOS) { setShowIOSGuide(!showIOSGuide); return; }
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') setIsInstalled(true);
+        setDeferredPrompt(null);
+    };
 
     useEffect(() => {
         const handleScroll = () => {
@@ -38,42 +80,85 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
         return () => observer.disconnect();
     }, []);
 
+    const medicalStructuredData = [
+        {
+            '@context': 'https://schema.org',
+            '@type': 'SoftwareApplication',
+            name: 'MyTracksy Medical',
+            url: 'https://mytracksy.lk/medical',
+            applicationCategory: 'MedicalBusiness',
+            operatingSystem: 'Web, Android, iOS',
+            image: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            description: 'MyTracksy Medical helps Sri Lankan doctors manage channeling income, clinic expenses, AI voice notes, patient workflows, and tax-ready exports in one fast PWA.',
+            offers: {
+                '@type': 'Offer',
+                price: '0',
+                priceCurrency: 'LKR',
+            },
+            publisher: {
+                '@type': 'Organization',
+                name: 'MyTracksy',
+                url: 'https://mytracksy.lk/',
+                logo: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            },
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+                {
+                    '@type': 'ListItem',
+                    position: 1,
+                    name: 'MyTracksy',
+                    item: 'https://mytracksy.lk/',
+                },
+                {
+                    '@type': 'ListItem',
+                    position: 2,
+                    name: 'Medical',
+                    item: 'https://mytracksy.lk/medical',
+                },
+            ],
+        },
+        {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: MEDICAL_FAQS.map((faq) => ({
+                '@type': 'Question',
+                name: faq.question,
+                acceptedAnswer: {
+                    '@type': 'Answer',
+                    text: faq.answer,
+                },
+            })),
+        },
+    ];
+
     return (
         <>
             <Helmet>
-                <title>MyTracksy Medical | Best Clinic & Tax Software for Doctors in Sri Lanka</title>
-                <meta name="description" content="The ultimate AI-powered clinic management and tax automation software designed specifically for Sri Lankan doctors. Automate your private practice revenue, clinical notes, and IRD tax compliance." />
+                <title>MyTracksy Medical | Clinic, Tax & Practice Management for Sri Lankan Doctors</title>
+                <meta name="description" content="MyTracksy Medical helps Sri Lankan doctors manage clinic income, channeling, expenses, voice notes, patients, and IRD-ready tax workflows from one fast mobile-friendly PWA." />
                 <meta name="keywords" content="doctor software sri lanka, clinic management system, medical billing software, sri lanka doctor tax, private channeling software, AI clinical notes sinhala tamil" />
+                <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+                <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
                 <link rel="canonical" href="https://mytracksy.lk/medical" />
+                <link rel="preload" as="image" href="/assets/healthcare/sri_lankan_doctors_hero_bg.png" />
 
-                {/* Open Graph / Social */}
                 <meta property="og:type" content="website" />
+                <meta property="og:site_name" content="MyTracksy" />
                 <meta property="og:url" content="https://mytracksy.lk/medical" />
-                <meta property="og:title" content="MyTracksy Medical | Clinic & Tax Software for Sri Lankan Doctors" />
-                <meta property="og:description" content="Automate your channeling revenue, clinical notes, and IRD tax compliance seamlessly." />
-                <meta property="og:image" content="https://mytracksy.web.app/logos/logo final tag.png" />
+                <meta property="og:title" content="MyTracksy Medical | Clinic, Tax & Practice Management for Sri Lankan Doctors" />
+                <meta property="og:description" content="Track channeling income, clinic expenses, AI voice notes, patient workflows, and tax-ready exports in one doctor-first workspace." />
+                <meta property="og:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+                <meta property="og:image:alt" content="MyTracksy logo" />
+                <meta name="twitter:card" content="summary_large_image" />
+                <meta name="twitter:title" content="MyTracksy Medical | Clinic, Tax & Practice Management for Sri Lankan Doctors" />
+                <meta name="twitter:description" content="Track channeling income, clinic expenses, AI voice notes, patient workflows, and tax-ready exports in one doctor-first workspace." />
+                <meta name="twitter:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
 
-                {/* JSON-LD Schema Markup */}
                 <script type="application/ld+json">
-                    {`
-                        {
-                            "@context": "https://schema.org",
-                            "@type": "SoftwareApplication",
-                            "name": "MyTracksy Medical",
-                            "applicationCategory": "MedicalSoftware",
-                            "operatingSystem": "Web, Android, iOS",
-                            "description": "AI-powered clinic management and tax automation software for doctors in Sri Lanka.",
-                            "offers": {
-                                "@type": "Offer",
-                                "price": "0",
-                                "priceCurrency": "LKR"
-                            },
-                            "author": {
-                                "@type": "Organization",
-                                "name": "SafeNetCreations"
-                            }
-                        }
-                    `}
+                    {JSON.stringify(medicalStructuredData)}
                 </script>
             </Helmet>
 
@@ -112,9 +197,13 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 @media (max-width: 900px) {
                     .hero-grid { grid-template-columns: 1fr !important; text-align: center; }
                     .nav-links, .hero-image { display: none !important; }
-                    .lt-h1 { font-size: 3rem !important; }
-                    .hero-btns { justify-content: center; }
+                    .lt-h1 { font-size: 2.5rem !important; }
+                    .hero-btns { justify-content: center; flex-direction: column; align-items: center; }
                     .glass-card { padding: 24px !important; }
+                    .nav-back-btn { display: none !important; }
+                    .nav-right-full { display: none !important; }
+                    .nav-right-mobile { display: flex !important; }
+                    .lt-nav .lt-i { padding: 0 16px !important; }
                 }
             `}</style>
 
@@ -122,10 +211,10 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 {/* Navbar */}
                 <nav className={`lt-nav ${navSolid ? 'lt-nav-s' : ''}`}>
                     <div className="lt-i" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', gap: 16 }}>
-                            <button onClick={onBack} className="btn-secondary" style={{ padding: '8px 16px', fontSize: 13 }}>← Back to Platform</button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <button onClick={onBack} className="btn-secondary nav-back-btn" style={{ padding: '8px 16px', fontSize: 13 }}>← Back to Platform</button>
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
-                                <img src="/logos/final logo no lettermy tracksy.png" alt="MyTracksy Logo" style={{ width: 38, height: 38, objectFit: 'contain' }} />
+                                <img src="/logos/mytracksy-logo.png" alt="MyTracksy Logo" style={{ width: 38, height: 38, objectFit: 'contain' }} />
                                 <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em' }}>Medical <sup style={{ fontSize: 10, color: '#0ea5e9', fontWeight: 700 }}>PRO</sup></span>
                             </div>
                         </div>
@@ -142,9 +231,15 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 )
                             })}
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        {/* Desktop right nav */}
+                        <div className="nav-right-full" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <span onClick={onLogin} style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>Sign In</span>
                             <button onClick={onGetStarted} className="btn-primary" style={{ padding: '10px 24px' }}>Deploy Infrastructure</button>
+                        </div>
+                        {/* Mobile right nav */}
+                        <div className="nav-right-mobile" style={{ display: 'none', alignItems: 'center', gap: 10 }}>
+                            <span onClick={onLogin} style={{ fontSize: 13, fontWeight: 600, color: navSolid ? '#0f172a' : '#fff', cursor: 'pointer' }}>Sign In</span>
+                            <button onClick={onGetStarted} className="btn-primary" style={{ padding: '8px 18px', fontSize: 12 }}>Start Free</button>
                         </div>
                     </div>
                 </nav>
@@ -161,7 +256,6 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     backgroundImage: 'radial-gradient(circle at center, rgba(15,23,42,0.85) 0%, rgba(15,23,42,0.95) 100%), url("/assets/healthcare/sri_lankan_doctors_hero_bg.png")',
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
-                    backgroundAttachment: 'fixed',
                     color: '#fff'
                 }}>
                     <div style={{ position: 'absolute', top: '10%', right: '5%', width: 500, height: 500, background: 'linear-gradient(135deg, rgba(14,165,233,0.3), rgba(99,102,241,0.2))', borderRadius: '50%', filter: 'blur(100px)', zIndex: 0, animation: 'float-slow 20s ease-in-out infinite' }} />
@@ -195,6 +289,37 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div className="sr" style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600, transitionDelay: '0.2s', display: 'flex', alignItems: 'center', gap: 8 }}>
                                     <span style={{ color: '#34d399' }}>✓</span> No App Store required. 100% Tax-Deductible Professional Software.
                                 </div>
+
+                                {/* One-line PWA Install Direct Link */}
+                                {!isInstalled && (
+                                    <div className="sr" style={{ transitionDelay: '0.3s', marginTop: 16 }}>
+                                        <button
+                                            onClick={handleInstallClick}
+                                            style={{
+                                                background: 'linear-gradient(135deg, rgba(14,165,233,0.15), rgba(99,102,241,0.15))',
+                                                border: '1px solid rgba(14,165,233,0.3)',
+                                                borderRadius: 99,
+                                                padding: '10px 24px',
+                                                color: '#38bdf8',
+                                                fontSize: 14,
+                                                fontWeight: 700,
+                                                cursor: 'pointer',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: 8,
+                                                backdropFilter: 'blur(10px)',
+                                                transition: 'all 0.3s ease',
+                                                fontFamily: 'inherit',
+                                                letterSpacing: '-0.01em',
+                                            }}
+                                            onMouseEnter={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(14,165,233,0.25), rgba(99,102,241,0.25))'; e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 24px rgba(14,165,233,0.2)'; }}
+                                            onMouseLeave={e => { e.currentTarget.style.background = 'linear-gradient(135deg, rgba(14,165,233,0.15), rgba(99,102,241,0.15))'; e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none'; }}
+                                        >
+                                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                                            {isIOS ? '📲 Free App — Add to Home Screen' : '📲 Free App — Install Now'}
+                                        </button>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="hero-image sr" style={{ position: 'relative', transitionDelay: '0.2s', zIndex: 2 }}>
@@ -224,6 +349,8 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     </div>
                 </header>
 
+
+
                 {/* Vertical Space */}
                 <div style={{ height: 60, background: 'linear-gradient(to bottom, #fcfcfc, #f1f5f9)' }} />
 
@@ -240,7 +367,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 40 }}>
                             <div className="glass-card sr" style={{ padding: 40 }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(14,165,233,0.4)', border: '1px solid rgba(14,165,233,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_prescription_billing_1773217275109.png" alt="Solo Practitioner Bookkeeping" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_prescription_billing_1773217275109.png" alt="Solo Practitioner Bookkeeping" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                                 <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Solo Practice Bookkeeping</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
@@ -250,7 +377,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                             <div className="glass-card sr" style={{ padding: 40, transitionDelay: '100ms' }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(16,185,129,0.4)', border: '1px solid rgba(16,185,129,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png" alt="Zero-Touch Bank Sync" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png" alt="Zero-Touch Bank Sync" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                                 <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Zero-Touch Bank Integrations</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
@@ -260,7 +387,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                             <div className="glass-card sr" style={{ padding: 40, transitionDelay: '200ms' }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(139,92,246,0.4)', border: '1px solid rgba(139,92,246,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_tax_compliance_1773217329017.png" alt="Auditor Export Engine" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_tax_compliance_1773217329017.png" alt="Auditor Export Engine" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                                 <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>1-Click Auditor Excel Exports</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
@@ -566,60 +693,14 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         </div>
 
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                            <div style={{ padding: 24, borderRadius: 16, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Is MyTracksy recognized for IRD Tax purposes in Sri Lanka?</h3>
-                                <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6 }}>Yes. MyTracksy exports all your channeling income and business expenses (clinic rent, locum payments, vehicle maintenance) into a consolidated, Chartered Accountant-friendly format specifically aligned with Inland Revenue Department (IRD) requirements for APIT/PAYE calculations.</p>
-                            </div>
-
-                            <div style={{ padding: 24, borderRadius: 16, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Does the AI voice dictation support Sinhala and Tamil medical terms?</h3>
-                                <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6 }}>Our proprietary Clinical AI Voice Vault is trained to understand "Singlish" and local medical colloquialisms. You can dictate naturally (e.g., "patient presenting with unappu, query dengue"), and the AI will format it into standard English clinical notes or generate Sinhala/Tamil take-home PDF cards for the patient.</p>
-                            </div>
-
-                            <div style={{ padding: 24, borderRadius: 16, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Is patient data safe and PDPA compliant?</h3>
-                                <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6 }}>Absolutely. MyTracksy operates under the strict guidelines of Sri Lanka's Personal Data Protection Act (PDPA) No. 9 of 2022. We utilize bank-grade AES-256 encryption. Patient data is never used to train global AI models, and all processing is securely firewalled.</p>
-                            </div>
-
-                            <div style={{ padding: 24, borderRadius: 16, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                                <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>Can I use it offline in Government hospital wards where there is no signal?</h3>
-                                <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6 }}>Yes! MyTracksy is a PWA (Progressive Web App) with an offline-first architecture. You can rapidly log patients, expenses, and notes deep inside concrete hospital wards without internet. Everything automatically syncs to the cloud the moment your phone reconnects to 4G or WiFi.</p>
-                            </div>
+                            {MEDICAL_FAQS.map((faq) => (
+                                <div key={faq.question} style={{ padding: 24, borderRadius: 16, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                    <h3 style={{ fontSize: 18, fontWeight: 700, color: '#0f172a', marginBottom: 12 }}>{faq.question}</h3>
+                                    <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.6 }}>{faq.answer}</p>
+                                </div>
+                            ))}
                         </div>
                     </div>
-                    {/* FAQ JSON-LD Schema */}
-                    <Helmet>
-                        <script type="application/ld+json">
-                            {`
-                                {
-                                  "@context": "https://schema.org",
-                                  "@type": "FAQPage",
-                                  "mainEntity": [{
-                                    "@type": "Question",
-                                    "name": "Is MyTracksy recognized for IRD Tax purposes in Sri Lanka?",
-                                    "acceptedAnswer": {
-                                      "@type": "Answer",
-                                      "text": "Yes. MyTracksy exports all your channeling income and business expenses into a consolidated, Chartered Accountant-friendly format specifically aligned with Inland Revenue Department (IRD) requirements for APIT/PAYE calculations."
-                                    }
-                                  }, {
-                                    "@type": "Question",
-                                    "name": "Does the AI voice dictation support Sinhala and Tamil medical terms?",
-                                    "acceptedAnswer": {
-                                      "@type": "Answer",
-                                      "text": "Our proprietary Clinical AI Voice Vault is trained to understand 'Singlish' and local medical colloquialisms to format them into standard clinical notes."
-                                    }
-                                  }, {
-                                    "@type": "Question",
-                                    "name": "Can I use it offline in Government hospital wards where there is no signal?",
-                                    "acceptedAnswer": {
-                                      "@type": "Answer",
-                                      "text": "Yes! MyTracksy is a PWA with an offline-first architecture. You can log patients and notes without internet, and it automatically syncs when you reconnect."
-                                    }
-                                  }]
-                                }
-                            `}
-                        </script>
-                    </Helmet>
                 </section>
 
                 {/* Footer */}
@@ -628,7 +709,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 80 }}>
                             <div style={{ gridColumn: 'span 2' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                    <img src="/logos/logo final tag.png" alt="MyTracksy - Institutional Financial Intelligence" style={{ height: 48, objectFit: 'contain' }} />
+                                    <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ height: 48, objectFit: 'contain' }} />
                                     <span style={{ fontSize: 20, fontWeight: 800, color: '#0ea5e9' }}>Medical</span>
                                 </div>
                                 <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.7, maxWidth: 350 }}>

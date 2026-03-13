@@ -342,7 +342,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               label={
                 <Typography variant="body2">
                   I agree to the{' '}
-                  <Link href="#" target="_blank">Terms of Service</Link>
+                  <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of Service</Link>
                 </Typography>
               }
             />
@@ -360,7 +360,7 @@ export const RegisterForm: React.FC<RegisterFormProps> = ({
               label={
                 <Typography variant="body2">
                   I agree to the{' '}
-                  <Link href="#" target="_blank">Privacy Policy</Link>
+                  <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</Link>
                 </Typography>
               }
             />

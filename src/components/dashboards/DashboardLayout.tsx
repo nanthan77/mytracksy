@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { ProfessionType } from '../../contexts/AuthContext';
 import { useIsCompactMobile } from './useIsCompactMobile';
 
-interface NavItem { id: string; label: string; icon: string; }
+interface NavItem { id: string; label: string; icon: string; premium?: boolean; locked?: boolean; tierBadge?: string; }
 
 interface MobileTabItem {
     id: string;
@@ -18,6 +18,12 @@ interface MobileShellConfig {
     activeTitle: string;
     activeSubtitle?: string;
     headerAction?: React.ReactNode;
+    accentColor?: string;
+    activeTabBackground?: string;
+    background?: string;
+    headerBackground?: string;
+    navBackground?: string;
+    subtitleColor?: string;
 }
 
 interface DashboardLayoutProps {
@@ -48,6 +54,12 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
         [activeNav, navItems]
     );
     const showMobileShell = Boolean(mobileShell?.enabled && isCompactMobile);
+    const mobileAccentColor = mobileShell?.accentColor || '#0ea5e9';
+    const mobileActiveTabBackground = mobileShell?.activeTabBackground || 'linear-gradient(135deg, rgba(14,165,233,0.14), rgba(99,102,241,0.1))';
+    const mobileBackground = mobileShell?.background || 'linear-gradient(180deg, #f8fbff 0%, #eef4ff 34%, #f8fafc 100%)';
+    const mobileHeaderBackground = mobileShell?.headerBackground || 'rgba(248,251,255,0.88)';
+    const mobileNavBackground = mobileShell?.navBackground || 'rgba(255,255,255,0.94)';
+    const mobileSubtitleColor = mobileShell?.subtitleColor || '#64748b';
 
     if (showMobileShell && mobileShell) {
         return (
@@ -74,13 +86,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     }
                     .mobile-tab-btn.active {
                         color: #0f172a;
-                        background: linear-gradient(135deg, rgba(14,165,233,0.14), rgba(99,102,241,0.1));
+                        background: ${mobileActiveTabBackground};
                     }
                 `}</style>
 
                 <div style={{
                     minHeight: '100vh',
-                    background: 'linear-gradient(180deg, #f8fbff 0%, #eef4ff 34%, #f8fafc 100%)',
+                    background: mobileBackground,
                     fontFamily: "'Inter', -apple-system, sans-serif",
                     color: '#0f172a',
                 }}>
@@ -89,7 +101,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         top: 0,
                         zIndex: 120,
                         paddingTop: 'calc(var(--safe-area-top) + 12px)',
-                        background: 'rgba(248,251,255,0.88)',
+                        background: mobileHeaderBackground,
                         backdropFilter: 'blur(16px)',
                         WebkitBackdropFilter: 'blur(16px)',
                         borderBottom: '1px solid rgba(226,232,240,0.85)',
@@ -102,13 +114,13 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                             padding: '12px 16px 14px',
                         }}>
                             <div style={{ minWidth: 0 }}>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#0ea5e9', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: mobileAccentColor, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                                     {professionIcon} {professionLabel}
                                 </div>
                                 <h1 style={{ margin: '4px 0 0', fontSize: 18, fontWeight: 750, letterSpacing: '-0.03em', color: '#0f172a' }}>
                                     {mobileShell.activeTitle}
                                 </h1>
-                                <div style={{ fontSize: 12.5, color: '#64748b', marginTop: 2 }}>
+                                <div style={{ fontSize: 12.5, color: mobileSubtitleColor, marginTop: 2 }}>
                                     {mobileShell.activeSubtitle || `${userName} • native mobile mode`}
                                 </div>
                             </div>
@@ -149,7 +161,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                         bottom: 0,
                         zIndex: 140,
                         padding: '10px 12px calc(var(--safe-area-bottom) + 10px)',
-                        background: 'rgba(255,255,255,0.94)',
+                        background: mobileNavBackground,
                         backdropFilter: 'blur(20px)',
                         WebkitBackdropFilter: 'blur(20px)',
                         borderTop: '1px solid rgba(226,232,240,0.9)',
@@ -213,7 +225,7 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     }}>
                         {!collapsed && (
                             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <img src="/logos/final logo no lettermy tracksy.png" alt="MyTracksy" style={{ width: 32, height: 32, objectFit: 'contain' }} />
+                                <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ width: 32, height: 32, objectFit: 'contain' }} />
                                 <div>
                                     <div style={{ fontSize: 15, fontWeight: 700, letterSpacing: '-0.02em', lineHeight: 1.2 }}>MyTracksy</div>
                                     <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 500, letterSpacing: '0.04em', textTransform: 'uppercase' as const }}>SaaS Finance</div>
@@ -233,17 +245,60 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                     <nav style={{ flex: 1, padding: '12px 10px', display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
                         {navItems.map(item => (
                             <button key={item.id} onClick={() => onNavChange(item.id)}
-                                className={`sidebar-nav-btn ${activeNav === item.id ? 'active' : ''}`}
-                                style={{ justifyContent: collapsed ? 'center' : 'flex-start', position: 'relative' }}
-                                title={item.label}>
-                                <span style={{ fontSize: '1.15rem', flexShrink: 0, width: 24, textAlign: 'center' }}>{item.icon}</span>
-                                {!collapsed && <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>}
+                                className={`sidebar-nav-btn ${activeNav === item.id ? 'active' : ''}${item.locked ? ' locked' : ''}`}
+                                style={{
+                                    justifyContent: collapsed ? 'center' : 'flex-start',
+                                    position: 'relative',
+                                    opacity: item.locked ? 0.6 : 1,
+                                }}
+                                title={item.locked ? `${item.label} (${item.tierBadge || 'PRO'} required)` : item.label}>
+                                <span style={{ fontSize: '1.15rem', flexShrink: 0, width: 24, textAlign: 'center' }}>
+                                    {item.locked ? '🔒' : item.icon}
+                                </span>
+                                {!collapsed && (
+                                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', flex: 1, display: 'flex', alignItems: 'center', gap: 6 }}>
+                                        {item.label}
+                                        {item.tierBadge && (
+                                            <span style={{
+                                                fontSize: 9,
+                                                fontWeight: 800,
+                                                padding: '1px 6px',
+                                                borderRadius: 4,
+                                                background: item.locked
+                                                    ? 'linear-gradient(135deg, #f59e0b, #f97316)'
+                                                    : 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                                color: item.locked ? '#1e1b4b' : '#fff',
+                                                letterSpacing: '0.05em',
+                                                lineHeight: '14px',
+                                                flexShrink: 0,
+                                            }}>
+                                                {item.tierBadge}
+                                            </span>
+                                        )}
+                                    </span>
+                                )}
+                                {collapsed && item.tierBadge && (
+                                    <span style={{
+                                        position: 'absolute',
+                                        top: 2,
+                                        right: 2,
+                                        fontSize: 7,
+                                        fontWeight: 800,
+                                        padding: '0px 3px',
+                                        borderRadius: 3,
+                                        background: item.locked ? '#f59e0b' : '#6366f1',
+                                        color: item.locked ? '#1e1b4b' : '#fff',
+                                        lineHeight: '12px',
+                                    }}>
+                                        {item.tierBadge}
+                                    </span>
+                                )}
                             </button>
                         ))}
                     </nav>
 
-                    {!collapsed && (
-                        <div style={{ padding: '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    <div style={{ padding: collapsed ? '12px 8px' : '12px 14px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', gap: 6, alignItems: collapsed ? 'center' : 'stretch' }}>
+                        {!collapsed && (
                             <div style={{
                                 display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px',
                                 background: 'rgba(255,255,255,0.04)', borderRadius: 10, marginBottom: 4,
@@ -251,21 +306,45 @@ const DashboardLayout: React.FC<DashboardLayoutProps> = ({
                                 <div style={{
                                     width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    fontSize: 14, fontWeight: 700, color: 'white',
+                                    fontSize: 14, fontWeight: 700, color: 'white', flexShrink: 0,
                                 }}>{userName.charAt(0).toUpperCase()}</div>
                                 <div>
                                     <div style={{ fontSize: 13, fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{userName}</div>
                                     <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.55)', fontWeight: 500 }}>{professionLabel}</div>
                                 </div>
                             </div>
-                            <button onClick={onChangeProfession} className="sidebar-footer-btn">
-                                <span>🔄</span> Change Profession
-                            </button>
-                            <button onClick={onLogout} className="sidebar-footer-btn logout">
-                                <span>🚪</span> Sign Out
-                            </button>
-                        </div>
-                    )}
+                        )}
+                        {collapsed ? (
+                            <>
+                                <div style={{
+                                    width: 32, height: 32, borderRadius: 8, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 13, fontWeight: 700, color: 'white', marginBottom: 4,
+                                }} title={userName}>{userName.charAt(0).toUpperCase()}</div>
+                                <button onClick={onChangeProfession} title="Change Profession" style={{
+                                    width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 14, transition: 'all 0.2s ease',
+                                }}>🔄</button>
+                                <button onClick={onLogout} title="Sign Out" style={{
+                                    width: 32, height: 32, borderRadius: 8, background: 'rgba(255,255,255,0.06)',
+                                    border: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.7)',
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    fontSize: 14, transition: 'all 0.2s ease',
+                                }}>🚪</button>
+                            </>
+                        ) : (
+                            <>
+                                <button onClick={onChangeProfession} className="sidebar-footer-btn">
+                                    <span>🔄</span> Change Profession
+                                </button>
+                                <button onClick={onLogout} className="sidebar-footer-btn logout">
+                                    <span>🚪</span> Sign Out
+                                </button>
+                            </>
+                        )}
+                    </div>
                 </aside>
 
                 <div style={{ flex: 1, display: 'flex', flexDirection: 'column', marginLeft: sidebarWidth, transition: 'margin-left 0.3s cubic-bezier(0.4,0,0.2,1)' }}>

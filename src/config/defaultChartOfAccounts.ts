@@ -126,6 +126,25 @@ const AQUA_ACCOUNTS: DefaultAccount[] = [
     { name: 'Personal Expense', type: 'expense', is_tax_deductible: false },
 ];
 
+// ─── Studios / Photography ─────────────────────────────────────
+
+const STUDIO_ACCOUNTS: DefaultAccount[] = [
+    { name: 'Wedding Package Revenue', type: 'income', is_tax_deductible: false },
+    { name: 'Pre-Shoot Revenue', type: 'income', is_tax_deductible: false },
+    { name: 'Album Delivery Revenue', type: 'income', is_tax_deductible: false },
+    { name: 'Commercial Shoot Revenue', type: 'income', is_tax_deductible: false },
+    { name: 'Drone Operator Payout', type: 'expense', is_tax_deductible: true },
+    { name: 'Second Shooter Payout', type: 'expense', is_tax_deductible: true },
+    { name: 'Lighting Assistant Payout', type: 'expense', is_tax_deductible: true },
+    { name: 'Album Printing', type: 'expense', is_tax_deductible: true },
+    { name: 'Gear Rental', type: 'expense', is_tax_deductible: true },
+    { name: 'Travel to Shoot', type: 'expense', is_tax_deductible: true },
+    { name: 'Camera & Drone Purchase', type: 'expense', is_tax_deductible: true, metadata: { is_capital_item: true } },
+    { name: 'Laptop / Editing Rig', type: 'expense', is_tax_deductible: true, metadata: { is_capital_item: true } },
+    { name: 'Studio Software / Subscriptions', type: 'expense', is_tax_deductible: true },
+    { name: 'Personal Expense', type: 'expense', is_tax_deductible: false },
+];
+
 // ─── Profession → Accounts Map ─────────────────────────────────
 
 const PROFESSION_ACCOUNTS: Record<string, DefaultAccount[]> = {
@@ -141,6 +160,7 @@ const PROFESSION_ACCOUNTS: Record<string, DefaultAccount[]> = {
     travel: GENERIC_ACCOUNTS,
     transportation: TRANSPORT_ACCOUNTS,
     aquaculture: AQUA_ACCOUNTS,
+    studios: STUDIO_ACCOUNTS,
 };
 
 /**

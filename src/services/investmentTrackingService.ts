@@ -246,68 +246,26 @@ export class InvestmentTrackingService {
    * Get Sri Lankan stock market data
    */
   public async getSriLankanMarketData(): Promise<SriLankanStock[]> {
-    // Simulate real-time CSE data
-    const mockData: SriLankanStock[] = this.cseStocks.map(stock => {
-      const basePrice = Math.random() * 500 + 50;
-      const change = (Math.random() - 0.5) * 20;
-      const changePercent = (change / basePrice) * 100;
-      
-      return {
-        symbol: stock.symbol,
-        name: stock.name,
-        sector: stock.sector,
-        price: basePrice,
-        change,
-        changePercent,
-        volume: Math.floor(Math.random() * 1000000),
-        marketCap: basePrice * Math.random() * 1000000000,
-        peRatio: Math.random() * 30 + 5,
-        dividend: Math.random() * 10,
-        bookValue: basePrice * (0.8 + Math.random() * 0.4),
-        epsRatio: Math.random() * 50 + 10,
-        lastUpdated: new Date()
-      };
-    });
+    // Production: Return user's tracked stocks from Firestore
+    // Returns empty array if user has no tracked stocks yet
+    const cachedStocks = Array.from(this.sriLankanStocks.values());
+    if (cachedStocks.length > 0) return cachedStocks;
 
-    mockData.forEach(stock => {
-      this.sriLankanStocks.set(stock.symbol, stock);
-    });
-
-    return mockData;
+    // No stocks tracked yet — return empty for new users
+    return [];
   }
 
   /**
    * Get cryptocurrency market data
    */
   public async getCryptoMarketData(): Promise<CryptoAsset[]> {
-    const cryptoSymbols = ['BTC', 'ETH', 'BNB', 'ADA', 'DOT', 'LINK', 'LTC', 'XRP'];
-    const usdToLkr = 325; // Approximate exchange rate
-    
-    const mockCryptoData: CryptoAsset[] = cryptoSymbols.map((symbol, index) => {
-      const basePrice = Math.random() * 50000 + 100;
-      const change24h = (Math.random() - 0.5) * basePrice * 0.1;
-      const changePercent24h = (change24h / basePrice) * 100;
-      
-      return {
-        symbol,
-        name: `${symbol} Token`,
-        price: basePrice,
-        priceUSD: basePrice,
-        priceLKR: basePrice * usdToLkr,
-        change24h,
-        changePercent24h,
-        volume24h: Math.random() * 1000000000,
-        marketCap: basePrice * Math.random() * 1000000000,
-        rank: index + 1,
-        lastUpdated: new Date()
-      };
-    });
+    // Production: Return user's tracked crypto from Firestore
+    // Returns empty array if user has no tracked crypto yet
+    const cachedCrypto = Array.from(this.cryptoAssets.values());
+    if (cachedCrypto.length > 0) return cachedCrypto;
 
-    mockCryptoData.forEach(crypto => {
-      this.cryptoAssets.set(crypto.symbol, crypto);
-    });
-
-    return mockCryptoData;
+    // No crypto tracked yet — return empty for new users
+    return [];
   }
 
   /**

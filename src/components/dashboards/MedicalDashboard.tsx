@@ -3,6 +3,7 @@ import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
 import InvoiceForm, { InvoiceData } from './InvoiceForm';
+import { useRouteNav } from '../../hooks/useRouteNav';
 import VoiceInput, { ParsedVoiceAction } from '../VoiceInput';
 import PrescriptionPad from '../PrescriptionPad';
 import TaxSpeedometer from '../TaxSpeedometer';
@@ -24,6 +25,8 @@ import {
     subscribeGovIncomeConfig, toCents, fromCents,
 } from '../../services/accountingCoreService';
 import { useIsCompactMobile } from './useIsCompactMobile';
+import { useSubscriptionTier } from '../../hooks/useSubscriptionTier';
+import { isFeatureAccessible, getFeatureTierInfo } from '../../config/featureGating';
 
 interface MedicalDashboardProps {
     userName: string;
@@ -103,58 +106,10 @@ function getMedicalMobileTab(activeNav: string): MedicalMobileTabId {
 // Use GOLDEN_LIST from shared config — legally-grounded tax categories
 const medicalExpenseCategories = GOLDEN_LIST.map(c => ({ name: c.name, icon: c.icon, color: c.color }));
 
-// Sample data — these would come from Firestore in production
-const sampleInvoices: Transaction[] = [
-    { id: '1', type: 'income', amount: 15000, description: 'Consultation — Dr. Perera', category: 'Consultation', date: '2026-03-10', status: 'paid' },
-    { id: '2', type: 'income', amount: 85000, description: 'Surgery — Lanka Hospitals', category: 'Surgery', date: '2026-03-08', status: 'paid' },
-    { id: '3', type: 'income', amount: 25000, description: 'Follow-up — Asiri Hospital', category: 'Follow-up', date: '2026-03-07', status: 'pending' },
-    { id: '4', type: 'income', amount: 45000, description: 'Lab Work — Nawaloka', category: 'Lab Work', date: '2026-03-05', status: 'overdue' },
-];
+// Production-ready: All data comes from Firestore — no hardcoded sample data
+// Empty arrays are used as initial state; Firestore subscriptions populate real data
 
-const sampleExpenses: Transaction[] = [
-    { id: '5', type: 'expense', amount: 12000, description: 'Stethoscope calibration', category: 'Medical Equipment', date: '2026-03-09', status: 'completed' },
-    { id: '6', type: 'expense', amount: 35000, description: 'CME Workshop — Cardiology', category: 'CME / Training', date: '2026-03-06', status: 'completed' },
-    { id: '7', type: 'expense', amount: 8500, description: 'Medical journal subscription', category: 'Medical Subscriptions', date: '2026-03-04', status: 'completed' },
-    { id: '8', type: 'expense', amount: 5200, description: 'Fuel — hospital visits', category: 'Vehicle / Transport', date: '2026-03-03', status: 'completed' },
-];
-
-const sampleBankAccounts = [
-    { id: 'b1', name: 'BOC Savings', bank: 'Bank of Ceylon', balance: 1250000, type: 'savings' },
-    { id: 'b2', name: 'Commercial Current', bank: 'Commercial Bank', balance: 485000, type: 'current' },
-    { id: 'b3', name: 'HNB Fixed Deposit', bank: 'HNB', balance: 2000000, type: 'fixed' },
-];
-
-const sampleCheques = [
-    { id: 'c1', number: 'CHQ-00142', party: 'Lanka Hospitals', amount: 85000, date: '2026-03-15', type: 'received', status: 'pending' },
-    { id: 'c2', number: 'CHQ-00143', party: 'Medical Supplies Ltd', amount: 45000, date: '2026-03-12', type: 'issued', status: 'cleared' },
-    { id: 'c3', number: 'CHQ-00144', party: 'Asiri Hospital', amount: 25000, date: '2026-03-20', type: 'received', status: 'pending' },
-];
-
-const samplePatients = [
-    { id: 'p1', name: 'Kumara Bandara', nic: '891234567V', phone: '077-1234567', age: 37, blood: 'B+', allergies: 'Penicillin', lastVisit: '2026-03-10', visits: 12 },
-    { id: 'p2', name: 'Anoma Wickramasinghe', nic: '952345678V', phone: '071-9876543', age: 31, blood: 'O+', allergies: 'None', lastVisit: '2026-03-08', visits: 5 },
-    { id: 'p3', name: 'Ranjith Fernando', nic: '780987654V', phone: '076-5551234', age: 48, blood: 'A-', allergies: 'Sulfa drugs', lastVisit: '2026-03-05', visits: 23 },
-    { id: 'p4', name: 'Dilani Perera', nic: '880345612V', phone: '070-8887766', age: 38, blood: 'AB+', allergies: 'None', lastVisit: '2026-03-01', visits: 8 },
-    { id: 'p5', name: 'Mohamed Farook', nic: '920567890V', phone: '077-3332211', age: 34, blood: 'O-', allergies: 'Aspirin', lastVisit: '2026-02-28', visits: 3 },
-];
-
-const channelingData = [
-    { id: 'ch1', hospital: 'Asiri Central', day: 'Mon & Thu', time: '4:00 PM – 7:00 PM', fee: 3500, doctorShare: 2500, hospitalShare: 1000, avgPatients: 15 },
-    { id: 'ch2', hospital: 'Lanka Hospitals', day: 'Tue & Fri', time: '5:00 PM – 8:00 PM', fee: 4000, doctorShare: 3000, hospitalShare: 1000, avgPatients: 12 },
-    { id: 'ch3', hospital: 'Nawaloka Hospital', day: 'Wed', time: '6:00 PM – 9:00 PM', fee: 3000, doctorShare: 2200, hospitalShare: 800, avgPatients: 18 },
-    { id: 'ch4', hospital: 'Private Clinic (Nugegoda)', day: 'Sat', time: '9:00 AM – 1:00 PM', fee: 2000, doctorShare: 2000, hospitalShare: 0, avgPatients: 25 },
-];
-
-const appointmentsData = [
-    { id: 'a1', patient: 'Kumara Bandara', type: 'Follow-up', time: '4:00 PM', hospital: 'Asiri Central', date: '2026-03-10', status: 'confirmed' as const },
-    { id: 'a2', patient: 'New Patient', type: 'Consultation', time: '4:30 PM', hospital: 'Asiri Central', date: '2026-03-10', status: 'confirmed' as const },
-    { id: 'a3', patient: 'Ranjith Fernando', type: 'Lab Review', time: '5:15 PM', hospital: 'Asiri Central', date: '2026-03-10', status: 'confirmed' as const },
-    { id: 'a4', patient: 'Dilani Perera', type: 'Consultation', time: '5:00 PM', hospital: 'Lanka Hospitals', date: '2026-03-11', status: 'confirmed' as const },
-    { id: 'a5', patient: 'Mohamed Farook', type: 'Follow-up', time: '5:30 PM', hospital: 'Lanka Hospitals', date: '2026-03-11', status: 'pending' as const },
-    { id: 'a6', patient: 'Walk-in', type: 'Consultation', time: '6:00 PM', hospital: 'Nawaloka Hospital', date: '2026-03-12', status: 'pending' as const },
-    { id: 'a7', patient: 'Anoma Wickramasinghe', type: 'Prescription Renewal', time: '9:30 AM', hospital: 'Private Clinic (Nugegoda)', date: '2026-03-13', status: 'confirmed' as const },
-    { id: 'a8', patient: 'New Patient', type: 'Consultation', time: '10:00 AM', hospital: 'Private Clinic (Nugegoda)', date: '2026-03-13', status: 'pending' as const },
-];
+const channelingData: { id: string; hospital: string; day: string; time: string; fee: number; doctorShare: number; hospitalShare: number; avgPatients: number }[] = [];
 
 const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     userName,
@@ -163,29 +118,33 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 }) => {
     const { currentUser } = useAuth();
     const uid = currentUser?.uid;
+    const subscriptionState = useSubscriptionTier();
 
-    const [activeNav, setActiveNav] = useState('overview');
+    const validNavIds = useMemo(() => navItems.map(n => n.id), []);
+    const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
     const [showInvoiceForm, setShowInvoiceForm] = useState(false);
-    const [invoices, setInvoices] = useState<Transaction[]>(sampleInvoices);
-    const [expenses, setExpenses] = useState<Transaction[]>(sampleExpenses);
+    const [invoices, setInvoices] = useState<Transaction[]>([]);
+    const [expenses, setExpenses] = useState<Transaction[]>([]);
     const [firestoreReady, setFirestoreReady] = useState(false);
     const [showAddExpense, setShowAddExpense] = useState(false);
     const [expenseForm, setExpenseForm] = useState({ description: '', amount: 0, category: GOLDEN_LIST[0].name, date: new Date().toISOString().split('T')[0] });
     const [showGoldenList, setShowGoldenList] = useState(false);
-    const [quickNotes, setQuickNotes] = useState<{ id: string; text: string; time: string; patient?: string; type: string }[]>([
-        { id: 'qn1', text: 'Kumara BP 140/90 — started Losartan 50mg', time: '4:15 PM', patient: 'Kumara Bandara', type: 'vitals' },
-        { id: 'qn2', text: 'Anoma — follow up in 2 weeks for blood sugar', time: '5:30 PM', patient: 'Anoma Wickramasinghe', type: 'follow-up' },
-        { id: 'qn3', text: 'Ranjith — refer to cardiologist Dr. Silva', time: '6:00 PM', patient: 'Ranjith Fernando', type: 'referral' },
-    ]);
+    const [quickNotes, setQuickNotes] = useState<{ id: string; text: string; time: string; patient?: string; type: string }[]>([]);
     const [appointmentStatuses, setAppointmentStatuses] = useState<Record<string, string>>({});
     const [noteText, setNoteText] = useState('');
 
-    // ===== Dual-Income State =====
-    const [govSalary] = useState(185000); // Monthly MoH base salary
-    const [datAllowance] = useState(25000); // DAT allowance
+    // Production state — populated from Firestore, empty by default
+    const [samplePatients, setSamplePatients] = useState<{ id: string; name: string; nic: string; phone: string; age: number; blood: string; allergies: string; lastVisit: string; visits: number }[]>([]);
+    const [sampleBankAccounts, setSampleBankAccounts] = useState<{ id: string; name: string; bank: string; balance: number; type: string }[]>([]);
+    const [sampleCheques, setSampleCheques] = useState<{ id: string; number: string; party: string; amount: number; date: string; type: string; status: string }[]>([]);
+    const [appointmentsData, setAppointmentsData] = useState<{ id: string; patient: string; type: string; time: string; hospital: string; date: string; status: 'confirmed' | 'pending' }[]>([]);
+
+    // ===== Dual-Income State (loaded from Firestore config) =====
+    const [govSalary, setGovSalary] = useState(0);
+    const [datAllowance, setDatAllowance] = useState(0);
     const govMonthly = govSalary + datAllowance;
     const govAnnual = govMonthly * 12;
-    const govAPIT = Math.round(govAnnual * 0.12); // Simplified APIT for demo
+    const govAPIT = govAnnual > 0 ? Math.round(govAnnual * 0.12) : 0;
 
     // ===== AUTO-SEED CHART OF ACCOUNTS =====
     useEffect(() => {
@@ -197,45 +156,40 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 
     // ===== FIRESTORE REAL-TIME SUBSCRIPTIONS (Universal) =====
     useEffect(() => {
-        if (!uid) return; // Demo mode — keep sample data
+        if (!uid) return;
 
         // Subscribe to cleared income from unified transactions
         const unsubIncome = subscribeTransactions(uid, (txns) => {
-            if (txns.length > 0) {
-                setInvoices(txns.map(t => ({
-                    id: t.id || '',
-                    type: 'income' as const,
-                    amount: fromCents(t.amount_cents),
-                    description: t.description,
-                    category: t.category_name || '',
-                    date: t.date,
-                    status: (t.status === 'cleared' ? 'paid' : 'pending') as any,
-                })));
-                setFirestoreReady(true);
-            } else if (!firestoreReady) {
-                setFirestoreReady(true);
-            }
+            setInvoices(txns.map(t => ({
+                id: t.id || '',
+                type: 'income' as const,
+                amount: fromCents(t.amount_cents),
+                description: t.description,
+                category: t.category_name || '',
+                date: t.date,
+                status: (t.status === 'cleared' ? 'paid' : 'pending') as any,
+            })));
+            setFirestoreReady(true);
         }, { type: 'income', status: 'cleared' });
 
         // Subscribe to cleared expenses from unified transactions
         const unsubExpenses = subscribeTransactions(uid, (txns) => {
-            if (txns.length > 0) {
-                setExpenses(txns.map(t => ({
-                    id: t.id || '',
-                    type: 'expense' as const,
-                    amount: fromCents(t.amount_cents),
-                    description: t.description,
-                    category: t.category_name || '',
-                    date: t.date,
-                    status: 'completed',
-                })));
-            }
+            setExpenses(txns.map(t => ({
+                id: t.id || '',
+                type: 'expense' as const,
+                amount: fromCents(t.amount_cents),
+                description: t.description,
+                category: t.category_name || '',
+                date: t.date,
+                status: 'completed',
+            })));
         }, { type: 'expense', status: 'cleared' });
 
         // Subscribe to government income config
         const unsubGov = subscribeGovIncomeConfig(uid, (config) => {
             if (config) {
-                // Could update govSalary/datAllowance states here in future
+                if (config.baseSalary) setGovSalary(config.baseSalary);
+                if (config.datAllowance) setDatAllowance(config.datAllowance);
             }
         });
 
@@ -247,27 +201,37 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     }, [uid]);
 
     // ===== Channeling Payment Tracker State =====
-    const [channelingShifts, setChannelingShifts] = useState<{ id: string; hospital: string; date: string; patients: number; expected: number; status: 'pending' | 'received' | 'overdue'; receivedDate?: string }[]>([
-        { id: 'cs1', hospital: 'Asiri Central', date: '2026-03-08', patients: 14, expected: 35000, status: 'received', receivedDate: '2026-03-10' },
-        { id: 'cs2', hospital: 'Lanka Hospitals', date: '2026-03-07', patients: 10, expected: 30000, status: 'pending' },
-        { id: 'cs3', hospital: 'Nawaloka Hospital', date: '2026-03-05', patients: 18, expected: 39600, status: 'overdue' },
-        { id: 'cs4', hospital: 'Asiri Central', date: '2026-03-01', patients: 16, expected: 40000, status: 'received', receivedDate: '2026-03-04' },
-        { id: 'cs5', hospital: 'Lanka Hospitals', date: '2026-02-28', patients: 12, expected: 36000, status: 'overdue' },
-        { id: 'cs6', hospital: 'Private Clinic (Nugegoda)', date: '2026-03-09', patients: 22, expected: 44000, status: 'pending' },
-    ]);
+    const [channelingShifts, setChannelingShifts] = useState<{ id: string; hospital: string; date: string; patients: number; expected: number; status: 'pending' | 'received' | 'overdue'; receivedDate?: string }[]>([]);
     const [showAddShift, setShowAddShift] = useState(false);
-    const [shiftForm, setShiftForm] = useState({ hospital: channelingData[0].hospital, date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
+    const [shiftForm, setShiftForm] = useState({ hospital: '', date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
 
     const walletData = useTokenWallet(uid || '');
     const isCompactMobile = useIsCompactMobile();
+
+    // ===== SUBSCRIPTION-GATED NAV ITEMS =====
+    // Decorates each nav item with lock state and tier badge based on user's subscription
+    const gatedNavItems = useMemo(() => {
+        return navItems.map(item => {
+            const tierInfo = getFeatureTierInfo(item.id, 'medical');
+            if (!tierInfo) return { ...item, locked: false, tierBadge: '' }; // No gating — available to all
+
+            const accessible = isFeatureAccessible(item.id, subscriptionState.tier, 'medical');
+            return {
+                ...item,
+                locked: !accessible,
+                tierBadge: tierInfo.badge,
+            };
+        });
+    }, [subscriptionState.tier]);
+
     const activeNavItem = useMemo(
-        () => navItems.find(item => item.id === activeNav) || navItems[0],
-        [activeNav]
+        () => gatedNavItems.find(item => item.id === activeNav) || gatedNavItems[0],
+        [activeNav, gatedNavItems]
     );
     const activeMobileTab = useMemo(() => getMedicalMobileTab(activeNav), [activeNav]);
     const activeMobileSections = useMemo(
-        () => MEDICAL_MOBILE_GROUPS[activeMobileTab].map(navId => navItems.find(item => item.id === navId)).filter(Boolean) as typeof navItems,
-        [activeMobileTab]
+        () => MEDICAL_MOBILE_GROUPS[activeMobileTab].map(navId => gatedNavItems.find(item => item.id === navId)).filter(Boolean) as typeof gatedNavItems,
+        [activeMobileTab, gatedNavItems]
     );
 
     useEffect(() => {
@@ -291,6 +255,22 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         return () => window.removeEventListener('popstate', applyShortcutFromLocation);
     }, []);
 
+    // ===== GATED NAVIGATION HANDLER =====
+    // When a locked feature is clicked, redirect to subscription page
+    const [_upgradePromptFeature, setUpgradePromptFeature] = useState<string | null>(null);
+
+    const handleGatedNavChange = (navId: string) => {
+        const gatedItem = gatedNavItems.find(item => item.id === navId);
+        if (gatedItem?.locked) {
+            // Show the subscription page with an upgrade prompt
+            setUpgradePromptFeature(navId);
+            setActiveNav('subscription');
+            return;
+        }
+        setUpgradePromptFeature(null);
+        setActiveNav(navId);
+    };
+
     const handleMobileTabChange = (tabId: string) => {
         const nextTab = tabId as MedicalMobileTabId;
         const currentGroup = MEDICAL_MOBILE_GROUPS[nextTab];
@@ -312,25 +292,28 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             }}>
                 {activeMobileSections.map(item => {
                     const active = activeNav === item.id;
+                    const isLocked = !!(item as any).locked;
                     return (
                         <button
                             key={item.id}
-                            onClick={() => setActiveNav(item.id)}
+                            onClick={() => handleGatedNavChange(item.id)}
                             style={{
                                 border: 'none',
                                 borderRadius: 999,
                                 padding: '9px 14px',
                                 whiteSpace: 'nowrap',
-                                background: active ? 'linear-gradient(135deg, #0ea5e9, #2563eb)' : 'rgba(255,255,255,0.88)',
-                                color: active ? 'white' : '#475569',
+                                background: active ? 'linear-gradient(135deg, #0ea5e9, #2563eb)' : isLocked ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.88)',
+                                color: active ? 'white' : isLocked ? '#b45309' : '#475569',
                                 boxShadow: active ? '0 8px 18px rgba(37,99,235,0.22)' : 'inset 0 0 0 1px rgba(226,232,240,0.92)',
                                 fontSize: 12.5,
                                 fontWeight: active ? 700 : 600,
                                 minHeight: 38,
                                 cursor: 'pointer',
+                                opacity: isLocked ? 0.7 : 1,
                             }}
                         >
-                            {item.icon} {item.label}
+                            {isLocked ? '🔒' : item.icon} {item.label}
+                            {isLocked && <span style={{ fontSize: 9, fontWeight: 800, background: '#f59e0b', color: '#1e1b4b', padding: '0 4px', borderRadius: 3, marginLeft: 4 }}>PRO</span>}
                         </button>
                     );
                 })}
@@ -443,6 +426,19 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const privateAnnual = privateIncome * 12;
     const totalWHT = Math.round(privateAnnual * 0.05);
 
+    // ===== FEATURE GATE WRAPPER =====
+    // Wraps content of pro-only features with a gate that checks subscription
+    const renderFeatureGated = (featureId: string, featureName: string, featureIcon: string, content: React.ReactNode) => {
+        if (!isFeatureAccessible(featureId, subscriptionState.tier, 'medical')) {
+            return (
+                <SubscriptionGate featureName={featureName} featureIcon={featureIcon}>
+                    {content}
+                </SubscriptionGate>
+            );
+        }
+        return <>{content}</>;
+    };
+
     const renderContent = () => {
         switch (activeNav) {
             case 'overview':
@@ -450,7 +446,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             case 'inbox':
                 return <TransactionInbox uid={uid} />;
             case 'briefing':
-                return <MorningBriefing />;
+                return renderFeatureGated('briefing', 'Ward Round AI Briefing', '🌅', <MorningBriefing />);
             case 'voicevault':
                 return (
                     <BiometricGate sectionName="Voice Vault" sectionIcon="🎙️">
@@ -460,9 +456,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     </BiometricGate>
                 );
             case 'scheduler':
-                return <SmartScheduler />;
+                return renderFeatureGated('scheduler', 'Smart Scheduler', '📅', <SmartScheduler />);
             case 'lifeadmin':
-                return <LifeAdmin />;
+                return renderFeatureGated('lifeadmin', 'Life Admin', '📋', <LifeAdmin />);
             case 'today':
                 return renderTodaySchedule();
             case 'quicknotes':
@@ -470,7 +466,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             case 'patients':
                 return renderPatients();
             case 'prescriptions':
-                return <PrescriptionPad />;
+                return renderFeatureGated('prescriptions', 'Prescription Manager', '💊', <PrescriptionPad />);
             case 'channeling':
                 return renderChanneling();
             case 'appointments':
@@ -480,15 +476,15 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             case 'expenses':
                 return <BiometricGate sectionName="Expenses" sectionIcon="💸">{renderExpenses()}</BiometricGate>;
             case 'tax':
-                return <TaxSpeedometer annualPrivateIncome={privateAnnual} annualGovIncome={govAnnual} annualExpenses={totalExpenses * 12} whtDeducted={totalWHT} />;
+                return renderFeatureGated('tax', 'Tax Automation & IRD Filing', '🧾', <TaxSpeedometer annualPrivateIncome={privateAnnual} annualGovIncome={govAnnual} annualExpenses={totalExpenses * 12} whtDeducted={totalWHT} />);
             case 'receipts':
                 return <ReceiptScanner />;
             case 'banking':
                 return renderBanking();
             case 'reports':
-                return renderReports();
+                return renderFeatureGated('reports', 'Advanced Reports', '📊', renderReports());
             case 'export':
-                return <AuditorExport invoices={invoices} expenses={expenses} />;
+                return renderFeatureGated('export', 'Auditor Export', '📤', <AuditorExport invoices={invoices} expenses={expenses} />);
             case 'wallet':
                 return renderWallet();
             case 'settings':
@@ -860,7 +856,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             if (!shiftForm.patients || !shiftForm.expected) return;
             setChannelingShifts(prev => [{ id: `cs-${Date.now()}`, hospital: shiftForm.hospital, date: shiftForm.date, patients: shiftForm.patients, expected: shiftForm.expected, status: 'pending' }, ...prev]);
             setShowAddShift(false);
-            setShiftForm({ hospital: channelingData[0].hospital, date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
+            setShiftForm({ hospital: channelingData.length > 0 ? channelingData[0].hospital : '', date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
         };
 
         const markReceived = (id: string) => setChannelingShifts(prev => prev.map(s => s.id === id ? { ...s, status: 'received' as const, receivedDate: new Date().toISOString().split('T')[0] } : s));
@@ -1049,8 +1045,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 
     /* ========== APPOINTMENTS ========== */
     const renderAppointments = () => {
-        const today = appointmentsData.filter(a => a.date === '2026-03-10');
-        const upcoming = appointmentsData.filter(a => a.date > '2026-03-10');
+        const todayStr = new Date().toISOString().split('T')[0];
+        const today = appointmentsData.filter(a => a.date === todayStr);
+        const upcoming = appointmentsData.filter(a => a.date > todayStr);
         return (
             <div>
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: stackGap, marginBottom: '1.25rem' }}>
@@ -1567,7 +1564,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     )}
                     {!walletData.savedCard && walletData.autoReloadEnabled && (
                         <div style={{ padding: '0.75rem', background: '#fef2f2', borderRadius: 8, fontSize: '0.8rem', color: '#991b1b', border: '1px solid #fecaca' }}>
-                            ⚠️ Link a card first to enable auto-reload. <a href="https://wallet.mytracksy.lk/link-card" target="_blank" rel="noreferrer" style={{ color: '#6366f1', fontWeight: 600 }}>Link now →</a>
+                            ⚠️ Link a card first to enable auto-reload. <a href="https://wallet.mytracksy.lk/link-card" target="_blank" rel="noopener noreferrer" style={{ color: '#6366f1', fontWeight: 600 }}>Link now →</a>
                         </div>
                     )}
                 </div>
@@ -1641,9 +1638,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 professionLabel="Medical Professional"
                 professionIcon="🩺"
                 userName={userName}
-                navItems={navItems}
+                navItems={gatedNavItems}
                 activeNav={activeNav}
-                onNavChange={setActiveNav}
+                onNavChange={handleGatedNavChange}
                 onChangeProfession={onChangeProfession}
                 onLogout={onLogout}
                 tokenBalance={walletData.tokenBalance}

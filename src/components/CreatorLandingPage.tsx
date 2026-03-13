@@ -78,6 +78,11 @@ const CreatorLandingPage: React.FC<CreatorLandingPageProps> = ({ onGetStarted, o
                     backdrop-filter: blur(12px);
                     border: 1px solid rgba(255, 255, 255, 0.1);
                 }
+                @media (max-width: 900px) {
+                    .creator-nav-back { display: none !important; }
+                    .creator-nav-right-full { display: none !important; }
+                    .creator-nav-right-mobile { display: flex !important; }
+                }
             `}</style>
 
             {/* Navigation */}
@@ -91,7 +96,7 @@ const CreatorLandingPage: React.FC<CreatorLandingPageProps> = ({ onGetStarted, o
             }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                        <button onClick={onBack} style={{
+                        <button onClick={onBack} className="creator-nav-back" style={{
                             background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)',
                             borderRadius: '50%', width: 36, height: 36, color: '#fff',
                             display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer'
@@ -102,13 +107,23 @@ const CreatorLandingPage: React.FC<CreatorLandingPageProps> = ({ onGetStarted, o
                             <span style={{ fontSize: 24 }}>🎥</span> MyTracksy <span className="text-gradient">Creator</span>
                         </div>
                     </div>
-                    <div style={{ display: 'flex', gap: 12 }}>
+                    {/* Desktop nav */}
+                    <div className="creator-nav-right-full" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
                         <button onClick={onLogin} style={{
                             background: 'transparent', border: 'none', color: '#a1a1aa', fontWeight: 600,
                             padding: '8px 16px', cursor: 'pointer', transition: 'color 0.2s'
                         }} onMouseOver={e => (e.target as any).style.color = '#fff'} onMouseOut={e => (e.target as any).style.color = '#a1a1aa'}>
                             Log in
                         </button>
+                    </div>
+                    {/* Mobile nav */}
+                    <div className="creator-nav-right-mobile" style={{ display: 'none', alignItems: 'center', gap: 10 }}>
+                        <span onClick={onLogin} style={{ color: '#a1a1aa', fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Sign In</span>
+                        <button onClick={onGetStarted} style={{
+                            background: 'linear-gradient(135deg, #a855f7, #06b6d4)', color: '#fff',
+                            border: 'none', padding: '8px 18px', borderRadius: 99,
+                            fontWeight: 700, fontSize: 13, cursor: 'pointer'
+                        }}>Start Free</button>
                     </div>
                 </div>
             </nav>
@@ -173,8 +188,36 @@ const CreatorLandingPage: React.FC<CreatorLandingPageProps> = ({ onGetStarted, o
                         Start 14-Day Free Trial <span style={{ color: '#22d3ee' }}>→</span>
                     </button>
                     <div style={{ marginTop: 16, fontSize: 13, color: '#71717a' }}>
-                        No credit card required. Cancel anytime.
+                        ✓ No credit card required. Cancel anytime.
                     </div>
+
+                    {/* Inline PWA Install Link */}
+                    <button
+                        onClick={onGetStarted}
+                        style={{
+                            marginTop: 16,
+                            background: 'rgba(168, 85, 247, 0.12)',
+                            border: '1px solid rgba(168, 85, 247, 0.3)',
+                            borderRadius: 99,
+                            padding: '10px 24px',
+                            color: '#d8b4fe',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 8,
+                            transition: 'all 0.3s ease',
+                            fontFamily: 'inherit',
+                        }}
+                        onMouseEnter={e => { e.currentTarget.style.background = 'rgba(168, 85, 247, 0.2)'; }}
+                        onMouseLeave={e => { e.currentTarget.style.background = 'rgba(168, 85, 247, 0.12)'; }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                        </svg>
+                        📲 Free App — Install Now
+                    </button>
                 </div>
             </header>
 

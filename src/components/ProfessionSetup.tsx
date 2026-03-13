@@ -84,6 +84,12 @@ const professions: {
             features: ['Foreign income tracking (USD to LKR)', '5% Sri Lanka Tax Calculator', 'Sponsorship & AdSense tracking', 'Equipment depreciation', 'Production expense management'],
             stats: [{ value: 'Multi', label: 'Currency' }, { value: '5%', label: 'Tax Calc' }, { value: 'Auto', label: 'Tracking' }]
         },
+        {
+            id: 'studios', title: 'Photography Studio', subtitle: 'Wedding Photographers, Production Houses, Freelance Creatives', icon: '📸',
+            gradient: 'linear-gradient(135deg, #1c1917, #b45309)', primaryColor: '#b45309',
+            features: ['Event folio milestone billing', 'Crew & album payout tracking', 'Gear depreciation vault', 'Nekath clash detector', 'AI contracts & client WhatsApp tools'],
+            stats: [{ value: '5', label: 'Milestone flows' }, { value: '20%', label: 'Gear dep.' }, { value: 'AI', label: 'Studio Ops' }]
+        },
     ];
 
 interface ProfessionSetupProps { onProfessionSelected: (profession: ProfessionType) => void; onBackToHome?: () => void; }

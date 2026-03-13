@@ -1,0 +1,87 @@
+{
+  "id": "/studios",
+  "name": "LensTracksy",
+  "short_name": "LensTracksy",
+  "description": "Wedding studio finance OS for milestone billing, crew payouts, gear depreciation, and AI client workflows.",
+  "start_url": "/studios",
+  "scope": "/studios",
+  "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "background_color": "#0c0a09",
+  "theme_color": "#b45309",
+  "orientation": "portrait-primary",
+  "lang": "en-LK",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance", "photography", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Studio Home",
+      "short_name": "Home",
+      "description": "Open the LensTracksy home board",
+      "url": "/studios?action=overview",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Event Folios",
+      "short_name": "Events",
+      "description": "Open event milestone and folio tracking",
+      "url": "/studios?action=folio",
+      "icons": [
+        {
+          "src": "/icons/business-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Gear Vault",
+      "short_name": "Gear",
+      "description": "Open the depreciation and receipt vault",
+      "url": "/studios?action=gear",
+      "icons": [
+        {
+          "src": "/icons/analytics-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "AI Contract",
+      "short_name": "Contract",
+      "description": "Open the AI contract builder",
+      "url": "/studios?action=contracts",
+      "icons": [
+        {
+          "src": "/icons/voice-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}

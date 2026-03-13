@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
+import { useRouteNav } from '../../hooks/useRouteNav';
 
 interface Props { userName: string; onChangeProfession: () => void; onLogout: () => void; }
 
@@ -73,7 +74,8 @@ const cs: React.CSSProperties = { background: 'white', borderRadius: 12, padding
 const ct: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontWeight: 600, color: '#1e293b' };
 
 const TravelDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogout }) => {
-    const [activeNav, setActiveNav] = useState('overview');
+    const validNavIds = useMemo(() => navItems.map(n => n.id), []);
+    const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
     const totI = incomeData.reduce((s, t) => s + t.amount, 0);
     const totE = expenseData.reduce((s, t) => s + t.amount, 0);
 

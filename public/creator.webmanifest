@@ -1,0 +1,100 @@
+{
+  "id": "/creator",
+  "name": "MyTracksy Creator",
+  "short_name": "Creator",
+  "description": "Creator-first assistant for deals, payouts, tax exports, gear tracking, and AI production workflows.",
+  "start_url": "/creator",
+  "scope": "/creator",
+  "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "background_color": "#0f0820",
+  "theme_color": "#a855f7",
+  "orientation": "portrait-primary",
+  "lang": "en-LK",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance", "productivity", "photo", "video"],
+  "shortcuts": [
+    {
+      "name": "Creator Home",
+      "short_name": "Home",
+      "description": "Open the creator home screen",
+      "url": "/creator?action=overview",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Deal CRM",
+      "short_name": "Deals",
+      "description": "Open brand deals and follow-ups",
+      "url": "/creator?action=deals",
+      "icons": [
+        {
+          "src": "/icons/business-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Revenue",
+      "short_name": "Money",
+      "description": "Open creator revenue and payouts",
+      "url": "/creator?action=finance",
+      "icons": [
+        {
+          "src": "/icons/analytics-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Gear Vault",
+      "short_name": "Gear",
+      "description": "Open creator asset tracking",
+      "url": "/creator?action=gear",
+      "icons": [
+        {
+          "src": "/icons/sms-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "AI Studio",
+      "short_name": "AI",
+      "description": "Open creator AI workflows",
+      "url": "/creator?action=ai",
+      "icons": [
+        {
+          "src": "/icons/voice-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}

@@ -117,6 +117,9 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
                     .aqua-grid-4 { grid-template-columns: repeat(2, 1fr); }
                     .aqua-workflow-arrow { transform: rotate(90deg); justify-content: center; }
                     .aqua-voice-btn { width: 100px; height: 100px; }
+                    .aqua-nav-back { display: none !important; }
+                    .aqua-nav-links { display: none !important; }
+                    .aqua-nav-right-mobile { display: flex !important; }
                 }
                 @media (max-width: 480px) {
                     .aqua-grid-4 { grid-template-columns: 1fr; }
@@ -134,19 +137,29 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
                 }}>
                     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', height: 64 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <button onClick={onBack} style={{ background: 'none', border: 'none', color: WHITE, fontSize: 20, cursor: 'pointer', padding: '4px 8px' }}>←</button>
+                            <button onClick={onBack} className="aqua-nav-back" style={{ background: 'none', border: 'none', color: WHITE, fontSize: 20, cursor: 'pointer', padding: '4px 8px' }}>←</button>
                             <span style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 22, color: WHITE }}>
                                 🐟 Aqua<span style={{ color: CYAN_LIGHT }}>Tracksy</span>
                             </span>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+                        {/* Desktop nav links */}
+                        <div className="aqua-nav-links" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                             {['Voice Engine', 'Pond Accounting', 'AI Tokens', 'Pricing'].map((label, i) => (
                                 <button key={label} onClick={() => scrollTo(['voice', 'accounting', 'ai-tokens', 'pricing'][i])}
-                                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.85)', fontSize: 14, cursor: 'pointer', fontWeight: 500, display: window.innerWidth < 768 && i > 1 ? 'none' : 'block' }}>
+                                    style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.85)', fontSize: 14, cursor: 'pointer', fontWeight: 500 }}>
                                     {label}
                                 </button>
                             ))}
                             <button onClick={onLogin} style={{ background: 'none', border: `1px solid ${CYAN}`, color: CYAN_LIGHT, padding: '8px 20px', borderRadius: 8, fontSize: 14, cursor: 'pointer', fontWeight: 600 }}>Sign In</button>
+                        </div>
+                        {/* Mobile compact nav */}
+                        <div className="aqua-nav-right-mobile" style={{ display: 'none', alignItems: 'center', gap: 10 }}>
+                            <span onClick={onLogin} style={{ color: CYAN_LIGHT, fontWeight: 600, fontSize: 14, cursor: 'pointer' }}>Sign In</span>
+                            <button onClick={onGetStarted} style={{
+                                background: `linear-gradient(135deg, ${CYAN}, ${AQUA_GREEN})`, color: WHITE,
+                                border: 'none', padding: '8px 18px', borderRadius: 99,
+                                fontWeight: 700, fontSize: 13, cursor: 'pointer'
+                            }}>Start Free</button>
                         </div>
                     </div>
                 </nav>
@@ -226,6 +239,35 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
                         }}>
                             Start Your 14-Day Free Trial →
                         </button>
+
+                        {/* Inline PWA Install Link */}
+                        <div style={{ marginTop: 20 }}>
+                            <button
+                                onClick={onGetStarted}
+                                style={{
+                                    background: 'rgba(6, 182, 212, 0.12)',
+                                    border: '1px solid rgba(6, 182, 212, 0.3)',
+                                    borderRadius: 99,
+                                    padding: '10px 24px',
+                                    color: CYAN_LIGHT,
+                                    fontSize: 14,
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: 8,
+                                    transition: 'all 0.3s ease',
+                                    fontFamily: FONT_BODY,
+                                }}
+                                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.2)'; }}
+                                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(6, 182, 212, 0.12)'; }}
+                            >
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" />
+                                </svg>
+                                📲 Free App — Install Now
+                            </button>
+                        </div>
                     </div>
                 </section>
 

@@ -9,6 +9,7 @@ export interface ProfessionRouteConfig {
     themeColor: string;
     description: string;
     dedicatedPwa?: boolean;
+    manifestPath?: string;
 }
 
 export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
@@ -21,6 +22,7 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         themeColor: '#0ea5e9',
         description: 'Doctor\'s personal assistant — Schedule, prescriptions, voice notes',
         dedicatedPwa: true,
+        manifestPath: '/medical.webmanifest',
     },
     {
         slug: 'legal',
@@ -30,16 +32,15 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         icon: '⚖️',
         themeColor: '#0f172a',
         description: 'AI-Powered Legal Practice Management for Sri Lankan Attorneys-at-Law',
-        dedicatedPwa: true,
     },
     {
         slug: 'engineering',
         profession: 'engineering',
-        name: 'MyTracksy Engineer',
-        shortName: 'Eng Tracksy',
-        icon: '⚙️',
-        themeColor: '#f59e0b',
-        description: 'Engineering project tracking — Projects, budgets, site logs',
+        name: 'EngiTracksy',
+        shortName: 'EngiTracksy',
+        icon: '🏗️',
+        themeColor: '#f97316',
+        description: 'AI-Powered Project Financial Management for Civil, Mechanical & Electrical Engineers',
     },
     {
         slug: 'business',
@@ -49,6 +50,8 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         icon: '💼',
         themeColor: '#10b981',
         description: 'Business management — Multi-company, invoicing, analytics',
+        dedicatedPwa: true,
+        manifestPath: '/business.webmanifest',
     },
     {
         slug: 'individual',
@@ -123,13 +126,37 @@ export const PROFESSION_ROUTES: ProfessionRouteConfig[] = [
         description: 'Aquaculture — Pond management, harvest tracking, feed logs',
     },
     {
+        slug: 'tourism',
+        profession: 'tourism',
+        name: 'MyTracksy Tourism',
+        shortName: 'Tour Tracksy',
+        icon: '✈️', // Reusing travel icon, or could be a new one like 🗺️
+        themeColor: '#4f46e5', // Indigo from the instruction
+        description: 'Tourism agency — Bookings, commissions, tour packages, multi-currency wallets',
+        dedicatedPwa: true,
+        manifestPath: '/tourism.webmanifest',
+    },
+    {
         slug: 'creator',
         profession: 'creator',
         name: 'MyTracksy Creator',
         shortName: 'Creator Tracksy',
         icon: '🎥',
-        themeColor: '#facc15',
+        themeColor: '#a855f7',
         description: 'Digital Creator — Foreign income tracking, 5% tax calculator, sponsorships',
+        dedicatedPwa: true,
+        manifestPath: '/creator.webmanifest',
+    },
+    {
+        slug: 'studios',
+        profession: 'studios',
+        name: 'LensTracksy',
+        shortName: 'LensTracksy',
+        icon: '📸',
+        themeColor: '#b45309',
+        description: 'Wedding studio finance OS — events, milestones, gear vault, AI client workflows',
+        dedicatedPwa: true,
+        manifestPath: '/studios.webmanifest',
     },
 ];
 
@@ -143,10 +170,53 @@ export function getRouteByProfession(profession: ProfessionType): ProfessionRout
     return PROFESSION_ROUTES.find(r => r.profession === profession);
 }
 
-/** Get slug from current URL path */
+/** Shorthand slug aliases → canonical slug mapping */
+export const SLUG_ALIASES: Record<string, string> = {
+    // Common aliases mapping to primary slugs
+    tutor: 'education',
+    doctor: 'medical',
+    nurse: 'medical',
+    construction: 'engineering',
+    plumber: 'engineering',
+    influencer: 'creator',
+    youtuber: 'creator',
+    blogger: 'creator',
+    photographer: 'studios',
+    photography: 'studios',
+    studio: 'studios',
+    studios: 'studios',
+    wedding: 'studios',
+    lawyer: 'legal',
+    attorney: 'legal',
+    consultant: 'business',
+    'small-business': 'business',
+    fish: 'aquaculture',
+    shrimp: 'aquaculture',
+    crab: 'aquaculture',
+    farmer: 'aquaculture',
+    tourism: 'tourism',
+    travel: 'tourism',
+    guide: 'tourism',
+    agency: 'tourism'
+};
+
+/** Get slug from current URL path (supports shorthand aliases) */
 export function getSlugFromPath(): string | null {
     const path = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
     if (!path) return null;
-    const route = PROFESSION_ROUTES.find(r => r.slug === path);
-    return route ? route.slug : null;
+    // Extract first segment only (e.g. /medical/income → 'medical')
+    const firstSegment = path.split('/')[0];
+    // Check direct match first
+    const directRoute = PROFESSION_ROUTES.find(r => r.slug === firstSegment);
+    if (directRoute) return directRoute.slug;
+    // Check shorthand alias
+    const canonical = SLUG_ALIASES[firstSegment];
+    if (canonical) return canonical;
+    return null;
+}
+
+/** Extract the sub-path (nav section) from the URL: /medical/income → 'income' */
+export function getSubPathFromURL(): string | null {
+    const parts = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase().split('/');
+    return parts[1] || null;
 }

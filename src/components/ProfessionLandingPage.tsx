@@ -7,6 +7,8 @@ import LawyerLandingPage from './LawyerLandingPage';
 import EngineerLandingPage from './EngineerLandingPage';
 import BizTracksyLanding from './BizTracksyLanding';
 import AquaLandingPage from './AquaLandingPage';
+import LensTracksyLanding from './LensTracksyLanding';
+import { TourTracksyLanding } from './TourTracksyLanding';
 
 interface ProfessionLandingPageProps {
     slug: string;
@@ -224,37 +226,7 @@ const professionContent: Record<string, {
         testimonialAuthor: 'Nadeesha F., Software Engineer — Colombo',
     },
 };
-const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onGetStarted, onLogin, onBack }) => {
-    // Doctor gets a fully custom landing page
-    if (slug === 'medical') {
-        return <DoctorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
-    }
-
-    // Creator gets a fully custom landing page
-    if (slug === 'creator') {
-        return <CreatorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
-    }
-
-    // Lawyer gets a fully custom landing page (LexTracksy)
-    if (slug === 'legal') {
-        return <LawyerLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
-    }
-
-    // Business gets a fully custom landing page (BizTracksy)
-    if (slug === 'business') {
-        return <BizTracksyLanding onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
-    }
-
-    // Engineer gets a fully custom landing page (EngiTracksy)
-    if (slug === 'engineering') {
-        return <EngineerLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
-    }
-
-    // Aquaculture gets a fully custom landing page (AquaTracksy)
-    if (slug === 'aquaculture') {
-        return <AquaLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
-    }
-
+const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onGetStarted, onLogin, onBack }) => {
     const [mounted, setMounted] = useState(false);
     const [openFaq, setOpenFaq] = useState<number | null>(null);
     const [navSolid, setNavSolid] = useState(false);
@@ -279,7 +251,72 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
 
     const route = PROFESSION_ROUTES.find(r => r.slug === slug);
     const content = professionContent[slug];
-    if (slug !== 'medical' && (!route || !content)) return <div style={{ padding: 100, textAlign: 'center' }}>Profession not found. <button onClick={onBack}>Go Back</button></div>;
+    if (slug === 'studios') {
+        return <LensTracksyLanding onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+    if (slug !== 'medical' && (!route || !content)) {
+        return (
+            <div style={{
+                minHeight: '100vh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: '#f8fafc',
+                padding: '2rem',
+                fontFamily: 'system-ui, -apple-system, sans-serif'
+            }}>
+                <div style={{
+                    background: '#ffffff',
+                    padding: '3rem',
+                    borderRadius: '1.5rem',
+                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+                    maxWidth: '480px',
+                    width: '100%',
+                    textAlign: 'center'
+                }}>
+                    <div style={{
+                        width: '80px',
+                        height: '80px',
+                        background: '#fee2e2',
+                        color: '#ef4444',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '2rem',
+                        margin: '0 auto 1.5rem'
+                    }}>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                    </div>
+                    <h1 style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', marginBottom: '1rem' }}>Page Not Found</h1>
+                    <p style={{ color: '#475569', fontSize: '1.125rem', marginBottom: '2rem', lineHeight: 1.6 }}>
+                        The profession <strong>"{slug}"</strong> doesn't exist or isn't available yet.
+                    </p>
+                    <button
+                        onClick={onBack}
+                        style={{
+                            padding: '0.875rem 2rem',
+                            background: '#0ea5e9',
+                            color: '#ffffff',
+                            border: 'none',
+                            borderRadius: '0.75rem',
+                            fontWeight: '600',
+                            fontSize: '1rem',
+                            cursor: 'pointer',
+                            transition: 'all 0.2s',
+                            width: '100%',
+                            boxShadow: '0 4px 6px -1px rgba(14, 165, 233, 0.3)'
+                        }}
+                        onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                        onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                    >
+                        Go Back Home
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     const color = route?.themeColor || '#10b981';
     const routeName = route?.name || 'MyTracksy';
@@ -689,14 +726,48 @@ const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ slug, onG
                         <div>© 2026 MyTracksy. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: color, textDecoration: 'none', fontWeight: 700 }}>SafeNetCreations</a></div>
                         <div style={{ display: 'flex', gap: 16 }}>
                             <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>All Professions</button>
-                            <a href="#" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Privacy</a>
-                            <a href="#" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Terms</a>
+                            <a href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Privacy</a>
+                            <a href="/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Terms</a>
                         </div>
                     </div>
                 </footer>
             </div>
         </>
     );
+};
+
+const ProfessionLandingPage: React.FC<ProfessionLandingPageProps> = (props) => {
+    const { slug, onGetStarted, onLogin, onBack } = props;
+
+    if (slug === 'medical') {
+        return <DoctorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    if (slug === 'creator') {
+        return <CreatorLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    if (slug === 'legal') {
+        return <LawyerLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    if (slug === 'business') {
+        return <BizTracksyLanding onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    if (slug === 'engineering') {
+        return <EngineerLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    if (slug === 'aquaculture') {
+        return <AquaLandingPage onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    if (slug === 'tourism' || slug === 'travel') {
+        return <TourTracksyLanding onGetStarted={onGetStarted} onLogin={onLogin} onBack={onBack} />;
+    }
+
+    return <GenericProfessionLandingPage {...props} />;
 };
 
 export default ProfessionLandingPage;

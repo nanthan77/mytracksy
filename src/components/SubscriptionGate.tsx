@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
+import { getPricingForProfession, PAYWALL_ANCHORS } from '../config/pricingConfig';
+import { ProfessionType } from '../contexts/AuthContext';
 
 interface SubscriptionGateProps {
     children: React.ReactNode;
@@ -176,6 +178,18 @@ const styles: Record<string, React.CSSProperties> = {
     },
 };
 
+/** Detect current profession from localStorage */
+function detectProfession(): ProfessionType {
+    try {
+        const stored = localStorage.getItem('myTracksyProfession');
+        if (stored) {
+            const data = JSON.parse(stored);
+            if (data.profession) return data.profession as ProfessionType;
+        }
+    } catch { }
+    return 'individual';
+}
+
 export default function SubscriptionGate({ children, featureName = 'AI Voice Vault', featureIcon = '🎙️' }: SubscriptionGateProps) {
     const { currentUser } = useAuth();
     const [loading, setLoading] = useState(true);
@@ -183,6 +197,10 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
     const [quotaUsed, setQuotaUsed] = useState(0);
     const [showPaywall, setShowPaywall] = useState(false);
     const [activating, setActivating] = useState(false);
+    const profession = detectProfession();
+    const pricing = getPricingForProfession(profession);
+    const proTier = pricing.tiers.find(t => t.tierKey === 'pro');
+    const anchorText = PAYWALL_ANCHORS[profession] || '💡 Less than your daily coffee';
 
     useEffect(() => {
         if (!currentUser?.uid) {
@@ -322,19 +340,19 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
                 <div style={styles.priceSection}>
                     <div style={styles.priceRow}>
                         <span style={styles.priceLabel}>Monthly</span>
-                        <span style={styles.priceAmount}>LKR 2,900/mo</span>
+                        <span style={styles.priceAmount}>LKR {(proTier?.monthlyPrice || 2900).toLocaleString()}/mo</span>
                     </div>
                     <div style={styles.priceRowBest}>
                         <span style={styles.priceLabel}>
                             Annual
-                            <span style={styles.saveBadge}>SAVE 28%</span>
+                            <span style={styles.saveBadge}>SAVE {proTier ? Math.round((1 - proTier.annualPrice / (proTier.monthlyPrice * 12)) * 100) : 28}%</span>
                         </span>
-                        <span style={styles.priceAmount}>LKR 25,000/yr</span>
+                        <span style={styles.priceAmount}>LKR {(proTier?.annualPrice || 25000).toLocaleString()}/yr</span>
                     </div>
                 </div>
 
                 <p style={styles.anchor}>
-                    💡 Less than ONE patient consultation per month
+                    {anchorText}
                 </p>
 
                 <div style={styles.taxBadge}>

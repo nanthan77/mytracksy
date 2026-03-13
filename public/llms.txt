@@ -1,0 +1,34 @@
+# MyTracksy
+
+MyTracksy is a Sri Lankan profession-specific finance and operations platform.
+
+Canonical site: https://mytracksy.lk/
+
+## Public pages
+- Home: https://mytracksy.lk/
+- Medical landing page: https://mytracksy.lk/medical
+- Legal landing page: https://mytracksy.lk/legal
+- Engineering landing page: https://mytracksy.lk/engineering
+- Business landing page: https://mytracksy.lk/business
+- Individual landing page: https://mytracksy.lk/individual
+- Trading landing page: https://mytracksy.lk/trading
+- Automotive landing page: https://mytracksy.lk/automotive
+- Marketing landing page: https://mytracksy.lk/marketing
+- Travel landing page: https://mytracksy.lk/travel
+- Transportation landing page: https://mytracksy.lk/transportation
+- Retail landing page: https://mytracksy.lk/retail
+- Aquaculture landing page: https://mytracksy.lk/aquaculture
+- Creator landing page: https://mytracksy.lk/creator
+- LensTracksy studios landing page: https://mytracksy.lk/studios
+
+## Focus
+- Profession-specific workflows for Sri Lankan users
+- Mobile-friendly PWA experience
+- Income, expenses, reporting, and tax-ready exports
+- Medical workflow support for doctors and clinics
+- Photography studio workflows for wedding and commercial teams
+
+## Crawl guidance
+- Prefer canonical URLs on the `mytracksy.lk` domain.
+- Public landing pages can be indexed and summarized.
+- Admin and internal login utility pages are not public documentation targets.

@@ -2,12 +2,24 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
+const DIST_ROOT = path.resolve(__dirname, 'dist');
+
 const server = http.createServer((req, res) => {
-  let filePath = path.join(__dirname, 'dist', req.url === '/' ? 'index.html' : req.url);
-  
+  // ── Security: sanitise URL to prevent path traversal (C6) ──
+  const urlPath = req.url.split('?')[0]; // strip query string
+  const safePath = path.normalize(urlPath).replace(/^(\.\.[\/\\])+/, '');
+  let filePath = path.join(DIST_ROOT, safePath === '/' ? 'index.html' : safePath);
+
+  // Verify resolved path stays inside dist/
+  if (!filePath.startsWith(DIST_ROOT)) {
+    res.writeHead(403, { 'Content-Type': 'text/plain' });
+    res.end('Forbidden');
+    return;
+  }
+
   // Check if file exists
   if (!fs.existsSync(filePath)) {
-    filePath = path.join(__dirname, 'dist', 'index.html'); // Fallback to index.html for SPA
+    filePath = path.join(DIST_ROOT, 'index.html'); // Fallback to index.html for SPA
   }
   
   const extname = String(path.extname(filePath)).toLowerCase();

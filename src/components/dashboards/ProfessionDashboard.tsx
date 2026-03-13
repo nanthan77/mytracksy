@@ -13,6 +13,7 @@ import TransportationDashboard from './TransportationDashboard';
 import RetailDashboard from './RetailDashboard';
 import AquacultureDashboard from './AquacultureDashboard';
 import CreatorDashboard from '../CreatorDashboard';
+import StudiosDashboard from './StudiosDashboard';
 
 interface ProfessionDashboardProps {
     profession: ProfessionType;
@@ -106,6 +107,7 @@ const ProfessionDashboard: React.FC<ProfessionDashboardProps> = ({
             );
 
         case 'travel':
+        case 'tourism': // TourTracksy uses the robust Travel Dashboard
             return (
                 <TravelDashboard
                     userName={userName}
@@ -144,7 +146,15 @@ const ProfessionDashboard: React.FC<ProfessionDashboardProps> = ({
         case 'creator':
             return (
                 <CreatorDashboard
-                    sidebarCollapsed={false}
+                    userName={userName}
+                    onChangeProfession={onChangeProfession}
+                    onLogout={onLogout}
+                />
+            );
+
+        case 'studios':
+            return (
+                <StudiosDashboard
                     userName={userName}
                     onChangeProfession={onChangeProfession}
                     onLogout={onLogout}
@@ -184,6 +194,7 @@ const professionMeta: Record<string, { icon: string; label: string; color: strin
     transportation: { icon: '🚛', label: 'Transportation', color: '#f97316' },
     retail: { icon: '🏪', label: 'Retail', color: '#a855f7' },
     aquaculture: { icon: '🐟', label: 'Aquaculture', color: '#0ea5e9' },
+    studios: { icon: '📸', label: 'Photography Studio', color: '#b45309' },
 };
 
 const ComingSoonDashboard: React.FC<ComingSoonProps> = ({

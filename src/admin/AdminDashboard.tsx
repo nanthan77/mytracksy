@@ -18,6 +18,7 @@ interface AdminStats {
     freeUsers: number;
     totalVoiceNotesThisMonth: number;
     mrr: number;
+    professionBreakdown: Record<string, number>;
 }
 
 export default function AdminDashboard() {
@@ -31,7 +32,8 @@ export default function AdminDashboard() {
             try {
                 const usersSnap = await getDocs(collection(db, 'users'));
                 let totalUsers = 0, activeUsers = 0, pendingVerification = 0;
-                let suspendedUsers = 0, proUsers = 0, totalVoiceNotes = 0;
+                let suspendedUsers = 0, proUsers = 0, totalVoiceNotes = 0, mrr = 0;
+                const professionBreakdown: Record<string, number> = {};
 
                 for (const userDoc of usersSnap.docs) {
                     totalUsers++;
@@ -40,9 +42,19 @@ export default function AdminDashboard() {
                     else if (data.status === 'pending_verification') pendingVerification++;
                     else if (data.status === 'suspended') suspendedUsers++;
 
-                    // Check subscription
+                    // Track profession breakdown
+                    const prof = data.profession || 'individual';
+                    professionBreakdown[prof] = (professionBreakdown[prof] || 0) + 1;
+
+                    // Check subscription & compute MRR dynamically
                     const subSnap = await getDoc(doc(db, `users/${userDoc.id}/subscription/current`));
-                    if (subSnap.exists() && subSnap.data()?.tier === 'pro') proUsers++;
+                    if (subSnap.exists()) {
+                        const subData = subSnap.data();
+                        if (subData?.status === 'active' && subData?.tier !== 'free') {
+                            proUsers++;
+                            mrr += (subData.amount_cents || 290000) / 100;
+                        }
+                    }
 
                     // Count voice notes
                     const quotaSnap = await getDoc(doc(db, `users/${userDoc.id}/usage_quotas/current_month`));
@@ -59,7 +71,8 @@ export default function AdminDashboard() {
                     proUsers,
                     freeUsers: activeUsers - proUsers,
                     totalVoiceNotesThisMonth: totalVoiceNotes,
-                    mrr: proUsers * 2900,
+                    mrr: mrr || proUsers * 2900,
+                    professionBreakdown,
                 });
             } catch (err) {
                 console.error('Stats fetch error:', err);
@@ -147,6 +160,33 @@ export default function AdminDashboard() {
                 ))}
             </div>
 
+            {/* Profession Breakdown */}
+            <h2 style={s.sectionTitle}>👥 Users by Profession</h2>
+            <div style={{ ...s.card, padding: '1rem', marginBottom: '2rem' }}>
+                {Object.entries(stats?.professionBreakdown || {}).length === 0 ? (
+                    <p style={{ color: '#64748b', fontSize: '0.8rem', textAlign: 'center', padding: '1rem' }}>
+                        No users registered yet
+                    </p>
+                ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', gap: '0.5rem' }}>
+                        {Object.entries(stats?.professionBreakdown || {})
+                            .sort(([, a], [, b]) => b - a)
+                            .map(([prof, count]) => (
+                                <div key={prof} style={{
+                                    background: 'rgba(99,102,241,0.1)',
+                                    borderRadius: '0.5rem',
+                                    padding: '0.6rem',
+                                    textAlign: 'center',
+                                    border: '1px solid rgba(139,92,246,0.2)',
+                                }}>
+                                    <div style={{ color: '#fff', fontSize: '1.25rem', fontWeight: 700 }}>{count}</div>
+                                    <div style={{ color: '#94a3b8', fontSize: '0.7rem', textTransform: 'capitalize' as const }}>{prof}</div>
+                                </div>
+                            ))}
+                    </div>
+                )}
+            </div>
+
             <h2 style={s.sectionTitle}>📝 Recent Admin Actions</h2>
             <div style={{ ...s.card, padding: '1rem' }}>
                 {recentAudit.length === 0 ? (
@@ -157,7 +197,7 @@ export default function AdminDashboard() {
                     recentAudit.map((log: any) => (
                         <div key={log.id} style={s.auditRow}>
                             <span style={{ color: '#c7d2fe' }}>
-                                {log.action === 'approve_doctor' && '✅ Doctor Approved'}
+                                {log.action === 'approve_doctor' && '✅ User Approved'}
                                 {log.action === 'suspend_user' && '🚫 User Suspended'}
                                 {log.action === 'override_subscription' && `🔄 Sub Override → ${log.new_tier}`}
                             </span>

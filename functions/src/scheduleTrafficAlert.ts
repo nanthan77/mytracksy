@@ -9,8 +9,7 @@
  * On event delete or update with alert disabled, cancels the existing task.
  */
 
-import { onDocumentCreated, onDocumentUpdated, onDocumentDeleted } from "firebase-functions/v2/firestore";
-import { logger } from "firebase-functions/v2";
+import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 import { CloudTasksClient, protos } from "@google-cloud/tasks";
 
@@ -38,7 +37,7 @@ async function enqueueTrafficTask(
 
     // Don't schedule tasks in the past
     if (taskFireTime <= now) {
-        logger.info(`⏭️ Event ${eventId} starts too soon for traffic alert, skipping.`);
+        functions.logger.info(`⏭️ Event ${eventId} starts too soon for traffic alert, skipping.`);
         return null;
     }
 
@@ -70,12 +69,12 @@ async function enqueueTrafficTask(
     try {
         const [response] = await tasksClient.createTask({ parent, task });
         const taskName = response.name || "";
-        logger.info(`📋 Enqueued task: ${taskName} (fires at ${taskFireTime.toISOString()})`);
+        functions.logger.info(`📋 Enqueued task: ${taskName} (fires at ${taskFireTime.toISOString()})`);
         return taskName;
     } catch (err: any) {
         // Task might already exist (duplicate protection)
         if (err.code === 6) { // ALREADY_EXISTS
-            logger.info(`Task already exists for ${eventId}, skipping.`);
+            functions.logger.info(`Task already exists for ${eventId}, skipping.`);
             return `${parent}/tasks/traffic-${userId}-${eventId}`;
         }
         throw err;
@@ -88,12 +87,12 @@ async function cancelTrafficTask(taskId: string): Promise<void> {
     if (!taskId) return;
     try {
         await tasksClient.deleteTask({ name: taskId });
-        logger.info(`🗑️ Cancelled task: ${taskId}`);
+        functions.logger.info(`🗑️ Cancelled task: ${taskId}`);
     } catch (err: any) {
         if (err.code === 5) {  // NOT_FOUND — task already executed or gone
-            logger.info(`Task ${taskId} already gone, ignoring.`);
+            functions.logger.info(`Task ${taskId} already gone, ignoring.`);
         } else {
-            logger.error(`Failed to cancel task ${taskId}:`, err);
+            functions.logger.error(`Failed to cancel task ${taskId}:`, err);
         }
     }
 }
@@ -108,27 +107,23 @@ function getWorkerUrl(): string {
 //  ON CREATE — New schedule event
 // ═══════════════════════════════════════════════════════════════
 
-export const onScheduleEventCreated = onDocumentCreated(
-    {
-        document: "users/{userId}/schedule/{eventId}",
-        region: "asia-south1",
-        memory: "256MiB",
-    },
-    async (event) => {
-        const snap = event.data;
-        if (!snap) return;
+export const onScheduleEventCreated = functions
+    .region("asia-south1")
+    .firestore.document("users/{userId}/schedule/{eventId}")
+    .onCreate(async (snap, context) => {
+        if (!snap.exists) return;
 
         const data = snap.data();
-        const userId = event.params.userId;
-        const eventId = event.params.eventId;
+        const userId = context.params.userId;
+        const eventId = context.params.eventId;
 
         if (!data.requires_traffic_alert) {
-            logger.info(`No traffic alert needed for ${eventId}`);
+            functions.logger.info(`No traffic alert needed for ${eventId}`);
             return;
         }
 
         if (!data.origin_lat_lng || !data.destination_lat_lng) {
-            logger.warn(`Missing coordinates for ${eventId}, skipping traffic alert`);
+            functions.logger.warn(`Missing coordinates for ${eventId}, skipping traffic alert`);
             return;
         }
 
@@ -138,26 +133,22 @@ export const onScheduleEventCreated = onDocumentCreated(
             // Save task ID so we can cancel it if the event changes
             await snap.ref.update({ cloud_task_id: taskName });
         }
-    }
-);
+    });
 
 // ═══════════════════════════════════════════════════════════════
 //  ON UPDATE — Schedule event modified
 // ═══════════════════════════════════════════════════════════════
 
-export const onScheduleEventUpdated = onDocumentUpdated(
-    {
-        document: "users/{userId}/schedule/{eventId}",
-        region: "asia-south1",
-        memory: "256MiB",
-    },
-    async (event) => {
-        const before = event.data?.before?.data();
-        const after = event.data?.after?.data();
+export const onScheduleEventUpdated = functions
+    .region("asia-south1")
+    .firestore.document("users/{userId}/schedule/{eventId}")
+    .onUpdate(async (change, context) => {
+        const before = change.before.data();
+        const after = change.after.data();
         if (!before || !after) return;
 
-        const userId = event.params.userId;
-        const eventId = event.params.eventId;
+        const userId = context.params.userId;
+        const eventId = context.params.eventId;
 
         // Cancel the old task first
         if (before.cloud_task_id) {
@@ -168,32 +159,27 @@ export const onScheduleEventUpdated = onDocumentUpdated(
         if (after.requires_traffic_alert && after.origin_lat_lng && after.destination_lat_lng) {
             const taskName = await enqueueTrafficTask(userId, eventId, after, getWorkerUrl());
             if (taskName) {
-                await event.data!.after.ref.update({ cloud_task_id: taskName });
+                await change.after.ref.update({ cloud_task_id: taskName });
             }
         } else {
-            await event.data!.after.ref.update({ cloud_task_id: admin.firestore.FieldValue.delete() });
+            await change.after.ref.update({ cloud_task_id: admin.firestore.FieldValue.delete() });
         }
-    }
-);
+    });
 
 // ═══════════════════════════════════════════════════════════════
 //  ON DELETE — Schedule event removed
 // ═══════════════════════════════════════════════════════════════
 
-export const onScheduleEventDeleted = onDocumentDeleted(
-    {
-        document: "users/{userId}/schedule/{eventId}",
-        region: "asia-south1",
-        memory: "256MiB",
-    },
-    async (event) => {
-        const data = event.data?.data();
+export const onScheduleEventDeleted = functions
+    .region("asia-south1")
+    .firestore.document("users/{userId}/schedule/{eventId}")
+    .onDelete(async (snap, context) => {
+        const data = snap.data();
         if (!data) return;
 
         if (data.cloud_task_id) {
             await cancelTrafficTask(data.cloud_task_id);
         }
 
-        logger.info(`🗑️ Cleaned up schedule event ${event.params.eventId}`);
-    }
-);
+        functions.logger.info(`🗑️ Cleaned up schedule event ${context.params.eventId}`);
+    });

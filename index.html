@@ -2,8 +2,24 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com https://www.google.com https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net wss://*.firebaseio.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.google-analytics.com https://firebase.googleapis.com; frame-src https://accounts.google.com https://www.google.com https://*.firebaseapp.com; media-src 'self' blob:; worker-src 'self' blob:;" />
+    <meta http-equiv="X-DNS-Prefetch-Control" content="off" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
     <meta name="description" content="MyTracksy — Professional finance management for Sri Lankan businesses. Track income, expenses, and grow smarter." />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="MyTracksy" />
+    <meta property="og:title" content="MyTracksy — Professional Finance Management" />
+    <meta property="og:description" content="Professional finance management for Sri Lankan businesses. Track income, expenses, and grow smarter." />
+    <meta property="og:url" content="https://mytracksy.lk/" />
+    <meta property="og:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+    <meta property="og:image:alt" content="MyTracksy logo" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="MyTracksy — Professional Finance Management" />
+    <meta name="twitter:description" content="Professional finance management for Sri Lankan businesses. Track income, expenses, and grow smarter." />
+    <meta name="twitter:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+    <link rel="canonical" href="https://mytracksy.lk/" />
 
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#1a237e" />
@@ -17,17 +33,157 @@
     <meta name="format-detection" content="telephone=no" />
 
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.json" />
+    <script>
+      (function () {
+        const fullPath = window.location.pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+        const path = fullPath.split('/')[0]; // Extract first segment only (e.g. medical/income → medical)
+        const slugAliases = {
+          dr: 'medical',
+          lawyer: 'legal',
+          engineer: 'engineering',
+          biz: 'business',
+          personal: 'individual',
+          trader: 'trading',
+          auto: 'automotive',
+          transport: 'transportation',
+          aqua: 'aquaculture',
+        };
+        const slug = slugAliases[path] || path;
+        const routeMeta = {
+          medical: {
+            title: 'MyTracksy Medical | Clinic, Tax & Practice Management for Sri Lankan Doctors',
+            description: 'MyTracksy Medical helps Sri Lankan doctors manage clinic income, channeling, expenses, voice notes, and IRD-ready tax workflows from one fast PWA.',
+            url: 'https://mytracksy.lk/medical',
+            image: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            manifestPath: '/medical.webmanifest',
+            themeColor: '#0ea5e9',
+            applicationName: 'MyTracksy Doctor',
+            appleTitle: 'Dr Tracksy'
+          },
+          legal: {
+            title: 'LexTracksy | Financial Software for Sri Lankan Legal Professionals',
+            description: 'LexTracksy helps Sri Lankan legal professionals manage billing, expenses, ledgers, tax-ready exports, and practice workflows in one app.',
+            url: 'https://mytracksy.lk/legal',
+            image: 'https://mytracksy.lk/logos/mytracksy-logo.png'
+          },
+          engineering: {
+            title: 'EngiTracksy | Financial Software for Sri Lankan Engineering Professionals',
+            description: 'EngiTracksy helps Sri Lankan engineers manage project finance, expenses, reporting, and tax-ready exports in one fast workspace.',
+            url: 'https://mytracksy.lk/engineering',
+            image: 'https://mytracksy.lk/logos/mytracksy-logo.png'
+          },
+          business: {
+            title: 'MyTracksy Business | Financial Software for Sri Lankan Businesses',
+            description: 'MyTracksy Business helps Sri Lankan companies manage invoicing, expenses, reporting, and operating workflows from one dashboard.',
+            url: 'https://mytracksy.lk/business',
+            image: 'https://mytracksy.lk/logos/mytracksy-logo.png'
+          },
+          individual: {
+            title: 'MyTracksy Personal | Personal Finance Software for Sri Lankan Users',
+            description: 'MyTracksy Personal helps Sri Lankan users track income, expenses, budgets, and savings goals in one mobile-friendly app.',
+            url: 'https://mytracksy.lk/individual',
+            image: 'https://mytracksy.lk/assets/professions/profession_personal_1773215331363.png'
+          },
+          trading: {
+            title: 'MyTracksy Trader | Financial Software for Sri Lankan Trading Businesses',
+            description: 'MyTracksy Trader helps Sri Lankan traders manage income, stock, margins, expenses, and tax-ready reporting in one app.',
+            url: 'https://mytracksy.lk/trading',
+            image: 'https://mytracksy.lk/assets/professions/profession_trader_1773215186011.png'
+          },
+          automotive: {
+            title: 'MyTracksy Auto | Financial Software for Sri Lankan Automotive Workshops',
+            description: 'MyTracksy Auto helps Sri Lankan garages and workshops manage jobs, billing, parts, expenses, and reports in one app.',
+            url: 'https://mytracksy.lk/automotive',
+            image: 'https://mytracksy.lk/assets/professions/profession_auto_1773215201791.png'
+          },
+          marketing: {
+            title: 'MyTracksy Marketing | Financial Software for Sri Lankan Agencies',
+            description: 'MyTracksy Marketing helps Sri Lankan agencies manage campaigns, client billing, expenses, and reporting from one workspace.',
+            url: 'https://mytracksy.lk/marketing',
+            image: 'https://mytracksy.lk/assets/professions/profession_marketing_1773215238062.png'
+          },
+          travel: {
+            title: 'MyTracksy Travel | Financial Software for Sri Lankan Travel Businesses',
+            description: 'MyTracksy Travel helps Sri Lankan travel businesses manage bookings, commissions, expenses, and reports in one app.',
+            url: 'https://mytracksy.lk/travel',
+            image: 'https://mytracksy.lk/assets/professions/profession_travel_1773215259443.png'
+          },
+          transportation: {
+            title: 'MyTracksy Transport | Financial Software for Sri Lankan Fleet Businesses',
+            description: 'MyTracksy Transport helps Sri Lankan transport operators manage trips, fuel, expenses, payroll, and reporting in one app.',
+            url: 'https://mytracksy.lk/transportation',
+            image: 'https://mytracksy.lk/assets/professions/profession_transport_1773215278251.png'
+          },
+          retail: {
+            title: 'MyTracksy Retail | Financial Software for Sri Lankan Retail Businesses',
+            description: 'MyTracksy Retail helps Sri Lankan retailers manage sales, stock, expenses, supplier payments, and reporting in one app.',
+            url: 'https://mytracksy.lk/retail',
+            image: 'https://mytracksy.lk/assets/professions/profession_retail_1773215293921.png'
+          },
+          aquaculture: {
+            title: 'MyTracksy Aqua | Financial Software for Sri Lankan Aquaculture Businesses',
+            description: 'MyTracksy Aqua helps Sri Lankan aquaculture operators manage pond costs, harvest revenue, expenses, and reports in one app.',
+            url: 'https://mytracksy.lk/aquaculture',
+            image: 'https://mytracksy.lk/assets/professions/profession_aquaculture_1773215316236.png'
+          },
+          creator: {
+            title: 'MyTracksy Creator | Finance Software for Sri Lankan Digital Creators',
+            description: 'MyTracksy Creator helps Sri Lankan creators manage foreign income, sponsorships, gear depreciation, AI workflows, and tax-ready exports in one fast PWA.',
+            url: 'https://mytracksy.lk/creator',
+            image: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            manifestPath: '/creator.webmanifest',
+            themeColor: '#a855f7',
+            applicationName: 'MyTracksy Creator',
+            appleTitle: 'Creator Tracksy'
+          }
+        };
+        const meta = routeMeta[slug];
+        const isDedicatedPwa = Boolean(meta && meta.manifestPath);
+        const manifest = document.createElement('link');
+        manifest.rel = 'manifest';
+        manifest.href = isDedicatedPwa ? meta.manifestPath : '/manifest.json';
+        document.head.appendChild(manifest);
+
+        const setMeta = (selector, attr, content) => {
+          const node = document.querySelector(selector);
+          if (node) node.setAttribute(attr, content);
+        };
+
+        const setCanonical = (href) => {
+          const canonical = document.querySelector('link[rel="canonical"]');
+          if (canonical) canonical.setAttribute('href', href);
+        };
+
+        if (meta) {
+          document.title = meta.title;
+          setMeta('meta[name="description"]', 'content', meta.description);
+          setMeta('meta[property="og:title"]', 'content', meta.title);
+          setMeta('meta[property="og:description"]', 'content', meta.description);
+          setMeta('meta[property="og:url"]', 'content', meta.url);
+          setMeta('meta[property="og:image"]', 'content', meta.image);
+          setMeta('meta[name="twitter:title"]', 'content', meta.title);
+          setMeta('meta[name="twitter:description"]', 'content', meta.description);
+          setMeta('meta[name="twitter:image"]', 'content', meta.image);
+          setCanonical(meta.url);
+        }
+
+        if (isDedicatedPwa) {
+          const themeMeta = document.querySelector('meta[name="theme-color"]');
+          const appMeta = document.querySelector('meta[name="application-name"]');
+          const appleTitleMeta = document.querySelector('meta[name="apple-mobile-web-app-title"]');
+
+          if (themeMeta) themeMeta.setAttribute('content', meta.themeColor);
+          if (appMeta) appMeta.setAttribute('content', meta.applicationName);
+          if (appleTitleMeta) appleTitleMeta.setAttribute('content', meta.appleTitle);
+        }
+      })();
+    </script>
 
     <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-32.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-180.png" />
     <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
     <link rel="apple-touch-icon" sizes="120x120" href="/icons/icon-120.png" />
-
-    <!-- Splash screens for iOS -->
-    <meta name="apple-mobile-web-app-title" content="MyTracksy" />
 
     <!-- Preconnect & Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -35,6 +191,29 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
     <title>MyTracksy — Professional Finance Management</title>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "Organization",
+            "name": "MyTracksy",
+            "url": "https://mytracksy.lk/",
+            "logo": "https://mytracksy.lk/logos/mytracksy-logo.png",
+            "description": "Professional finance management for Sri Lankan businesses and professionals."
+          },
+          {
+            "@type": "WebSite",
+            "name": "MyTracksy",
+            "url": "https://mytracksy.lk/",
+            "publisher": {
+              "@type": "Organization",
+              "name": "MyTracksy"
+            }
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
