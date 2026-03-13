@@ -291,13 +291,7 @@
     </div>
 
     <script>
-        // Admin login credentials (in production, this should be server-side)
-        const ADMIN_CREDENTIALS = {
-            'admin@mytracksy.com': 'MyTracksyAdmin2024!',
-            'superadmin@mytracksy.com': 'SuperAdmin2024!',
-            'support@mytracksy.com': 'SupportAdmin2024!'
-        };
-
+        // Admin login via Firebase Authentication with custom claims
         document.getElementById('adminLoginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
@@ -309,39 +303,32 @@
             hideMessages();
             
             try {
-                // Simulate authentication delay
-                await new Promise(resolve => setTimeout(resolve, 1500));
+                // Authenticate with Firebase Auth
+                const userCredential = await firebase.auth().signInWithEmailAndPassword(email, password);
+                const idTokenResult = await userCredential.user.getIdTokenResult();
                 
-                // Validate credentials
-                if (ADMIN_CREDENTIALS[email] && ADMIN_CREDENTIALS[email] === password) {
-                    // Successful login
+                // Verify admin custom claim
+                if (idTokenResult.claims.admin) {
                     await handleSuccessfulLogin(email);
                 } else {
-                    // Failed login
+                    await firebase.auth().signOut();
                     handleFailedLogin();
+                    showError('Access denied: Admin privileges required.');
                 }
             } catch (error) {
                 console.error('Login error:', error);
-                showError('An unexpected error occurred. Please try again.');
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    handleFailedLogin();
+                } else {
+                    showError('An unexpected error occurred. Please try again.');
+                }
             } finally {
                 setLoadingState(false);
             }
         });
 
         async function handleSuccessfulLogin(email) {
-            // Generate admin token
-            const adminToken = generateAdminToken(email);
-            
-            // Store authentication data
-            localStorage.setItem('mytracksy_admin_access', 'true');
-            localStorage.setItem('mytracksy_admin_token', adminToken);
-            localStorage.setItem('mytracksy_admin_user', JSON.stringify({
-                email: email,
-                loginTime: new Date().toISOString(),
-                role: getAdminRole(email)
-            }));
-            
-            // Show success message
+            // Show success message (auth state managed by Firebase)
             showSuccess('Login successful! Redirecting to admin panel...');
             
             // Log the login attempt
@@ -440,7 +427,7 @@
 
         // Check if already logged in
         document.addEventListener('DOMContentLoaded', function() {
-            const isLoggedIn = localStorage.getItem('mytracksy_admin_access');
+            const user = firebase.auth().currentUser; const isLoggedIn = !!user;
             const adminToken = localStorage.getItem('mytracksy_admin_token');
             
             if (isLoggedIn && adminToken) {
@@ -459,7 +446,7 @@
                 }
                 
                 // Token expired, clear storage
-                localStorage.removeItem('mytracksy_admin_access');
+                await firebase.auth().signOut();
                 localStorage.removeItem('mytracksy_admin_token');
                 localStorage.removeItem('mytracksy_admin_user');
             }

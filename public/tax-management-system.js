@@ -13,7 +13,7 @@ class TaxManagementSystem {
     initializeFirebase() {
         // Firebase configuration
         const firebaseConfig = {
-            apiKey: "AIzaSyBKJoVWvlp5EttjcHvgd-8PBvb8v7m59ZI",
+            apiKey: "REMOVED_USE_ENV_CONFIG",
             authDomain: "tracksy-8e30c.firebaseapp.com",
             projectId: "tracksy-8e30c",
             storageBucket: "tracksy-8e30c.appspot.com",

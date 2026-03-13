@@ -70,7 +70,7 @@ class AdminManager {
 
         // Firebase config (should be in environment variables)
         const firebaseConfig = {
-            apiKey: "AIzaSyBqZKm4Vp8kDy8t2yRaAGt5hPlJ_wX3QJ8",
+            apiKey: "REMOVED_USE_ENV_CONFIG",
             authDomain: "tracksy-8e30c.firebaseapp.com",
             projectId: "tracksy-8e30c",
             storageBucket: "tracksy-8e30c.appspot.com",

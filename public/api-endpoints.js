@@ -1,3 +1,6 @@
+// DEPRECATED: This file contains client-side API simulation for development only.
+// DO NOT use in production. All authentication should go through Firebase Auth.
+// Client-side token generation has been removed for security.
 // MyTracksy Backend API Endpoints
 // Version: 1.0.0
 // This file simulates backend API endpoints for development/demo purposes
@@ -542,11 +545,10 @@ class APIEndpoints {
     }
 
     generateAuthToken(user) {
-        const payload = {
-            userId: user.id,
-            email: user.email,
-            timestamp: Date.now()
-        };
+        // SECURITY: Token generation removed. Use Firebase Auth ID tokens instead.
+        // Call: const token = await firebase.auth().currentUser.getIdToken();
+        throw new Error('Client-side token generation is not supported. Use Firebase Auth.');
+    };
         
         return btoa(JSON.stringify(payload)) + '.' + Math.random().toString(36);
     }
