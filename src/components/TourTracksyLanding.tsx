@@ -97,22 +97,37 @@ export function TourTracksyLanding({
   }, []);
 
   useEffect(() => {
+    const revealElement = (el: Element) => {
+      (el as HTMLElement).style.opacity = '1';
+      (el as HTMLElement).style.transform = 'translateY(0)';
+    };
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            (entry.target as HTMLElement).style.opacity = "1";
-            (entry.target as HTMLElement).style.transform = "translateY(0)";
+            revealElement(entry.target);
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.12, rootMargin: "0px 0px -60px 0px" },
+      { threshold: 0.05, rootMargin: "0px 0px -40px 0px" },
     );
-    setTimeout(() => {
-      document.querySelectorAll(".sr").forEach((el) => observer.observe(el));
-    }, 100);
-    return () => observer.disconnect();
+    const timer = setTimeout(() => {
+      document.querySelectorAll('.sr').forEach((el) => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          revealElement(el);
+        } else {
+          observer.observe(el);
+        }
+      });
+    }, 150);
+    const fallbackTimer = setTimeout(() => {
+      document.querySelectorAll('.sr').forEach((el) => {
+        if ((el as HTMLElement).style.opacity !== '1') revealElement(el);
+      });
+    }, 3000);
+    return () => { clearTimeout(timer); clearTimeout(fallbackTimer); observer.disconnect(); };
   }, []);
 
   return (
@@ -129,8 +144,10 @@ export function TourTracksyLanding({
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
                 
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                
-                body { 
+
+                html { scroll-padding-top: 80px; scroll-behavior: smooth; }
+
+                body {
                     background: #f8fafc; /* Sleek, bright light mode */
                     color: #0f172a;
                 }
@@ -138,7 +155,7 @@ export function TourTracksyLanding({
                 .lt-c { 
                     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; 
                     line-height: 1.6; 
-                    overflow-x: hidden; 
+                    overflow-x: clip;
                     -webkit-font-smoothing: antialiased; 
                 }
                 
@@ -361,11 +378,13 @@ export function TourTracksyLanding({
                 return (
                   <span
                     key={link}
-                    onClick={() =>
-                      document
-                        .getElementById(sectionMap[link])
-                        ?.scrollIntoView({ behavior: "smooth" })
-                    }
+                    onClick={() => {
+                      const el = document.getElementById(sectionMap[link]);
+                      if (el) {
+                        const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                        window.scrollTo({ top: y, behavior: 'smooth' });
+                      }
+                    }}
                     style={{
                       fontSize: 14,
                       fontWeight: 600,
@@ -540,11 +559,13 @@ export function TourTracksyLanding({
                 Deploy Your Engine <ArrowRight size={20} />
               </button>
               <button
-                onClick={() =>
-                  document
-                    .getElementById("features")
-                    ?.scrollIntoView({ behavior: "smooth" })
-                }
+                onClick={() => {
+                  const el = document.getElementById("features");
+                  if (el) {
+                    const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                    window.scrollTo({ top: y, behavior: 'smooth' });
+                  }
+                }}
                 className="btn-secondary"
                 style={{ padding: "18px 40px", fontSize: 18 }}
               >

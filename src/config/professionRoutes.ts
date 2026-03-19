@@ -1,4 +1,4 @@
-import { ProfessionType } from '../contexts/AuthContext';
+import { ProfessionType } from '../types/profession';
 
 export interface ProfessionRouteConfig {
     slug: string;

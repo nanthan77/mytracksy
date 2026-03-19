@@ -45,27 +45,46 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
 
     /* ── IntersectionObserver for scroll-reveal ── */
     useEffect(() => {
+        const revealElement = (el: Element) => {
+            (el as HTMLElement).style.opacity = '1';
+            (el as HTMLElement).style.transform = 'translateY(0)';
+        };
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        (entry.target as HTMLElement).style.opacity = '1';
-                        (entry.target as HTMLElement).style.transform = 'translateY(0)';
+                        revealElement(entry.target);
                         observer.unobserve(entry.target);
                     }
                 });
             },
-            { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+            { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
         );
-        setTimeout(() => {
-            document.querySelectorAll('.sr').forEach((el) => observer.observe(el));
-        }, 100);
-        return () => observer.disconnect();
+        const timer = setTimeout(() => {
+            document.querySelectorAll('.sr').forEach((el) => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    revealElement(el);
+                } else {
+                    observer.observe(el);
+                }
+            });
+        }, 150);
+        const fallbackTimer = setTimeout(() => {
+            document.querySelectorAll('.sr').forEach((el) => {
+                if ((el as HTMLElement).style.opacity !== '1') revealElement(el);
+            });
+        }, 3000);
+        return () => { clearTimeout(timer); clearTimeout(fallbackTimer); observer.disconnect(); };
     }, []);
 
     /* ── Helpers ── */
     const scrollTo = (id: string) => {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+        const el = document.getElementById(id);
+        if (el) {
+            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
     };
 
     const formatLKR = (amount: number): string => {
@@ -80,11 +99,11 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
                 <title>AquaTracksy | Voice-Powered Farm Finance for Sri Lankan Aquaculture</title>
                 <meta name="description" content="The first financial OS for Sri Lanka's Blue Economy. Track pond costs, feed inventory, and harvest profits using just your voice. Tamil & Sinhala Voice AI. Offline-first. Built for Shrimp, Sea Cucumber, and Seaweed farmers." />
                 <meta name="keywords" content="aquaculture software sri lanka, shrimp farming app, sea cucumber tracking, pond management app, feed conversion ratio tracker, harvest accounting, voice AI farming, aqua farm finance, NAQDA compliance, fish farming software" />
-                <link rel="canonical" href="https://mytracksy.lk/aqua" />
+                <link rel="canonical" href="https://mytracksy.com/aqua" />
                 <meta property="og:title" content="AquaTracksy — Voice-Powered Farm Finance for Aquaculture" />
                 <meta property="og:description" content="Wet hands? No problem. Track your farm with your voice. The ultimate offline financial app for Shrimp, Sea Cucumber, and Seaweed farmers." />
                 <meta property="og:type" content="website" />
-                <meta property="og:url" content="https://mytracksy.lk/aqua" />
+                <meta property="og:url" content="https://mytracksy.com/aqua" />
                 <script type="application/ld+json">{JSON.stringify({
                     "@context": "https://schema.org",
                     "@type": "SoftwareApplication",
@@ -98,6 +117,7 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
 
             {/* ═══ Injected Styles ═══ */}
             <style>{`
+                html { scroll-padding-top: 80px; scroll-behavior: smooth; }
                 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap');
                 .sr { opacity: 0; transform: translateY(32px); transition: opacity 0.7s cubic-bezier(.16,1,.3,1), transform 0.7s cubic-bezier(.16,1,.3,1); }
                 .aqua-pillar-card { background: ${WHITE}; border-radius: 16px; padding: 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); border: 1px solid #e0f2fe; transition: transform 0.25s, box-shadow 0.25s; }
@@ -634,7 +654,7 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
                             🔒 Your Farm Data Is Fort Knox Secure
                         </h2>
                         <p style={{ color: GRAY_600, fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
-                            Production data and buyer pricing stays 100% private. Works offline in areas with no signal — perfect for remote lagoons and coastal ponds.
+                            Production data and buyer pricing are protected with encrypted storage and access controls. Works offline in areas with no signal — perfect for remote lagoons and coastal ponds.
                         </p>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap' }}>
                             {[

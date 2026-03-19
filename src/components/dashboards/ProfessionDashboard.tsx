@@ -1,5 +1,5 @@
 import React from 'react';
-import { ProfessionType } from '../../contexts/AuthContext';
+import { ProfessionType } from '../../types/profession';
 import MedicalDashboard from './MedicalDashboard';
 import BusinessDashboard from './BusinessDashboard';
 import LegalDashboard from './LegalDashboard';

@@ -192,7 +192,7 @@ const BiometricGate: React.FC<BiometricGateProps> = ({ children, sectionName, se
                     {error && <p style={styles.error}>{error}</p>}
 
                     <p style={styles.pdpaBadge}>
-                        🔏 PDPA Compliant · Data encrypted at rest
+                        🔏 PDPA-Ready · Data encrypted at rest
                     </p>
                 </div>
             </div>

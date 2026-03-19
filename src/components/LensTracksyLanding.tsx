@@ -98,10 +98,10 @@ const LensTracksyLanding: React.FC<LensTracksyLandingProps> = ({ onGetStarted, o
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
             name: 'LensTracksy',
-            url: 'https://mytracksy.lk/studios',
+            url: 'https://mytracksy.com/studios',
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web, Android, iOS',
-            image: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            image: 'https://mytracksy.com/logos/mytracksy-logo.png',
             description: 'LensTracksy is the MyTracksy finance operating system for Sri Lankan wedding photographers and production studios, built for milestone billing, crew payouts, gear depreciation, and mobile PWA workflows.',
             offers: {
                 '@type': 'AggregateOffer',
@@ -127,8 +127,8 @@ const LensTracksyLanding: React.FC<LensTracksyLandingProps> = ({ onGetStarted, o
             '@context': 'https://schema.org',
             '@type': 'BreadcrumbList',
             itemListElement: [
-                { '@type': 'ListItem', position: 1, name: 'MyTracksy', item: 'https://mytracksy.lk/' },
-                { '@type': 'ListItem', position: 2, name: 'LensTracksy', item: 'https://mytracksy.lk/studios' },
+                { '@type': 'ListItem', position: 1, name: 'MyTracksy', item: 'https://mytracksy.com/' },
+                { '@type': 'ListItem', position: 2, name: 'LensTracksy', item: 'https://mytracksy.com/studios' },
             ],
         },
     ];
@@ -149,23 +149,23 @@ const LensTracksyLanding: React.FC<LensTracksyLandingProps> = ({ onGetStarted, o
                 />
                 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
                 <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-                <link rel="canonical" href="https://mytracksy.lk/studios" />
+                <link rel="canonical" href="https://mytracksy.com/studios" />
                 <meta property="og:type" content="website" />
                 <meta property="og:site_name" content="MyTracksy" />
-                <meta property="og:url" content="https://mytracksy.lk/studios" />
+                <meta property="og:url" content="https://mytracksy.com/studios" />
                 <meta property="og:title" content="LensTracksy | Wedding Studio Billing, Gear Tax, and AI Client Workflow App" />
                 <meta
                     property="og:description"
                     content="Stop chasing album balances, track crew and lab payouts, and run a Sri Lankan wedding studio from one installable mobile workflow."
                 />
-                <meta property="og:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+                <meta property="og:image" content="https://mytracksy.com/logos/mytracksy-logo.png" />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="LensTracksy | Wedding Studio Billing, Gear Tax, and AI Client Workflow App" />
                 <meta
                     name="twitter:description"
                     content="The financial studio for Sri Lankan visual creatives: milestone billing, gear depreciation, AI contracts, and true event profit tracking."
                 />
-                <meta name="twitter:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+                <meta name="twitter:image" content="https://mytracksy.com/logos/mytracksy-logo.png" />
                 <meta name="theme-color" content="#b45309" />
                 <script type="application/ld+json">
                     {JSON.stringify(structuredData)}

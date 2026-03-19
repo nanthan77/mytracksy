@@ -208,7 +208,7 @@ export function useTokenWallet(userId: string | null) {
 
     if (!wallet.savedCard) {
       // No saved card — redirect to PayHere preapproval page
-      window.open('https://wallet.mytracksy.lk/topup', '_blank');
+      window.open('https://wallet.mytracksy.com/topup', '_blank');
       return false;
     }
 
@@ -238,7 +238,7 @@ export function useTokenWallet(userId: string | null) {
       setWallet(prev => ({ ...prev, purchaseInProgress: false }));
       // If card is expired/invalid, prompt to re-add
       if (error?.code === 'functions/failed-precondition') {
-        window.open('https://wallet.mytracksy.lk/topup', '_blank');
+        window.open('https://wallet.mytracksy.com/topup', '_blank');
       }
       return false;
     }

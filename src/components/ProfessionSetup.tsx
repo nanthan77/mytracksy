@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProfessionType } from '../contexts/AuthContext';
+import { ProfessionType } from '../types/profession';
 
 const professions: {
     id: ProfessionType; title: string; subtitle: string; icon: string;
@@ -127,7 +127,8 @@ const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected,
         <>
             <style>{`
                 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-                .prof-card { background: rgba(255,255,255,0.97); border-radius: 16px; padding: 1.5rem; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; font-family: 'Inter', sans-serif; }
+                .prof-card { animation-fill-mode: forwards !important; background: rgba(255,255,255,0.97); border-radius: 16px; padding: 1.5rem; cursor: pointer; border: 2px solid transparent; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); position: relative; overflow: hidden; font-family: 'Inter', sans-serif; }
+                @media (prefers-reduced-motion: reduce) { .prof-card { animation: none !important; opacity: 1 !important; transform: none !important; } }
                 .prof-card:hover { transform: translateY(-3px); box-shadow: 0 20px 40px rgba(0,0,0,0.12) !important; }
                 .prof-continue-btn { padding: 14px 48px; border: none; border-radius: 12px; font-size: 15px; font-weight: 650; color: white; background: linear-gradient(135deg, #6366f1, #8b5cf6); font-family: 'Inter', sans-serif; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 6px 20px rgba(99,102,241,0.3); letter-spacing: -0.01em; }
                 .prof-continue-btn:hover { box-shadow: 0 10px 30px rgba(99,102,241,0.4); transform: translateY(-2px); }
@@ -186,11 +187,11 @@ const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected,
 
                     {/* Grid */}
                     <div style={{
-                        display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+                        display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
                         gap: '1.25rem', marginBottom: '2rem',
-                    }}>
+                    }} role="listbox" aria-label="Select your profession">
                         {professions.map((p, i) => (
-                            <div key={p.id} onClick={() => setSelected(p.id)} className="prof-card"
+                            <button key={p.id} onClick={() => setSelected(p.id)} className="prof-card" role="option" aria-selected={selected === p.id} tabIndex={0}
                                 style={{
                                     borderColor: selected === p.id ? p.primaryColor : 'transparent',
                                     boxShadow: selected === p.id
@@ -234,7 +235,7 @@ const ProfessionSetup: React.FC<ProfessionSetupProps> = ({ onProfessionSelected,
                                         </div>
                                     ))}
                                 </div>
-                            </div>
+                            </button>
                         ))}
                     </div>
 

@@ -92,22 +92,34 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
     }, []);
 
     useEffect(() => {
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        (entry.target as HTMLElement).style.opacity = '1';
-                        (entry.target as HTMLElement).style.transform = 'translateY(0)';
-                        observer.unobserve(entry.target);
-                    }
-                });
-            },
-            { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
-        );
-        setTimeout(() => {
-            document.querySelectorAll('.sr').forEach((el) => observer.observe(el));
-        }, 100);
-        return () => observer.disconnect();
+        const revealElement = (el: HTMLElement) => {
+            el.style.opacity = '1';
+            el.style.transform = 'translateY(0)';
+        };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach((entry) => {
+                if (entry.isIntersecting) {
+                    revealElement(entry.target as HTMLElement);
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.05, rootMargin: '0px 0px -40px 0px' });
+        const timer = setTimeout(() => {
+            document.querySelectorAll('.sr').forEach((el) => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    revealElement(el as HTMLElement);
+                } else {
+                    observer.observe(el);
+                }
+            });
+        }, 150);
+        const fallbackTimer = setTimeout(() => {
+            document.querySelectorAll('.sr').forEach((el) => {
+                if ((el as HTMLElement).style.opacity !== '1') revealElement(el as HTMLElement);
+            });
+        }, 3000);
+        return () => { clearTimeout(timer); clearTimeout(fallbackTimer); observer.disconnect(); };
     }, []);
 
     // Structured data for SEO
@@ -146,12 +158,12 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                 <meta name="keywords" content="construction software sri lanka, civil engineer erp, boq tracking, contractor app, baas ledger, ictad software" />
                 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
                 <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-                <link rel="canonical" href="https://mytracksy.lk/engineering" />
+                <link rel="canonical" href="https://mytracksy.com/engineering" />
                 <link rel="preload" as="image" href="/civil_engineering_hero_bg_1773246455725.png" />
 
                 <meta property="og:type" content="website" />
                 <meta property="og:site_name" content="MyTracksy" />
-                <meta property="og:url" content="https://mytracksy.lk/engineering" />
+                <meta property="og:url" content="https://mytracksy.com/engineering" />
                 <meta property="og:title" content="EngiTracksy | Construction ERP & BOQ Tracker for Sri Lanka" />
                 <meta property="og:description" content="Manage construction finances with AI." />
                 <meta property="og:image" content="/engineering_hero_bg_1773246380742.png" />
@@ -164,9 +176,10 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
 
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+                html { scroll-padding-top: 80px; scroll-behavior: smooth; }
                 * { box-sizing: border-box; margin: 0; padding: 0; }
                 body { background: #fafafa; }
-                .lt-c { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; color: #0f172a; line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+                .lt-c { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; color: #0f172a; line-height: 1.6; overflow-x: clip; -webkit-font-smoothing: antialiased; }
                 .lt-i { max-width: 1300px; margin: 0 auto; padding: 0 5%; }
                 .sr { opacity: 0; transform: translateY(40px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
                 
@@ -257,7 +270,7 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                                     'Pricing': 'pricing'
                                 };
                                 return (
-                                    <span key={link} onClick={() => document.getElementById(sectionMap[link])?.scrollIntoView({ behavior: 'smooth' })} style={{ fontSize: 14, fontWeight: 600, color: '#475569', cursor: 'pointer', transition: 'color 0.2s' }}>{link}</span>
+                                    <span key={link} onClick={() => { const el = document.getElementById(sectionMap[link]); if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: y, behavior: 'smooth' }); } }} style={{ fontSize: 14, fontWeight: 600, color: '#475569', cursor: 'pointer', transition: 'color 0.2s' }}>{link}</span>
                                 )
                             })}
                         </div>
@@ -310,7 +323,7 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                                         <ArrowRight style={{ width: 20, height: 20 }} />
                                     </button>
                                     <button
-                                        onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+                                        onClick={() => { const el = document.getElementById('features'); if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: y, behavior: 'smooth' }); } }}
                                         className="btn-secondary"
                                         style={{ padding: '18px 36px', fontSize: 18, display: 'flex', alignItems: 'center', gap: 8 }}
                                     >
@@ -513,7 +526,7 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                                         </ul>
                                     </div>
                                     <div style={{ position: 'relative' }}>
-                                        <img src="https://images.unsplash.com/photo-1541888087406-ebfaa78dc3b5?auto=format&fit=crop&q=80&w=600" alt="BOQ Variance" style={{ width: '100%', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0', aspectRatio: '4/3', objectFit: 'cover' }} />
+                                        <img src="https://images.unsplash.com/photo-1541888087406-ebfaa78dc3b5?auto=format&fit=crop&q=80&w=600" alt="MyTracksy engineering dashboard showing BOQ variance tracking for construction projects" style={{ width: '100%', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0', aspectRatio: '4/3', objectFit: 'cover' }} />
                                         <div style={{ position: 'absolute', bottom: -24, left: -24, background: '#fff', padding: 16, borderRadius: 16, boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: 16 }}>
                                             <div style={{ background: '#fef2f2', padding: 12, borderRadius: 12 }}>
                                                 <BarChart3 style={{ color: '#ef4444', width: 24, height: 24 }} />
@@ -530,7 +543,7 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                             {activeTab === 'subcontractor' && (
                                 <div className="animate-fade-in hero-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.5fr)', gap: 48, alignItems: 'center' }}>
                                     <div style={{ position: 'relative' }}>
-                                        <img src="https://images.unsplash.com/photo-1504307651254-35680f356f12?auto=format&fit=crop&q=80&w=600" alt="Subcontractor UI" style={{ maxWidth: 350, margin: '0 auto', display: 'block', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0', aspectRatio: '3/4', objectFit: 'cover' }} />
+                                        <img src="https://images.unsplash.com/photo-1504307651254-35680f356f12?auto=format&fit=crop&q=80&w=600" alt="Subcontractor payment management interface for engineering firms" style={{ maxWidth: 350, margin: '0 auto', display: 'block', borderRadius: 24, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)', border: '1px solid #e2e8f0', aspectRatio: '3/4', objectFit: 'cover' }} />
                                     </div>
                                     <div>
                                         <div style={{ width: 48, height: 48, borderRadius: 16, background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
@@ -645,7 +658,7 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                     <div className="lt-i" style={{ position: 'relative', zIndex: 1 }}>
                         <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1.5fr)', gap: 64, alignItems: 'center' }}>
                             <div className="sr" style={{ position: 'relative', maxWidth: 350, margin: '0 auto', width: '100%' }}>
-                                <img src="https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?auto=format&fit=crop&q=80&w=600" alt="AI Site Scanner" style={{ borderRadius: 40, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)', position: 'relative', zIndex: 10, width: '100%', height: 'auto', display: 'block', aspectRatio: '3/4', objectFit: 'cover' }} />
+                                <img src="https://images.unsplash.com/photo-1584464491033-06628f3a6b7b?auto=format&fit=crop&q=80&w=600" alt="AI-powered construction site scanner for automated cost tracking" style={{ borderRadius: 40, boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)', position: 'relative', zIndex: 10, width: '100%', height: 'auto', display: 'block', aspectRatio: '3/4', objectFit: 'cover' }} />
                                 <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.2), transparent)', borderRadius: 40, zIndex: 20 }} />
                             </div>
 
@@ -827,7 +840,7 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                                         'Retention Vault': 'features'
                                     };
                                     return (
-                                        <div key={l} onClick={() => document.getElementById(sectionMap[l])?.scrollIntoView({ behavior: 'smooth' })} style={{ fontSize: 15, color: '#64748b', marginBottom: 12, cursor: 'pointer' }}>{l}</div>
+                                        <div key={l} onClick={() => { const el = document.getElementById(sectionMap[l]); if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: y, behavior: 'smooth' }); } }} style={{ fontSize: 15, color: '#64748b', marginBottom: 12, cursor: 'pointer' }}>{l}</div>
                                     )
                                 })}
                             </div>

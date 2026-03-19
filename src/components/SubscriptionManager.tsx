@@ -4,7 +4,7 @@ import { doc, getDoc, setDoc, collection, getDocs, orderBy, query, limit } from 
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import { getPricingForProfession } from '../config/pricingConfig';
-import { ProfessionType } from '../contexts/AuthContext';
+import { ProfessionType } from '../types/profession';
 
 const functions = getFunctions(undefined, 'asia-south1');
 
@@ -256,11 +256,11 @@ export default function SubscriptionManager() {
                 window.location.href = data.checkout_url;
             } else {
                 // Fallback: direct PayHere sandbox URL for testing
-                alert('Payment gateway is being configured. Please contact support@mytracksy.lk for early access.');
+                alert('Payment gateway is being configured. Please contact support@mytracksy.com for early access.');
             }
         } catch (err: any) {
             console.error('Payment initiation error:', err);
-            alert('Unable to connect to payment gateway. Please try again or contact support@mytracksy.lk');
+            alert('Unable to connect to payment gateway. Please try again or contact support@mytracksy.com');
         } finally {
             setActivating(false);
         }

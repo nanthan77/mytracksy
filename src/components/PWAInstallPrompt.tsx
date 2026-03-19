@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ProfessionType } from '../contexts/AuthContext';
+import { ProfessionType } from '../types/profession';
 import { getRouteByProfession } from '../config/professionRoutes';
 
 interface PWAInstallPromptProps {

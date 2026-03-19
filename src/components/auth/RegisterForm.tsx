@@ -23,7 +23,7 @@ import {
   Phone as PhoneIcon,
   PersonAdd as PersonAddIcon
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface RegisterFormProps {
   onSuccess?: () => void;

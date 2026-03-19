@@ -31,7 +31,7 @@ const professionContent: Record<string, {
             { icon: '📋', title: 'Staff Payroll & EPF', desc: 'Automated EPF/ETF calculations for clinic staff. APIT compliance built in.' },
             { icon: '📊', title: 'Tax Intelligence', desc: 'Auto-categorize medical expenses. Generate IRD-ready tax returns. Withholding tax tracking.' },
             { icon: '🗓️', title: 'Appointment Economics', desc: 'See revenue per time slot. Optimize your schedule for maximum earnings.' },
-            { icon: '🔒', title: 'Patient Data Safe', desc: 'Zero patient data stored. Only your financial records — on your device only.' },
+            { icon: '🔒', title: 'Patient Data Safe', desc: 'Built for PDPA-ready operations. Financial records protected with encryption, access controls, and privacy-first design.' },
         ],
         demoDesc: 'See how Dr. Perera manages 3 clinic locations, tracks Rs. 2.5M monthly revenue, and files taxes in minutes.',
         useCases: ['Private Practice', 'Hospital Channeling', 'Multi-Clinic Management', 'Specialist Practice', 'Medical Lab Owners'],
@@ -46,7 +46,7 @@ const professionContent: Record<string, {
             { icon: '🏛️', title: 'Court Fee Tracking', desc: 'Track court filing fees, stamp duties, and disbursements. Auto-categorize legal expenses.' },
             { icon: '📊', title: 'Tax & Compliance', desc: 'Automated APIT, WHT tracking. Generate IRD-ready reports for legal practice income.' },
             { icon: '👥', title: 'Staff & Associates', desc: 'Manage junior lawyer payments, clerk salaries, and office expenses.' },
-            { icon: '🔒', title: 'Client Confidentiality', desc: 'All data on your device. No client financial data ever leaves your phone.' },
+            { icon: '🔒', title: 'Client Confidentiality', desc: 'Client financial data protected with encryption, access controls, and PDPA-aligned privacy safeguards.' },
         ],
         demoDesc: 'See how Attorney Silva manages 45 active cases, tracks LKR 1.8M in retainers, and generates monthly billing reports.',
         useCases: ['Private Practice', 'Law Firm Partner', 'Corporate Counsel', 'Notary Public', 'Legal Consultant'],
@@ -62,7 +62,7 @@ const professionContent: Record<string, {
             { icon: '🚜', title: 'Material & Equipment', desc: 'Track material purchases, equipment rentals, and supplier payments per project.' },
             { icon: '👷', title: 'Labor & Subcontractor', desc: 'Manage worker payments, subcontractor invoices, and daily wage calculations.' },
             { icon: '📊', title: 'Project P&L', desc: 'See profit/loss per project. Compare margins across multiple sites.' },
-            { icon: '🔒', title: 'Project Data Safe', desc: 'Sensitive project financials stay on your device. Client data never exposed.' },
+            { icon: '🔒', title: 'Project Data Safe', desc: 'Sensitive project financials protected with encryption and role-based access controls.' },
         ],
         demoDesc: 'See how Eng. Fernando tracks 5 concurrent projects, manages LKR 15M in budgets, and monitors profit margins live.',
         useCases: ['Civil Engineer', 'Structural Consultant', 'Quantity Surveyor', 'MEP Engineer', 'Project Manager'],
@@ -77,7 +77,7 @@ const professionContent: Record<string, {
             { icon: '📦', title: 'Inventory Management', desc: 'Track stock levels, purchase orders, and supplier payments across all locations.' },
             { icon: '💰', title: 'Cash Flow Forecasting', desc: 'AI-powered cash flow predictions. Know your runway and plan ahead with confidence.' },
             { icon: '📊', title: 'Business Intelligence', desc: 'Revenue trends, expense patterns, and profitability dashboards for smarter decisions.' },
-            { icon: '🔒', title: 'Business Data Safe', desc: 'Sensitive business financials on your device only. Competitor-proof data security.' },
+            { icon: '🔒', title: 'Business Data Safe', desc: 'Sensitive business financials protected with encrypted storage and privacy-first architecture.' },
         ],
         demoDesc: 'See how a Colombo retailer manages 3 shops, tracks LKR 8M monthly turnover, and automates supplier payments.',
         useCases: ['SME Owner', 'Franchise Operator', 'Import/Export', 'Restaurant Owner', 'Service Provider'],
@@ -93,7 +93,7 @@ const professionContent: Record<string, {
             { icon: '💱', title: 'Multi-Currency', desc: 'Handle LKR, USD, EUR transactions. Auto forex conversion at daily rates.' },
             { icon: '🧾', title: 'Supplier Ledger', desc: 'Track supplier credits, advance payments, and outstanding balances per vendor.' },
             { icon: '📊', title: 'Margin Analytics', desc: 'See which products earn the most. Optimize your trading strategy with data.' },
-            { icon: '🔒', title: 'Trade Secrets Safe', desc: 'Your pricing, margins, and supplier details never leave your device.' },
+            { icon: '🔒', title: 'Trade Secrets Safe', desc: 'Your pricing, margins, and supplier details secured with encrypted storage and access controls.' },
         ],
         demoDesc: 'See how a Pettah wholesaler tracks 500+ SKUs, manages 30 suppliers, and calculates margins instantly.',
         useCases: ['Wholesale Trader', 'Import Dealer', 'Commodity Trader', 'Online Reseller', 'Distributor'],
@@ -108,7 +108,7 @@ const professionContent: Record<string, {
             { icon: '📦', title: 'Parts Inventory', desc: 'Track spare parts stock, supplier orders, and reorder points. Never run out of critical parts.' },
             { icon: '👨‍🔧', title: 'Mechanic Payroll', desc: 'Track mechanic hours, job-based commissions, and overtime. Fair pay calculations.' },
             { icon: '📊', title: 'Workshop P&L', desc: 'See daily/weekly/monthly revenue. Track which services are most profitable.' },
-            { icon: '🔒', title: 'Customer Data Safe', desc: 'Vehicle and customer data stays on your device. Privacy guaranteed.' },
+            { icon: '🔒', title: 'Customer Data Safe', desc: 'Vehicle and customer data protected with encrypted storage and privacy controls.' },
         ],
         demoDesc: 'See how a Nugegoda garage manages 20 daily jobs, tracks parts inventory, and calculates mechanic commissions.',
         useCases: ['Garage Owner', 'Auto Electrician', 'Body Shop', 'Tire & Service Center', 'Fleet Maintenance'],
@@ -124,7 +124,7 @@ const professionContent: Record<string, {
             { icon: '🎨', title: 'Freelancer Payments', desc: 'Track freelancer/contractor invoices, WHT deductions, and payment schedules.' },
             { icon: '📊', title: 'ROI Dashboard', desc: 'See return on ad spend, client profitability, and campaign performance metrics.' },
             { icon: '🧾', title: 'Expense Claims', desc: 'Digital expense claims for shoots, events, and client entertainment. Photo receipts.' },
-            { icon: '🔒', title: 'Client Data Protected', desc: 'Client budgets and campaign data stay on your device. NDA-level security.' },
+            { icon: '🔒', title: 'Client Data Protected', desc: 'Client budgets and campaign data secured with encryption and role-based access controls.' },
         ],
         demoDesc: 'See how a Colombo agency manages 15 clients, tracks LKR 3M monthly ad spend, and calculates campaign ROI.',
         useCases: ['Digital Agency', 'Creative Studio', 'Social Media Manager', 'PR Firm', 'Freelance Marketer'],
@@ -139,7 +139,7 @@ const professionContent: Record<string, {
             { icon: '💰', title: 'Commission Tracking', desc: 'Track airline, hotel, and supplier commissions. See net revenue per booking.' },
             { icon: '👥', title: 'Agent Payouts', desc: 'Manage agent/sub-agent commissions, incentives, and performance bonuses.' },
             { icon: '📊', title: 'Seasonal Analytics', desc: 'Revenue by season, destination, and package type. Plan your peak strategy.' },
-            { icon: '🔒', title: 'Client Privacy', desc: 'Traveler details and booking data stay on your device. GDPR-ready privacy.' },
+            { icon: '🔒', title: 'Client Privacy', desc: 'Traveler details and booking data protected with encrypted storage and PDPA-aligned privacy controls.' },
         ],
         demoDesc: 'See how a Kandy travel agency tracks 200 monthly bookings, manages 50 suppliers, and calculates per-tour profit.',
         useCases: ['Travel Agency', 'Tour Operator', 'DMC', 'Online Travel Agent', 'Corporate Travel Manager'],
@@ -155,7 +155,7 @@ const professionContent: Record<string, {
             { icon: '👨‍✈️', title: 'Driver Management', desc: 'Track driver wages, advances, trip allowances, and performance bonuses.' },
             { icon: '🔧', title: 'Vehicle Maintenance', desc: 'Service schedules, repair costs, and insurance tracking per vehicle.' },
             { icon: '📊', title: 'Fleet P&L', desc: 'Profit/loss per vehicle. Know which trucks earn and which ones drain money.' },
-            { icon: '🔒', title: 'Business Data Safe', desc: 'Route and revenue data on your device only. Competitor-proof information.' },
+            { icon: '🔒', title: 'Business Data Safe', desc: 'Route and revenue data protected with encrypted storage and access controls.' },
         ],
         demoDesc: 'See how a Kaduwela fleet owner manages 15 vehicles, tracks fuel for 50,000km/month, and calculates per-trip profit.',
         useCases: ['Fleet Owner', 'Logistics Company', 'Courier Service', 'School Transport', 'Rental Service'],
@@ -170,7 +170,7 @@ const professionContent: Record<string, {
             { icon: '🧾', title: 'Supplier Payments', desc: 'Track credit purchases, payment schedules, and outstanding supplier balances.' },
             { icon: '👥', title: 'Staff & Payroll', desc: 'Employee attendance, salary calculations, and commission tracking for sales staff.' },
             { icon: '📊', title: 'Shop Analytics', desc: 'Best-selling products, peak hours, and customer spending patterns.' },
-            { icon: '🔒', title: 'Sales Data Private', desc: 'Revenue and supplier pricing data stays on your device. No cloud exposure.' },
+            { icon: '🔒', title: 'Sales Data Private', desc: 'Revenue and supplier pricing data secured with encryption and privacy-first storage controls.' },
         ],
         demoDesc: 'See how a Galle shopkeeper manages daily sales of LKR 200K, tracks 500 products, and handles 10 suppliers.',
         useCases: ['Grocery Store', 'Clothing Shop', 'Electronics Retailer', 'Pharmacy', 'Multi-Branch Retail'],
@@ -186,7 +186,7 @@ const professionContent: Record<string, {
             { icon: '📈', title: 'Harvest Revenue', desc: 'Log harvest quantities, market prices, and buyer payments. Per-batch profit tracking.' },
             { icon: '🔬', title: 'Input Cost Tracking', desc: 'Seed/fry costs, probiotics, chemicals, and equipment maintenance expenses.' },
             { icon: '📊', title: 'Farm P&L', desc: 'See profitability per pond, per cycle, and per species. Optimize your farming strategy.' },
-            { icon: '🔒', title: 'Farm Data Private', desc: 'Production data and buyer pricing stays on your device. Protect your trade knowledge.' },
+            { icon: '🔒', title: 'Farm Data Private', desc: 'Production data and buyer pricing protected with encrypted storage and access controls.' },
         ],
         demoDesc: 'See how a Chilaw farmer tracks 8 ponds, monitors feed costs, and calculates harvest profits per cycle.',
         useCases: ['Shrimp Farming', 'Fish Farming', 'Crab Fattening', 'Ornamental Fish', 'Hatchery Operation'],
@@ -218,7 +218,7 @@ const professionContent: Record<string, {
             { icon: '💳', title: 'Bank Integration', desc: 'SMS banking alerts auto-captured. No manual entry for bank transactions.' },
             { icon: '📊', title: 'Budget Planning', desc: 'Monthly budgets with smart alerts. Know when you\'re close to overspending.' },
             { icon: '🏦', title: 'Investment Tracking', desc: 'Track FDs, savings accounts, stocks, and other investments in one place.' },
-            { icon: '🔒', title: 'Personal Data Safe', desc: 'Your financial life stays on your device. No one else can see your money.' },
+            { icon: '🔒', title: 'Personal Data Safe', desc: 'Your financial data protected with encrypted storage, access controls, and privacy-first design.' },
         ],
         demoDesc: 'See how a young professional tracks LKR 150K salary, manages 5 savings goals, and plans for their first home.',
         useCases: ['Salaried Employee', 'Freelancer', 'Student', 'Homemaker', 'Retiree'],
@@ -337,21 +337,24 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
 
     const faqItems = [
         { q: 'Is the Free plan really free forever?', a: 'Yes. No credit card required. Sign up with Google and start using immediately. Upgrade only when you need more features.' },
-        { q: 'Where is my financial data stored?', a: `All your ${routeName} data stays 100% on your device. We comply with Sri Lankan PDPA regulations. No personal or financial data is ever stored on our servers.` },
+        { q: 'Where is my financial data stored?', a: `MyTracksy ${routeShortName} is designed with privacy-first principles and PDPA-aligned data handling. Your financial workflows include device-level storage, encrypted cloud sync when enabled, and role-based access controls. We continuously review our data practices as Sri Lankan data protection regulations evolve.` },
         { q: 'Can I switch plans anytime?', a: 'Yes. Upgrade, downgrade, or cancel anytime. No lock-in contracts. Your data remains safe regardless of plan changes.' },
         { q: 'Does it work without internet?', a: 'Absolutely. MyTracksy works fully offline as a PWA. Your data syncs automatically when you reconnect.' },
         { q: `Is it built specifically for ${routeShortName}?`, a: `Yes. Every feature, category, report, and tax calculation is tailored for the ${slug === 'individual' ? 'personal finance' : routeName.replace('MyTracksy ', '')} profession in Sri Lanka.` },
     ];
 
     const professionOgImages: Record<string, string> = {
-        individual: 'https://mytracksy.lk/assets/professions/profession_personal_1773215331363.png',
-        trading: 'https://mytracksy.lk/assets/professions/profession_trader_1773215186011.png',
-        automotive: 'https://mytracksy.lk/assets/professions/profession_auto_1773215201791.png',
-        marketing: 'https://mytracksy.lk/assets/professions/profession_marketing_1773215238062.png',
-        travel: 'https://mytracksy.lk/assets/professions/profession_travel_1773215259443.png',
-        transportation: 'https://mytracksy.lk/assets/professions/profession_transport_1773215278251.png',
-        retail: 'https://mytracksy.lk/assets/professions/profession_retail_1773215293921.png',
-        aquaculture: 'https://mytracksy.lk/assets/professions/profession_aquaculture_1773215316236.png',
+        individual: 'https://mytracksy.com/assets/professions/profession_personal_1773215331363.png',
+        trading: 'https://mytracksy.com/assets/professions/profession_trader_1773215186011.png',
+        automotive: 'https://mytracksy.com/assets/professions/profession_auto_1773215201791.png',
+        marketing: 'https://mytracksy.com/assets/professions/profession_marketing_1773215238062.png',
+        travel: 'https://mytracksy.com/assets/professions/profession_travel_1773215259443.png',
+        transportation: 'https://mytracksy.com/assets/professions/profession_transport_1773215278251.png',
+        retail: 'https://mytracksy.com/assets/professions/profession_retail_1773215293921.png',
+        aquaculture: 'https://mytracksy.com/assets/professions/profession_aquaculture_1773215316236.png',
+        dr: 'https://mytracksy.com/assets/og/mytracksy-og-main.png',
+        creator: 'https://mytracksy.com/assets/og/mytracksy-og-main.png',
+        studios: 'https://mytracksy.com/assets/og/mytracksy-og-main.png',
     };
 
     const structuredData = [
@@ -359,10 +362,10 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
             name: `MyTracksy ${routeShortName}`,
-            url: `https://mytracksy.lk/${slug}`,
+            url: `https://mytracksy.com/${slug}`,
             applicationCategory: 'BusinessApplication',
             operatingSystem: 'Web, Android, iOS',
-            image: professionOgImages[slug] || 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            image: professionOgImages[slug] || 'https://mytracksy.com/assets/og/mytracksy-og-main.png',
             description: `MyTracksy helps Sri Lankan ${routeShortName} professionals manage income, expenses, tax-ready exports, and profession-specific workflows in one fast PWA.`,
             offers: {
                 '@type': 'Offer',
@@ -372,8 +375,8 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
             publisher: {
                 '@type': 'Organization',
                 name: 'MyTracksy',
-                url: 'https://mytracksy.lk/',
-                logo: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+                url: 'https://mytracksy.com/',
+                logo: 'https://mytracksy.com/logos/mytracksy-logo.png',
             },
         },
         {
@@ -384,13 +387,13 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                     '@type': 'ListItem',
                     position: 1,
                     name: 'MyTracksy',
-                    item: 'https://mytracksy.lk/',
+                    item: 'https://mytracksy.com/',
                 },
                 {
                     '@type': 'ListItem',
                     position: 2,
                     name: routeShortName,
-                    item: `https://mytracksy.lk/${slug}`,
+                    item: `https://mytracksy.com/${slug}`,
                 },
             ],
         },
@@ -415,19 +418,21 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                 <meta name="keywords" content={`${slug} software sri lanka, ${routeShortName} management app, professional billing software, sri lanka tax tracker`} />
                 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
                 <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-                <link rel="canonical" href={`https://mytracksy.lk/${slug}`} />
+                <link rel="canonical" href={`https://mytracksy.com/${slug}`} />
 
                 <meta property="og:type" content="website" />
                 <meta property="og:site_name" content="MyTracksy" />
-                <meta property="og:url" content={`https://mytracksy.lk/${slug}`} />
+                <meta property="og:url" content={`https://mytracksy.com/${slug}`} />
                 <meta property="og:title" content={`MyTracksy ${routeShortName} | Financial Software for Sri Lankan ${routeShortName} Professionals`} />
                 <meta property="og:description" content={`Track income, expenses, tax-ready exports, and daily workflows for Sri Lankan ${routeShortName} professionals in one app.`} />
-                <meta property="og:image" content={professionOgImages[slug] || 'https://mytracksy.lk/logos/mytracksy-logo.png'} />
+                <meta property="og:image" content={professionOgImages[slug] || 'https://mytracksy.com/assets/og/mytracksy-og-main.png'} />
+                <meta property="og:image:width" content="1200" />
+                <meta property="og:image:height" content="630" />
                 <meta property="og:image:alt" content={`${routeShortName} page on MyTracksy`} />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content={`MyTracksy ${routeShortName} | Financial Software for Sri Lankan ${routeShortName} Professionals`} />
                 <meta name="twitter:description" content={`Track income, expenses, tax-ready exports, and daily workflows for Sri Lankan ${routeShortName} professionals in one app.`} />
-                <meta name="twitter:image" content={professionOgImages[slug] || 'https://mytracksy.lk/logos/mytracksy-logo.png'} />
+                <meta name="twitter:image" content={professionOgImages[slug] || 'https://mytracksy.com/assets/og/mytracksy-og-main.png'} />
 
                 <script type="application/ld+json">
                     {JSON.stringify(structuredData)}
@@ -518,7 +523,7 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                                     </button>
                                 </div>
                                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                                    {['🔒 Data on your device', '🇱🇰 PDPA Compliant', '⚡ Works offline'].map((t, i) => (
+                                    {['🔒 Data on your device', '🇱🇰 Built for PDPA-ready operations', '⚡ Works offline'].map((t, i) => (
                                         <span key={i} style={{ fontSize: 12, fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.06)', padding: '6px 12px', borderRadius: 8, border: '1px solid rgba(16,185,129,0.1)' }}>{t}</span>
                                     ))}
                                 </div>
@@ -526,13 +531,13 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                             {/* Demo Video Embed */}
                             <div style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(40px)', transition: 'all 1s cubic-bezier(0.16,1,0.3,1) 0.2s' }}>
                                 <div style={{ borderRadius: 24, overflow: 'hidden', background: '#000', aspectRatio: '16/10', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: `0 40px 80px -20px ${color}35, 0 0 0 1px ${color}15`, border: 'none', position: 'relative', transition: 'all 0.4s' }}>
-                                    <iframe
-                                        src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&mute=1&loop=1&playlist=dQw4w9WgXcQ&controls=0&showinfo=0&rel=0&modestbranding=1"
-                                        style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                                        allow="autoplay; encrypted-media"
-                                        allowFullScreen
-                                        title={`MyTracksy ${routeShortName} Demo`}
-                                    />
+                                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${color}15, ${color}30)`, gap: 16 }}>
+                                        <div style={{ width: 64, height: 64, borderRadius: '50%', background: `${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${color}50` }}>
+                                            <svg width="28" height="28" viewBox="0 0 24 24" fill={color}><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                                        </div>
+                                        <span style={{ color: color, fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>Watch {routeShortName} Demo</span>
+                                        <span style={{ color: '#64748b', fontSize: 13 }}>See how it works in 2 minutes</span>
+                                    </div>
                                     {/* The absolute overlay ensures it looks integrated and blocks unwanted interactions if needed, but for a real video we might want controls enabled later. 
                                         For this visual demo showing a "sleek clean frame" without UI, playing automatically is perfect. */}
                                 </div>
@@ -637,12 +642,12 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                     <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(rgba(255,255,255,0.04) 1px,transparent 1px)', backgroundSize: '32px 32px', pointerEvents: 'none' }} />
                     <div className="pp-inner pp-sr" style={{ position: 'relative', zIndex: 2 }}>
                         <div style={{ fontSize: 56, marginBottom: 20, filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.2))' }}>🛡️</div>
-                        <h2 className="pp-heading" style={{ fontSize: '2rem', color: '#fff', marginBottom: 12 }}>Your Data Never Leaves Your Device</h2>
+                        <h2 className="pp-heading" style={{ fontSize: '2rem', color: '#fff', marginBottom: 12 }}>Your Data, Protected by Design</h2>
                         <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: 16, maxWidth: 550, margin: '0 auto 24px', lineHeight: 1.7 }}>
-                            MyTracksy follows Sri Lankan government data protection regulations. No personal data, financial records, or client information is stored on any server. Everything stays encrypted on your own device.
+                            MyTracksy is built for PDPA-ready operations with encrypted storage, role-based access controls, and privacy-first architecture. Your financial workflows are protected by design — with safeguards aligned to Sri Lankan data protection requirements.
                         </p>
                         <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
-                            {['🔐 Zero Server Storage', '🇱🇰 PDPA Compliant', '🛡️ 256-bit Encryption', '📱 Device-Level Security'].map((t, i) => (
+                            {['🔐 Encrypted Storage', '🇱🇰 PDPA-Ready', '🛡️ 256-bit Encryption', '📱 Device-Level Security'].map((t, i) => (
                                 <span key={i} style={{ padding: '10px 18px', borderRadius: 50, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', color: '#fff', fontSize: 13, fontWeight: 600 }}>{t}</span>
                             ))}
                         </div>

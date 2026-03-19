@@ -1,4 +1,4 @@
-import { ProfessionType } from '../contexts/AuthContext';
+import { ProfessionType } from '../types/profession';
 
 export type TierKey = 'free' | 'pro' | 'chambers';
 

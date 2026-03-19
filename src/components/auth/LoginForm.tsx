@@ -19,7 +19,7 @@ import {
   Phone as PhoneIcon,
   Language as LanguageIcon
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 
 interface LoginFormProps {
   onSuccess?: () => void;

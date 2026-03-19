@@ -1,8 +1,8 @@
-import { useState, useEffect, lazy, Suspense, useCallback } from 'react';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, sendPasswordResetEmail, signOut as firebaseSignOut } from 'firebase/auth';
+import React, { useState, useEffect, lazy, Suspense, useCallback } from 'react';
+import { onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, sendPasswordResetEmail, signOut as firebaseSignOut } from 'firebase/auth';
 import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { auth, db } from './config/firebase';
-import { ProfessionType } from './contexts/AuthContext';
+import { ProfessionType } from './types/profession';
 import { getSlugFromPath, getRouteBySlug, getRouteByProfession } from './config/professionRoutes';
 import { seedChartOfAccounts } from './services/accountingCoreService';
 import './i18n';
@@ -49,11 +49,54 @@ function LoadingFallback() {
   );
 }
 
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          minHeight: '100vh', background: '#0f172a', fontFamily: 'system-ui, sans-serif',
+        }}>
+          <div style={{ textAlign: 'center', color: '#f8fafc', maxWidth: 420, padding: '2rem' }}>
+            <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+            <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 12 }}>Something went wrong</h1>
+            <p style={{ color: '#94a3b8', fontSize: 15, lineHeight: 1.6, marginBottom: 24 }}>
+              MyTracksy encountered an error loading this page. Please try refreshing.
+            </p>
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                padding: '12px 28px', background: '#6366f1', color: '#fff',
+                border: 'none', borderRadius: 12, fontSize: 15, fontWeight: 600,
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              Refresh Page
+            </button>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 type AppView = 'landing' | 'professionLanding' | 'login' | 'profession' | 'dashboard';
 
 function App() {
   const [view, setView] = useState<AppView>('landing');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [authReady, setAuthReady] = useState(false); // Firebase auth confirmed
   const [loginError, setLoginError] = useState('');
   const [loginLoading, setLoginLoading] = useState(false);
   const [selectedProfession, setSelectedProfession] = useState<ProfessionType | null>(null);
@@ -152,61 +195,85 @@ function App() {
     }).catch(() => {});
   }, [bootstrapFirebaseUser]);
 
+  // ============ FIREBASE AUTH STATE LISTENER ============
+  // Security fix: Use onAuthStateChanged as the authoritative auth source.
+  // localStorage is only used for profession preference (non-sensitive).
   useEffect(() => {
-    const slug = getSlugFromPath();
-    const storedUser = localStorage.getItem('tracksyUser');
-    const storedProfession = localStorage.getItem('myTracksyProfession');
-    const currentPath = getCurrentPath();
-    let persistedProfession: ProfessionType | null = null;
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const slug = getSlugFromPath();
+      const storedProfession = localStorage.getItem('myTracksyProfession');
+      const currentPath = getCurrentPath();
+      let persistedProfession: ProfessionType | null = null;
 
-    if (storedProfession) {
-      try {
-        const data = JSON.parse(storedProfession);
-        if (data.profession) {
-          persistedProfession = data.profession;
-          setSelectedProfession(data.profession);
+      if (storedProfession) {
+        try {
+          const data = JSON.parse(storedProfession);
+          if (data.profession) {
+            persistedProfession = data.profession;
+            setSelectedProfession(data.profession);
+          }
+        } catch {
+          persistedProfession = null;
         }
-      } catch {
-        persistedProfession = null;
       }
-    }
 
-    if (slug) {
-      // URL has a profession slug (e.g., /medical, /legal)
-      const route = getRouteBySlug(slug);
-      if (route) {
-        if (storedUser) {
-          // Logged in → go straight to dashboard
-          setCurrentUser(JSON.parse(storedUser));
-          setSelectedProfession(route.profession);
+      if (firebaseUser) {
+        // Firebase confirms a valid session — trust this user
+        const user = {
+          email: firebaseUser.email || '',
+          name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
+          uid: firebaseUser.uid,
+          photoURL: firebaseUser.photoURL || null,
+        };
+        setCurrentUser(user);
+        localStorage.setItem('tracksyUser', JSON.stringify(user));
+
+        if (slug) {
+          const route = getRouteBySlug(slug);
+          if (route) {
+            setSelectedProfession(route.profession);
+            setView('dashboard');
+            setAuthReady(true);
+            return;
+          }
+        }
+
+        if (persistedProfession) {
+          navigateToProfession(persistedProfession);
           setView('dashboard');
         } else {
-          // Not logged in → show profession landing page
-          setProfessionLandingSlug(slug);
-          setView('professionLanding');
+          if (currentPath === '/login') {
+            navigateToRoot();
+          }
+          setView('profession');
         }
-        return;
-      }
-    }
-
-    // No profession slug → normal flow
-    if (storedUser) {
-      setCurrentUser(JSON.parse(storedUser));
-      if (persistedProfession) {
-        navigateToProfession(persistedProfession);
-        setView('dashboard');
       } else {
-        if (currentPath === '/login') {
-          navigateToRoot();
+        // No Firebase session — user is not authenticated
+        setCurrentUser(null);
+        localStorage.removeItem('tracksyUser');
+
+        if (slug) {
+          const route = getRouteBySlug(slug);
+          if (route) {
+            setProfessionLandingSlug(slug);
+            setView('professionLanding');
+            setAuthReady(true);
+            return;
+          }
         }
-        setView('profession');
+
+        if (currentPath === '/login') {
+          setProfessionLandingSlug(null);
+          setView('login');
+        } else {
+          setView('landing');
+        }
       }
-    } else if (currentPath === '/login') {
-      setProfessionLandingSlug(null);
-      setView('login');
-    } else {
-      setView('landing');
-    }
+
+      setAuthReady(true);
+    });
+
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -482,10 +549,17 @@ function App() {
     setView('landing');
   };
 
+  // ============ AUTH GATE ============
+  // Wait for Firebase to confirm auth state before rendering any view.
+  // This prevents the flash-of-wrong-content and localStorage auth bypass.
+  if (!authReady) {
+    return <LoadingFallback />;
+  }
+
   // 0. Landing page (first visit, root URL)
   if (view === 'landing') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
+      <ErrorBoundary><Suspense fallback={<LoadingFallback />}>
         <LandingPage
           onGetStarted={() => {
             window.history.pushState({}, '', '/login');
@@ -502,7 +576,7 @@ function App() {
           onDemoProfession={handleDemoProfession}
           onProfessionPage={handleProfessionPage}
         />
-      </Suspense>
+      </Suspense></ErrorBoundary>
     );
   }
 
@@ -512,7 +586,7 @@ function App() {
     const landingProfession = route ? route.profession : null;
 
     return (
-      <Suspense fallback={<LoadingFallback />}>
+      <ErrorBoundary><Suspense fallback={<LoadingFallback />}>
         {landingProfession && <ManifestUpdater profession={landingProfession} />}
         <ProfessionLandingPage
           slug={professionLandingSlug}
@@ -520,12 +594,14 @@ function App() {
             if (route) {
               setSelectedProfession(route.profession);
             }
+            window.history.pushState({}, '', '/login');
             setView('login');
           }}
           onLogin={() => {
             if (route) {
               setSelectedProfession(route.profession);
             }
+            window.history.pushState({}, '', '/login');
             setView('login');
           }}
           onBack={() => {
@@ -535,14 +611,14 @@ function App() {
           }}
         />
         {landingProfession && route?.dedicatedPwa && <PWAInstallPrompt profession={landingProfession} />}
-      </Suspense>
+      </Suspense></ErrorBoundary>
     );
   }
 
   // 1. Login / Register page
   if (view === 'login') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
+      <ErrorBoundary><Suspense fallback={<LoadingFallback />}>
         <SimpleLogin
           onLogin={handleLogin}
           onRegister={handleRegister}
@@ -554,14 +630,14 @@ function App() {
           loading={loginLoading}
           error={loginError}
         />
-      </Suspense>
+      </Suspense></ErrorBoundary>
     );
   }
 
   // 2. Profession selection
   if (view === 'profession') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
+      <ErrorBoundary><Suspense fallback={<LoadingFallback />}>
         <ProfessionSetup
           onProfessionSelected={handleProfessionSelected}
           onBackToHome={() => {
@@ -569,14 +645,14 @@ function App() {
             setView('landing');
           }}
         />
-      </Suspense>
+      </Suspense></ErrorBoundary>
     );
   }
 
   // 3. Dashboard with PWA support
   const selectedRoute = selectedProfession ? getRouteByProfession(selectedProfession) : undefined;
   return (
-    <Suspense fallback={<LoadingFallback />}>
+    <ErrorBoundary><Suspense fallback={<LoadingFallback />}>
       <NetworkStatusBar />
       <ManifestUpdater profession={selectedProfession} />
       <ProfessionDashboard
@@ -586,7 +662,7 @@ function App() {
         onLogout={handleLogout}
       />
       {selectedProfession && selectedRoute?.dedicatedPwa && <PWAInstallPrompt profession={selectedProfession} layoutContext="dashboard" />}
-    </Suspense>
+    </Suspense></ErrorBoundary>
   );
 }
 

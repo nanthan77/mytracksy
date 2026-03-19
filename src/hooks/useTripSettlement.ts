@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 export interface TripTransaction {
     id: string;

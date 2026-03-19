@@ -17,8 +17,8 @@ const MEDICAL_FAQS = [
         answer: 'The clinical voice workflow is designed for Sri Lankan usage patterns, including Sinhala, Tamil, English, and mixed speech patterns often used in local medical environments.',
     },
     {
-        question: 'Is patient and practice data handled with PDPA-conscious safeguards?',
-        answer: 'MyTracksy Medical is designed around privacy-first handling, bank-grade protection patterns, and Sri Lankan PDPA-conscious workflows so doctors can manage practice operations with stronger data discipline.',
+        question: 'How does MyTracksy handle patient and practice data?',
+        answer: 'MyTracksy Medical is designed for PDPA-ready operations with role-based access controls, encryption in transit and at rest, ephemeral voice processing, and contractual restrictions on AI vendor data usage. Security features are continuously reviewed as Sri Lankan data protection regulations evolve.',
     },
     {
         question: 'Can doctors use MyTracksy Medical in wards or clinics with weak internet?',
@@ -62,22 +62,54 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
     }, []);
 
     useEffect(() => {
+        // Progressive enhancement: add js-ready class so CSS can enable animations
+        document.documentElement.classList.add('js-ready');
+
+        const revealElement = (el: Element) => {
+            el.classList.add('sr-visible');
+        };
+
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        (entry.target as HTMLElement).style.opacity = '1';
-                        (entry.target as HTMLElement).style.transform = 'translateY(0)';
+                        revealElement(entry.target);
                         observer.unobserve(entry.target);
                     }
                 });
             },
-            { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+            { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
         );
-        setTimeout(() => {
-            document.querySelectorAll('.sr').forEach((el) => observer.observe(el));
-        }, 100);
-        return () => observer.disconnect();
+
+        // Observe all .sr elements after a brief delay for DOM readiness
+        const timer = setTimeout(() => {
+            const srElements = document.querySelectorAll('.sr');
+            srElements.forEach((el) => {
+                // Immediately reveal elements already in viewport
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    revealElement(el);
+                } else {
+                    observer.observe(el);
+                }
+            });
+        }, 150);
+
+        // Fallback: reveal ALL still-hidden .sr elements after 2.5 seconds
+        const fallbackTimer = setTimeout(() => {
+            document.querySelectorAll('.sr').forEach((el) => {
+                if (!el.classList.contains('sr-visible')) {
+                    revealElement(el);
+                }
+            });
+        }, 2500);
+
+        return () => {
+            clearTimeout(timer);
+            clearTimeout(fallbackTimer);
+            observer.disconnect();
+            document.documentElement.classList.remove('js-ready');
+        };
     }, []);
 
     const medicalStructuredData = [
@@ -85,10 +117,10 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
             '@context': 'https://schema.org',
             '@type': 'SoftwareApplication',
             name: 'MyTracksy Medical',
-            url: 'https://mytracksy.lk/medical',
+            url: 'https://mytracksy.com/medical',
             applicationCategory: 'MedicalBusiness',
             operatingSystem: 'Web, Android, iOS',
-            image: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+            image: 'https://mytracksy.com/logos/mytracksy-logo.png',
             description: 'MyTracksy Medical helps Sri Lankan doctors manage channeling income, clinic expenses, AI voice notes, patient workflows, and tax-ready exports in one fast PWA.',
             offers: {
                 '@type': 'Offer',
@@ -98,8 +130,8 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
             publisher: {
                 '@type': 'Organization',
                 name: 'MyTracksy',
-                url: 'https://mytracksy.lk/',
-                logo: 'https://mytracksy.lk/logos/mytracksy-logo.png',
+                url: 'https://mytracksy.com/',
+                logo: 'https://mytracksy.com/logos/mytracksy-logo.png',
             },
         },
         {
@@ -110,13 +142,13 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     '@type': 'ListItem',
                     position: 1,
                     name: 'MyTracksy',
-                    item: 'https://mytracksy.lk/',
+                    item: 'https://mytracksy.com/',
                 },
                 {
                     '@type': 'ListItem',
                     position: 2,
                     name: 'Medical',
-                    item: 'https://mytracksy.lk/medical',
+                    item: 'https://mytracksy.com/medical',
                 },
             ],
         },
@@ -142,20 +174,20 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 <meta name="keywords" content="doctor software sri lanka, clinic management system, medical billing software, sri lanka doctor tax, private channeling software, AI clinical notes sinhala tamil" />
                 <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
                 <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
-                <link rel="canonical" href="https://mytracksy.lk/medical" />
+                <link rel="canonical" href="https://mytracksy.com/medical" />
                 <link rel="preload" as="image" href="/assets/healthcare/sri_lankan_doctors_hero_bg.png" />
 
                 <meta property="og:type" content="website" />
                 <meta property="og:site_name" content="MyTracksy" />
-                <meta property="og:url" content="https://mytracksy.lk/medical" />
+                <meta property="og:url" content="https://mytracksy.com/medical" />
                 <meta property="og:title" content="MyTracksy Medical | Clinic, Tax & Practice Management for Sri Lankan Doctors" />
                 <meta property="og:description" content="Track channeling income, clinic expenses, AI voice notes, patient workflows, and tax-ready exports in one doctor-first workspace." />
-                <meta property="og:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+                <meta property="og:image" content="https://mytracksy.com/logos/mytracksy-logo.png" />
                 <meta property="og:image:alt" content="MyTracksy logo" />
                 <meta name="twitter:card" content="summary_large_image" />
                 <meta name="twitter:title" content="MyTracksy Medical | Clinic, Tax & Practice Management for Sri Lankan Doctors" />
                 <meta name="twitter:description" content="Track channeling income, clinic expenses, AI voice notes, patient workflows, and tax-ready exports in one doctor-first workspace." />
-                <meta name="twitter:image" content="https://mytracksy.lk/logos/mytracksy-logo.png" />
+                <meta name="twitter:image" content="https://mytracksy.com/logos/mytracksy-logo.png" />
 
                 <script type="application/ld+json">
                     {JSON.stringify(medicalStructuredData)}
@@ -165,34 +197,57 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
             <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
                 * { box-sizing: border-box; margin: 0; padding: 0; }
+                html { scroll-padding-top: 80px; scroll-behavior: smooth; }
                 body { background: #fcfcfc; }
-                .lt-c { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; color: #0f172a; line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+                .lt-c { font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif; color: #0f172a; line-height: 1.6; overflow-x: clip; -webkit-font-smoothing: antialiased; }
                 .lt-i { max-width: 1300px; margin: 0 auto; padding: 0 5%; }
-                .sr { opacity: 0; transform: translateY(40px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
-                
+                /* Progressive enhancement: content visible by default. Only hide for animation when JS has loaded. */
+                .sr { opacity: 1; transform: none; }
+                html.js-ready .sr { opacity: 0; transform: translateY(40px); transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1), transform 0.8s cubic-bezier(0.16, 1, 0.3, 1); }
+                html.js-ready .sr.sr-visible { opacity: 1; transform: translateY(0); }
+                /* A11y/SEO: Never hide content from reduced-motion users, screen readers, or print */
+                @media (prefers-reduced-motion: reduce) { html.js-ready .sr { opacity: 1 !important; transform: none !important; transition: none !important; } }
+                @media print { .sr { opacity: 1 !important; transform: none !important; } }
+
                 @keyframes gradient-bg { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
                 @keyframes float-slow { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-20px); } }
 
+                /* A11y: Skip navigation link */
+                .skip-nav { position: absolute; top: -100px; left: 16px; z-index: 10000; background: #0f172a; color: #fff; padding: 12px 24px; border-radius: 0 0 8px 8px; font-weight: 700; font-size: 14px; text-decoration: none; transition: top 0.2s ease; }
+                .skip-nav:focus { top: 0; outline: 3px solid #0ea5e9; outline-offset: 2px; }
+
+                /* A11y: Focus visible indicators for ALL interactive elements */
+                *:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; border-radius: 4px; }
+                button:focus-visible, a:focus-visible { outline: 2px solid #2563EB; outline-offset: 2px; }
+
                 .lt-nav { position: fixed; top: 0; left: 0; right: 0; z-index: 1000; padding: 20px 0; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
                 .lt-nav-s { padding: 16px 0; background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(24px) saturate(180%); -webkit-backdrop-filter: blur(24px) saturate(180%); border-bottom: 1px solid rgba(0, 0, 0, 0.04); box-shadow: 0 1px 20px rgba(0, 0, 0, 0.03); }
-                
-                .btn-primary { 
+
+                /* A11y: Nav link buttons with proper touch targets (44px min) */
+                .nav-link-btn { background: none; border: none; font-size: 14px; font-weight: 600; color: #475569; cursor: pointer; transition: color 0.2s; font-family: inherit; padding: 12px 8px; min-height: 44px; min-width: 44px; display: inline-flex; align-items: center; }
+                .nav-link-btn:hover { color: #0f172a; }
+
+                .btn-primary {
                     background: linear-gradient(135deg, #0ea5e9, #6366f1); color: #fff; border: none; padding: 14px 32px; border-radius: 99px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3); font-family: inherit; letter-spacing: -0.01em;
                 }
                 .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4); }
-                
+
                 .btn-secondary {
                     background: rgba(255,255,255,0.8); color: #0f172a; border: 1px solid rgba(0,0,0,0.08); padding: 14px 32px; border-radius: 99px; font-weight: 600; font-size: 15px; cursor: pointer; transition: all 0.3s ease; backdrop-filter: blur(10px); font-family: inherit;
                 }
                 .btn-secondary:hover { background: #fff; border-color: rgba(0,0,0,0.15); transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
-                
+
                 .glass-card {
                     background: rgba(255, 255, 255, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-radius: 24px; border: 1px solid rgba(255, 255, 255, 0.8); box-shadow: 0 4px 24px -6px rgba(0, 0, 0, 0.04), 0 1px 4px rgba(0,0,0,0.02); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
                 }
                 .glass-card:hover { transform: translateY(-8px); box-shadow: 0 20px 40px -8px rgba(0,0,0,0.08); border-color: rgba(99,102,241,0.2); }
-                
-                .text-gradient { background: linear-gradient(135deg, #0f172a, #334155, #6366f1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: gradient-bg 8s linear infinite; }
-                .text-gradient-white { background: linear-gradient(135deg, #ffffff, #e2e8f0, #c7d2fe); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+                .text-gradient { background: linear-gradient(135deg, #0f172a, #1e293b, #4f46e5); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-size: 200% auto; animation: gradient-bg 8s linear infinite; }
+                .text-gradient-white { background: linear-gradient(135deg, #ffffff, #f1f5f9, #e0e7ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+                /* A11y: Footer link buttons */
+                .footer-link-btn { background: none; border: none; font-size: 15px; color: #475569; margin-bottom: 12px; cursor: pointer; font-family: inherit; padding: 4px 0; text-align: left; transition: color 0.2s; display: block; }
+                .footer-link-btn:hover { color: #0ea5e9; }
 
                 @media (max-width: 900px) {
                     .hero-grid { grid-template-columns: 1fr !important; text-align: center; }
@@ -204,21 +259,29 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     .nav-right-full { display: none !important; }
                     .nav-right-mobile { display: flex !important; }
                     .lt-nav .lt-i { padding: 0 16px !important; }
+                    .security-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
+                    .pricing-pro-card { transform: none !important; }
+                    .footer-grid-brand { grid-column: span 1 !important; }
+                    .token-store-card { flex-direction: column !important; padding: 24px !important; }
                 }
             `}</style>
 
             <div className="lt-c">
+                {/* A11y: Skip navigation link */}
+                <a href="#main-content" className="skip-nav">Skip to main content</a>
+
                 {/* Navbar */}
-                <nav className={`lt-nav ${navSolid ? 'lt-nav-s' : ''}`}>
+                <nav className={`lt-nav ${navSolid ? 'lt-nav-s' : ''}`} aria-label="Medical page navigation">
                     <div className="lt-i" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
                             <button onClick={onBack} className="btn-secondary nav-back-btn" style={{ padding: '8px 16px', fontSize: 13 }}>← Back to Platform</button>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer' }}>
+                            <a href="/medical" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }} aria-label="MyTracksy Medical home">
                                 <img src="/logos/mytracksy-logo.png" alt="MyTracksy Logo" style={{ width: 38, height: 38, objectFit: 'contain' }} />
                                 <span style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.03em' }}>Medical <sup style={{ fontSize: 10, color: '#0ea5e9', fontWeight: 700 }}>PRO</sup></span>
-                            </div>
+                            </a>
                         </div>
-                        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+                        {/* A11y: Convert nav <span> to <button> elements with proper touch targets */}
+                        <div className="nav-links" style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
                             {['Clinical Intelligence', 'Financial Orchestration', 'Security', 'Pricing'].map((link) => {
                                 const sectionMap: Record<string, string> = {
                                     'Clinical Intelligence': 'ai-superpowers',
@@ -227,23 +290,32 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                     'Pricing': 'pricing'
                                 };
                                 return (
-                                    <span key={link} onClick={() => document.getElementById(sectionMap[link])?.scrollIntoView({ behavior: 'smooth' })} style={{ fontSize: 14, fontWeight: 600, color: '#475569', cursor: 'pointer', transition: 'color 0.2s' }}>{link}</span>
+                                    <button key={link} className="nav-link-btn" onClick={() => {
+                                        const el = document.getElementById(sectionMap[link]);
+                                        if (el) {
+                                            const navHeight = 80;
+                                            const y = el.getBoundingClientRect().top + window.scrollY - navHeight;
+                                            window.scrollTo({ top: y, behavior: 'smooth' });
+                                        }
+                                    }}>{link}</button>
                                 )
                             })}
                         </div>
-                        {/* Desktop right nav */}
+                        {/* Desktop right nav - A11y: Convert Sign In <span> to <button> */}
                         <div className="nav-right-full" style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-                            <span onClick={onLogin} style={{ fontSize: 14, fontWeight: 600, color: '#0f172a', cursor: 'pointer' }}>Sign In</span>
-                            <button onClick={onGetStarted} className="btn-primary" style={{ padding: '10px 24px' }}>Deploy Infrastructure</button>
+                            <button onClick={onLogin} className="nav-link-btn" style={{ color: '#0f172a' }}>Sign In</button>
+                            <button onClick={onGetStarted} className="btn-primary" style={{ padding: '10px 24px' }}>Start Free</button>
                         </div>
-                        {/* Mobile right nav */}
+                        {/* Mobile right nav - A11y: Convert Sign In <span> to <button> */}
                         <div className="nav-right-mobile" style={{ display: 'none', alignItems: 'center', gap: 10 }}>
-                            <span onClick={onLogin} style={{ fontSize: 13, fontWeight: 600, color: navSolid ? '#0f172a' : '#fff', cursor: 'pointer' }}>Sign In</span>
+                            <button onClick={onLogin} className="nav-link-btn" style={{ fontSize: 13, color: navSolid ? '#0f172a' : '#fff' }}>Sign In</button>
                             <button onClick={onGetStarted} className="btn-primary" style={{ padding: '8px 18px', fontSize: 12 }}>Start Free</button>
                         </div>
                     </div>
                 </nav>
 
+                {/* A11y: Wrap in <main> landmark */}
+                <main id="main-content">
                 {/* Hero Section */}
                 <header style={{
                     minHeight: '100vh',
@@ -265,7 +337,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         <div className="hero-grid" style={{ display: 'grid', gridTemplateColumns: '55% 45%', gap: '4rem', alignItems: 'center' }}>
                             <div style={{ zIndex: 2 }}>
                                 <div className="sr" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 99, background: 'rgba(14,165,233,0.15)', border: '1px solid rgba(14,165,233,0.3)', color: '#38bdf8', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 24, backdropFilter: 'blur(10px)' }}>
-                                    <span style={{ fontSize: 16 }}>🇱🇰</span> Built Exclusively for Sri Lankan Medical Professionals
+                                    <span style={{ fontSize: 16 }}>🇱🇰</span> Built for Sri Lankan Medical Professionals
                                 </div>
 
                                 <h1 className="sr lt-h1" style={{ fontSize: '4rem', fontWeight: 800, lineHeight: 1.05, letterSpacing: '-0.03em', marginBottom: 24, color: '#f8fafc' }}>
@@ -277,22 +349,29 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                     Juggling Government ward rounds, evening channeling, and complex IRD taxes? MyTracksy is the ultimate <strong>Cash Management & Accounting app</strong> designed specifically for Sri Lankan junior doctors and solo practitioners. Track your private income, manage clinic expenses, and instantly share standard financial reports with your auditor. Start with our powerful free accounting tier.
                                 </p>
 
-                                <div className="hero-btns sr" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', transitionDelay: '0.1s', marginBottom: 16 }}>
+                                <div className="hero-btns" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16, opacity: 1 }}>
                                     <button onClick={onGetStarted} className="btn-primary" style={{ padding: '18px 36px', fontSize: 16 }}>
                                         👉 Start Your 14-Day Free Trial
                                     </button>
-                                    <button onClick={() => document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth' })} className="btn-secondary" style={{ padding: '18px 36px', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <button onClick={() => {
+                                        const hero = document.querySelector('.hero-image iframe') as HTMLIFrameElement;
+                                        if (hero) {
+                                            hero.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                        } else {
+                                            document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                        }
+                                    }} className="btn-secondary" style={{ padding: '18px 36px', fontSize: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
                                         ▶ Watch the 1-Minute Demo
                                     </button>
                                 </div>
 
-                                <div className="sr" style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600, transitionDelay: '0.2s', display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span style={{ color: '#34d399' }}>✓</span> No App Store required. 100% Tax-Deductible Professional Software.
+                                <div style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, opacity: 1 }}>
+                                    <span style={{ color: '#34d399' }}>✓</span> No App Store required. Professional software — may qualify as a tax-deductible business expense.*
                                 </div>
 
                                 {/* One-line PWA Install Direct Link */}
                                 {!isInstalled && (
-                                    <div className="sr" style={{ transitionDelay: '0.3s', marginTop: 16 }}>
+                                    <div style={{ marginTop: 16, opacity: 1 }}>
                                         <button
                                             onClick={handleInstallClick}
                                             style={{
@@ -355,10 +434,10 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 <div style={{ height: 60, background: 'linear-gradient(to bottom, #fcfcfc, #f1f5f9)' }} />
 
                 {/* Core Architecture */}
-                <section id="platform" style={{ padding: '120px 0', background: '#f1f5f9', position: 'relative' }}>
+                <section id="platform" aria-labelledby="platform-heading" style={{ padding: '120px 0', background: '#f1f5f9', position: 'relative' }}>
                     <div className="lt-i">
                         <div className="sr" style={{ textAlign: 'center', marginBottom: 80 }}>
-                            <h2 style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Accounting Designed specifically For Clinicians</h2>
+                            <h2 id="platform-heading" style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Accounting Designed specifically For Clinicians</h2>
                             <p style={{ fontSize: 18, color: '#475569', maxWidth: 700, margin: '0 auto', lineHeight: 1.7 }}>
                                 Discard legacy ledgers and complex accounting software. Manage your single-clinic bookkeeping, track your daily cash flow, and effortlessly compile RAMIS-ready tax exports. <strong>Core accounting is free forever.</strong>
                             </p>
@@ -367,7 +446,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: 40 }}>
                             <div className="glass-card sr" style={{ padding: 40 }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(14,165,233,0.4)', border: '1px solid rgba(14,165,233,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_prescription_billing_1773217275109.png" alt="Solo Practitioner Bookkeeping" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_prescription_billing_1773217275109.png" alt="MyTracksy prescription billing and solo practice bookkeeping for doctors" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                                 <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Solo Practice Bookkeeping</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
@@ -377,7 +456,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                             <div className="glass-card sr" style={{ padding: 40, transitionDelay: '100ms' }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(16,185,129,0.4)', border: '1px solid rgba(16,185,129,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png" alt="Zero-Touch Bank Sync" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png" alt="Clinic revenue tracking dashboard with automated bank sync for medical practices" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                                 <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Zero-Touch Bank Integrations</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
@@ -387,7 +466,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                             <div className="glass-card sr" style={{ padding: 40, transitionDelay: '200ms' }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(139,92,246,0.4)', border: '1px solid rgba(139,92,246,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_tax_compliance_1773217329017.png" alt="Auditor Export Engine" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_tax_compliance_1773217329017.png" alt="Tax compliance and auditor-ready export tools for Sri Lankan medical professionals" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
                                 <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>1-Click Auditor Excel Exports</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
@@ -399,7 +478,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 </section>
 
                 {/* AI Superpowers */}
-                <section id="ai-superpowers" style={{ padding: '140px 0 100px', background: '#0f172a', position: 'relative', overflow: 'hidden' }}>
+                <section id="ai-superpowers" aria-labelledby="ai-heading" style={{ padding: '140px 0 100px', background: '#0f172a', position: 'relative', overflow: 'hidden' }}>
                     {/* Glowing Orbs */}
                     <div style={{ position: 'absolute', top: '10%', left: '-10%', width: 600, height: 600, background: 'radial-gradient(circle, rgba(124,58,237,0.15) 0%, transparent 60%)', filter: 'blur(80px)', zIndex: 0 }} />
                     <div style={{ position: 'absolute', bottom: '10%', right: '-10%', width: 600, height: 600, background: 'radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 60%)', filter: 'blur(80px)', zIndex: 0 }} />
@@ -411,13 +490,13 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#a855f7', boxShadow: '0 0 12px #a855f7' }}></span>
                                 Token Wallet Powered
                             </div>
-                            <h2 style={{ fontSize: '3.5rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', marginBottom: 24, lineHeight: 1.1 }}>
+                            <h2 id="ai-heading" style={{ fontSize: '3.5rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', marginBottom: 24, lineHeight: 1.1 }}>
                                 Upgrade Your Practice with<br />
                                 <span style={{ background: 'linear-gradient(135deg, #c084fc, #38bdf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                                     AI Clinical Superpowers.
                                 </span>
                             </h2>
-                            <p style={{ fontSize: 18, color: '#94a3b8', maxWidth: 700, margin: '0 auto', lineHeight: 1.7 }}>
+                            <p style={{ fontSize: 18, color: '#cbd5e1', maxWidth: 700, margin: '0 auto', lineHeight: 1.7 }}>
                                 Need to do heavy lifting? Use your MyTracksy Token Wallet to access elite, time-saving AI tools instantly.
                             </p>
                         </div>
@@ -428,7 +507,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #8b5cf6, transparent)' }} />
                                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05))', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24, boxShadow: 'inset 0 0 20px rgba(139,92,246,0.1)' }}>📄</div>
                                 <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>1-Click Referral Letters</h3>
-                                <p style={{ fontSize: 16, color: '#94a3b8', lineHeight: 1.7, flex: 1 }}>
+                                <p style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.7, flex: 1 }}>
                                     Turn a messy 30-second casual voice note into a beautifully formatted, highly polite PDF Referral Letter to a Consultant in <strong style={{ color: '#e2e8f0', fontWeight: 600 }}>5 seconds</strong>.
                                 </p>
                             </div>
@@ -438,7 +517,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #0ea5e9, transparent)' }} />
                                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, rgba(14,165,233,0.2), rgba(14,165,233,0.05))', border: '1px solid rgba(14,165,233,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24, boxShadow: 'inset 0 0 20px rgba(14,165,233,0.1)' }}>📉</div>
                                 <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>Vision AI Lab Trends</h3>
-                                <p style={{ fontSize: 16, color: '#94a3b8', lineHeight: 1.7, flex: 1 }}>
+                                <p style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.7, flex: 1 }}>
                                     Snap a photo of 4 faded, printed blood reports from the last 6 months. The AI instantly draws a clean trend-graph of the patient's Fasting Blood Sugar right on your screen.
                                 </p>
                             </div>
@@ -448,7 +527,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #10b981, transparent)' }} />
                                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05))', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24, boxShadow: 'inset 0 0 20px rgba(16,185,129,0.1)' }}>🗣️</div>
                                 <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>Patient Translator</h3>
-                                <p style={{ fontSize: 16, color: '#94a3b8', lineHeight: 1.7, flex: 1 }}>
+                                <p style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.7, flex: 1 }}>
                                     Dictate dosage instructions in English, and instantly generate a polite Sinhala/Tamil PDF "Take-Home Card" to WhatsApp to your patient.
                                 </p>
                             </div>
@@ -456,55 +535,64 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     </div>
                 </section>
 
-                {/* PDPA & Security */}
-                <section id="security" style={{ padding: '140px 0', background: '#0f172a', color: '#ffffff', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ position: 'absolute', top: '-10%', right: '-10%', width: 800, height: 800, background: 'radial-gradient(circle, rgba(14,165,233,0.15) 0%, transparent 60%)', filter: 'blur(100px)', zIndex: 0 }} />
-                    <div className="lt-i" style={{ position: 'relative', zIndex: 1, display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 80, alignItems: 'center' }}>
-
-                        <div className="sr">
-                            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', borderRadius: 99, background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#bae6fd', fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 24 }}>System Integrity</div>
-                            <h2 className="text-gradient-white" style={{ fontSize: '3.5rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: 24, lineHeight: 1.1 }}>PDPA No. 9 of 2022 Fully Compliant.</h2>
-                            <p style={{ fontSize: 18, color: '#cbd5e1', lineHeight: 1.7, marginBottom: 32 }}>
-                                Medical data is classified as Special Category Personal Data. Our infrastructure enforces Local-First Storage, Enterprise B2B API contracts (zero public model training), and AES-256 Cloud Encryption.
+                {/* ===== TRUST & COMPLIANCE ===== */}
+                <section className="sr" style={{ padding: '100px 24px', background: 'linear-gradient(180deg, #0c1222 0%, #111827 100%)' }}>
+                    <div style={{ maxWidth: 1100, margin: '0 auto' }}>
+                        <div style={{ textAlign: 'center', marginBottom: 56 }}>
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: 'rgba(45,212,191,0.1)', border: '1px solid rgba(45,212,191,0.25)', borderRadius: 100, padding: '8px 20px', fontSize: 12, fontWeight: 600, letterSpacing: '0.08em', textTransform: 'uppercase' as const, color: '#5eead4', marginBottom: 20 }}>
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                                Built for Medical-Grade Operations
+                            </span>
+                            <h2 style={{ fontSize: 'clamp(26px, 3.5vw, 38px)', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.15, color: '#f1f5f9', marginBottom: 14 }}>
+                                Your Practice Data, Protected by Design
+                            </h2>
+                            <p style={{ fontSize: 16, lineHeight: 1.7, color: '#94a3b8', maxWidth: 580, margin: '0 auto' }}>
+                                Architected for the regulatory reality of Sri Lankan medical practice — where patient data is special-category information.
                             </p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-                                {[
-                                    '100% Automated anonymization of patient identifiers.',
-                                    'Voice data is permanently neutralized milliseconds after text processing.',
-                                    'Hosted entirely on compliant South Asian (Singapore/Mumbai) server clusters.'
-                                ].map((item, i) => (
-                                    <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                                        <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'rgba(59,130,246,0.2)', border: '1px solid rgba(59,130,246,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 2 }}>
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" /></svg>
-                                        </div>
-                                        <span style={{ fontSize: 16, color: '#e2e8f0' }}>{item}</span>
-                                    </div>
-                                ))}
-                            </div>
                         </div>
 
-                        <div className="sr" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, position: 'relative' }}>
-                            <div style={{ background: 'rgba(30,41,59,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: 32, backdropFilter: 'blur(20px)', transform: 'translateY(40px)' }}>
-                                <div style={{ fontSize: 32, marginBottom: 16 }}>🏦</div>
-                                <h4 style={{ fontSize: 18, fontWeight: 700, color: '#f8fafc', marginBottom: 8 }}>CBSL Payments</h4>
-                                <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.6 }}>Integrated exclusively with Central Bank of Sri Lanka approved gateways.</p>
+                        {/* PDPA-Ready Banner */}
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, background: 'linear-gradient(135deg, rgba(45,212,191,0.08), rgba(99,102,241,0.08))', border: '1px solid rgba(45,212,191,0.2)', borderRadius: 12, padding: '14px 24px', marginBottom: 48, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
+                            <div style={{ width: 32, height: 32, background: 'rgba(45,212,191,0.12)', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12l2 2 4-4"/><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
                             </div>
-                            <div style={{ background: 'rgba(30,41,59,0.5)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 24, padding: 32, backdropFilter: 'blur(20px)' }}>
-                                <div style={{ fontSize: 32, marginBottom: 16 }}>📜</div>
-                                <h4 style={{ fontSize: 18, fontWeight: 700, color: '#f8fafc', marginBottom: 8 }}>CA Verified</h4>
-                                <p style={{ fontSize: 14, color: '#94a3b8', lineHeight: 1.6 }}>Tax estimation logic stringently audited against Inland Revenue parameters.</p>
-                            </div>
+                            <span style={{ fontSize: 14, fontWeight: 500, color: '#2dd4bf' }}>
+                                Built for PDPA-Ready Operations <span style={{ color: '#64748b', fontWeight: 400 }}>— Act No. 9 of 2022</span>
+                            </span>
                         </div>
 
+                        {/* Trust Cards Grid */}
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18 }}>
+                            {[
+                                { icon: '🛡️', color: '#818cf8', label: 'SYSTEM INTEGRITY', title: 'PDPA-Aligned Data Handling', body: 'Designed for handling special-category medical data with role-based access controls, encryption in transit and at rest, and auditable processing controls.' },
+                                { icon: '🔒', color: '#2dd4bf', label: 'PRIVACY CONTROLS', title: 'Automated Redaction & Pseudonymization', body: 'Patient-identifier redaction workflows applied based on your deployment policy and workflow configuration.' },
+                                { icon: '🎙️', color: '#fb7185', label: 'VOICE PROCESSING', title: 'Ephemeral Voice Handling', body: 'Voice inputs processed using ephemeral controls with vendor restrictions designed to minimize retention and prevent public model training use.' },
+                                { icon: '☁️', color: '#38bdf8', label: 'CLOUD INFRASTRUCTURE', title: 'Enterprise Cloud with Safeguards', body: 'Hosted on enterprise-grade cloud infrastructure with cross-border processing safeguards, encryption, and audit logging.' },
+                                { icon: '💳', color: '#34d399', label: 'PAYMENT PROCESSING', title: 'Sri Lanka-Licensed Channels', body: 'Integrates with Sri Lanka-licensed and authorized payment providers and acquiring channels, subject to merchant onboarding.' },
+                                { icon: '📋', color: '#fbbf24', label: 'TAX LOGIC', title: 'IRD-Aligned Tax Estimation', body: 'Tax workflows built against applicable Sri Lankan tax rules, designed for periodic review by qualified tax professionals including CA Sri Lanka members.' },
+                            ].map((card, i) => (
+                                <div key={i} style={{ background: '#1a2332', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '28px 24px', transition: 'border-color 0.3s, transform 0.3s' }} onMouseOver={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.2)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }} onMouseOut={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
+                                    <span style={{ fontSize: 24, marginBottom: 16, display: 'block' }}>{card.icon}</span>
+                                    <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' as const, color: '#64748b', marginBottom: 6 }}>{card.label}</div>
+                                    <div style={{ fontSize: 16, fontWeight: 600, color: '#f1f5f9', marginBottom: 10, lineHeight: 1.35 }}>{card.title}</div>
+                                    <div style={{ fontSize: 13.5, lineHeight: 1.65, color: '#94a3b8' }}>{card.body}</div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Legal footnote */}
+                        <p style={{ textAlign: 'center', fontSize: 12, color: '#475569', maxWidth: 640, margin: '36px auto 0', lineHeight: 1.7, borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 28 }}>
+                            MyTracksy is designed to support compliance with the Personal Data Protection Act, No. 9 of 2022. Compliance status depends on your deployment configuration, operational policies, and ongoing governance practices.
+                        </p>
                     </div>
                 </section>
 
                 {/* ===== PRICING SECTION ===== */}
-                <section id="pricing" style={{ padding: '120px 0', background: '#fcfcfc', position: 'relative' }}>
+                <section id="pricing" aria-labelledby="pricing-heading" style={{ padding: '120px 0', background: '#fcfcfc', position: 'relative' }}>
                     <div className="lt-i">
                         <div className="sr" style={{ textAlign: 'center', marginBottom: 60 }}>
                             <div className="pp-badge" style={{ display: 'inline-block', background: 'rgba(14,165,233,0.08)', color: '#0284c7', padding: '6px 16px', borderRadius: 99, fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 16 }}>Costs less than ONE channeling consultation</div>
-                            <h2 style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Put your taxes and clinical notes on autopilot.</h2>
+                            <h2 id="pricing-heading" style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Put your taxes and clinical notes on autopilot.</h2>
                             <p style={{ fontSize: 18, color: '#475569', maxWidth: 650, margin: '0 auto', lineHeight: 1.7 }}>
                                 Why spend LKR 50,000+ on accountant fees and lose hundreds of thousands in forgotten hospital payments?
                             </p>
@@ -550,7 +638,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                             </div>
 
                             {/* Pro Tier (Highlighted) */}
-                            <div className="sr" style={{ padding: '48px 32px', background: 'linear-gradient(135deg, #0f172a, #1e293b)', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 40px 100px -20px rgba(14,165,233,0.3)', position: 'relative', transform: 'scale(1.05)', zIndex: 2 }}>
+                            <div className="sr pricing-pro-card" style={{ padding: '48px 32px', background: 'linear-gradient(135deg, #0f172a, #1e293b)', borderRadius: 32, border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 40px 100px -20px rgba(14,165,233,0.3)', position: 'relative', transform: 'scale(1.05)', zIndex: 2 }}>
                                 <div style={{ position: 'absolute', top: -16, left: '50%', transform: 'translateX(-50%)', background: 'linear-gradient(135deg, #38bdf8, #0ea5e9)', color: '#fff', padding: '6px 20px', borderRadius: 99, fontSize: 14, fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em', boxShadow: '0 8px 16px rgba(14,165,233,0.3)' }}>Most Popular</div>
                                 <div style={{ fontSize: 14, fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', marginBottom: 8, letterSpacing: '0.05em' }}>🥇 Tier 2</div>
                                 <div style={{ fontSize: 24, fontWeight: 800, color: '#fff', marginBottom: 16 }}>Pro / Consultant</div>
@@ -571,7 +659,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                                 <div style={{ fontSize: 13, color: '#cbd5e1', background: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 16, marginBottom: 32, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                                     <div style={{ fontSize: 20 }}>🛡️</div>
-                                    <div style={{ lineHeight: 1.5 }}><strong>100% Tax Deductible.</strong> When you subscribe, MyTracksy instantly logs this invoice into your expense tracker as "Professional Medical Software," legally lowering your IRD taxable income.</div>
+                                    <div style={{ lineHeight: 1.5 }}><strong>May qualify as a tax-deductible expense.</strong> When you subscribe, MyTracksy logs this invoice into your expense tracker as "Professional Medical Software," which may help reduce your taxable income. Consult your tax advisor.</div>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -610,7 +698,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div style={{ fontSize: 14, color: '#64748b', fontWeight: 600, marginBottom: 32 }}>
                                     {billingCycle === 'annual' ? '/ year — That\'s just LKR 6,250/mo' : '/ month'}
                                 </div>
-                                <button onClick={onGetStarted} className="btn-secondary" style={{ width: '100%', marginBottom: 32, padding: '16px', fontSize: 16, background: '#f8fafc' }}>Contact Sales</button>
+                                <button onClick={() => window.open('mailto:hello@mytracksy.com?subject=Clinic%20Director%20Plan%20Inquiry', '_blank')} className="btn-secondary" style={{ width: '100%', marginBottom: 32, padding: '16px', fontSize: 16, background: '#f8fafc' }}>Contact Sales</button>
 
                                 <div style={{ fontSize: 13, color: '#475569', background: '#f1f5f9', padding: 16, borderRadius: 16, marginBottom: 32, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                                     <div style={{ fontSize: 20 }}>💡</div>
@@ -635,7 +723,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         </div>
 
                         {/* AI Token Store Add-on */}
-                        <div className="sr" style={{ marginTop: 60, padding: '40px 48px', background: '#ffffff', borderRadius: 32, border: '1px solid rgba(0,0,0,0.08)', display: 'flex', gap: 48, alignItems: 'center', boxShadow: '0 20px 40px -20px rgba(0,0,0,0.05)', flexWrap: 'wrap' }}>
+                        <div className="sr token-store-card" style={{ marginTop: 60, padding: '40px 48px', background: '#ffffff', borderRadius: 32, border: '1px solid rgba(0,0,0,0.08)', display: 'flex', gap: 48, alignItems: 'center', boxShadow: '0 20px 40px -20px rgba(0,0,0,0.05)', flexWrap: 'wrap' }}>
                             <div style={{ flex: '1 1 300px' }}>
                                 <div style={{ fontSize: 14, fontWeight: 800, color: '#f59e0b', textTransform: 'uppercase', marginBottom: 12, letterSpacing: '0.05em' }}>🪙 AI Token Store — Pay-As-You-Go</div>
                                 <h3 style={{ fontSize: '2rem', fontWeight: 800, color: '#0f172a', marginBottom: 16, letterSpacing: '-0.02em', lineHeight: 1.2 }}>Run out of your monthly free tokens? Top up instantly.</h3>
@@ -669,16 +757,16 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         <div className="sr" style={{ background: 'linear-gradient(135deg, #0ea5e9, #6366f1)', borderRadius: 40, padding: '80px 40px', position: 'relative', overflow: 'hidden', boxShadow: '0 40px 100px -20px rgba(0,0,0,0.2)' }}>
                             <div style={{ position: 'absolute', right: '-10%', top: '-20%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%)', borderRadius: '50%', filter: 'blur(60px)' }} />
 
-                            <h2 style={{ fontSize: '3.5rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', marginBottom: 24, position: 'relative', zIndex: 1 }}>Deploy Your Administrative Superiority.</h2>
+                            <h2 style={{ fontSize: '3.5rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', marginBottom: 24, position: 'relative', zIndex: 1 }}>Start Managing Your Practice Like a Pro.</h2>
                             <p style={{ fontSize: 18, color: '#e0e7ff', maxWidth: 600, margin: '0 auto 48px', lineHeight: 1.7, position: 'relative', zIndex: 1 }}>
-                                Reclaim twenty operational hours per month. Integrate your practice into the definitive financial architecture built for Sri Lankan Doctors.
+                                Reclaim 20+ hours per month. The complete accounting and clinical workflow platform built specifically for Sri Lankan Doctors.
                             </p>
 
                             <div style={{ position: 'relative', zIndex: 1 }}>
                                 <button onClick={onGetStarted} className="btn-primary" style={{ padding: '20px 48px', fontSize: 18, background: '#ffffff', color: '#0f172a' }}>
-                                    Initiate 14-Day Free Deployment
+                                    Start Your 14-Day Free Trial
                                 </button>
-                                <div style={{ marginTop: 20, fontSize: 14, color: '#e0e7ff', fontWeight: 600 }}>100% Tax Deductible Corporate Expense.</div>
+                                <div style={{ marginTop: 20, fontSize: 14, color: '#e0e7ff', fontWeight: 600 }}>No credit card required. *Consult your tax advisor on deductibility.</div>
                             </div>
                         </div>
                     </div>
@@ -703,21 +791,22 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     </div>
                 </section>
 
-                {/* Footer */}
-                <footer style={{ background: '#f8fafc', padding: '80px 0 40px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                </main>
+                {/* Footer - A11y: Fix heading hierarchy H4→H3, convert divs to buttons, fix contrast */}
+                <footer style={{ background: '#f8fafc', padding: '80px 0 40px', borderTop: '1px solid rgba(0,0,0,0.05)' }} role="contentinfo">
                     <div className="lt-i">
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 80 }}>
-                            <div style={{ gridColumn: 'span 2' }}>
+                            <div className="footer-grid-brand" style={{ gridColumn: 'span 2' }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
                                     <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ height: 48, objectFit: 'contain' }} />
                                     <span style={{ fontSize: 20, fontWeight: 800, color: '#0ea5e9' }}>Medical</span>
                                 </div>
-                                <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.7, maxWidth: 350 }}>
-                                    The definitive financial architecture platform utilized by leading doctors and surgeons across Sri Lanka.
+                                <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.7, maxWidth: 350 }}>
+                                    The complete accounting and practice management platform trusted by doctors and surgeons across Sri Lanka.
                                 </p>
                             </div>
                             <div>
-                                <h4 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>System Capabilities</h4>
+                                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>System Capabilities</h3>
                                 {['Clinical Intelligence', 'Revenue Syndication', 'Security Protocols', 'AI Extensibility'].map(l => {
                                     const sectionMap: Record<string, string> = {
                                         'Clinical Intelligence': 'platform',
@@ -726,25 +815,39 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                         'AI Extensibility': 'ai-superpowers'
                                     };
                                     return (
-                                        <div key={l} onClick={() => document.getElementById(sectionMap[l])?.scrollIntoView({ behavior: 'smooth' })} style={{ fontSize: 15, color: '#64748b', marginBottom: 12, cursor: 'pointer' }}>{l}</div>
+                                        <button key={l} className="footer-link-btn" onClick={() => {
+                                            const el = document.getElementById(sectionMap[l]);
+                                            if (el) {
+                                                const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                                                window.scrollTo({ top: y, behavior: 'smooth' });
+                                            }
+                                        }}>{l}</button>
                                     )
                                 })}
                             </div>
                             <div>
-                                <h4 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>Compliance</h4>
-                                {['PDPA No.9 2022 Adherence', 'Terms of Operations', 'Data Sovereignty Doctrine'].map(l => (
-                                    <div key={l} onClick={() => l === 'PDPA No.9 2022 Adherence' ? document.getElementById('security')?.scrollIntoView({ behavior: 'smooth' }) : undefined} style={{ fontSize: 15, color: '#64748b', marginBottom: 12, cursor: 'pointer' }}>{l}</div>
+                                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>Compliance</h3>
+                                {['PDPA-Ready Operations', 'Terms of Service', 'Data Protection Policy'].map(l => (
+                                    <button key={l} className="footer-link-btn" onClick={() => {
+                                        if (l === 'PDPA-Ready Operations') {
+                                            const el = document.getElementById('security');
+                                            if (el) {
+                                                const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                                                window.scrollTo({ top: y, behavior: 'smooth' });
+                                            }
+                                        }
+                                    }}>{l}</button>
                                 ))}
                             </div>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, paddingTop: 32, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                            <div style={{ fontSize: 14, color: '#94a3b8' }}>
-                                © 2026 MyTracksy Enterprise Systems. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#3b82f6', textDecoration: 'none', fontWeight: 600 }}>SafeNetCreations</a>.
+                            <div style={{ fontSize: 14, color: '#475569' }}>
+                                © 2026 MyTracksy Enterprise Systems. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline', fontWeight: 600 }}>SafeNetCreations</a>.
                             </div>
-                            <div style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontWeight: 600 }}>
-                                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }} />
-                                Medical Infrastructure Operational
+                            <div style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#059669', fontWeight: 600 }}>
+                                <span aria-hidden="true" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }} />
+                                All Systems Operational
                             </div>
                         </div>
                     </div>

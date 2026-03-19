@@ -6,7 +6,7 @@
  * Users can customise later.
  */
 
-import type { ProfessionType } from '../contexts/AuthContext';
+import type { ProfessionType } from '../types/profession';
 
 export interface DefaultAccount {
     name: string;

@@ -277,7 +277,7 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({
         }}>
           {[
             { icon: '🔒', text: '256-bit Encryption' },
-            { icon: '🛡️', text: 'PDPA Compliant' },
+            { icon: '🛡️', text: 'PDPA-Ready' },
             { icon: '☁️', text: 'Firebase Secured' },
           ].map(b => (
             <div key={b.text} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>

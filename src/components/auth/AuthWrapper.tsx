@@ -12,7 +12,7 @@ import {
   CheckCircle as CheckCircleIcon,
   Email as EmailIcon
 } from '@mui/icons-material';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import { PhoneAuthForm } from './PhoneAuthForm';

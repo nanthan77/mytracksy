@@ -352,7 +352,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                     Account deletion is permanent and cannot be undone.
                   </Alert>
                   <Typography variant="body2" color="text.secondary">
-                    To delete your account, please contact support at support@mytracksy.lk
+                    To delete your account, please contact support at support@mytracksy.com
                   </Typography>
                 </CardContent>
               </Card>

@@ -710,7 +710,7 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
                 </div>
               </div>
             ) : (
-              <button onClick={() => window.open('https://wallet.mytracksy.lk/link-card', '_blank')} style={{
+              <button onClick={() => window.open('https://wallet.mytracksy.com/link-card', '_blank')} style={{
                 background: 'rgba(255,255,255,0.2)', border: '1px solid rgba(255,255,255,0.3)',
                 color: 'white', borderRadius: 10, padding: '8px 16px', cursor: 'pointer',
                 fontSize: '0.8rem', fontWeight: 600,
@@ -813,7 +813,7 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
           )}
           {!walletData.savedCard && walletData.autoReloadEnabled && (
             <div style={{ padding: '0.75rem', background: '#fef2f2', borderRadius: 8, fontSize: '0.8rem', color: '#991b1b', border: '1px solid #fecaca' }}>
-              ⚠️ Link a card first to enable auto-reload. <a href="https://wallet.mytracksy.lk/link-card" target="_blank" rel="noopener noreferrer" style={{ color: NAVY, fontWeight: 600 }}>Link now →</a>
+              ⚠️ Link a card first to enable auto-reload. <a href="https://wallet.mytracksy.com/link-card" target="_blank" rel="noopener noreferrer" style={{ color: NAVY, fontWeight: 600 }}>Link now →</a>
             </div>
           )}
         </div>

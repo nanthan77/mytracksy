@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { ProfessionType } from '../../contexts/AuthContext';
+import { ProfessionType } from '../../types/profession';
 import { useIsCompactMobile } from './useIsCompactMobile';
 
 interface NavItem { id: string; label: string; icon: string; premium?: boolean; locked?: boolean; tierBadge?: string; }

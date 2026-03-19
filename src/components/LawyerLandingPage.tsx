@@ -43,27 +43,46 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
 
     /* ── IntersectionObserver for scroll-reveal ── */
     useEffect(() => {
+        const revealElement = (el: Element) => {
+            (el as HTMLElement).style.opacity = '1';
+            (el as HTMLElement).style.transform = 'translateY(0)';
+        };
         const observer = new IntersectionObserver(
             (entries) => {
                 entries.forEach((entry) => {
                     if (entry.isIntersecting) {
-                        (entry.target as HTMLElement).style.opacity = '1';
-                        (entry.target as HTMLElement).style.transform = 'translateY(0)';
+                        revealElement(entry.target);
                         observer.unobserve(entry.target);
                     }
                 });
             },
-            { threshold: 0.12, rootMargin: '0px 0px -60px 0px' }
+            { threshold: 0.05, rootMargin: '0px 0px -40px 0px' }
         );
-        setTimeout(() => {
-            document.querySelectorAll('.sr').forEach((el) => observer.observe(el));
-        }, 100);
-        return () => observer.disconnect();
+        const timer = setTimeout(() => {
+            document.querySelectorAll('.sr').forEach((el) => {
+                const rect = el.getBoundingClientRect();
+                if (rect.top < window.innerHeight && rect.bottom > 0) {
+                    revealElement(el);
+                } else {
+                    observer.observe(el);
+                }
+            });
+        }, 150);
+        const fallbackTimer = setTimeout(() => {
+            document.querySelectorAll('.sr').forEach((el) => {
+                if ((el as HTMLElement).style.opacity !== '1') revealElement(el);
+            });
+        }, 3000);
+        return () => { clearTimeout(timer); clearTimeout(fallbackTimer); observer.disconnect(); };
     }, []);
 
     /* ── Helpers ── */
     const scrollTo = (id: string) => {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+        const el = document.getElementById(id);
+        if (el) {
+            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+            window.scrollTo({ top: y, behavior: 'smooth' });
+        }
     };
 
     const formatLKR = (amount: number): string => {
@@ -78,11 +97,11 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                 <title>LexTracksy | AI Legal Practice Management for Sri Lankan Attorneys</title>
                 <meta name="description" content="Complete legal accounting engine for Sri Lankan Attorneys-at-Law. Dual-Wallet Ledger, Court Steps Expense Tracker, 1-Click Fee Notes, Notary Escrow, IRD Tax Deductions. AI add-ons included." />
                 <meta name="keywords" content="lawyer accounting software sri lanka, legal practice management, attorney billing software, trust account ledger, fee note generator, court expense tracker, notary escrow, IRD tax deductions lawyers, BASL software" />
-                <link rel="canonical" href="https://mytracksy.lk/legal" />
+                <link rel="canonical" href="https://mytracksy.com/legal" />
                 <meta property="og:type" content="website" />
                 <meta property="og:title" content="LexTracksy | Legal Accounting Engine for Sri Lankan Attorneys" />
                 <meta property="og:description" content="Dual-Wallet Ledger, Fee Notes, Expense Tracker, Notary Escrow & IRD Tax Deductions. AI add-ons included." />
-                <meta property="og:url" content="https://mytracksy.lk/legal" />
+                <meta property="og:url" content="https://mytracksy.com/legal" />
                 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 
                 {/* JSON-LD Schema */}
@@ -112,14 +131,14 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
             {/* ═══ Global Styles ═══ */}
             <style>{`
                 * { box-sizing: border-box; margin: 0; padding: 0; }
-                html { scroll-behavior: smooth; }
+                html { scroll-padding-top: 80px; scroll-behavior: smooth; }
                 body { background: #fcfcfc; }
 
                 .lex-root {
                     font-family: ${FONT_BODY};
                     color: ${NAVY};
                     line-height: 1.6;
-                    overflow-x: hidden;
+                    overflow-x: clip;
                     -webkit-font-smoothing: antialiased;
                 }
                 .lex-container {

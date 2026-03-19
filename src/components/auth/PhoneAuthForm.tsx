@@ -20,7 +20,7 @@ import {
   Security as SecurityIcon
 } from '@mui/icons-material';
 import { RecaptchaVerifier } from 'firebase/auth';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { auth } from '../../config/firebase';
 
 interface PhoneAuthFormProps {

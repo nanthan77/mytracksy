@@ -188,7 +188,8 @@
     <!-- Preconnect & Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
 
     <title>MyTracksy — Professional Finance Management</title>
     <script type="application/ld+json">
@@ -218,5 +219,34 @@
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <noscript>
+      <div style="max-width:800px;margin:40px auto;padding:0 20px;font-family:system-ui,sans-serif;color:#0f172a;line-height:1.7">
+        <h1>MyTracksy — Professional Finance & Workflow Software for Sri Lanka</h1>
+        <p>MyTracksy is a profession-specific finance and operations platform for Sri Lankan professionals and businesses. It combines income tracking, expenses, tax-ready exports, and profession-aware operational tools in one web app and PWA.</p>
+        <h2>Profession Modules</h2>
+        <ul>
+          <li><a href="/medical">Healthcare & Medical</a> — Clinic income, channeling, IRD-ready tax workflows</li>
+          <li><a href="/legal">Legal Practices</a> — Trust accounting and billing</li>
+          <li><a href="/business">Corporate Business</a> — Multi-entity financial governance</li>
+          <li><a href="/engineering">Civil & Architectural Firms</a> — BOQ variance and subcontractor ledgers</li>
+          <li><a href="/creator">Digital Creators</a> — Multi-currency SaaS for content creators</li>
+          <li><a href="/studios">Wedding Studios</a> — Milestone billing, crew profit, and gear tax vaults</li>
+          <li><a href="/trading">Trading & Markets</a> — Equity margin and analytics</li>
+          <li><a href="/automotive">Automotive Networks</a> — Workshop inventory control</li>
+          <li><a href="/marketing">Marketing Agencies</a> — Campaign ROI optimization</li>
+          <li><a href="/travel">Travel & Tourism</a> — Booking ledger systems</li>
+          <li><a href="/transportation">Logistics & Fleet</a> — Fleet telematics and fuel tracking</li>
+          <li><a href="/retail">Retail Commerce</a> — Multi-location POS oversight</li>
+          <li><a href="/aquaculture">Aquaculture Sector</a> — Harvest yield modeling</li>
+          <li><a href="/individual">Private Wealth</a> — Personal wealth architecture</li>
+        </ul>
+        <h2>Frequently Asked Questions</h2>
+        <h3>What is MyTracksy and who is it built for?</h3>
+        <p>MyTracksy is a Sri Lankan professional finance platform built for medical, legal, engineering, business, creator, and other profession-specific workflows. It combines income tracking, expenses, tax-ready exports, and profession-aware operational tools in one web app and PWA.</p>
+        <h3>Does MyTracksy support Sri Lankan tax and compliance workflows?</h3>
+        <p>Yes. MyTracksy is designed around Sri Lankan business and professional workflows, including expense categorization, auditor-friendly exports, and profession-specific reporting needs.</p>
+        <p>Built in Sri Lanka by <a href="https://safenetcreations.com/">SafeNetCreations</a>.</p>
+      </div>
+    </noscript>
   </body>
 </html>
