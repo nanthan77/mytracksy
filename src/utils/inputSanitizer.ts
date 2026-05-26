@@ -56,7 +56,7 @@ export function escapeHtml(input: string): string {
 
 /**
  * Validate and sanitize monetary amounts.
- * Returns the amount in cents (integer) or null if invalid.
+ * Returns the normalized rupee amount or null if invalid.
  */
 export function sanitizeAmount(
     input: string | number,
@@ -70,8 +70,11 @@ export function sanitizeAmount(
 
     let value: number;
     if (typeof input === 'string') {
-        // Remove currency symbols, commas, spaces
-        const cleaned = input.replace(/[^\d.\-]/g, '');
+        // Remove common Sri Lankan currency markers before preserving decimal dots.
+        const cleaned = input
+            .replace(/(?:lkr|rs\.?|රු\.?|ரூ\.?)/gi, '')
+            .replace(/,/g, '')
+            .replace(/[^\d.\-]/g, '');
         value = parseFloat(cleaned);
     } else {
         value = input;

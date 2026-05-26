@@ -7,19 +7,18 @@ interface TaxSpeedometerProps {
     whtDeducted: number;
 }
 
-// Sri Lanka IRD 2025/26 Tax Brackets (after personal relief of Rs. 1,200,000)
-const TAX_BRACKETS = [
-    { min: 0, max: 500000, rate: 0.06, label: '6%' },
-    { min: 500000, max: 1000000, rate: 0.12, label: '12%' },
+// Sri Lanka IRD 2025/26 individual rates after personal relief.
+export const TAX_BRACKETS = [
+    { min: 0, max: 1000000, rate: 0.06, label: '6%' },
     { min: 1000000, max: 1500000, rate: 0.18, label: '18%' },
     { min: 1500000, max: 2000000, rate: 0.24, label: '24%' },
     { min: 2000000, max: 2500000, rate: 0.30, label: '30%' },
     { min: 2500000, max: Infinity, rate: 0.36, label: '36%' },
 ];
 
-const PERSONAL_RELIEF = 1200000;
+export const PERSONAL_RELIEF = 1800000;
 
-function calculateTax(taxableIncome: number): { tax: number; bracket: string; effectiveRate: number; breakdown: { bracket: string; taxable: number; tax: number }[] } {
+export function calculateTax(taxableIncome: number): { tax: number; bracket: string; effectiveRate: number; breakdown: { bracket: string; taxable: number; tax: number }[] } {
     if (taxableIncome <= 0) return { tax: 0, bracket: '0%', effectiveRate: 0, breakdown: [] };
 
     let remaining = taxableIncome;
@@ -133,7 +132,7 @@ const TaxSpeedometer: React.FC<TaxSpeedometerProps> = ({
                         </svg>
 
                         <div style={{ display: 'flex', gap: '1rem', marginTop: '0.75rem' }}>
-                            {['6%', '12%', '18%', '24%', '30%', '36%'].map((b, i) => (
+                            {['6%', '18%', '24%', '30%', '36%'].map((b) => (
                                 <div key={b} style={{
                                     padding: '3px 10px', borderRadius: 6, fontSize: 11, fontWeight: 700,
                                     background: b === bracket ? gaugeColor : '#f1f5f9',

@@ -79,8 +79,11 @@ describe('sanitizeAmount', () => {
   it('parses valid amounts', () => {
     expect(sanitizeAmount(100)).toBe(100);
     expect(sanitizeAmount('1,500.50')).toBe(1500.50);
-    // 'Rs. 2,500' → strip non-digit/dot/dash → '.2500' → 0.25
-    // Currency symbol parsing leaves the dot from 'Rs.'
+    expect(sanitizeAmount('Rs. 2,500')).toBe(2500);
+    expect(sanitizeAmount('LKR 2,500.75')).toBe(2500.75);
+    expect(sanitizeAmount('රු. 2,500')).toBe(2500);
+    expect(sanitizeAmount('ரூ. 2,500')).toBe(2500);
+    expect(sanitizeAmount('2,500.75 LKR')).toBe(2500.75);
     expect(sanitizeAmount('2500')).toBe(2500);
   });
 

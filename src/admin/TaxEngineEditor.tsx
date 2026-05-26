@@ -25,14 +25,13 @@ interface TaxConfig {
 
 const DEFAULT_CONFIG: TaxConfig = {
     brackets: [
-        { threshold: 1200000, percentage: 6 },
-        { threshold: 1200000, percentage: 12 },
-        { threshold: 1200000, percentage: 18 },
-        { threshold: 1200000, percentage: 24 },
-        { threshold: 1200000, percentage: 30 },
+        { threshold: 1000000, percentage: 6 },
+        { threshold: 500000, percentage: 18 },
+        { threshold: 500000, percentage: 24 },
+        { threshold: 500000, percentage: 30 },
         { threshold: Infinity, percentage: 36 },
     ],
-    standard_relief: 1200000,
+    standard_relief: 1800000,
     personal_relief: 0,
     fiscal_year: '2025/2026',
 };
@@ -72,7 +71,7 @@ export default function TaxEngineEditor() {
     const addBracket = () => {
         setConfig({
             ...config,
-            brackets: [...config.brackets, { threshold: 1200000, percentage: 0 }],
+            brackets: [...config.brackets, { threshold: 500000, percentage: 0 }],
         });
     };
 
