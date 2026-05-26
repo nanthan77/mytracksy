@@ -698,7 +698,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div style={{ fontSize: 14, color: '#64748b', fontWeight: 600, marginBottom: 32 }}>
                                     {billingCycle === 'annual' ? '/ year — That\'s just LKR 6,250/mo' : '/ month'}
                                 </div>
-                                <button onClick={() => window.open('mailto:hello@mytracksy.com?subject=Clinic%20Director%20Plan%20Inquiry', '_blank')} className="btn-secondary" style={{ width: '100%', marginBottom: 32, padding: '16px', fontSize: 16, background: '#f8fafc' }}>Contact Sales</button>
+                                <button onClick={() => window.open('mailto:info@mytracksy.com?subject=Clinic%20Director%20Plan%20Inquiry', '_blank')} className="btn-secondary" style={{ width: '100%', marginBottom: 32, padding: '16px', fontSize: 16, background: '#f8fafc' }}>Contact Sales</button>
 
                                 <div style={{ fontSize: 13, color: '#475569', background: '#f1f5f9', padding: 16, borderRadius: 16, marginBottom: 32, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                                     <div style={{ fontSize: 20 }}>💡</div>

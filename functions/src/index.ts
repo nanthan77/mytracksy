@@ -89,6 +89,19 @@ const TOKEN_PACKAGES: Record<string, { tokens: number; price_lkr: number; label:
 const ONE_CLICK_LOCK_TTL_MS = 2 * 60 * 1000;
 const AUTO_RELOAD_LOCK_TTL_MS = 55 * 60 * 1000;
 
+function isPayHereChargingEnabled(): boolean {
+  return process.env.PAYHERE_CHARGING_ENABLED === 'true';
+}
+
+function requirePayHereChargingEnabled() {
+  if (!isPayHereChargingEnabled()) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'PayHere hosted checkout is active. Saved-card charging will be enabled after PayHere Merchant API IP whitelisting.'
+    );
+  }
+}
+
 function isPaymentLockActive(lockData: FirebaseFirestore.DocumentData | undefined, nowMs: number): boolean {
   return typeof lockData?.pending_until_ms === 'number' && lockData.pending_until_ms > nowMs;
 }
@@ -207,7 +220,7 @@ async function getPayHereCustomerFields(userId: string, authToken: Record<string
   return {
     first_name: stringValue(user.firstName, firstName),
     last_name: stringValue(user.lastName, lastName),
-    email: stringValue(user.email, stringValue(authToken?.email, 'support@mytracksy.com')),
+    email: stringValue(user.email, stringValue(authToken?.email, 'info@mytracksy.com')),
     phone: stringValue(user.phoneNumber, stringValue(user.phone, stringValue(user.mobile, '0000000000'))),
     address: stringValue(user.address, 'Not provided'),
     city: stringValue(user.city, 'Colombo'),
@@ -581,6 +594,8 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
     throw new functions.https.HttpsError('invalid-argument', `Invalid package: ${packageId}`);
   }
 
+  requirePayHereChargingEnabled();
+
   // Fetch saved card token
   const cardDoc = await db.doc(`users/${userId}/payment_methods/payhere_card`).get();
   if (!cardDoc.exists || !cardDoc.data()?.customer_token) {
@@ -746,6 +761,10 @@ export const updatePayHereAutoReload = functions.https.onCall(async (data, conte
     throw new functions.https.HttpsError('invalid-argument', `Invalid package: ${packageId}`);
   }
 
+  if (enabled) {
+    requirePayHereChargingEnabled();
+  }
+
   const cardRef = db.doc(`users/${context.auth.uid}/payment_methods/payhere_card`);
   const cardSnap = await cardRef.get();
 
@@ -781,6 +800,11 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
     console.log('[Auto-Reload] Starting hourly auto-reload check...');
 
     try {
+      if (!isPayHereChargingEnabled()) {
+        console.log('[Auto-Reload] Skipped. PayHere Merchant API charging is disabled until IP whitelisting is complete.');
+        return null;
+      }
+
       // Query all users with auto-reload enabled
       const cardSnapshots = await db.collectionGroup('payment_methods')
         .where('auto_reload_enabled', '==', true)

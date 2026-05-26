@@ -13,6 +13,8 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+functions/.env
+functions/.env.*
 
 # Logs
 npm-debug.log*

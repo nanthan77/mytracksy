@@ -3794,7 +3794,7 @@
         }
 
         function contactSupport() {
-            showNotification('Support chat system opening...', 'info');
+            window.location.href = 'mailto:info@mytracksy.com?subject=MyTracksy%20Support';
         }
 
         function showNotification(message, type = 'success') {
@@ -4320,7 +4320,7 @@
             };
             
             window.contactEnterprise = function() {
-                showNotification('🏢 Enterprise sales team will contact you within 24 hours!', 'info');
+                window.location.href = 'mailto:info@mytracksy.com?subject=MyTracksy%20Enterprise%20Inquiry';
                 modal.remove();
             };
         }

@@ -21,7 +21,7 @@ const COMPANY_INFO = {
     name: "MyTracksy (Pvt) Ltd",
     address: "No. 42, Baseline Road, Colombo 09, Sri Lanka",
     brn: "PV 12345678",
-    email: "billing@mytracksy.lk",
+    email: "info@mytracksy.com",
     phone: "+94 11 234 5678",
 };
 
@@ -37,6 +37,8 @@ export const generateSubscriptionInvoice = onDocumentUpdated(
         document: "users/{userId}/subscription/current",
         region: "asia-south1",
         memory: "512MiB",
+        cpu: "gcf_gen1",
+        maxInstances: 1,
         timeoutSeconds: 60,
     },
     async (event) => {

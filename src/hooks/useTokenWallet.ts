@@ -44,6 +44,17 @@ interface WalletState {
 // Wallet payment functions are deployed in us-central1.
 const walletFunctions = getFunctions(undefined, 'us-central1');
 
+function paymentErrorMessage(error: unknown, fallback: string): string {
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) {
+      return message;
+    }
+  }
+
+  return fallback;
+}
+
 export function useTokenWallet(userId: string | null) {
   const [wallet, setWallet] = useState<WalletState>({
     tokenBalance: 0,
@@ -230,6 +241,9 @@ export function useTokenWallet(userId: string | null) {
     } catch (error) {
       console.error('[Wallet] Auto-reload update error:', error);
       setWallet(prev => ({ ...prev, autoReloadEnabled: !enabled }));
+      if (typeof window !== 'undefined') {
+        window.alert(paymentErrorMessage(error, 'Unable to update auto-reload. Please try again later.'));
+      }
     }
   }, [linkPayHereCard, wallet.autoReloadPackage, wallet.autoReloadThreshold, wallet.savedCard]);
 

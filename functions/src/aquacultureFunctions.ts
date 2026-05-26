@@ -171,6 +171,8 @@ export const processAquacultureAI = onCall(
   {
     region: 'asia-south1',
     memory: '512MiB',
+    cpu: 'gcf_gen1',
+    maxInstances: 1,
     timeoutSeconds: 60,
     secrets: [geminiApiKey],
   },

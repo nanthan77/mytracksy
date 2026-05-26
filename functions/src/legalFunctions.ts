@@ -154,7 +154,7 @@ Flag any issues found.`,
 };
 
 export const processLegalAIQuery = onCall(
-  { secrets: [geminiApiKey], region: 'asia-south1', memory: '512MiB', timeoutSeconds: 60 },
+  { secrets: [geminiApiKey], region: 'asia-south1', memory: '512MiB', cpu: 'gcf_gen1', maxInstances: 1, timeoutSeconds: 60 },
   async (request) => {
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'Must be logged in');

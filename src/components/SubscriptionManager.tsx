@@ -255,11 +255,11 @@ export default function SubscriptionManager() {
             if (data.actionUrl && data.fields) {
                 submitPayHereForm(data);
             } else {
-                alert('Payment gateway is being configured. Please contact support@mytracksy.com for early access.');
+                alert('Payment gateway is being configured. Please contact info@mytracksy.com for early access.');
             }
         } catch (err: any) {
             console.error('Payment initiation error:', err);
-            alert('Unable to connect to payment gateway. Please try again or contact support@mytracksy.com');
+            alert('Unable to connect to payment gateway. Please try again or contact info@mytracksy.com');
         } finally {
             setActivating(false);
         }
