@@ -6,7 +6,7 @@
  * at 30 days, 7 days, and 1 day before due date.
  */
 
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { addColomboDays, getColomboDateKey } from "./timezoneUtils";
 

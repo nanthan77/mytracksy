@@ -9,7 +9,7 @@
  * On event delete or update with alert disabled, cancels the existing task.
  */
 
-import * as functions from "firebase-functions";
+import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { CloudTasksClient, protos } from "@google-cloud/tasks";
 
