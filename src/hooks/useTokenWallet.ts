@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db as firestoreDb } from '../config/firebase';
+import { submitPayHereForm, PayHereFormPayload } from '../utils/payhere';
 
 // ============================================
 // Token Wallet Hook
@@ -40,8 +41,8 @@ interface WalletState {
   purchaseInProgress: boolean;
 }
 
-// Firebase Functions instance (asia-south1 region)
-const functions = getFunctions(undefined, 'asia-south1');
+// Wallet payment functions are deployed in us-central1.
+const walletFunctions = getFunctions(undefined, 'us-central1');
 
 export function useTokenWallet(userId: string | null) {
   const [wallet, setWallet] = useState<WalletState>({
@@ -111,13 +112,20 @@ export function useTokenWallet(userId: string | null) {
       (snap) => {
         if (snap.exists()) {
           const data = snap.data();
+          const maskedValue = data.masked_card || data.card_masked || '';
+          const last4 = typeof maskedValue === 'string'
+            ? (maskedValue.match(/(\d{4})$/)?.[1] || maskedValue.replace(/\D/g, '').slice(-4) || '****')
+            : '****';
           setWallet(prev => ({
             ...prev,
             savedCard: data.customer_token ? {
-              masked: data.card_masked || '****',
-              type: data.card_brand || 'Card',
+              masked: last4,
+              type: data.card_type || data.card_brand || 'Card',
               customerToken: data.customer_token,
             } : null,
+            autoReloadEnabled: data.auto_reload_enabled ?? prev.autoReloadEnabled,
+            autoReloadThreshold: data.auto_reload_threshold ?? prev.autoReloadThreshold,
+            autoReloadPackage: data.auto_reload_package ?? prev.autoReloadPackage,
           }));
         }
       },
@@ -147,7 +155,7 @@ export function useTokenWallet(userId: string | null) {
     }
 
     try {
-      const spendFn = httpsCallable(functions, 'spendTokens');
+      const spendFn = httpsCallable(walletFunctions, 'spendTokens');
       const result = await spendFn({ amount, feature: 'ai_tool', description });
       const data = result.data as { success: boolean; remaining_tokens?: number };
 
@@ -181,9 +189,49 @@ export function useTokenWallet(userId: string | null) {
     console.log(`[Wallet] Added ${tokens} tokens (LKR ${amountLKR.toLocaleString()})`);
   }, []);
 
-  const toggleAutoReload = useCallback((enabled: boolean) => {
+  const linkPayHereCard = useCallback(async (packageId?: string): Promise<boolean> => {
+    if (!userId) return false;
+
+    setWallet(prev => ({ ...prev, purchaseInProgress: true }));
+
+    try {
+      const initFn = httpsCallable(walletFunctions, 'initPayHerePreapproval');
+      const result = await initFn({ packageId });
+      const payload = result.data as PayHereFormPayload;
+
+      if (!payload?.actionUrl || !payload?.fields) {
+        throw new Error('PayHere did not return checkout fields');
+      }
+
+      submitPayHereForm(payload);
+      return true;
+    } catch (error) {
+      console.error('[Wallet] PayHere card link error:', error);
+      setWallet(prev => ({ ...prev, purchaseInProgress: false }));
+      return false;
+    }
+  }, [userId]);
+
+  const toggleAutoReload = useCallback(async (enabled: boolean) => {
+    if (enabled && !wallet.savedCard) {
+      await linkPayHereCard();
+      return;
+    }
+
     setWallet(prev => ({ ...prev, autoReloadEnabled: enabled }));
-  }, []);
+
+    try {
+      const updateFn = httpsCallable(walletFunctions, 'updatePayHereAutoReload');
+      await updateFn({
+        enabled,
+        threshold: wallet.autoReloadThreshold,
+        packageId: wallet.autoReloadPackage,
+      });
+    } catch (error) {
+      console.error('[Wallet] Auto-reload update error:', error);
+      setWallet(prev => ({ ...prev, autoReloadEnabled: !enabled }));
+    }
+  }, [linkPayHereCard, wallet.autoReloadPackage, wallet.autoReloadThreshold, wallet.savedCard]);
 
   const setAutoReloadPackage = useCallback((packageId: string) => {
     setWallet(prev => ({ ...prev, autoReloadPackage: packageId }));
@@ -207,15 +255,14 @@ export function useTokenWallet(userId: string | null) {
     if (!pkg) return false;
 
     if (!wallet.savedCard) {
-      // No saved card — redirect to PayHere preapproval page
-      window.open('https://wallet.mytracksy.com/topup', '_blank');
-      return false;
+      // No saved card — send the user through PayHere preapproval with this package.
+      return linkPayHereCard(packageId);
     }
 
     setWallet(prev => ({ ...prev, purchaseInProgress: true }));
 
     try {
-      const topUpFn = httpsCallable(functions, 'oneClickTopUp');
+      const topUpFn = httpsCallable(walletFunctions, 'oneClickTopUp');
       const result = await topUpFn({ packageId });
       const data = result.data as { success: boolean; new_balance?: number };
 
@@ -238,11 +285,11 @@ export function useTokenWallet(userId: string | null) {
       setWallet(prev => ({ ...prev, purchaseInProgress: false }));
       // If card is expired/invalid, prompt to re-add
       if (error?.code === 'functions/failed-precondition') {
-        window.open('https://wallet.mytracksy.com/topup', '_blank');
+        await linkPayHereCard(packageId);
       }
       return false;
     }
-  }, [wallet.savedCard]);
+  }, [linkPayHereCard, wallet.savedCard]);
 
   return {
     ...wallet,
@@ -253,6 +300,7 @@ export function useTokenWallet(userId: string | null) {
     openBuyModal,
     closeBuyModal,
     dismissOutOfTokens,
+    linkPayHereCard,
     oneClickPurchase,
     purchaseTokens: oneClickPurchase,
   };

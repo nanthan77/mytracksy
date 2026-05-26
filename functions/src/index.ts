@@ -1,4 +1,5 @@
 import * as functions from 'firebase-functions';
+import { onRequest as onRequestV2 } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
 import * as crypto from 'crypto';
@@ -60,14 +61,21 @@ export { brandDealReminder, processCreatorAI } from './creatorFunctions';
 // ============================================
 // PayHere Configuration — using defineSecret (params)
 // Set via: firebase functions:secrets:set PAYHERE_MERCHANT_ID
+//          firebase functions:secrets:set PAYHERE_MERCHANT_SECRET
 //          firebase functions:secrets:set PAYHERE_APP_SECRET
 //          firebase functions:secrets:set PAYHERE_APP_ID
 // ============================================
 const PAYHERE_MERCHANT_ID = defineSecret('PAYHERE_MERCHANT_ID');
+const PAYHERE_MERCHANT_SECRET = defineSecret('PAYHERE_MERCHANT_SECRET');
 const PAYHERE_APP_SECRET = defineSecret('PAYHERE_APP_SECRET');
 const PAYHERE_APP_ID = defineSecret('PAYHERE_APP_ID');
-const PAYHERE_CHARGE_URL = 'https://www.payhere.lk/pay/api/charging/charge';
-const PAYHERE_TOKEN_URL = 'https://www.payhere.lk/pay/api/v1/oauth/token';
+const PAYHERE_PREAPPROVAL_URL = 'https://www.payhere.lk/pay/preapprove';
+const PAYHERE_CHECKOUT_URL = 'https://www.payhere.lk/pay/checkout';
+const PAYHERE_CHARGE_URL = 'https://www.payhere.lk/merchant/v1/payment/charge';
+const PAYHERE_TOKEN_URL = 'https://www.payhere.lk/merchant/v1/oauth/token';
+const APP_BASE_URL = process.env.APP_BASE_URL || 'https://tracksy-8e30c.web.app';
+const PAYHERE_WALLET_NOTIFY_URL = 'https://us-central1-tracksy-8e30c.cloudfunctions.net/handlePayHereWalletWebhook';
+const PAYHERE_SUBSCRIPTION_NOTIFY_URL = 'https://asia-south1-tracksy-8e30c.cloudfunctions.net/handleSubscriptionWebhook';
 
 // Token package mapping
 const TOKEN_PACKAGES: Record<string, { tokens: number; price_lkr: number; label: string }> = {
@@ -85,12 +93,292 @@ function isPaymentLockActive(lockData: FirebaseFirestore.DocumentData | undefine
   return typeof lockData?.pending_until_ms === 'number' && lockData.pending_until_ms > nowMs;
 }
 
+type SubscriptionTier = 'pro' | 'chambers';
+type BillingPeriod = 'monthly' | 'annual';
+
+interface SubscriptionPlan {
+  tier: SubscriptionTier;
+  monthlyPrice: number;
+  annualPrice: number;
+  label: string;
+}
+
+const DEFAULT_PRO_PLAN: SubscriptionPlan = {
+  tier: 'pro',
+  monthlyPrice: 2900,
+  annualPrice: 25000,
+  label: 'MyTracksy Pro',
+};
+
+const SUBSCRIPTION_PRICES: Record<string, Record<SubscriptionTier, SubscriptionPlan | undefined>> = {
+  individual: {
+    pro: { tier: 'pro', monthlyPrice: 1900, annualPrice: 19000, label: 'MyTracksy Personal Pro' },
+    chambers: undefined,
+  },
+  legal: {
+    pro: { tier: 'pro', monthlyPrice: 2900, annualPrice: 29000, label: 'MyTracksy Independent Counsel' },
+    chambers: { tier: 'chambers', monthlyPrice: 9900, annualPrice: 99000, label: 'MyTracksy Chambers Plan' },
+  },
+  aquaculture: {
+    pro: { tier: 'pro', monthlyPrice: 3900, annualPrice: 39000, label: 'MyTracksy Single Farm' },
+    chambers: { tier: 'chambers', monthlyPrice: 14900, annualPrice: 149000, label: 'MyTracksy Commercial Hatchery' },
+  },
+  tourism: {
+    pro: { tier: 'pro', monthlyPrice: 2900, annualPrice: 25000, label: 'MyTracksy Guide Pro' },
+    chambers: { tier: 'chambers', monthlyPrice: 9900, annualPrice: 99000, label: 'MyTracksy Agency Plan' },
+  },
+  travel: {
+    pro: { tier: 'pro', monthlyPrice: 2900, annualPrice: 25000, label: 'MyTracksy Guide Pro' },
+    chambers: { tier: 'chambers', monthlyPrice: 9900, annualPrice: 99000, label: 'MyTracksy Agency Plan' },
+  },
+  studios: {
+    pro: { tier: 'pro', monthlyPrice: 6900, annualPrice: 69000, label: 'MyTracksy Premium Wedding Pro' },
+    chambers: { tier: 'chambers', monthlyPrice: 19900, annualPrice: 199000, label: 'MyTracksy Pvt Ltd Studio' },
+  },
+};
+
+function normalizeBillingPeriod(value: unknown): BillingPeriod {
+  return value === 'annual' ? 'annual' : 'monthly';
+}
+
+function normalizeSubscriptionTier(value: unknown): SubscriptionTier {
+  return value === 'chambers' ? 'chambers' : 'pro';
+}
+
+function getSubscriptionPlan(professionValue: unknown, tierValue: unknown): SubscriptionPlan {
+  const profession = typeof professionValue === 'string' ? professionValue : 'individual';
+  const tier = normalizeSubscriptionTier(tierValue);
+  const plan = SUBSCRIPTION_PRICES[profession]?.[tier] || (tier === 'pro' ? DEFAULT_PRO_PLAN : undefined);
+
+  if (!plan) {
+    throw new functions.https.HttpsError('invalid-argument', `The ${profession} profession does not support the ${tier} tier`);
+  }
+
+  return plan;
+}
+
+function getSubscriptionAmount(plan: SubscriptionPlan, period: BillingPeriod): number {
+  return period === 'annual' ? plan.annualPrice : plan.monthlyPrice;
+}
+
+function formatPayHereAmount(amount: number): string {
+  return amount.toFixed(2);
+}
+
+function createPayHereHash(merchantId: string, orderId: string, amount: string, currency: string, merchantSecret: string): string {
+  const secretHash = crypto.createHash('md5').update(merchantSecret).digest('hex').toUpperCase();
+  return crypto
+    .createHash('md5')
+    .update(merchantId + orderId + amount + currency + secretHash)
+    .digest('hex')
+    .toUpperCase();
+}
+
+function safeCompareMd5(received: unknown, expected: string): boolean {
+  if (typeof received !== 'string') return false;
+
+  const receivedUpper = received.toUpperCase();
+  if (receivedUpper.length !== expected.length) return false;
+
+  return crypto.timingSafeEqual(Buffer.from(receivedUpper, 'utf8'), Buffer.from(expected, 'utf8'));
+}
+
+function splitName(displayName?: string): { firstName: string; lastName: string } {
+  const parts = (displayName || 'MyTracksy User').trim().split(/\s+/).filter(Boolean);
+  return {
+    firstName: parts[0] || 'MyTracksy',
+    lastName: parts.slice(1).join(' ') || 'User',
+  };
+}
+
+function stringValue(value: unknown, fallback = ''): string {
+  return typeof value === 'string' && value.trim() ? value.trim() : fallback;
+}
+
+async function getPayHereCustomerFields(userId: string, authToken: Record<string, any> | undefined) {
+  const userSnap = await db.doc(`users/${userId}`).get();
+  const user = userSnap.exists ? userSnap.data() || {} : {};
+  const { firstName, lastName } = splitName(
+    stringValue(user.displayName) ||
+    stringValue(user.name) ||
+    stringValue(authToken?.name)
+  );
+
+  return {
+    first_name: stringValue(user.firstName, firstName),
+    last_name: stringValue(user.lastName, lastName),
+    email: stringValue(user.email, stringValue(authToken?.email, 'support@mytracksy.com')),
+    phone: stringValue(user.phoneNumber, stringValue(user.phone, stringValue(user.mobile, '0000000000'))),
+    address: stringValue(user.address, 'Not provided'),
+    city: stringValue(user.city, 'Colombo'),
+    country: stringValue(user.country, 'Sri Lanka'),
+  };
+}
+
+async function getPayHereAccessToken(fetchImpl: (url: string, init?: any) => Promise<any>): Promise<string> {
+  if (!PAYHERE_APP_ID.value() || !PAYHERE_APP_SECRET.value()) {
+    throw new functions.https.HttpsError('failed-precondition', 'PayHere Merchant API credentials are not configured');
+  }
+
+  const basicToken = Buffer
+    .from(`${PAYHERE_APP_ID.value()}:${PAYHERE_APP_SECRET.value()}`)
+    .toString('base64');
+
+  const tokenResponse = await fetchImpl(PAYHERE_TOKEN_URL, {
+    method: 'POST',
+    headers: {
+      Authorization: `Basic ${basicToken}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: 'grant_type=client_credentials',
+  });
+
+  const tokenData = await tokenResponse.json() as any;
+  if (!tokenResponse.ok || !tokenData.access_token) {
+    throw new Error(tokenData?.error_description || tokenData?.msg || 'Failed to obtain PayHere access token');
+  }
+
+  return tokenData.access_token;
+}
+
 // ============================================
-// 1. PayHere Pre-Approval Webhook
-//    Saves the customer_token when doctor
-//    first links their card via web portal
+// 1. PayHere Pre-Approval Initializer
+//    Returns signed form fields for the client
+//    to POST to PayHere.
 // ============================================
-export const handlePayHerePreapproval = functions.runWith({ secrets: [PAYHERE_MERCHANT_ID, PAYHERE_APP_SECRET, PAYHERE_APP_ID] }).https.onRequest(async (req, res) => {
+export const initPayHerePreapproval = functions
+  .runWith({ secrets: [PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET] })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+    }
+
+    const merchantId = PAYHERE_MERCHANT_ID.value();
+    const merchantSecret = PAYHERE_MERCHANT_SECRET.value();
+    if (!merchantId || !merchantSecret) {
+      throw new functions.https.HttpsError('failed-precondition', 'PayHere merchant credentials are not configured');
+    }
+
+    const packageId = typeof data?.packageId === 'string' ? data.packageId : undefined;
+    const pkg = packageId ? TOKEN_PACKAGES[packageId] : undefined;
+    if (packageId && !pkg) {
+      throw new functions.https.HttpsError('invalid-argument', `Invalid package: ${packageId}`);
+    }
+
+    const amount = pkg ? formatPayHereAmount(pkg.price_lkr) : '10.00';
+    const currency = 'LKR';
+    const orderId = `pre_${context.auth.uid}_${packageId || 'card'}_${Date.now()}`;
+    const customer = await getPayHereCustomerFields(context.auth.uid, context.auth.token);
+    const hash = createPayHereHash(merchantId, orderId, amount, currency, merchantSecret);
+
+    const fields: Record<string, string> = {
+      merchant_id: merchantId,
+      return_url: `${APP_BASE_URL}/payment/return?type=wallet`,
+      cancel_url: `${APP_BASE_URL}/payment/cancel?type=wallet`,
+      notify_url: PAYHERE_WALLET_NOTIFY_URL,
+      order_id: orderId,
+      items: pkg ? `MyTracksy ${pkg.label} + Saved Card` : 'MyTracksy Saved Card Setup',
+      currency,
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      email: customer.email,
+      phone: customer.phone,
+      address: customer.address,
+      city: customer.city,
+      country: customer.country,
+      custom_1: context.auth.uid,
+      custom_2: packageId || '',
+      hash,
+    };
+
+    if (pkg) {
+      fields.amount = amount;
+    }
+
+    await db.doc(`users/${context.auth.uid}/payment_attempts/${orderId}`).set({
+      type: 'wallet_preapproval',
+      package_id: packageId || null,
+      amount_lkr: pkg?.price_lkr || 0,
+      status: 'initialized',
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      actionUrl: PAYHERE_PREAPPROVAL_URL,
+      fields,
+    };
+  });
+
+// ============================================
+// 2. PayHere Subscription Initializer
+//    Returns signed checkout fields for Pro/Chambers
+//    recurring billing.
+// ============================================
+export const initPayHereSubscription = functions
+  .runWith({ secrets: [PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET] })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+    }
+
+    const merchantId = PAYHERE_MERCHANT_ID.value();
+    const merchantSecret = PAYHERE_MERCHANT_SECRET.value();
+    if (!merchantId || !merchantSecret) {
+      throw new functions.https.HttpsError('failed-precondition', 'PayHere merchant credentials are not configured');
+    }
+
+    const billingPeriod = normalizeBillingPeriod(data?.planType || data?.billingPeriod);
+    const tier = normalizeSubscriptionTier(data?.tier);
+    const profession = stringValue(data?.profession, 'individual');
+    const plan = getSubscriptionPlan(profession, tier);
+    const amount = formatPayHereAmount(getSubscriptionAmount(plan, billingPeriod));
+    const currency = 'LKR';
+    const orderId = `sub_${context.auth.uid}_${profession}_${tier}_${billingPeriod}_${Date.now()}`;
+    const customer = await getPayHereCustomerFields(context.auth.uid, context.auth.token);
+    const hash = createPayHereHash(merchantId, orderId, amount, currency, merchantSecret);
+
+    const fields: Record<string, string> = {
+      merchant_id: merchantId,
+      return_url: `${APP_BASE_URL}/payment/return?type=subscription`,
+      cancel_url: `${APP_BASE_URL}/payment/cancel?type=subscription`,
+      notify_url: PAYHERE_SUBSCRIPTION_NOTIFY_URL,
+      order_id: orderId,
+      items: `${plan.label} ${billingPeriod === 'annual' ? 'Annual' : 'Monthly'}`,
+      currency,
+      amount,
+      recurrence: billingPeriod === 'annual' ? '1 Year' : '1 Month',
+      duration: 'Forever',
+      first_name: customer.first_name,
+      last_name: customer.last_name,
+      email: customer.email,
+      phone: customer.phone,
+      address: customer.address,
+      city: customer.city,
+      country: customer.country,
+      custom_1: context.auth.uid,
+      custom_2: `subscription:${profession}:${tier}:${billingPeriod}`,
+      hash,
+    };
+
+    await db.doc(`users/${context.auth.uid}/payment_attempts/${orderId}`).set({
+      type: 'subscription',
+      profession,
+      tier,
+      billing_period: billingPeriod,
+      amount_lkr: Number(amount),
+      status: 'initialized',
+      created_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return {
+      success: true,
+      actionUrl: PAYHERE_CHECKOUT_URL,
+      fields,
+    };
+  });
+
+async function payHerePreapprovalWebhookHandler(req: any, res: any): Promise<void> {
   // H8: CORS — only allow PayHere webhook origin
   res.set('Access-Control-Allow-Origin', 'https://www.payhere.lk');
   res.set('Access-Control-Allow-Methods', 'POST');
@@ -103,7 +391,7 @@ export const handlePayHerePreapproval = functions.runWith({ secrets: [PAYHERE_ME
   }
 
   // H7: Guard against missing PayHere config (secrets are available at runtime via .value())
-  if (!PAYHERE_MERCHANT_ID.value() || !PAYHERE_APP_SECRET.value()) {
+  if (!PAYHERE_MERCHANT_ID.value() || !PAYHERE_MERCHANT_SECRET.value()) {
     console.error('[PayHere Webhook] PayHere secrets not set — refusing to process');
     res.status(500).send('Server misconfiguration');
     return;
@@ -125,21 +413,22 @@ export const handlePayHerePreapproval = functions.runWith({ secrets: [PAYHERE_ME
       card_expiry,
     } = req.body;
 
-    // Step 1: Validate MD5 signature to prevent spoofing
-    const localMd5 = crypto
-      .createHash('md5')
-      .update(
-        merchant_id +
-        order_id +
-        payhere_amount +
-        payhere_currency +
-        status_code +
-        crypto.createHash('md5').update(PAYHERE_APP_SECRET.value()).digest('hex').toUpperCase()
-      )
-      .digest('hex')
-      .toUpperCase();
+    if (merchant_id !== PAYHERE_MERCHANT_ID.value()) {
+      console.error('[PayHere Webhook] Merchant ID mismatch');
+      res.status(403).send('Invalid merchant');
+      return;
+    }
 
-    if (localMd5 !== md5sig?.toUpperCase()) {
+    // Step 1: Validate MD5 signature to prevent spoofing
+    const localMd5 = createPayHereHash(
+      merchant_id,
+      order_id,
+      payhere_amount,
+      payhere_currency,
+      PAYHERE_MERCHANT_SECRET.value()
+    );
+
+    if (!safeCompareMd5(md5sig, localMd5)) {
       console.error('[PayHere Webhook] MD5 signature mismatch — possible spoofing attempt');
       res.status(403).send('Invalid signature');
       return;
@@ -152,30 +441,46 @@ export const handlePayHerePreapproval = functions.runWith({ secrets: [PAYHERE_ME
       return;
     }
 
+    const eventId = `payhere_preapproval_${order_id}_${payment_id || status_code}`;
+    const eventRef = db.doc(`webhook_events/${eventId}`);
+
     // Step 2: Check if pre-approval was successful
     if (String(status_code) === '2') {
+      if (!customer_token) {
+        console.error('[PayHere Webhook] Missing customer_token on successful preapproval');
+        res.status(400).send('Missing customer token');
+        return;
+      }
+
       // SUCCESS — Save the customer_token securely
-      const maskedCard = card_no ? `${card_no.slice(-8)}` : 'Card saved';
       const cardType = card_no?.startsWith('4') ? 'Visa' : card_no?.startsWith('5') ? 'Mastercard' : 'Card';
+      let alreadyProcessed = false;
 
-      await db.doc(`users/${userId}/payment_methods/payhere_card`).set({
-        customer_token: customer_token,
-        masked_card: `${cardType} •••• ${card_no?.slice(-4) || '****'}`,
-        card_type: cardType,
-        card_holder_name: card_holder_name || '',
-        card_expiry: card_expiry || '',
-        auto_reload_enabled: false,
-        auto_reload_threshold: 10,
-        auto_reload_package: 'pack_100',
-        linked_at: admin.firestore.FieldValue.serverTimestamp(),
-        last_charged_at: null,
-        status: 'active',
-      }, { merge: true });
+      const packageId = typeof req.body.custom_2 === 'string' && req.body.custom_2 ? req.body.custom_2 : undefined;
+      const pkg = packageId ? TOKEN_PACKAGES[packageId] : undefined;
+      await db.runTransaction(async (txn) => {
+        const eventSnap = await txn.get(eventRef);
+        if (eventSnap.exists) {
+          alreadyProcessed = true;
+          return;
+        }
 
-      // Log the initial top-up transaction
-      const pkg = TOKEN_PACKAGES[req.body.custom_2 || 'pack_100'];
-      if (pkg) {
-        await db.runTransaction(async (txn) => {
+        const cardRef = db.doc(`users/${userId}/payment_methods/payhere_card`);
+        txn.set(cardRef, {
+          customer_token,
+          masked_card: `${cardType} •••• ${card_no?.slice(-4) || '****'}`,
+          card_type: cardType,
+          card_holder_name: card_holder_name || '',
+          card_expiry: card_expiry || '',
+          auto_reload_enabled: false,
+          auto_reload_threshold: 10,
+          auto_reload_package: 'pack_100',
+          linked_at: admin.firestore.FieldValue.serverTimestamp(),
+          last_charged_at: null,
+          status: 'active',
+        }, { merge: true });
+
+        if (pkg) {
           const walletRef = db.doc(`users/${userId}/wallet/current_balance`);
           const walletSnap = await txn.get(walletRef);
           const currentTokens = walletSnap.exists ? (walletSnap.data()?.ai_tokens || 0) : 0;
@@ -199,10 +504,28 @@ export const handlePayHerePreapproval = functions.runWith({ secrets: [PAYHERE_ME
             taxCategory: 'business_software',
             paymentMethod: 'payhere_card',
             payhere_payment_id: payment_id,
+            payhere_order_id: order_id,
             createdAt: Date.now(),
             sync_status: 'synced',
           });
+        }
+
+        txn.set(eventRef, {
+          processed_at: admin.firestore.FieldValue.serverTimestamp(),
+          provider: 'payhere',
+          type: 'wallet_preapproval',
+          order_id,
+          payment_id: payment_id || null,
+          status_code: String(status_code),
+          userId,
+          package_id: packageId || null,
         });
+      });
+
+      if (alreadyProcessed) {
+        console.log(`[PayHere Webhook] Duplicate preapproval ignored for order ${order_id}`);
+        res.status(200).send('Already processed');
+        return;
       }
 
       console.log(`[PayHere Webhook] Card saved for user ${userId}: ${cardType} •••• ${card_no?.slice(-4)}`);
@@ -215,7 +538,27 @@ export const handlePayHerePreapproval = functions.runWith({ secrets: [PAYHERE_ME
     console.error('[PayHere Webhook] Error:', error);
     res.status(500).send('Internal server error');
   }
-});
+}
+
+// ============================================
+// 3. PayHere Pre-Approval Webhook
+//    Saves the customer_token when users link
+//    their card via the PayHere preapproval flow.
+// ============================================
+export const handlePayHerePreapproval = functions
+  .runWith({ secrets: [PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET] })
+  .https.onRequest(payHerePreapprovalWebhookHandler);
+
+export const handlePayHereWalletWebhook = onRequestV2(
+  {
+    region: 'us-central1',
+    memory: '256MiB',
+    secrets: [PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET],
+    cors: false,
+    invoker: 'public',
+  },
+  payHerePreapprovalWebhookHandler
+);
 
 
 // ============================================
@@ -243,7 +586,7 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
   if (!cardDoc.exists || !cardDoc.data()?.customer_token) {
     throw new functions.https.HttpsError(
       'failed-precondition',
-      'No saved payment card. Please link your card at wallet.mytracksy.lk first.'
+      'No saved payment card. Please link a PayHere card first.'
     );
   }
 
@@ -272,40 +615,31 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
 
     // Step 1: Get PayHere access token
     const fetch = (await import('node-fetch')).default;
-
-    const tokenResponse = await fetch(PAYHERE_TOKEN_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `grant_type=client_credentials&app_id=${PAYHERE_APP_ID.value()}&app_secret=${PAYHERE_APP_SECRET.value()}`,
-    });
-    const tokenData = await tokenResponse.json() as any;
-
-    if (!tokenData.access_token) {
-      throw new Error('Failed to obtain PayHere access token');
-    }
+    const accessToken = await getPayHereAccessToken(fetch);
 
     // Step 2: Charge the saved card
     const orderId = `topup_${userId}_${packageId}_${lockStartedAtMs}`;
     const chargeResponse = await fetch(PAYHERE_CHARGE_URL, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`,
+        'Authorization': `Bearer ${accessToken}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        type: 'CHARGING',
+        type: 'PAYMENT',
         order_id: orderId,
         items: pkg.label,
         currency: 'LKR',
-        amount: pkg.price_lkr,
+        amount: formatPayHereAmount(pkg.price_lkr),
         customer_token: customerToken,
       }),
     });
     const chargeData = await chargeResponse.json() as any;
+    const statusCode = chargeData?.data?.status_code ?? chargeData?.status_code;
 
-    if (chargeData.status !== 1 && chargeData.status_code !== 2) {
+    if (!chargeResponse.ok || chargeData.status !== 1 || String(statusCode) !== '2') {
       // Card declined or error
-      if (chargeData.status === -1 || chargeData.msg?.includes('declined')) {
+      if (chargeData.status === -1 || chargeData.msg?.toLowerCase?.().includes('declined')) {
         // Disable auto-reload if card is declining
         await db.doc(`users/${userId}/payment_methods/payhere_card`).update({
           auto_reload_enabled: false,
@@ -342,6 +676,7 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
         taxCategory: 'business_software',
         paymentMethod: 'payhere_saved_card',
         payhere_order_id: orderId,
+        payhere_payment_id: chargeData?.data?.payment_id || chargeData?.payment_id || null,
         createdAt: Date.now(),
         sync_status: 'synced',
       });
@@ -389,9 +724,53 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
   }
 });
 
+// ============================================
+// 5. Auto-Reload Settings
+//    Persists client auto-reload preferences
+//    without exposing card tokens to writes.
+// ============================================
+export const updatePayHereAutoReload = functions.https.onCall(async (data, context) => {
+  if (!context.auth) {
+    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
+  }
+
+  const enabled = Boolean(data?.enabled);
+  const threshold = Number(data?.threshold ?? 10);
+  const packageId = typeof data?.packageId === 'string' ? data.packageId : 'pack_100';
+
+  if (!Number.isFinite(threshold) || threshold < 1 || threshold > 1000) {
+    throw new functions.https.HttpsError('invalid-argument', 'Auto-reload threshold must be between 1 and 1000 tokens');
+  }
+
+  if (!TOKEN_PACKAGES[packageId]) {
+    throw new functions.https.HttpsError('invalid-argument', `Invalid package: ${packageId}`);
+  }
+
+  const cardRef = db.doc(`users/${context.auth.uid}/payment_methods/payhere_card`);
+  const cardSnap = await cardRef.get();
+
+  if (enabled && (!cardSnap.exists || !cardSnap.data()?.customer_token)) {
+    throw new functions.https.HttpsError('failed-precondition', 'Please link a PayHere card before enabling auto-reload');
+  }
+
+  await cardRef.set({
+    auto_reload_enabled: enabled,
+    auto_reload_threshold: threshold,
+    auto_reload_package: packageId,
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  }, { merge: true });
+
+  return {
+    success: true,
+    auto_reload_enabled: enabled,
+    auto_reload_threshold: threshold,
+    auto_reload_package: packageId,
+  };
+});
+
 
 // ============================================
-// 3. Auto-Reload Cron Job (Every Hour)
+// 6. Auto-Reload Cron Job (Every Hour)
 //    Checks all users with auto-reload ON
 //    and balance below threshold
 // ============================================
@@ -469,45 +848,29 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
             const fetch = (await import('node-fetch')).default;
 
             // Get PayHere access token
-            const tokenResponse = await fetch(PAYHERE_TOKEN_URL, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-              body: `grant_type=client_credentials&app_id=${PAYHERE_APP_ID.value()}&app_secret=${PAYHERE_APP_SECRET.value()}`,
-            });
-            const tokenData = await tokenResponse.json() as any;
-
-            if (!tokenData.access_token) {
-              console.error(`[Auto-Reload] Failed to get PayHere token for user ${userId}`);
-              await lockRef.set({
-                status: 'failed',
-                pending_until_ms: Date.now(),
-                last_error: 'Failed to obtain PayHere access token',
-                updated_at: admin.firestore.FieldValue.serverTimestamp(),
-              }, { merge: true });
-              failed++;
-              continue;
-            }
+            const accessToken = await getPayHereAccessToken(fetch);
 
             // Charge saved card
             const orderId = `auto_${userId}_${reloadPackage}_${lockStartedAtMs}`;
             const chargeResponse = await fetch(PAYHERE_CHARGE_URL, {
               method: 'POST',
               headers: {
-                'Authorization': `Bearer ${tokenData.access_token}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify({
-                type: 'CHARGING',
+                type: 'PAYMENT',
                 order_id: orderId,
                 items: `Auto-Reload: ${pkg.label}`,
                 currency: 'LKR',
-                amount: pkg.price_lkr,
+                amount: formatPayHereAmount(pkg.price_lkr),
                 customer_token: cardData.customer_token,
               }),
             });
             const chargeData = await chargeResponse.json() as any;
+            const statusCode = chargeData?.data?.status_code ?? chargeData?.status_code;
 
-            if (chargeData.status === 1 || chargeData.status_code === 2) {
+            if (chargeResponse.ok && chargeData.status === 1 && String(statusCode) === '2') {
               // SUCCESS — Add tokens
               await db.runTransaction(async (txn) => {
                 const walletRef = db.doc(`users/${userId}/wallet/current_balance`);
@@ -542,6 +905,7 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
                   taxCategory: 'business_software',
                   paymentMethod: 'payhere_auto_reload',
                   payhere_order_id: orderId,
+                  payhere_payment_id: chargeData?.data?.payment_id || chargeData?.payment_id || null,
                   createdAt: Date.now(),
                   sync_status: 'synced',
                 });
@@ -594,7 +958,7 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
                     token: fcmToken,
                     notification: {
                       title: '⚠️ Auto-Reload Failed',
-                      body: 'Your card was declined. Please update your payment method at wallet.mytracksy.lk',
+                      body: 'Your card was declined. Please update your payment method in MyTracksy.',
                     },
                   });
                 }

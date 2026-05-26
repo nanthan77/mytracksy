@@ -17,14 +17,118 @@ import * as crypto from "crypto";
 const db = admin.firestore();
 
 // ─── Secrets ────────────────────────────────────────────────────
+const PAYHERE_MERCHANT_ID = defineSecret("PAYHERE_MERCHANT_ID");
 const PAYHERE_MERCHANT_SECRET = defineSecret("PAYHERE_MERCHANT_SECRET");
 const REVENUCAT_WEBHOOK_SECRET = defineSecret("REVENUCAT_WEBHOOK_SECRET");
 
 // ─── Pricing ────────────────────────────────────────────────────
-const PLAN_PRICES: Record<string, { amount_cents: number; period_days: number; label: string }> = {
-    monthly: { amount_cents: 290000, period_days: 30, label: "Monthly Pro" },
-    annual: { amount_cents: 2500000, period_days: 365, label: "Annual Pro" },
+type SubscriptionTier = "pro" | "chambers";
+type BillingPeriod = "monthly" | "annual";
+
+interface SubscriptionPlan {
+    tier: SubscriptionTier;
+    monthlyPrice: number;
+    annualPrice: number;
+    label: string;
+}
+
+const DEFAULT_PRO_PLAN: SubscriptionPlan = {
+    tier: "pro",
+    monthlyPrice: 2900,
+    annualPrice: 25000,
+    label: "MyTracksy Pro",
 };
+
+const SUBSCRIPTION_PRICES: Record<string, Record<SubscriptionTier, SubscriptionPlan | undefined>> = {
+    individual: {
+        pro: { tier: "pro", monthlyPrice: 1900, annualPrice: 19000, label: "MyTracksy Personal Pro" },
+        chambers: undefined,
+    },
+    legal: {
+        pro: { tier: "pro", monthlyPrice: 2900, annualPrice: 29000, label: "MyTracksy Independent Counsel" },
+        chambers: { tier: "chambers", monthlyPrice: 9900, annualPrice: 99000, label: "MyTracksy Chambers Plan" },
+    },
+    aquaculture: {
+        pro: { tier: "pro", monthlyPrice: 3900, annualPrice: 39000, label: "MyTracksy Single Farm" },
+        chambers: { tier: "chambers", monthlyPrice: 14900, annualPrice: 149000, label: "MyTracksy Commercial Hatchery" },
+    },
+    tourism: {
+        pro: { tier: "pro", monthlyPrice: 2900, annualPrice: 25000, label: "MyTracksy Guide Pro" },
+        chambers: { tier: "chambers", monthlyPrice: 9900, annualPrice: 99000, label: "MyTracksy Agency Plan" },
+    },
+    travel: {
+        pro: { tier: "pro", monthlyPrice: 2900, annualPrice: 25000, label: "MyTracksy Guide Pro" },
+        chambers: { tier: "chambers", monthlyPrice: 9900, annualPrice: 99000, label: "MyTracksy Agency Plan" },
+    },
+    studios: {
+        pro: { tier: "pro", monthlyPrice: 6900, annualPrice: 69000, label: "MyTracksy Premium Wedding Pro" },
+        chambers: { tier: "chambers", monthlyPrice: 19900, annualPrice: 199000, label: "MyTracksy Pvt Ltd Studio" },
+    },
+};
+
+function normalizeBillingPeriod(value: unknown): BillingPeriod {
+    return value === "annual" ? "annual" : "monthly";
+}
+
+function normalizeTier(value: unknown): SubscriptionTier {
+    return value === "chambers" ? "chambers" : "pro";
+}
+
+function getSubscriptionPlan(professionValue: unknown, tierValue: unknown): SubscriptionPlan {
+    const profession = typeof professionValue === "string" ? professionValue : "individual";
+    const tier = normalizeTier(tierValue);
+    return SUBSCRIPTION_PRICES[profession]?.[tier] || DEFAULT_PRO_PLAN;
+}
+
+function parsePlanMetadata(custom2: unknown): {
+    profession: string;
+    tier: SubscriptionTier;
+    planType: BillingPeriod;
+    plan: SubscriptionPlan;
+} {
+    if (typeof custom2 === "string" && custom2.startsWith("subscription:")) {
+        const [, profession = "individual", tierValue = "pro", periodValue = "monthly"] = custom2.split(":");
+        const tier = normalizeTier(tierValue);
+        const planType = normalizeBillingPeriod(periodValue);
+        const plan = getSubscriptionPlan(profession, tier);
+        return {
+            profession,
+            tier: plan.tier,
+            planType,
+            plan,
+        };
+    }
+
+    const planType = normalizeBillingPeriod(custom2);
+    const plan = getSubscriptionPlan("individual", "pro");
+    return {
+        profession: "individual",
+        tier: plan.tier,
+        planType,
+        plan,
+    };
+}
+
+function amountCents(plan: SubscriptionPlan, planType: BillingPeriod): number {
+    return (planType === "annual" ? plan.annualPrice : plan.monthlyPrice) * 100;
+}
+
+function periodDays(planType: BillingPeriod): number {
+    return planType === "annual" ? 365 : 30;
+}
+
+function nextPeriodEnd(planType: BillingPeriod, payHereNextDate?: string): admin.firestore.Timestamp {
+    if (payHereNextDate) {
+        const parsed = new Date(payHereNextDate);
+        if (!Number.isNaN(parsed.getTime())) {
+            return admin.firestore.Timestamp.fromDate(parsed);
+        }
+    }
+
+    const fallback = new Date();
+    fallback.setDate(fallback.getDate() + periodDays(planType));
+    return admin.firestore.Timestamp.fromDate(fallback);
+}
 
 // ─── PayHere Signature Verification ─────────────────────────────
 function verifyPayHereSignature(
@@ -50,6 +154,10 @@ function verifyPayHereSignature(
         .digest("hex")
         .toUpperCase();
 
+    if (!receivedMd5 || receivedMd5.length !== computedHash.length) {
+        return false;
+    }
+
     return crypto.timingSafeEqual(
         Buffer.from(computedHash, 'utf8'),
         Buffer.from(receivedMd5.toUpperCase(), 'utf8')
@@ -72,7 +180,7 @@ export const handleSubscriptionWebhook = onRequest(
     {
         region: "asia-south1",
         memory: "256MiB",
-        secrets: [PAYHERE_MERCHANT_SECRET, REVENUCAT_WEBHOOK_SECRET],
+        secrets: [PAYHERE_MERCHANT_ID, PAYHERE_MERCHANT_SECRET, REVENUCAT_WEBHOOK_SECRET],
         cors: false,
     },
     async (req, res) => {
@@ -129,21 +237,26 @@ async function handlePayHereWebhook(body: any): Promise<void> {
     const {
         merchant_id,
         order_id,
+        payment_id,
+        subscription_id,
         payhere_amount,
         payhere_currency,
         status_code,
         md5sig,
         custom_1,        // userId
-        custom_2,        // plan: "monthly" | "annual"
+        custom_2,        // subscription metadata
         recurring,
+        item_rec_date_next,
     } = body;
 
-    // Idempotency: skip if already processed
-    const idempotencyRef = db.doc(`webhook_events/payhere_${order_id}_${status_code}`);
-    const existing = await idempotencyRef.get();
-    if (existing.exists) {
-        logger.info(`⏭️ PayHere webhook already processed: ${order_id}`);
-        return;
+    if (!PAYHERE_MERCHANT_ID.value() || !PAYHERE_MERCHANT_SECRET.value()) {
+        logger.error("❌ PayHere merchant secrets are not configured");
+        throw new Error("Server misconfigured");
+    }
+
+    if (merchant_id !== PAYHERE_MERCHANT_ID.value()) {
+        logger.error("❌ PayHere merchant mismatch", { order_id });
+        throw new Error("Invalid merchant");
     }
 
     // Verify signature
@@ -162,8 +275,16 @@ async function handlePayHereWebhook(body: any): Promise<void> {
         throw new Error("Invalid PayHere signature");
     }
 
+    // Idempotency: recurring renewals reuse order_id, so prefer payment_id.
+    const idempotencyRef = db.doc(`webhook_events/payhere_${order_id}_${payment_id || subscription_id || status_code}`);
+    const existing = await idempotencyRef.get();
+    if (existing.exists) {
+        logger.info(`⏭️ PayHere webhook already processed: ${order_id}`);
+        return;
+    }
+
     const userId = custom_1;
-    const planType = (custom_2 || "monthly") as string;
+    const { profession, tier, planType, plan } = parsePlanMetadata(custom_2);
 
     if (!userId) {
         logger.error("❌ No userId in PayHere custom_1 field");
@@ -171,10 +292,10 @@ async function handlePayHereWebhook(body: any): Promise<void> {
     }
 
     // Validate payment amount and currency
-    const expectedPlan = PLAN_PRICES[planType] || PLAN_PRICES.monthly;
+    const expectedAmountCents = amountCents(plan, planType);
     const receivedAmountCents = Math.round(parseFloat(payhere_amount) * 100);
-    if (receivedAmountCents < expectedPlan.amount_cents * 0.95) {
-        logger.error(`❌ Amount mismatch: received ${receivedAmountCents}, expected ${expectedPlan.amount_cents}`);
+    if (receivedAmountCents < expectedAmountCents * 0.95) {
+        logger.error(`❌ Amount mismatch: received ${receivedAmountCents}, expected ${expectedAmountCents}`);
         throw new Error("Payment amount mismatch");
     }
     if (payhere_currency !== "LKR") {
@@ -182,7 +303,7 @@ async function handlePayHereWebhook(body: any): Promise<void> {
         throw new Error("Invalid currency");
     }
 
-    logger.info(`💳 PayHere webhook: order=${order_id}, status=${status_code}, user=${userId}, plan=${planType}`);
+    logger.info(`💳 PayHere webhook: order=${order_id}, status=${status_code}, user=${userId}, plan=${profession}/${tier}/${planType}`);
 
     // PayHere status codes: 2 = success, 0 = pending, -1 = canceled, -2 = failed, -3 = chargeback
     const statusMap: Record<string, string> = {
@@ -194,31 +315,43 @@ async function handlePayHereWebhook(body: any): Promise<void> {
     };
 
     const newStatus = statusMap[status_code] || "unknown";
-    const plan = PLAN_PRICES[planType] || PLAN_PRICES.monthly;
-
-    const periodEnd = new Date();
-    periodEnd.setDate(periodEnd.getDate() + plan.period_days);
-
     const subRef = db.doc(`users/${userId}/subscription/current`);
 
     if (newStatus === "active") {
         await subRef.set({
-            tier: "pro",
+            tier,
             status: "active",
-            current_period_end: admin.firestore.Timestamp.fromDate(periodEnd),
+            current_period_end: nextPeriodEnd(planType, item_rec_date_next),
             provider: "payhere_web",
-            provider_subscription_id: order_id,
+            provider_subscription_id: subscription_id || order_id,
+            provider_payment_id: payment_id || null,
             plan_type: planType,
-            amount_cents: plan.amount_cents,
-            is_recurring: recurring === "1",
+            profession,
+            amount_cents: expectedAmountCents,
+            plan_label: plan.label,
+            is_recurring: recurring === "1" || Boolean(subscription_id),
             updated_at: admin.firestore.FieldValue.serverTimestamp(),
-        });
-        logger.info(`✅ User ${userId} upgraded to Pro (PayHere, ${planType})`);
+        }, { merge: true });
+
+        await db.doc(`users/${userId}/payment_attempts/${order_id}`).set({
+            status: "paid",
+            payment_id: payment_id || null,
+            subscription_id: subscription_id || null,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+
+        logger.info(`✅ User ${userId} upgraded to ${tier} (PayHere, ${planType})`);
     } else if (newStatus === "canceled" || newStatus === "past_due") {
-        await subRef.update({
+        await subRef.set({
             status: newStatus,
             updated_at: admin.firestore.FieldValue.serverTimestamp(),
-        });
+        }, { merge: true });
+        await db.doc(`users/${userId}/payment_attempts/${order_id}`).set({
+            status: newStatus,
+            payment_id: payment_id || null,
+            subscription_id: subscription_id || null,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
         logger.info(`⚠️ User ${userId} subscription ${newStatus} (PayHere)`);
     }
 
@@ -227,6 +360,12 @@ async function handlePayHereWebhook(body: any): Promise<void> {
         processed_at: admin.firestore.FieldValue.serverTimestamp(),
         status_code,
         userId,
+        order_id,
+        payment_id: payment_id || null,
+        subscription_id: subscription_id || null,
+        profession,
+        tier,
+        plan_type: planType,
     });
 }
 
@@ -271,8 +410,8 @@ async function handleRevenueCatWebhook(body: any): Promise<void> {
 
     // Determine plan from product_id
     const isAnnual = product_id?.includes("annual") || product_id?.includes("yearly");
-    const planType = isAnnual ? "annual" : "monthly";
-    const plan = PLAN_PRICES[planType];
+    const planType: BillingPeriod = isAnnual ? "annual" : "monthly";
+    const plan = getSubscriptionPlan("individual", "pro");
 
     switch (type) {
         case "INITIAL_PURCHASE":
@@ -281,7 +420,7 @@ async function handleRevenueCatWebhook(body: any): Promise<void> {
         case "UNCANCELLATION": {
             const periodEnd = expiration_at_ms
                 ? new Date(expiration_at_ms)
-                : new Date(Date.now() + plan.period_days * 86400000);
+                : new Date(Date.now() + periodDays(planType) * 86400000);
 
             await subRef.set({
                 tier: "pro",
@@ -290,7 +429,7 @@ async function handleRevenueCatWebhook(body: any): Promise<void> {
                 provider: store === "APP_STORE" ? "apple_app_store" : "google_play",
                 provider_subscription_id: event.id || product_id,
                 plan_type: planType,
-                amount_cents: plan.amount_cents,
+                amount_cents: amountCents(plan, planType),
                 updated_at: admin.firestore.FieldValue.serverTimestamp(),
             });
             logger.info(`✅ User ${userId} Pro activated (RevenueCat ${type})`);

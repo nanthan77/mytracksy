@@ -5,8 +5,9 @@ import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import { getPricingForProfession } from '../config/pricingConfig';
 import { ProfessionType } from '../types/profession';
+import { submitPayHereForm, PayHereFormPayload } from '../utils/payhere';
 
-const functions = getFunctions(undefined, 'asia-south1');
+const paymentFunctions = getFunctions(undefined, 'us-central1');
 
 interface SubData {
     tier: 'free' | 'pro' | 'chambers';
@@ -242,20 +243,18 @@ export default function SubscriptionManager() {
         if (!currentUser?.uid) return;
         setActivating(true);
         try {
-            // Call Cloud Function to initiate PayHere preapproval checkout
-            const initCheckout = httpsCallable(functions, 'handlePayHerePreapproval');
+            // Call Cloud Function to create signed PayHere recurring checkout fields.
+            const initCheckout = httpsCallable(paymentFunctions, 'initPayHereSubscription');
             const result = await initCheckout({
-                plan_type: 'monthly',
+                planType: 'monthly',
                 tier: 'pro',
                 profession,
             });
-            const data = result.data as { checkout_url?: string; success?: boolean };
+            const data = result.data as PayHereFormPayload;
 
-            if (data.checkout_url) {
-                // Redirect to PayHere hosted checkout page
-                window.location.href = data.checkout_url;
+            if (data.actionUrl && data.fields) {
+                submitPayHereForm(data);
             } else {
-                // Fallback: direct PayHere sandbox URL for testing
                 alert('Payment gateway is being configured. Please contact support@mytracksy.com for early access.');
             }
         } catch (err: any) {
