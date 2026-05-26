@@ -1113,15 +1113,15 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
   );
 
   const SETTINGS_FIELDS: { key: keyof typeof legalSettings; label: string; icon: string; placeholder: string }[] = [
-    { key: 'barNumber', label: 'Bar Association #', icon: '⚖️', placeholder: 'e.g. BASL/2024/1234' },
+    { key: 'barRegistration', label: 'Bar Association #', icon: '⚖️', placeholder: 'e.g. BASL/2024/1234' },
     { key: 'specialization', label: 'Specialization', icon: '📚', placeholder: 'e.g. Commercial Litigation' },
-    { key: 'certificateExpiry', label: 'Practising Certificate Expiry', icon: '📜', placeholder: 'e.g. 2026' },
+    { key: 'practisingCertificate', label: 'Practising Certificate Expiry', icon: '📜', placeholder: 'e.g. 2026' },
     { key: 'primaryCourt', label: 'Primary Court', icon: '🏛️', placeholder: 'e.g. Commercial High Court, Colombo' },
     { key: 'chambers', label: 'Chambers Address', icon: '🏢', placeholder: 'e.g. Hulftsdorp Street, Colombo 12' },
-    { key: 'indemnityInsurer', label: 'Indemnity Insurer', icon: '🛡️', placeholder: 'e.g. SLIC — Policy Active' },
+    { key: 'professionalIndemnity', label: 'Indemnity Insurer', icon: '🛡️', placeholder: 'e.g. SLIC — Policy Active' },
     { key: 'currency', label: 'Currency', icon: '💱', placeholder: 'e.g. LKR' },
     { key: 'taxYear', label: 'Tax Year', icon: '📋', placeholder: 'e.g. 2025/2026 (April – March)' },
-    { key: 'irdTin', label: 'IRD TIN', icon: '🔑', placeholder: 'Required for APIT filing' },
+    { key: 'irdTIN', label: 'IRD TIN', icon: '🔑', placeholder: 'Required for APIT filing' },
   ];
 
   const renderSettings = (): React.ReactNode => (

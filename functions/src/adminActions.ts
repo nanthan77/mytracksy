@@ -163,7 +163,7 @@ export const overrideSubscription = onCall(
 // ─── Get Admin Stats ────────────────────────────────────────────
 
 export const getAdminStats = onCall(
-    { region: "asia-south1", memory: "256MiB" },
+    { region: "asia-south1", memory: "256MiB", cpu: "gcf_gen1", maxInstances: 1 },
     async (request) => {
         if (!request.auth) throw new HttpsError("unauthenticated", "Must be logged in");
         await requireAdmin(request.auth.uid);

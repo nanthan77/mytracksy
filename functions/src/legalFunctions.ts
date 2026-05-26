@@ -192,9 +192,9 @@ export const processLegalAIQuery = onCall(
       const genAI = new GoogleGenerativeAI(apiKey);
       const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-      const result = await model.generateContent([
-        { role: 'user', parts: [{ text: toolConfig.systemPrompt + '\n\n---\n\nUser Query:\n' + prompt }] },
-      ]);
+      const result = await model.generateContent(
+        `${toolConfig.systemPrompt}\n\n---\n\nUser Query:\n${prompt}`
+      );
       const response = await result.response;
       const text = response.text();
 

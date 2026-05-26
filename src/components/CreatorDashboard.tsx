@@ -344,7 +344,7 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
 
   const handleVoiceAction = (action: ParsedVoiceAction) => {
     if (!uid) return;
-    if (action.type === 'expense') {
+    if (action.intent === 'expense') {
       addTransaction(uid, {
         date: new Date().toISOString().split('T')[0], amount: action.amount || 0,
         category: action.category || 'Production', type: 'expense',

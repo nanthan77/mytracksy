@@ -78,6 +78,13 @@ const TOKEN_PACKAGES: Record<string, { tokens: number; price_lkr: number; label:
   pack_1000: { tokens: 1000, price_lkr: 12000, label: '1,000 AI Tokens' },
 };
 
+const ONE_CLICK_LOCK_TTL_MS = 2 * 60 * 1000;
+const AUTO_RELOAD_LOCK_TTL_MS = 55 * 60 * 1000;
+
+function isPaymentLockActive(lockData: FirebaseFirestore.DocumentData | undefined, nowMs: number): boolean {
+  return typeof lockData?.pending_until_ms === 'number' && lockData.pending_until_ms > nowMs;
+}
+
 // ============================================
 // 1. PayHere Pre-Approval Webhook
 //    Saves the customer_token when doctor
@@ -241,8 +248,28 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
   }
 
   const customerToken = cardDoc.data()!.customer_token;
+  const lockRef = db.doc(`users/${userId}/payment_locks/oneclick_topup`);
+  const lockStartedAtMs = Date.now();
 
   try {
+    await db.runTransaction(async (txn) => {
+      const lockSnap = await txn.get(lockRef);
+
+      if (isPaymentLockActive(lockSnap.data(), lockStartedAtMs)) {
+        throw new functions.https.HttpsError(
+          'already-exists',
+          'A top-up is already processing. Please wait a moment before trying again.'
+        );
+      }
+
+      txn.set(lockRef, {
+        package_id: packageId,
+        status: 'pending',
+        pending_until_ms: lockStartedAtMs + ONE_CLICK_LOCK_TTL_MS,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
+    });
+
     // Step 1: Get PayHere access token
     const fetch = (await import('node-fetch')).default;
 
@@ -258,7 +285,7 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
     }
 
     // Step 2: Charge the saved card
-    const orderId = `topup_${userId}_${Date.now()}`;
+    const orderId = `topup_${userId}_${packageId}_${lockStartedAtMs}`;
     const chargeResponse = await fetch(PAYHERE_CHARGE_URL, {
       method: 'POST',
       headers: {
@@ -322,6 +349,14 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
       // c) Update last charged timestamp on card
       const cardRef = db.doc(`users/${userId}/payment_methods/payhere_card`);
       txn.update(cardRef, { last_charged_at: admin.firestore.FieldValue.serverTimestamp() });
+
+      txn.set(lockRef, {
+        status: 'succeeded',
+        order_id: orderId,
+        pending_until_ms: lockStartedAtMs,
+        completed_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      }, { merge: true });
     });
 
     console.log(`[1-Click TopUp] User ${userId} purchased ${pkg.tokens} tokens for LKR ${pkg.price_lkr}`);
@@ -334,8 +369,22 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
       message: `${pkg.tokens} tokens added to your wallet! Tax receipt generated.`,
     };
   } catch (error: any) {
-    if (error instanceof functions.https.HttpsError) throw error;
+    if (error instanceof functions.https.HttpsError && error.code === 'already-exists') {
+      throw error;
+    }
+
     console.error('[1-Click TopUp] Error:', error);
+    await lockRef.set({
+      status: 'failed',
+      pending_until_ms: Date.now(),
+      last_error: error?.message || 'Payment processing error',
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    }, { merge: true }).catch((lockError) => {
+      console.error('[1-Click TopUp] Failed to clear payment lock:', lockError);
+    });
+
+    if (error instanceof functions.https.HttpsError) throw error;
+
     throw new functions.https.HttpsError('internal', 'Payment processing error. Please try again.');
   }
 });
@@ -375,16 +424,46 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
         const cardData = cardDoc.data();
         const threshold = cardData.auto_reload_threshold || 10;
         const reloadPackage = cardData.auto_reload_package || 'pack_100';
+        const pkg = TOKEN_PACKAGES[reloadPackage];
 
-        // Check wallet balance
-        const walletSnap = await db.doc(`users/${userId}/wallet/current_balance`).get();
-        const currentTokens = walletSnap.exists ? (walletSnap.data()?.ai_tokens || 0) : 0;
+        if (!pkg) {
+          console.warn(`[Auto-Reload] User ${userId}: invalid package ${reloadPackage}`);
+          processed++;
+          continue;
+        }
 
-        if (currentTokens < threshold) {
-          const pkg = TOKEN_PACKAGES[reloadPackage];
-          if (!pkg) continue;
+        const lockRef = db.doc(`users/${userId}/payment_locks/auto_reload`);
+        const lockStartedAtMs = Date.now();
+        const lockResult = await db.runTransaction(async (txn) => {
+          const walletRef = db.doc(`users/${userId}/wallet/current_balance`);
+          const walletSnap = await txn.get(walletRef);
+          const lockSnap = await txn.get(lockRef);
+          const currentTokens = walletSnap.exists ? (walletSnap.data()?.ai_tokens || 0) : 0;
 
-          console.log(`[Auto-Reload] User ${userId}: ${currentTokens} tokens < ${threshold} threshold. Charging LKR ${pkg.price_lkr}...`);
+          if (currentTokens >= threshold) {
+            return { shouldCharge: false, currentTokens, reason: 'above-threshold' };
+          }
+
+          if (isPaymentLockActive(lockSnap.data(), lockStartedAtMs)) {
+            return { shouldCharge: false, currentTokens, reason: 'locked' };
+          }
+
+          txn.set(lockRef, {
+            package_id: reloadPackage,
+            status: 'pending',
+            pending_until_ms: lockStartedAtMs + AUTO_RELOAD_LOCK_TTL_MS,
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+          }, { merge: true });
+
+          return { shouldCharge: true, currentTokens, reason: 'below-threshold' };
+        });
+
+        if (lockResult.reason === 'locked') {
+          console.log(`[Auto-Reload] User ${userId}: skipped because a charge is already processing`);
+        }
+
+        if (lockResult.shouldCharge) {
+          console.log(`[Auto-Reload] User ${userId}: ${lockResult.currentTokens} tokens < ${threshold} threshold. Charging LKR ${pkg.price_lkr}...`);
 
           try {
             const fetch = (await import('node-fetch')).default;
@@ -399,12 +478,18 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
 
             if (!tokenData.access_token) {
               console.error(`[Auto-Reload] Failed to get PayHere token for user ${userId}`);
+              await lockRef.set({
+                status: 'failed',
+                pending_until_ms: Date.now(),
+                last_error: 'Failed to obtain PayHere access token',
+                updated_at: admin.firestore.FieldValue.serverTimestamp(),
+              }, { merge: true });
               failed++;
               continue;
             }
 
             // Charge saved card
-            const orderId = `auto_${userId}_${Date.now()}`;
+            const orderId = `auto_${userId}_${reloadPackage}_${lockStartedAtMs}`;
             const chargeResponse = await fetch(PAYHERE_CHARGE_URL, {
               method: 'POST',
               headers: {
@@ -435,6 +520,14 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
                   total_lifetime_spend_lkr: spend + pkg.price_lkr,
                   last_topup_at: admin.firestore.FieldValue.serverTimestamp(),
                   last_auto_reload_at: admin.firestore.FieldValue.serverTimestamp(),
+                }, { merge: true });
+
+                txn.set(lockRef, {
+                  status: 'succeeded',
+                  order_id: orderId,
+                  pending_until_ms: lockStartedAtMs,
+                  completed_at: admin.firestore.FieldValue.serverTimestamp(),
+                  updated_at: admin.firestore.FieldValue.serverTimestamp(),
                 }, { merge: true });
 
                 // Tax-deductible accounting log
@@ -485,6 +578,12 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
                 last_error: chargeData.msg || 'Card declined during auto-reload',
                 last_error_at: admin.firestore.FieldValue.serverTimestamp(),
               });
+              await lockRef.set({
+                status: 'failed',
+                pending_until_ms: Date.now(),
+                last_error: chargeData.msg || 'Card declined during auto-reload',
+                updated_at: admin.firestore.FieldValue.serverTimestamp(),
+              }, { merge: true });
 
               // Notify user to update card
               try {
@@ -506,6 +605,14 @@ export const processAutoReloads = functions.runWith({ secrets: [PAYHERE_APP_ID, 
             }
           } catch (err) {
             console.error(`[Auto-Reload] Error processing user ${userId}:`, err);
+            await lockRef.set({
+              status: 'failed',
+              pending_until_ms: Date.now(),
+              last_error: err instanceof Error ? err.message : 'Auto-reload processing error',
+              updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            }, { merge: true }).catch((lockError) => {
+              console.error(`[Auto-Reload] Failed to clear lock for user ${userId}:`, lockError);
+            });
             failed++;
           }
         }
@@ -583,18 +690,53 @@ export const generateCorporateInvoice = functions.https.onCall(async (data, cont
 
   const { companyId, customerId, items, taxData } = data;
 
-  // TODO: Implement actual PDF generation and Firestore transaction
-  // - Add invoice doc to /companies/{companyId}/invoices
-  // - Deduct stock from /companies/{companyId}/inventory
-  // - Sync to central ledger
+  if (!companyId || !customerId || !Array.isArray(items) || items.length === 0) {
+    throw new functions.https.HttpsError('invalid-argument', 'companyId, customerId, and at least one invoice item are required');
+  }
 
-  console.log(`[BizTracksy] Stub: Generating corporate invoice for company ${companyId}`);
+  const companyRef = db.doc(`companies/${companyId}`);
+  const companySnap = await companyRef.get();
+
+  if (!companySnap.exists) {
+    throw new functions.https.HttpsError('not-found', 'Company not found');
+  }
+
+  const company = companySnap.data() || {};
+  const member = company.members?.[context.auth.uid];
+  const memberRole = typeof member === 'object' ? member.role : member;
+  const canCreateInvoice = company.ownerId === context.auth.uid || ['admin', 'manager', 'editor'].includes(memberRole);
+
+  if (!canCreateInvoice) {
+    throw new functions.https.HttpsError('permission-denied', 'You do not have permission to create invoices for this company');
+  }
+
+  const invoiceRef = companyRef.collection('invoices').doc();
+  const invoiceTotal = items.reduce((sum: number, item: any) => {
+    const quantity = Number(item.quantity || 0);
+    const unitPrice = Number(item.unitPrice || item.price || 0);
+    return sum + quantity * unitPrice;
+  }, 0);
+
+  await invoiceRef.set({
+    customerId,
+    items,
+    taxData: taxData || null,
+    total: invoiceTotal,
+    currency: company.currency || 'LKR',
+    status: 'draft',
+    pdfUrl: null,
+    createdBy: context.auth.uid,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+  });
+
+  console.log(`[BizTracksy] Invoice draft ${invoiceRef.id} created for company ${companyId}`);
 
   return {
     success: true,
-    invoiceId: `INV-${Date.now()}`,
-    pdfUrl: 'mock_url_until_implemented',
-    message: 'Corporate Invoice generated (Stub)',
+    invoiceId: invoiceRef.id,
+    pdfUrl: null,
+    status: 'draft',
+    message: 'Corporate invoice draft created. PDF generation is not configured yet.',
   };
 });
-

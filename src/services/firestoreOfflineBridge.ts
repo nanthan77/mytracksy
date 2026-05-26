@@ -348,7 +348,7 @@ class FirestoreOfflineBridge {
         return new Promise((resolve, reject) => {
             const tx = db.transaction(this.STORES.audio, 'readonly');
             const index = tx.objectStore(this.STORES.audio).index('uploaded');
-            const request = index.getAll(false);
+            const request = index.getAll(false as unknown as IDBValidKey);
             request.onsuccess = () => {
                 let items = request.result as AudioQueueItem[];
                 if (userId) items = items.filter(i => i.userId === userId);

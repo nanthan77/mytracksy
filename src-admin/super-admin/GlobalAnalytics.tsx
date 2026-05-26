@@ -115,7 +115,7 @@ export default function GlobalAnalytics() {
                     innerRadius={60}
                     outerRadius={100}
                     dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}
                   >
                     {subscriptionPieData.map((_, index) => (
                       <Cell key={index} fill={PIE_COLORS[index]} />
@@ -142,7 +142,7 @@ export default function GlobalAnalytics() {
                   <YAxis tick={{ fill: '#94a3b8', fontSize: 12 }} />
                   <RechartsTooltip
                     contentStyle={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 8 }}
-                    formatter={(value: number) => [`LKR ${value.toLocaleString()}`, 'MRR']}
+                    formatter={(value) => [`LKR ${Number(value || 0).toLocaleString()}`, 'MRR']}
                   />
                   <Bar dataKey="mrr" name="MRR" fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>

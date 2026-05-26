@@ -60,6 +60,26 @@ export interface UniversalTransaction {
     updatedAt?: any;
 }
 
+export interface LegacyTransactionView {
+    id: string;
+    date: string;
+    amount: number;
+    type: TransactionType;
+    status?: 'completed' | 'pending' | 'overdue' | 'paid' | 'received';
+    category: string;
+    description: string;
+}
+
+export interface LegacyTransactionInput {
+    date: string;
+    amount: number;
+    type: TransactionType;
+    category: string;
+    description?: string;
+    paymentMethod?: string;
+    vendor?: string;
+}
+
 export interface GovIncomeConfig {
     basicSalary: number;             // Monthly basic (in LKR, not cents — display value)
     datAllowance: number;
@@ -119,7 +139,7 @@ export async function generateIdempotencyKey(date: string, amountCents: number, 
 // ════════════════════════════════════════════════════════════════
 
 /** Seed default chart of accounts for a user's profession. Idempotent. */
-export async function seedChartOfAccounts(uid: string, profession: string): Promise<void> {
+export async function seedChartOfAccounts(uid: string, profession = 'individual'): Promise<void> {
     // Check if already seeded
     const userRef = doc(db, 'users', uid);
     const userSnap = await getDoc(userRef);
@@ -183,9 +203,10 @@ export async function deleteAccount(uid: string, accountId: string): Promise<voi
 /** Add a new transaction. Generates idempotency key automatically. */
 export async function addTransaction(
     uid: string,
-    entry: Omit<UniversalTransaction, 'id' | 'createdAt' | 'updatedAt' | 'idempotency_key'>
+    entry: Omit<UniversalTransaction, 'id' | 'createdAt' | 'updatedAt' | 'idempotency_key'> | LegacyTransactionInput
 ): Promise<string> {
-    const idemKey = await generateIdempotencyKey(entry.date, entry.amount_cents, entry.vendor);
+    const normalized = normalizeTransactionInput(entry);
+    const idemKey = await generateIdempotencyKey(normalized.date, normalized.amount_cents, normalized.vendor);
 
     // Idempotency check — skip if duplicate
     const existing = query(
@@ -199,7 +220,7 @@ export async function addTransaction(
     }
 
     const ref = await addDoc(userCol(uid, 'transactions'), {
-        ...entry,
+        ...normalized,
         idempotency_key: idemKey,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
@@ -244,15 +265,72 @@ export interface TransactionFilter {
     source?: TransactionSource;
 }
 
+function isLegacyTransactionInput(
+    entry: Omit<UniversalTransaction, 'id' | 'createdAt' | 'updatedAt' | 'idempotency_key'> | LegacyTransactionInput
+): entry is LegacyTransactionInput {
+    return 'amount' in entry;
+}
+
+function normalizeTransactionInput(
+    entry: Omit<UniversalTransaction, 'id' | 'createdAt' | 'updatedAt' | 'idempotency_key'> | LegacyTransactionInput
+): Omit<UniversalTransaction, 'id' | 'createdAt' | 'updatedAt' | 'idempotency_key'> {
+    if (!isLegacyTransactionInput(entry)) return entry;
+
+    return {
+        date: entry.date,
+        amount_cents: toCents(entry.amount),
+        type: entry.type,
+        status: 'cleared',
+        source: 'manual_entry',
+        vendor: entry.vendor || entry.paymentMethod || entry.category,
+        category_id: entry.category,
+        category_name: entry.category,
+        description: entry.description || entry.category,
+        metadata: entry.paymentMethod ? { paymentMethod: entry.paymentMethod } : undefined,
+    };
+}
+
+function toLegacyTransactionView(transaction: UniversalTransaction): LegacyTransactionView {
+    return {
+        id: transaction.id || '',
+        date: transaction.date,
+        amount: fromCents(transaction.amount_cents),
+        type: transaction.type,
+        status: transaction.status === 'cleared'
+            ? (transaction.type === 'income' ? 'paid' : 'completed')
+            : 'pending',
+        category: transaction.category_name || transaction.category_id,
+        description: transaction.description,
+    };
+}
+
 /**
  * Subscribe to transactions with optional filters.
  * Always ordered by date descending.
  */
 export function subscribeTransactions(
     uid: string,
+    type: TransactionType,
+    callback: (transactions: LegacyTransactionView[]) => void
+): () => void;
+export function subscribeTransactions(
+    uid: string,
     callback: (transactions: UniversalTransaction[]) => void,
     filters?: TransactionFilter
+): () => void;
+export function subscribeTransactions(
+    uid: string,
+    typeOrCallback: TransactionType | ((transactions: UniversalTransaction[]) => void),
+    filtersOrCallback?: TransactionFilter | ((transactions: LegacyTransactionView[]) => void)
 ): () => void {
+    const legacyType = typeof typeOrCallback === 'string' ? typeOrCallback : null;
+    const callback = typeof typeOrCallback === 'function'
+        ? typeOrCallback
+        : filtersOrCallback as (transactions: LegacyTransactionView[]) => void;
+    const filters = legacyType
+        ? { type: legacyType, status: 'cleared' as TransactionStatus }
+        : filtersOrCallback as TransactionFilter | undefined;
+
     let q = query(userCol(uid, 'transactions'), orderBy('date', 'desc'));
 
     // Build filtered query (Firestore allows up to 1 inequality + multiple equality filters)
@@ -279,7 +357,11 @@ export function subscribeTransactions(
             createdAt: d.data().createdAt?.toDate?.() || null,
             updatedAt: d.data().updatedAt?.toDate?.() || null,
         })) as UniversalTransaction[];
-        callback(txns);
+        if (legacyType) {
+            (callback as (transactions: LegacyTransactionView[]) => void)(txns.map(toLegacyTransactionView));
+            return;
+        }
+        (callback as (transactions: UniversalTransaction[]) => void)(txns);
     }, (err) => {
         console.error('Transaction subscription error:', err);
         callback([]);

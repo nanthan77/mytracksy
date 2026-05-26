@@ -12,6 +12,8 @@ export interface InvoiceData {
     amount: number;
     date: string;
     notes: string;
+    category: string;
+    description: string;
     status: 'pending' | 'paid' | 'overdue';
 }
 
@@ -48,6 +50,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, onCancel }) => {
         amount: 0,
         date: new Date().toISOString().split('T')[0],
         notes: '',
+        category: serviceTypes[0],
+        description: '',
         status: 'pending',
     });
 
@@ -74,6 +78,8 @@ const InvoiceForm: React.FC<InvoiceFormProps> = ({ onSubmit, onCancel }) => {
             amount: 0,
             date: new Date().toISOString().split('T')[0],
             notes: '',
+            category: serviceTypes[0],
+            description: '',
             status: 'pending',
         });
     };

@@ -86,7 +86,7 @@ export default function ProfessionAnalytics() {
               <ResponsiveContainer width="100%" height={280}>
                 <PieChart>
                   <Pie data={subscriptionData} cx="50%" cy="50%" innerRadius={55} outerRadius={90} dataKey="value"
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}>
+                    label={({ name, percent }) => `${name}: ${((percent ?? 0) * 100).toFixed(0)}%`}>
                     {subscriptionData.map((_, idx) => (
                       <Cell key={idx} fill={PIE_COLORS[idx]} />
                     ))}

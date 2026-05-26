@@ -188,7 +188,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         // Subscribe to government income config
         const unsubGov = subscribeGovIncomeConfig(uid, (config) => {
             if (config) {
-                if (config.baseSalary) setGovSalary(config.baseSalary);
+                if (config.basicSalary) setGovSalary(config.basicSalary);
                 if (config.datAllowance) setDatAllowance(config.datAllowance);
             }
         });

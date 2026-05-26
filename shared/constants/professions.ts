@@ -9,9 +9,12 @@ export const PROFESSIONS: ProfessionConfig[] = [
   { id: 'automotive',   label: 'Automotive',   icon: '🚗', route: '/auto',      verificationField: 'business_reg',      verificationLabel: 'Business Registration',color: '#D53F8C' },
   { id: 'marketing',    label: 'Marketing',    icon: '📢', route: '/marketing', verificationField: 'company_reg',       verificationLabel: 'Company Registration', color: '#00B5D8' },
   { id: 'travel',       label: 'Travel',       icon: '✈️', route: '/travel',    verificationField: 'sltda_license',     verificationLabel: 'SLTDA License',        color: '#319795' },
-  { id: 'transport',    label: 'Transport',    icon: '🚛', route: '/transport', verificationField: 'transport_license', verificationLabel: 'Transport License',    color: '#975A16' },
+  { id: 'transportation', label: 'Transportation', icon: '🚛', route: '/transportation', verificationField: 'transport_license', verificationLabel: 'Transport License', color: '#975A16' },
   { id: 'retail',       label: 'Retail',       icon: '🛒', route: '/retail',    verificationField: 'business_reg',      verificationLabel: 'Business Registration',color: '#E53E3E' },
   { id: 'aquaculture',  label: 'Aquaculture',  icon: '🐟', route: '/aqua',      verificationField: 'naqda_license',     verificationLabel: 'NAQDA License',        color: '#2B6CB0' },
+  { id: 'tourism',      label: 'Tourism',      icon: '🏖️', route: '/tourism',   verificationField: 'sltda_license',     verificationLabel: 'SLTDA License',        color: '#4F46E5' },
+  { id: 'creator',      label: 'Creator',      icon: '🎥', route: '/creator',   verificationField: 'tin_number',        verificationLabel: 'TIN Number',           color: '#A855F7' },
+  { id: 'studios',      label: 'Studios',      icon: '📸', route: '/studios',   verificationField: 'studio_registration', verificationLabel: 'Studio Registration', color: '#B45309' },
   { id: 'individual',   label: 'Individual',   icon: '👤', route: '/personal',  verificationField: 'nic_number',        verificationLabel: 'NIC Number',           color: '#718096' },
 ];
 

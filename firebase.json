@@ -60,6 +60,10 @@
           "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }]
         },
         {
+          "source": "/tourism.webmanifest",
+          "headers": [{ "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }]
+        },
+        {
           "source": "**",
           "headers": [
             { "key": "X-Frame-Options", "value": "DENY" },
@@ -101,6 +105,8 @@
         { "source": "/retail", "destination": "/index.html" },
         { "source": "/aquaculture/**", "destination": "/index.html" },
         { "source": "/aquaculture", "destination": "/index.html" },
+        { "source": "/tourism/**", "destination": "/index.html" },
+        { "source": "/tourism", "destination": "/index.html" },
         { "source": "/creator/**", "destination": "/index.html" },
         { "source": "/creator", "destination": "/index.html" },
         { "source": "/studios/**", "destination": "/index.html" },

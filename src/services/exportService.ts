@@ -1,6 +1,6 @@
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import type { Workbook } from 'exceljs';
 import { format } from 'date-fns';
 
 export interface ExportOptions {
@@ -121,44 +121,68 @@ export class ExportService {
    * Export expenses to Excel with multiple sheets
    */
   public async exportToExcel(expenses: any[], options: ExportOptions): Promise<Blob> {
-    const workbook = XLSX.utils.book_new();
+    const { Workbook } = await import('exceljs');
+    const workbook = new Workbook();
+    workbook.creator = 'MyTracksy';
+    workbook.created = new Date();
 
     // Main expenses sheet
     const expensesData = this.formatExpensesForExcel(expenses, options);
-    const expensesWS = XLSX.utils.json_to_sheet(expensesData);
-    XLSX.utils.book_append_sheet(workbook, expensesWS, 'Expenses');
+    this.addJsonWorksheet(workbook, 'Expenses', expensesData);
 
     // Summary sheet
     const summaryData = this.createSummarySheet(expenses, options);
-    const summaryWS = XLSX.utils.json_to_sheet(summaryData);
-    XLSX.utils.book_append_sheet(workbook, summaryWS, 'Summary');
+    this.addJsonWorksheet(workbook, 'Summary', summaryData);
 
     // Category breakdown sheet
     const categoryData = this.createCategoryBreakdownSheet(expenses, options);
-    const categoryWS = XLSX.utils.json_to_sheet(categoryData);
-    XLSX.utils.book_append_sheet(workbook, categoryWS, 'Categories');
+    this.addJsonWorksheet(workbook, 'Categories', categoryData);
 
     // Monthly trends sheet
     const monthlyData = this.createMonthlyTrendsSheet(expenses, options);
-    const monthlyWS = XLSX.utils.json_to_sheet(monthlyData);
-    XLSX.utils.book_append_sheet(workbook, monthlyWS, 'Monthly Trends');
+    this.addJsonWorksheet(workbook, 'Monthly Trends', monthlyData);
 
     // Cultural events sheet (if requested)
     if (options.includeCultural) {
       const culturalData = this.createCulturalEventsSheet(expenses, options);
-      const culturalWS = XLSX.utils.json_to_sheet(culturalData);
-      XLSX.utils.book_append_sheet(workbook, culturalWS, 'Cultural Events');
+      this.addJsonWorksheet(workbook, 'Cultural Events', culturalData);
     }
 
     // Tax report sheet
     if (options.template === 'tax') {
       const taxData = this.createTaxReportSheet(expenses, options);
-      const taxWS = XLSX.utils.json_to_sheet(taxData);
-      XLSX.utils.book_append_sheet(workbook, taxWS, 'Tax Report');
+      this.addJsonWorksheet(workbook, 'Tax Report', taxData);
     }
 
-    const buffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-    return new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const buffer = await workbook.xlsx.writeBuffer();
+    return new Blob([buffer as BlobPart], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  }
+
+  private addJsonWorksheet(workbook: Workbook, sheetName: string, rows: Array<Record<string, any>>): void {
+    const worksheet = workbook.addWorksheet(sheetName);
+
+    if (rows.length === 0) {
+      worksheet.addRow(['No data']);
+      return;
+    }
+
+    const headers = Object.keys(rows[0]);
+    worksheet.addRow(headers);
+    rows.forEach((row) => {
+      worksheet.addRow(headers.map((header) => row[header] ?? ''));
+    });
+
+    worksheet.getRow(1).font = { bold: true };
+    worksheet.columns = headers.map((header) => ({
+      width: Math.min(
+        40,
+        Math.max(
+          12,
+          header.length + 2,
+          ...rows.map((row) => String(row[header] ?? '').length + 2)
+        )
+      ),
+    }));
   }
 
   /**

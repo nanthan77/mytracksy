@@ -68,8 +68,12 @@ export default defineConfig({
               return 'vendor-mui';
             }
             // Charts & data viz
-            if (id.includes('recharts') || id.includes('d3-') || id.includes('jspdf') || id.includes('xlsx')) {
+            if (id.includes('recharts') || id.includes('d3-') || id.includes('jspdf')) {
               return 'vendor-charts';
+            }
+            // Heavy export libraries are loaded only when users generate files
+            if (id.includes('exceljs') || id.includes('jszip') || id.includes('file-saver')) {
+              return 'vendor-export';
             }
             // i18n
             if (id.includes('i18next')) {

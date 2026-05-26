@@ -12,24 +12,48 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/users/$(userId)/subscription/current).data.tier in ['pro', 'chambers'];
     }
 
+    function companyExists(companyId) {
+      return exists(/databases/$(database)/documents/companies/$(companyId));
+    }
+
+    function isCompanyOwner(companyId) {
+      return request.auth != null
+        && companyExists(companyId)
+        && request.auth.uid == get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId;
+    }
+
+    function isCompanyMember(companyId) {
+      return request.auth != null
+        && companyExists(companyId)
+        && ('members' in get(/databases/$(database)/documents/companies/$(companyId)).data)
+        && request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.members.keys();
+    }
+
+    function canWriteCompanyData(companyId) {
+      return isCompanyOwner(companyId)
+        || (
+          isCompanyMember(companyId)
+          && get(/databases/$(database)/documents/companies/$(companyId)).data.members[request.auth.uid] is map
+          && get(/databases/$(database)/documents/companies/$(companyId)).data.members[request.auth.uid].role in ['admin', 'manager', 'editor']
+        );
+    }
+
     // ════════════════════════════════════════════════════════════
     //  BIZTRACKSY (MULTI-ENTITY ERP)
     // ════════════════════════════════════════════════════════════
     match /companies/{companyId} {
       // Members or owner can read
-      allow read: if request.auth != null && 
-                  (request.auth.uid == resource.data.ownerId || request.auth.uid in resource.data.members.keys());
+      allow read: if isCompanyOwner(companyId) || isCompanyMember(companyId);
       
       // Only owner can create
       allow create: if request.auth != null && request.resource.data.ownerId == request.auth.uid;
       // Only owner can update company details
-      allow update: if request.auth != null && request.auth.uid == resource.data.ownerId;
+      allow update: if isCompanyOwner(companyId);
       
       // Sub-collections under company (e.g., /companies/{companyId}/invoices/{invoiceId})
       match /{document=**} {
-        allow read, write: if request.auth != null && 
-                           (request.auth.uid == get(/databases/$(database)/documents/companies/$(companyId)).data.ownerId || 
-                            request.auth.uid in get(/databases/$(database)/documents/companies/$(companyId)).data.members.keys());
+        allow read: if isCompanyOwner(companyId) || isCompanyMember(companyId);
+        allow create, update, delete: if canWriteCompanyData(companyId);
       }
     }
 

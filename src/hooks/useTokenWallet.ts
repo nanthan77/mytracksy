@@ -254,6 +254,7 @@ export function useTokenWallet(userId: string | null) {
     closeBuyModal,
     dismissOutOfTokens,
     oneClickPurchase,
+    purchaseTokens: oneClickPurchase,
   };
 }
 

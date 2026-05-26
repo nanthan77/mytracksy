@@ -314,7 +314,7 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   };
 
   const handleVoiceAction = (action: ParsedVoiceAction) => {
-    if (action.type === 'expense' && uid) {
+    if (action.intent === 'expense' && uid) {
       addTransaction(uid, { date: new Date().toISOString().split('T')[0], amount: action.amount || 0, category: action.category || 'Site Materials', type: 'expense', description: action.description || 'Voice expense' });
     }
   };
@@ -690,9 +690,9 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
         <div style={cardStyle}>
           <h3 style={cardTitle}>📋 Tax-Deductible Categories (S.32 IRD Act)</h3>
           <div style={gridColumns(2)}>
-            {GOLDEN_LIST.filter(g => ['all', 'engineering'].includes(g.profession || 'all')).slice(0, 12).map(g => (
-              <div key={g.category} style={{ padding: '0.5rem', fontSize: '0.82rem', background: '#f0fdf4', borderRadius: 8, border: '1px solid #dcfce7' }}>
-                ✅ {g.category}
+            {GOLDEN_LIST.slice(0, 12).map(g => (
+              <div key={g.id} style={{ padding: '0.5rem', fontSize: '0.82rem', background: '#f0fdf4', borderRadius: 8, border: '1px solid #dcfce7' }}>
+                ✅ {g.name}
               </div>
             ))}
           </div>

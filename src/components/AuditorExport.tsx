@@ -1,7 +1,4 @@
 import React, { useState } from 'react';
-import * as XLSX from 'xlsx';
-import JSZip from 'jszip';
-import { saveAs } from 'file-saver';
 import { Transaction } from './dashboards/TransactionList';
 
 interface Receipt {
@@ -40,9 +37,16 @@ const AuditorExport: React.FC<AuditorExportProps> = ({ invoices, expenses }) => 
         try {
             const allTransactions = [...invoices, ...expenses].sort((a, b) => a.date.localeCompare(b.date));
             const receipts = getReceipts();
+            const [{ default: JSZip }, { saveAs }] = await Promise.all([
+                import('jszip'),
+                import('file-saver'),
+            ]);
 
             // ===== 1. Create Excel Workbook =====
-            const wb = XLSX.utils.book_new();
+            const { Workbook } = await import('exceljs');
+            const wb = new Workbook();
+            wb.creator = 'MyTracksy';
+            wb.created = new Date();
 
             // Sheet 1: General Ledger
             const ledgerData = [
@@ -76,13 +80,13 @@ const AuditorExport: React.FC<AuditorExportProps> = ({ invoices, expenses }) => 
                 invoices.reduce((s, i) => s + i.amount, 0).toString(),
                 '', '']);
 
-            const ws1 = XLSX.utils.aoa_to_sheet(ledgerData);
-            // Set column widths
-            ws1['!cols'] = [
-                { wch: 12 }, { wch: 35 }, { wch: 20 }, { wch: 10 },
-                { wch: 18 }, { wch: 18 }, { wch: 12 }, { wch: 15 },
+            const ws1 = wb.addWorksheet('General Ledger');
+            ws1.addRows(ledgerData);
+            ws1.getRow(1).font = { bold: true };
+            ws1.columns = [
+                { width: 12 }, { width: 35 }, { width: 20 }, { width: 10 },
+                { width: 18 }, { width: 18 }, { width: 12 }, { width: 15 },
             ];
-            XLSX.utils.book_append_sheet(wb, ws1, 'General Ledger');
 
             // Sheet 2: P&L Summary
             const totalIncome = invoices.reduce((s, i) => s + i.amount, 0);
@@ -117,9 +121,10 @@ const AuditorExport: React.FC<AuditorExportProps> = ({ invoices, expenses }) => 
             plData.push([]);
             plData.push(['NET PROFIT / (LOSS)', (totalIncome - totalExpense).toString()]);
 
-            const ws2 = XLSX.utils.aoa_to_sheet(plData);
-            ws2['!cols'] = [{ wch: 30 }, { wch: 18 }];
-            XLSX.utils.book_append_sheet(wb, ws2, 'P&L Summary');
+            const ws2 = wb.addWorksheet('P&L Summary');
+            ws2.addRows(plData);
+            ws2.getRow(1).font = { bold: true };
+            ws2.columns = [{ width: 30 }, { width: 18 }];
 
             // Sheet 3: Receipt Index
             const receiptData = [
@@ -131,12 +136,13 @@ const AuditorExport: React.FC<AuditorExportProps> = ({ invoices, expenses }) => 
             receipts.forEach(r => {
                 receiptData.push([r.id, r.date, r.vendor, r.category, r.amount.toString(), r.capturedAt, r.imageData ? 'Yes' : 'No']);
             });
-            const ws3 = XLSX.utils.aoa_to_sheet(receiptData);
-            ws3['!cols'] = [{ wch: 18 }, { wch: 12 }, { wch: 25 }, { wch: 18 }, { wch: 15 }, { wch: 22 }, { wch: 10 }];
-            XLSX.utils.book_append_sheet(wb, ws3, 'Receipt Index');
+            const ws3 = wb.addWorksheet('Receipt Index');
+            ws3.addRows(receiptData);
+            ws3.getRow(1).font = { bold: true };
+            ws3.columns = [{ width: 18 }, { width: 12 }, { width: 25 }, { width: 18 }, { width: 15 }, { width: 22 }, { width: 10 }];
 
             // Generate Excel buffer
-            const excelBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const excelBuffer = await wb.xlsx.writeBuffer();
 
             // ===== 2. Create ZIP =====
             const zip = new JSZip();

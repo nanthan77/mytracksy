@@ -1,0 +1,87 @@
+{
+  "id": "/tourism",
+  "name": "MyTracksy Tourism",
+  "short_name": "Tour Tracksy",
+  "description": "Tourism agency assistant for bookings, commissions, tour packages, multi-currency wallets, and tax-ready exports.",
+  "start_url": "/tourism",
+  "scope": "/tourism",
+  "display": "standalone",
+  "display_override": ["standalone", "browser"],
+  "background_color": "#eef2ff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "lang": "en-LK",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "finance", "travel", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Tourism Home",
+      "short_name": "Home",
+      "description": "Open the tourism command center",
+      "url": "/tourism?action=overview",
+      "icons": [
+        {
+          "src": "/icons/icon-192.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "short_name": "Bookings",
+      "description": "Open tourism bookings and package tracking",
+      "url": "/tourism?action=bookings",
+      "icons": [
+        {
+          "src": "/icons/business-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Commissions",
+      "short_name": "Money",
+      "description": "Open commission and multi-currency finance tools",
+      "url": "/tourism?action=finance",
+      "icons": [
+        {
+          "src": "/icons/analytics-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    },
+    {
+      "name": "Tax Exports",
+      "short_name": "Tax",
+      "description": "Open accountant-ready tourism tax exports",
+      "url": "/tourism?action=tax",
+      "icons": [
+        {
+          "src": "/icons/voice-shortcut.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}
