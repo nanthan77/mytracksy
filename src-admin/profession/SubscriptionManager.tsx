@@ -6,9 +6,8 @@ import {
   Alert, IconButton, Tooltip,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSION_MAP } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import EditIcon from '@mui/icons-material/Edit';
 import RefreshIcon from '@mui/icons-material/Refresh';
 
@@ -23,6 +22,7 @@ interface UserRow {
 const TIER_COLORS: Record<string, string> = {
   free: '#64748b',
   pro: '#6366f1',
+  chambers: '#22c55e',
   lifetime: '#f59e0b',
 };
 
@@ -44,9 +44,8 @@ export default function SubscriptionManager() {
     try {
       setLoading(true);
       setError(null);
-      const getProfessionUsers = httpsCallable<any, { users: UserRow[] }>(functions, 'getProfessionUsers');
-      const result = await getProfessionUsers({ profession: professionId, status: 'active', limit: 100 });
-      setUsers(result.data.users);
+      const result = await adminApi.getProfessionUsers<{ users: UserRow[] }>({ profession: professionId, status: 'active', limit: 100 });
+      setUsers(result.users);
     } catch (err: any) {
       setError(err.message || 'Failed to load users');
     } finally {
@@ -68,8 +67,7 @@ export default function SubscriptionManager() {
     try {
       setSaving(true);
       setError(null);
-      const override = httpsCallable(functions, 'overrideSubscription');
-      await override({ uid: selectedUser.uid, newTier, reason });
+      await adminApi.overrideSubscription(selectedUser.uid, newTier, reason);
       setDialogOpen(false);
       await fetchUsers();
     } catch (err: any) {
@@ -159,6 +157,7 @@ export default function SubscriptionManager() {
             <Select value={newTier} onChange={e => setNewTier(e.target.value)} label="New Plan">
               <MenuItem value="free">Free</MenuItem>
               <MenuItem value="pro">Pro</MenuItem>
+              <MenuItem value="chambers">Chambers</MenuItem>
               <MenuItem value="lifetime">Lifetime</MenuItem>
             </Select>
           </FormControl>

@@ -7,23 +7,14 @@
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
+import { requireAdminAccessV2 } from "./adminPermissions";
 
 const db = admin.firestore();
 
 export const sendBulkPush = onCall(
     { region: "asia-south1", memory: "512MiB", timeoutSeconds: 120 },
     async (request) => {
-        if (!request.auth) throw new HttpsError("unauthenticated", "Must be logged in");
-
-        // Verify admin
-        const user = await admin.auth().getUser(request.auth.uid);
-        if (user.customClaims?.admin !== true) {
-            const adminDoc = await db.doc("system_settings/admin_users").get();
-            const adminUids: string[] = adminDoc.data()?.uids || [];
-            if (!adminUids.includes(request.auth.uid) && user.email !== "ceo@mytracksy.lk") {
-                throw new HttpsError("permission-denied", "Admin access required");
-            }
-        }
+        const caller = await requireAdminAccessV2(request, ["super_admin", "profession_admin"], "send_notifications");
 
         const title = request.data?.title as string;
         const body = request.data?.body as string;
@@ -99,7 +90,7 @@ export const sendBulkPush = onCall(
             tokens_sent: tokens.length,
             success_count: successCount,
             failure_count: failureCount,
-            sent_by: request.auth.uid,
+            sent_by: caller.uid,
             sent_at: admin.firestore.FieldValue.serverTimestamp(),
         });
 

@@ -61,3 +61,27 @@ export const ROLE_PERMISSIONS: Record<AdminRole, string[]> = {
     'view_dashboard', 'view_analytics'
   ]
 };
+
+export function isAdminRole(value: unknown): value is AdminRole {
+  return (
+    value === 'super_admin' ||
+    value === 'profession_admin' ||
+    value === 'support_agent' ||
+    value === 'viewer'
+  );
+}
+
+export function hasAdminPermission(role: AdminRole | null | undefined, permission: string): boolean {
+  if (!role || !permission) return false;
+  return ROLE_PERMISSIONS[role]?.includes(permission) ?? false;
+}
+
+export function hasAdminProfessionAccess(
+  role: AdminRole | null | undefined,
+  professions: string[] | undefined,
+  professionId: string
+): boolean {
+  if (!role || !professionId) return false;
+  if (role === 'super_admin') return true;
+  return (professions || []).includes(professionId);
+}

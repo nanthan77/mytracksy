@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Grid, Typography, Alert, CircularProgress, Card, CardContent, List, ListItem, ListItemText, Chip } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSION_MAP } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import StatCard from '../shared/components/StatCard';
 import PeopleIcon from '@mui/icons-material/People';
 import PersonIcon from '@mui/icons-material/Person';
@@ -55,11 +54,11 @@ export default function ProfessionDashboard() {
         setLoading(true);
         setError(null);
         const [statsResult, auditResult] = await Promise.all([
-          httpsCallable<{ profession: string }, ProfessionStats>(functions, 'getProfessionStats')({ profession: professionId }),
-          httpsCallable<any, { entries: AuditEntry[] }>(functions, 'getAuditLog')({ profession: professionId, limit: 10 }),
+          adminApi.getProfessionStats<ProfessionStats>(professionId),
+          adminApi.getAuditLog<{ entries: AuditEntry[] }>({ profession: professionId, limit: 10 }),
         ]);
-        setStats(statsResult.data);
-        setRecentActivity(auditResult.data.entries);
+        setStats(statsResult);
+        setRecentActivity(auditResult.entries);
       } catch (err: any) {
         setError(err.message || 'Failed to load profession data');
       } finally {

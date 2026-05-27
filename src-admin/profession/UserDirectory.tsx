@@ -6,9 +6,8 @@ import {
   Dialog, DialogTitle, DialogContent, DialogActions, Select, MenuItem, FormControl, InputLabel,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSION_MAP } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -53,18 +52,15 @@ export default function UserDirectory() {
     try {
       setLoading(true);
       setError(null);
-      const getProfessionUsers = httpsCallable<any, { users: UserRow[]; hasMore: boolean; lastDocId: string | null }>(
-        functions, 'getProfessionUsers'
-      );
-      const result = await getProfessionUsers({
+      const result = await adminApi.getProfessionUsers<{ users: UserRow[]; hasMore: boolean; lastDocId: string | null }>({
         profession: professionId,
         status: statusFilter || undefined,
         limit: 25,
         startAfter: append ? lastDocId : undefined,
       });
-      setUsers(prev => append ? [...prev, ...result.data.users] : result.data.users);
-      setHasMore(result.data.hasMore);
-      setLastDocId(result.data.lastDocId);
+      setUsers(prev => append ? [...prev, ...result.users] : result.users);
+      setHasMore(result.hasMore);
+      setLastDocId(result.lastDocId);
     } catch (err: any) {
       setError(err.message || 'Failed to load users');
     } finally {
@@ -77,8 +73,7 @@ export default function UserDirectory() {
   const handleApprove = async (uid: string) => {
     try {
       setActionLoading(true);
-      const approve = httpsCallable(functions, 'approveDoctor');
-      await approve({ uid });
+      await adminApi.approveUser(uid);
       await fetchUsers();
     } catch (err: any) {
       setError(err.message);
@@ -91,8 +86,7 @@ export default function UserDirectory() {
     if (!selectedUser) return;
     try {
       setActionLoading(true);
-      const suspend = httpsCallable(functions, 'suspendUser');
-      await suspend({ uid: selectedUser.uid, reason: suspendReason });
+      await adminApi.suspendUser(selectedUser.uid, suspendReason);
       setActionDialogOpen(false);
       setSuspendReason('');
       await fetchUsers();
@@ -200,8 +194,8 @@ export default function UserDirectory() {
                           label={user.subscription_tier}
                           size="small"
                           sx={{
-                            bgcolor: user.subscription_tier === 'pro' ? '#6366f120' : user.subscription_tier === 'lifetime' ? '#f59e0b20' : 'transparent',
-                            color: user.subscription_tier === 'pro' ? '#6366f1' : user.subscription_tier === 'lifetime' ? '#f59e0b' : '#64748b',
+                            bgcolor: user.subscription_tier === 'pro' ? '#6366f120' : user.subscription_tier === 'chambers' ? '#22c55e20' : user.subscription_tier === 'lifetime' ? '#f59e0b20' : 'transparent',
+                            color: user.subscription_tier === 'pro' ? '#6366f1' : user.subscription_tier === 'chambers' ? '#22c55e' : user.subscription_tier === 'lifetime' ? '#f59e0b' : '#64748b',
                             fontWeight: 600,
                             textTransform: 'capitalize',
                           }}

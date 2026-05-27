@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { PROFESSION_ROUTES, ProfessionRouteConfig } from '../config/professionRoutes';
+import { MYTRACKSY_CONTACT } from '../config/contact';
 import DoctorLandingPage from './DoctorLandingPage';
 import CreatorLandingPage from './CreatorLandingPage';
 import LawyerLandingPage from './LawyerLandingPage';
@@ -733,6 +734,8 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                             <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>All Professions</button>
                             <a href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Privacy</a>
                             <a href="/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Terms</a>
+                            <a href={`mailto:${MYTRACKSY_CONTACT.email}`} style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>{MYTRACKSY_CONTACT.email}</a>
+                            <a href={MYTRACKSY_CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}</a>
                         </div>
                     </div>
                 </footer>

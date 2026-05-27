@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getPricingForProfession } from '../config/pricingConfig';
+import { MYTRACKSY_CONTACT } from '../config/contact';
 
 /* ───────────────────── Theme Constants ───────────────────── */
 const NAVY = '#0f172a';
@@ -1499,6 +1500,8 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                                     {link}
                                 </span>
                             ))}
+                            <a href={`mailto:${MYTRACKSY_CONTACT.email}`} style={{ fontSize: 14, color: GRAY_400, fontWeight: 500, textDecoration: 'none' }}>{MYTRACKSY_CONTACT.email}</a>
+                            <a href={MYTRACKSY_CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: GRAY_400, fontWeight: 500, textDecoration: 'none' }}>WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}</a>
                         </div>
 
                         {/* Divider */}

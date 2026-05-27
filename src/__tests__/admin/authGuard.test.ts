@@ -1,4 +1,9 @@
 import { describe, it, expect } from 'vitest';
+import {
+  AdminRole,
+  hasAdminPermission,
+  hasAdminProfessionAccess,
+} from '../../../shared/types/admin';
 
 // ═══════════════════════════════════════════════════════════
 // UNIT TESTS — Admin Auth Guard Logic
@@ -6,12 +11,11 @@ import { describe, it, expect } from 'vitest';
 // Tests the guard decision logic without React rendering
 // ═══════════════════════════════════════════════════════════
 
-type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
-
 interface GuardConfig {
   requiredRoles?: AdminRole[];
   requiredPermission?: string;
   requiredProfession?: string;
+  routeProfession?: string;
 }
 
 interface AuthState {
@@ -33,30 +37,17 @@ function evaluateGuard(
   if (!state.user || !state.role) return 'redirect_login';
   if (config.requiredRoles && !config.requiredRoles.includes(state.role)) return 'access_denied';
   if (config.requiredPermission && !hasPermission(config.requiredPermission)) return 'redirect_home';
-  if (config.requiredProfession && !hasProfessionAccess(config.requiredProfession)) return 'redirect_home';
+  const professionToCheck = config.requiredProfession || config.routeProfession;
+  if (professionToCheck && !hasProfessionAccess(professionToCheck)) return 'redirect_home';
   return 'allowed';
 }
 
-// Permission lookup helper
-const PERMISSIONS: Record<AdminRole, string[]> = {
-  super_admin: ['view_dashboard', 'manage_users', 'approve_users', 'suspend_users', 'override_subscriptions', 'manage_settings', 'manage_roles', 'view_analytics', 'send_notifications', 'manage_tax_engine', 'view_audit_log', 'manage_ai_usage'],
-  profession_admin: ['view_dashboard', 'manage_users', 'approve_users', 'suspend_users', 'override_subscriptions', 'manage_settings', 'view_analytics', 'send_notifications', 'view_audit_log'],
-  support_agent: ['view_dashboard', 'manage_users', 'approve_users', 'suspend_users', 'view_audit_log'],
-  viewer: ['view_dashboard', 'view_analytics'],
-};
-
 function makeHasPermission(role: AdminRole | null) {
-  return (permission: string) => {
-    if (!role) return false;
-    return PERMISSIONS[role]?.includes(permission) ?? false;
-  };
+  return (permission: string) => hasAdminPermission(role, permission);
 }
 
 function makeHasProfessionAccess(role: AdminRole | null, professions: string[]) {
-  return (professionId: string) => {
-    if (role === 'super_admin') return true;
-    return professions.includes(professionId);
-  };
+  return (professionId: string) => hasAdminProfessionAccess(role, professions, professionId);
 }
 
 describe('AdminAuthGuard Logic', () => {
@@ -343,7 +334,7 @@ describe('AdminAuthGuard Logic', () => {
       // profession_admin with access
       expect(
         evaluateGuard(
-          { requiredRoles: ['super_admin', 'profession_admin', 'support_agent', 'viewer'], requiredProfession: 'medical' },
+          { requiredRoles: ['super_admin', 'profession_admin', 'support_agent', 'viewer'], routeProfession: 'medical' },
           { user: { uid: 'a' }, role: 'profession_admin', professions: ['medical'], loading: false },
           makeHasPermission('profession_admin'),
           makeHasProfessionAccess('profession_admin', ['medical'])
@@ -353,7 +344,7 @@ describe('AdminAuthGuard Logic', () => {
       // profession_admin without access
       expect(
         evaluateGuard(
-          { requiredRoles: ['super_admin', 'profession_admin', 'support_agent', 'viewer'], requiredProfession: 'legal' },
+          { requiredRoles: ['super_admin', 'profession_admin', 'support_agent', 'viewer'], routeProfession: 'legal' },
           { user: { uid: 'a' }, role: 'profession_admin', professions: ['medical'], loading: false },
           makeHasPermission('profession_admin'),
           makeHasProfessionAccess('profession_admin', ['medical'])

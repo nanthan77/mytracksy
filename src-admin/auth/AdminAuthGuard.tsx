@@ -1,5 +1,5 @@
 import React from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router-dom';
 import { Box, CircularProgress, Typography } from '@mui/material';
 import { useAdminAuthContext } from './AdminAuthContext';
 
@@ -14,6 +14,7 @@ interface Props {
 
 export default function AdminAuthGuard({ children, requiredRoles, requiredPermission, requiredProfession }: Props) {
   const { user, role, loading, hasPermission, hasProfessionAccess } = useAdminAuthContext();
+  const { professionId } = useParams<{ professionId: string }>();
 
   if (loading) {
     return (
@@ -40,7 +41,8 @@ export default function AdminAuthGuard({ children, requiredRoles, requiredPermis
     return <Navigate to="/" replace />;
   }
 
-  if (requiredProfession && !hasProfessionAccess(requiredProfession)) {
+  const professionToCheck = requiredProfession || professionId;
+  if (professionToCheck && !hasProfessionAccess(professionToCheck)) {
     return <Navigate to="/" replace />;
   }
 

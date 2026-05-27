@@ -4,6 +4,7 @@ import { doc, getDoc, setDoc, collection, getDocs, orderBy, query, limit } from 
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import { getPricingForProfession } from '../config/pricingConfig';
+import { MYTRACKSY_CONTACT } from '../config/contact';
 import { ProfessionType } from '../types/profession';
 import { submitPayHereForm, PayHereFormPayload } from '../utils/payhere';
 
@@ -255,11 +256,11 @@ export default function SubscriptionManager() {
             if (data.actionUrl && data.fields) {
                 submitPayHereForm(data);
             } else {
-                alert('Payment gateway is being configured. Please contact info@mytracksy.com for early access.');
+                alert(`Payment gateway is being configured. Please contact ${MYTRACKSY_CONTACT.email} or WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay} for early access.`);
             }
         } catch (err: any) {
             console.error('Payment initiation error:', err);
-            alert('Unable to connect to payment gateway. Please try again or contact info@mytracksy.com');
+            alert(`Unable to connect to payment gateway. Please try again or contact ${MYTRACKSY_CONTACT.email} / WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay}.`);
         } finally {
             setActivating(false);
         }

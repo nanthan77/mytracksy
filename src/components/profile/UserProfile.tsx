@@ -43,6 +43,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../config/firebase';
+import { MYTRACKSY_CONTACT } from '../../config/contact';
 
 interface UserProfileProps {
   user?: any;
@@ -352,7 +353,7 @@ export const UserProfile: React.FC<UserProfileProps> = ({ onBack }) => {
                     Account deletion is permanent and cannot be undone.
                   </Alert>
                   <Typography variant="body2" color="text.secondary">
-                    To delete your account, please contact info@mytracksy.com
+                    To delete your account, please contact {MYTRACKSY_CONTACT.email} or WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}
                   </Typography>
                 </CardContent>
               </Card>

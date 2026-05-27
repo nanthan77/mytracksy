@@ -1,12 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
-import { httpsCallable } from 'firebase/functions';
-import { auth, functions } from '../../shared/firebase/config';
+import { auth } from '../../shared/firebase/config';
+import { AdminRole, hasAdminPermission, hasAdminProfessionAccess } from '../../shared/types/admin';
+import { adminApi } from '../shared/api/adminApi';
 
 const googleProvider = new GoogleAuthProvider();
 googleProvider.setCustomParameters({ prompt: 'select_account' });
-
-type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
 
 interface AdminAuthState {
   user: User | null;
@@ -51,14 +50,11 @@ export function useAdminAuth() {
       setState(prev => ({ ...prev, user, loading: true, error: null }));
 
       try {
-        const verifyAccess = httpsCallable<void, { role: AdminRole; professions: string[] }>(
-          functions, 'verifyAdminAccess'
-        );
-        const result = await verifyAccess();
+        const result = await adminApi.verifyAdminAccess();
         setState({
           user,
-          role: result.data.role,
-          professions: result.data.professions,
+          role: result.role,
+          professions: result.professions,
           loading: false,
           error: null,
         });
@@ -103,19 +99,11 @@ export function useAdminAuth() {
   };
 
   const hasPermission = (permission: string): boolean => {
-    if (!state.role) return false;
-    const PERMISSIONS: Record<AdminRole, string[]> = {
-      super_admin: ['view_dashboard','manage_users','approve_users','suspend_users','override_subscriptions','manage_settings','manage_roles','view_analytics','send_notifications','manage_tax_engine','view_audit_log','manage_ai_usage'],
-      profession_admin: ['view_dashboard','manage_users','approve_users','suspend_users','override_subscriptions','manage_settings','view_analytics','send_notifications','view_audit_log'],
-      support_agent: ['view_dashboard','manage_users','approve_users','suspend_users','view_audit_log'],
-      viewer: ['view_dashboard','view_analytics'],
-    };
-    return PERMISSIONS[state.role]?.includes(permission) ?? false;
+    return hasAdminPermission(state.role, permission);
   };
 
   const hasProfessionAccess = (professionId: string): boolean => {
-    if (state.role === 'super_admin') return true;
-    return state.professions.includes(professionId);
+    return hasAdminProfessionAccess(state.role, state.professions, professionId);
   };
 
   return { ...state, login, loginWithGoogle, logout, hasPermission, hasProfessionAccess };

@@ -14,6 +14,7 @@ export { verifyAdminAccess, assignAdminRole, removeAdminRole, listAdminUsers } f
 export { setAdminClaim, checkAdminStatus } from './adminAuth';
 export { approveDoctor, suspendUser, overrideSubscription, getAdminStats } from './adminActions';
 export { getProfessionStats, getGlobalStats, getProfessionUsers, getAuditLog } from './adminAnalytics';
+export { getAdminConfig, updateAdminConfig, getProfessionConfig, updateProfessionConfig } from './adminSettings';
 
 // ============================================
 // Schedule & Notification Functions
@@ -221,7 +222,7 @@ async function getPayHereCustomerFields(userId: string, authToken: Record<string
     first_name: stringValue(user.firstName, firstName),
     last_name: stringValue(user.lastName, lastName),
     email: stringValue(user.email, stringValue(authToken?.email, 'info@mytracksy.com')),
-    phone: stringValue(user.phoneNumber, stringValue(user.phone, stringValue(user.mobile, '0000000000'))),
+    phone: stringValue(user.phoneNumber, stringValue(user.phone, stringValue(user.mobile, '0703736555'))),
     address: stringValue(user.address, 'Not provided'),
     city: stringValue(user.city, 'Colombo'),
     country: stringValue(user.country, 'Sri Lanka'),

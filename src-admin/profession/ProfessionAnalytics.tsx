@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Grid, Card, CardContent, CircularProgress, Alert } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSION_MAP } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer,
@@ -36,9 +35,8 @@ export default function ProfessionAnalytics() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const getProfessionStats = httpsCallable<{ profession: string }, ProfessionStats>(functions, 'getProfessionStats');
-        const result = await getProfessionStats({ profession: professionId });
-        setStats(result.data);
+        const result = await adminApi.getProfessionStats<ProfessionStats>(professionId);
+        setStats(result);
       } catch (err: any) {
         setError(err.message || 'Failed to load analytics');
       } finally {

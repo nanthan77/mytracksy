@@ -8,58 +8,28 @@
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
+import { requireAdminAccessV2, resolveAdminIdentity } from "./adminPermissions";
 
 const db = admin.firestore();
-
-// Hardcoded founder email — the only person who can bootstrap admin access
-const FOUNDER_EMAIL = "ceo@mytracksy.lk";
-
-// ─── Helper: verify caller is admin ─────────────────────────────
-
-async function verifyAdminCaller(callerUid: string): Promise<boolean> {
-    const user = await admin.auth().getUser(callerUid);
-
-    // Check custom claim
-    if (user.customClaims?.admin === true) return true;
-
-    // Check founder email
-    if (user.email === FOUNDER_EMAIL) return true;
-
-    // Check admin list in Firestore
-    const adminDoc = await db.doc("system_settings/admin_users").get();
-    if (adminDoc.exists) {
-        const adminUids: string[] = adminDoc.data()?.uids || [];
-        if (adminUids.includes(callerUid)) return true;
-    }
-
-    return false;
-}
 
 // ─── Set Admin Claim ────────────────────────────────────────────
 
 export const setAdminClaim = onCall(
     { region: "asia-south1", memory: "256MiB" },
     async (request) => {
-        if (!request.auth) {
-            throw new HttpsError("unauthenticated", "Must be logged in");
-        }
-
-        const callerUid = request.auth.uid;
+        const caller = await requireAdminAccessV2(request, ["super_admin"], "manage_roles");
         const targetUid = request.data?.targetUid as string;
 
         if (!targetUid) {
             throw new HttpsError("invalid-argument", "targetUid is required");
         }
 
-        // Verify caller is admin
-        const isAdmin = await verifyAdminCaller(callerUid);
-        if (!isAdmin) {
-            logger.warn(`🚫 Non-admin ${callerUid} tried to set admin claim`);
-            throw new HttpsError("permission-denied", "Only admins can grant admin access");
-        }
-
-        // Set custom claim
-        await admin.auth().setCustomUserClaims(targetUid, { admin: true });
+        // Legacy helper now grants a real super_admin role for compatibility.
+        await admin.auth().setCustomUserClaims(targetUid, {
+            admin: true,
+            admin_role: "super_admin",
+            admin_professions: ["all"],
+        });
 
         // Also add to Firestore admin list
         await db.doc("system_settings/admin_users").set({
@@ -67,7 +37,7 @@ export const setAdminClaim = onCall(
             updated_at: admin.firestore.FieldValue.serverTimestamp(),
         }, { merge: true });
 
-        logger.info(`✅ Admin claim set for ${targetUid} by ${callerUid}`);
+        logger.info(`✅ Admin claim set for ${targetUid} by ${caller.uid}`);
 
         return { success: true, message: `Admin access granted to ${targetUid}` };
     }
@@ -82,8 +52,13 @@ export const checkAdminStatus = onCall(
             throw new HttpsError("unauthenticated", "Must be logged in");
         }
 
-        const isAdmin = await verifyAdminCaller(request.auth.uid);
+        const identity = await resolveAdminIdentity({ uid: request.auth.uid, token: request.auth.token });
 
-        return { isAdmin, uid: request.auth.uid };
+        return {
+            isAdmin: Boolean(identity),
+            uid: request.auth.uid,
+            role: identity?.role || null,
+            professions: identity?.professions || [],
+        };
     }
 );

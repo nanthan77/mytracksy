@@ -4,9 +4,8 @@ import {
   Alert, Avatar, Divider, IconButton, Tooltip,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSION_MAP } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CancelIcon from '@mui/icons-material/Cancel';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -37,15 +36,12 @@ export default function VerificationQueue() {
     try {
       setLoading(true);
       setError(null);
-      const getProfessionUsers = httpsCallable<any, { users: PendingUser[] }>(
-        functions, 'getProfessionUsers'
-      );
-      const result = await getProfessionUsers({
+      const result = await adminApi.getProfessionUsers<{ users: PendingUser[] }>({
         profession: professionId,
         status: 'pending_verification',
         limit: 50,
       });
-      setUsers(result.data.users);
+      setUsers(result.users);
     } catch (err: any) {
       setError(err.message || 'Failed to load verification queue');
     } finally {
@@ -58,8 +54,7 @@ export default function VerificationQueue() {
   const handleApprove = async (uid: string) => {
     try {
       setActionLoading(uid);
-      const approve = httpsCallable(functions, 'approveDoctor');
-      await approve({ uid });
+      await adminApi.approveUser(uid);
       setUsers(prev => prev.filter(u => u.uid !== uid));
     } catch (err: any) {
       setError(err.message);
@@ -71,8 +66,7 @@ export default function VerificationQueue() {
   const handleReject = async (uid: string) => {
     try {
       setActionLoading(uid);
-      const suspend = httpsCallable(functions, 'suspendUser');
-      await suspend({ uid, reason: 'Verification rejected' });
+      await adminApi.suspendUser(uid, 'Verification rejected');
       setUsers(prev => prev.filter(u => u.uid !== uid));
     } catch (err: any) {
       setError(err.message);

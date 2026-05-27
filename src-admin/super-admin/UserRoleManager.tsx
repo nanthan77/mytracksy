@@ -5,9 +5,8 @@ import {
   TextField, Select, MenuItem, FormControl, InputLabel, Chip, IconButton,
   Alert, CircularProgress, Checkbox, FormGroup, FormControlLabel, Tooltip,
 } from '@mui/material';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSIONS } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import BlockIcon from '@mui/icons-material/Block';
@@ -52,9 +51,8 @@ export default function UserRoleManager() {
     try {
       setLoading(true);
       setError(null);
-      const listAdmins = httpsCallable<void, { admins: AdminUser[] }>(functions, 'listAdminUsers');
-      const result = await listAdmins();
-      setAdmins(result.data.admins);
+      const result = await adminApi.listAdminUsers<{ admins: AdminUser[] }>();
+      setAdmins(result.admins);
     } catch (err: any) {
       setError(err.message || 'Failed to load admin users');
     } finally {
@@ -88,8 +86,7 @@ export default function UserRoleManager() {
     try {
       setSaving(true);
       setError(null);
-      const assignRole = httpsCallable(functions, 'assignAdminRole');
-      await assignRole({
+      await adminApi.assignAdminRole({
         targetUid: formUid,
         role: formRole,
         professions: formRole === 'super_admin' ? ['all'] : formProfessions,
@@ -108,8 +105,7 @@ export default function UserRoleManager() {
     if (!confirm('Are you sure you want to remove this admin?')) return;
     try {
       setError(null);
-      const removeRole = httpsCallable(functions, 'removeAdminRole');
-      await removeRole({ targetUid: uid });
+      await adminApi.removeAdminRole(uid);
       await fetchAdmins();
     } catch (err: any) {
       setError(err.message || 'Failed to remove admin');

@@ -1,36 +1,21 @@
 import { describe, it, expect } from 'vitest';
+import {
+  AdminRole,
+  ROLE_PERMISSIONS,
+  hasAdminPermission,
+  hasAdminProfessionAccess,
+} from '../../../shared/types/admin';
 
 // ═══════════════════════════════════════════════════════════
 // UNIT TESTS — Admin RBAC Permission System
 // Coverage: role hierarchy, permission checks, profession access
-// Tests the permission logic extracted from useAdminAuth.ts
+// Tests the permission logic used by the deployed admin panel.
 // ═══════════════════════════════════════════════════════════
 
-type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
-
-// Extracted permission matrix from useAdminAuth.ts
-const PERMISSIONS: Record<AdminRole, string[]> = {
-  super_admin: [
-    'view_dashboard', 'manage_users', 'approve_users', 'suspend_users',
-    'override_subscriptions', 'manage_settings', 'manage_roles',
-    'view_analytics', 'send_notifications', 'manage_tax_engine',
-    'view_audit_log', 'manage_ai_usage',
-  ],
-  profession_admin: [
-    'view_dashboard', 'manage_users', 'approve_users', 'suspend_users',
-    'override_subscriptions', 'manage_settings', 'view_analytics',
-    'send_notifications', 'view_audit_log',
-  ],
-  support_agent: [
-    'view_dashboard', 'manage_users', 'approve_users', 'suspend_users',
-    'view_audit_log',
-  ],
-  viewer: ['view_dashboard', 'view_analytics'],
-};
+const PERMISSIONS = ROLE_PERMISSIONS;
 
 function hasPermission(role: AdminRole | null, permission: string): boolean {
-  if (!role) return false;
-  return PERMISSIONS[role]?.includes(permission) ?? false;
+  return hasAdminPermission(role, permission);
 }
 
 function hasProfessionAccess(
@@ -38,8 +23,7 @@ function hasProfessionAccess(
   professions: string[],
   professionId: string
 ): boolean {
-  if (role === 'super_admin') return true;
-  return professions.includes(professionId);
+  return hasAdminProfessionAccess(role, professions, professionId);
 }
 
 describe('Admin Permission Matrix', () => {
@@ -214,10 +198,7 @@ describe('Admin Permission Matrix', () => {
 
     it('has no profession access without role', () => {
       expect(hasProfessionAccess(null, [], 'medical')).toBe(false);
-      // Note: hasProfessionAccess with null role but matching profession list
-      // still returns true from Array.includes — this is by design since
-      // the role null check happens at the guard level, not here
-      expect(hasProfessionAccess(null, ['medical'], 'medical')).toBe(true);
+      expect(hasProfessionAccess(null, ['medical'], 'medical')).toBe(false);
     });
   });
 

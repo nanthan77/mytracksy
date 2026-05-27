@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ProfessionType } from '../types/profession';
+import { MYTRACKSY_CONTACT } from '../config/contact';
 
 interface LandingPageProps {
     onGetStarted: () => void;
@@ -269,7 +270,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                 .profession-card-btn { background: none; border: none; padding: 0; cursor: pointer; text-align: left; font-family: inherit; width: 100%; display: flex; flex-direction: column; }
 
                 /* A11y: Footer link buttons */
-                .footer-link-btn { background: none; border: none; font-size: 15px; color: #475569; margin-bottom: 12px; cursor: pointer; font-family: inherit; padding: 4px 0; text-align: left; transition: color 0.2s; }
+                .footer-link-btn { background: none; border: none; display: block; font-size: 15px; color: #475569; margin-bottom: 12px; cursor: pointer; font-family: inherit; padding: 4px 0; text-align: left; text-decoration: none; transition: color 0.2s; }
                 .footer-link-btn:hover { color: #2563EB; }
 
                 @media (max-width: 900px) {
@@ -576,6 +577,12 @@ const LandingPage: React.FC<LandingPageProps> = ({ onGetStarted, onLogin, onProf
                                 {['PDPA-Ready Operations', 'Terms of Service', 'Data Protection Policy'].map(l => (
                                     <button key={l} className="footer-link-btn" onClick={() => scrollToSection('platform')}>{l}</button>
                                 ))}
+                            </div>
+                            <div>
+                                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>Contact</h3>
+                                <a className="footer-link-btn" href={`mailto:${MYTRACKSY_CONTACT.email}`}>{MYTRACKSY_CONTACT.email}</a>
+                                <a className="footer-link-btn" href={MYTRACKSY_CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer">WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}</a>
+                                <a className="footer-link-btn" href={MYTRACKSY_CONTACT.phoneHref}>Call {MYTRACKSY_CONTACT.phoneDisplay}</a>
                             </div>
                         </div>
 

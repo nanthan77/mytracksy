@@ -4,10 +4,9 @@ import {
   Button, Alert, CircularProgress, Divider,
 } from '@mui/material';
 import { useParams } from 'react-router-dom';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../shared/firebase/config';
 import { PROFESSION_MAP } from '../../shared/constants/professions';
 import SaveIcon from '@mui/icons-material/Save';
+import { adminApi } from '../shared/api/adminApi';
 
 interface ProfessionSettingsData {
   verification_required: boolean;
@@ -40,13 +39,12 @@ export default function ProfessionSettings() {
     const fetchSettings = async () => {
       try {
         setLoading(true);
-        const docRef = doc(db, 'system_settings', `profession_config_${professionId}`);
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          setSettings({ ...DEFAULT_SETTINGS, ...snap.data() } as ProfessionSettingsData);
-        } else {
-          setSettings({ ...DEFAULT_SETTINGS, custom_verification_label: profession?.verificationLabel || '' });
-        }
+        const result = await adminApi.getProfessionConfig(professionId);
+        setSettings({
+          ...DEFAULT_SETTINGS,
+          ...result.settings,
+          custom_verification_label: result.settings.custom_verification_label || profession?.verificationLabel || '',
+        });
       } catch (err: any) {
         setError(err.message || 'Failed to load settings');
       } finally {
@@ -62,8 +60,8 @@ export default function ProfessionSettings() {
       setSaving(true);
       setError(null);
       setSuccess(false);
-      const docRef = doc(db, 'system_settings', `profession_config_${professionId}`);
-      await setDoc(docRef, settings, { merge: true });
+      const result = await adminApi.updateProfessionConfig(professionId, settings);
+      setSettings(result.settings);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {

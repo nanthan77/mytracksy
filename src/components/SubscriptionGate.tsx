@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getPricingForProfession, PAYWALL_ANCHORS } from '../config/pricingConfig';
+import { MYTRACKSY_CONTACT } from '../config/contact';
 import { ProfessionType } from '../types/profession';
 
 interface SubscriptionGateProps {
@@ -255,7 +256,7 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
     const handleActivateDemo = async () => {
         // In production, redirect to payment flow
         // Demo mode: show coming soon message
-        alert('Payment integration coming soon! Contact info@mytracksy.com for early access.');
+        alert(`Payment integration coming soon! Contact ${MYTRACKSY_CONTACT.email} or WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay} for early access.`);
     };
 
     if (loading) {

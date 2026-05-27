@@ -1,14 +1,10 @@
 import * as functions from 'firebase-functions/v1';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import { AdminRole, requireAdminAccessV1 } from './adminPermissions';
 
 const db = getFirestore();
 const auth = getAuth();
-
-const FOUNDER_UID = 'eyuHN6ZeYZgi2fSBM3bmslfzAhX2';
-const FOUNDER_EMAILS = ['ceo@mytracksy.lk', 'nanthan77@gmail.com'];
-
-type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
 
 // ─── Middleware: Verify role + profession access ────────────────
 export async function requireRole(
@@ -16,72 +12,7 @@ export async function requireRole(
   requiredRoles: AdminRole[],
   requiredProfession?: string
 ): Promise<{ uid: string; role: AdminRole; professions: string[] }> {
-  if (!context.auth) {
-    throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
-  }
-
-  const uid = context.auth.uid;
-  const claims = context.auth.token;
-  const userEmail = context.auth.token.email || '';
-
-  // Founder always has super_admin (check both UID and email)
-  const isFounder = uid === FOUNDER_UID || FOUNDER_EMAILS.includes(userEmail);
-  const role: AdminRole = isFounder ? 'super_admin' : (claims.admin_role as AdminRole);
-
-  if (!role || !requiredRoles.includes(role)) {
-    // Log failed access attempt
-    await db.collection('admin_audit_log').add({
-      action: 'access_denied',
-      performed_by: uid,
-      role: role || 'none',
-      reason: `Required: ${requiredRoles.join(',')}`,
-      ip_address: context.rawRequest?.ip || 'unknown',
-      timestamp: FieldValue.serverTimestamp(),
-    });
-    throw new functions.https.HttpsError('permission-denied', 'Insufficient role');
-  }
-
-  const professions: string[] = isFounder
-    ? ['all']
-    : (claims.admin_professions as string[] || []);
-
-  // Check profession access (super_admin can access all)
-  if (requiredProfession && role !== 'super_admin') {
-    if (!professions.includes(requiredProfession)) {
-      throw new functions.https.HttpsError('permission-denied', 'No access to this profession');
-    }
-  }
-
-  // Check IP allowlist
-  const adminDoc = await db.collection('admin_users').doc(uid).get();
-  if (adminDoc.exists) {
-    const adminData = adminDoc.data()!;
-    if (adminData.status === 'disabled') {
-      throw new functions.https.HttpsError('permission-denied', 'Account disabled');
-    }
-    const allowedIps = adminData.allowed_ips || [];
-    const requestIp = context.rawRequest?.ip || '';
-    if (allowedIps.length > 0 && !allowedIps.includes(requestIp)) {
-      await db.collection('admin_audit_log').add({
-        action: 'ip_blocked',
-        performed_by: uid,
-        ip_address: requestIp,
-        reason: `IP not in allowlist`,
-        timestamp: FieldValue.serverTimestamp(),
-      });
-      throw new functions.https.HttpsError('permission-denied', 'IP not allowed');
-    }
-  }
-
-  // Update session
-  await db.collection('admin_sessions').doc(uid).set({
-    last_activity: FieldValue.serverTimestamp(),
-    ip_address: context.rawRequest?.ip || 'unknown',
-    user_agent: context.rawRequest?.headers['user-agent'] || 'unknown',
-    expires_at: new Date(Date.now() + 30 * 60 * 1000), // 30 min
-  }, { merge: true });
-
-  return { uid, role, professions };
+  return requireAdminAccessV1(context, requiredRoles, undefined, requiredProfession);
 }
 
 // ─── Assign admin role to a user ────────────────────────────────
@@ -96,6 +27,7 @@ export const assignAdminRole = functions.region('asia-south1').https.onCall(
 
     // Set custom claims
     await auth.setCustomUserClaims(targetUid, {
+      admin: role === 'super_admin',
       admin_role: role,
       admin_professions: professions,
     });
@@ -138,6 +70,7 @@ export const removeAdminRole = functions.region('asia-south1').https.onCall(
     const caller = await requireRole(context, ['super_admin']);
 
     await auth.setCustomUserClaims(data.targetUid, {
+      admin: false,
       admin_role: null,
       admin_professions: null,
     });

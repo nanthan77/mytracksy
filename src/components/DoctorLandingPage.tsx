@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { MYTRACKSY_CONTACT, mytracksyWhatsApp } from '../config/contact';
 
 interface DoctorLandingPageProps {
     onGetStarted: () => void;
@@ -246,7 +247,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 .text-gradient-white { background: linear-gradient(135deg, #ffffff, #f1f5f9, #e0e7ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
                 /* A11y: Footer link buttons */
-                .footer-link-btn { background: none; border: none; font-size: 15px; color: #475569; margin-bottom: 12px; cursor: pointer; font-family: inherit; padding: 4px 0; text-align: left; transition: color 0.2s; display: block; }
+                .footer-link-btn { background: none; border: none; font-size: 15px; color: #475569; margin-bottom: 12px; cursor: pointer; font-family: inherit; padding: 4px 0; text-align: left; text-decoration: none; transition: color 0.2s; display: block; }
                 .footer-link-btn:hover { color: #0ea5e9; }
 
                 @media (max-width: 900px) {
@@ -698,7 +699,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 <div style={{ fontSize: 14, color: '#64748b', fontWeight: 600, marginBottom: 32 }}>
                                     {billingCycle === 'annual' ? '/ year — That\'s just LKR 6,250/mo' : '/ month'}
                                 </div>
-                                <button onClick={() => window.open('mailto:info@mytracksy.com?subject=Clinic%20Director%20Plan%20Inquiry', '_blank')} className="btn-secondary" style={{ width: '100%', marginBottom: 32, padding: '16px', fontSize: 16, background: '#f8fafc' }}>Contact Sales</button>
+                                <button onClick={() => window.open(mytracksyWhatsApp('Hi MyTracksy, I want to discuss the Clinic Director plan.'), '_blank')} className="btn-secondary" style={{ width: '100%', marginBottom: 32, padding: '16px', fontSize: 16, background: '#f8fafc' }}>WhatsApp Sales</button>
 
                                 <div style={{ fontSize: 13, color: '#475569', background: '#f1f5f9', padding: 16, borderRadius: 16, marginBottom: 32, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                                     <div style={{ fontSize: 20 }}>💡</div>
@@ -838,6 +839,12 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                         }
                                     }}>{l}</button>
                                 ))}
+                            </div>
+                            <div>
+                                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>Contact</h3>
+                                <a className="footer-link-btn" href={`mailto:${MYTRACKSY_CONTACT.email}`}>{MYTRACKSY_CONTACT.email}</a>
+                                <a className="footer-link-btn" href={MYTRACKSY_CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer">WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}</a>
+                                <a className="footer-link-btn" href={MYTRACKSY_CONTACT.phoneHref}>Call {MYTRACKSY_CONTACT.phoneDisplay}</a>
                             </div>
                         </div>
 

@@ -3,9 +3,8 @@ import {
   Box, Typography, Card, CardContent, TextField, Switch, FormControlLabel,
   Button, Alert, CircularProgress, Divider,
 } from '@mui/material';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../../shared/firebase/config';
 import SaveIcon from '@mui/icons-material/Save';
+import { adminApi } from '../shared/api/adminApi';
 
 interface AdminConfig {
   session_timeout_minutes: number;
@@ -30,11 +29,8 @@ export default function SystemSettings() {
     const fetchConfig = async () => {
       try {
         setLoading(true);
-        const docRef = doc(db, 'system_settings', 'admin_config');
-        const snap = await getDoc(docRef);
-        if (snap.exists()) {
-          setConfig({ ...DEFAULT_CONFIG, ...snap.data() } as AdminConfig);
-        }
+        const result = await adminApi.getAdminConfig();
+        setConfig({ ...DEFAULT_CONFIG, ...result.config });
       } catch (err: any) {
         setError(err.message || 'Failed to load settings');
       } finally {
@@ -49,8 +45,8 @@ export default function SystemSettings() {
       setSaving(true);
       setError(null);
       setSuccess(false);
-      const docRef = doc(db, 'system_settings', 'admin_config');
-      await setDoc(docRef, config, { merge: true });
+      const result = await adminApi.updateAdminConfig(config);
+      setConfig(result.config);
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {

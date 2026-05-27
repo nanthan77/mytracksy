@@ -8,6 +8,7 @@ Do not commit merchant secret values, app secrets, test cards, or customer payme
 - App URL: `https://tracksy-8e30c.web.app`
 - Admin URL: `https://mytracksy-admin.web.app/admin.html`
 - Customer correspondence and refund email: `info@mytracksy.com`
+- WhatsApp / phone: `070 373 6555`
 
 ## PayHere Dashboard: Domain/App
 

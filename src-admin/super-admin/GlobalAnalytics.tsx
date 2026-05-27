@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Typography, Grid, Card, CardContent, CircularProgress, Alert } from '@mui/material';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSIONS } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import {
   BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid,
   Tooltip as RechartsTooltip, ResponsiveContainer, Legend,
@@ -26,9 +25,8 @@ export default function GlobalAnalytics() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const getGlobalStats = httpsCallable<void, GlobalStats>(functions, 'getGlobalStats');
-        const result = await getGlobalStats();
-        setStats(result.data);
+        const result = await adminApi.getGlobalStats<GlobalStats>();
+        setStats(result);
       } catch (err: any) {
         setError(err.message || 'Failed to load analytics');
       } finally {

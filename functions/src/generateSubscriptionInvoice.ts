@@ -22,7 +22,7 @@ const COMPANY_INFO = {
     address: "No. 42, Baseline Road, Colombo 09, Sri Lanka",
     brn: "PV 12345678",
     email: "info@mytracksy.com",
-    phone: "+94 11 234 5678",
+    phone: "070 373 6555",
 };
 
 const PLAN_LABELS: Record<string, string> = {

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { MYTRACKSY_CONTACT } from '../config/contact';
 
 interface SimpleLoginProps {
   onLogin: (email: string, password: string) => void;
@@ -305,7 +306,7 @@ const SimpleLogin: React.FC<SimpleLoginProps> = ({
                 </p>
               ))}
               <div style={{ padding: 14, borderRadius: 14, background: 'rgba(99,102,241,0.12)', color: '#c7d2fe', fontSize: 13.5, lineHeight: 1.65 }}>
-                For full legal text or compliance questions, contact the MyTracksy team before onboarding regulated client data.
+                For full legal text or compliance questions, contact {MYTRACKSY_CONTACT.email} or WhatsApp {MYTRACKSY_CONTACT.phoneDisplay} before onboarding regulated client data.
               </div>
             </div>
           </div>

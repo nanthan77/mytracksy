@@ -4,6 +4,34 @@ import { requireRole } from './adminRoles';
 
 const db = getFirestore();
 
+type SubscriptionSummary = {
+  tier: string;
+  status: string;
+  amount_cents: number;
+  plan_type?: string;
+};
+
+async function getCurrentSubscription(userId: string): Promise<SubscriptionSummary> {
+  const snap = await db.doc(`users/${userId}/subscription/current`).get();
+  const data = snap.exists ? snap.data() || {} : {};
+  return {
+    tier: typeof data.tier === 'string' ? data.tier : 'free',
+    status: typeof data.status === 'string' ? data.status : 'inactive',
+    amount_cents: typeof data.amount_cents === 'number' ? data.amount_cents : 0,
+    plan_type: typeof data.plan_type === 'string' ? data.plan_type : undefined,
+  };
+}
+
+function isPaidSubscription(sub: SubscriptionSummary): boolean {
+  return sub.status === 'active' && ['pro', 'chambers', 'lifetime'].includes(sub.tier);
+}
+
+function monthlyRevenueCents(sub: SubscriptionSummary): number {
+  if (!isPaidSubscription(sub)) return 0;
+  if (!sub.amount_cents || sub.plan_type === 'lifetime') return 0;
+  return sub.plan_type === 'annual' ? Math.round(sub.amount_cents / 12) : sub.amount_cents;
+}
+
 // ─── Get stats for a specific profession ────────────────────────
 export const getProfessionStats = functions.region('asia-south1').https.onCall(
   async (data: { profession: string }, context) => {
@@ -19,29 +47,25 @@ export const getProfessionStats = functions.region('asia-south1').https.onCall(
       professionQuery.where('status', '==', 'suspended').count().get(),
     ]);
 
-    // Pro users and MRR
-    const proSnap = await usersRef
-      .where('profession', '==', data.profession)
-      .where('status', '==', 'active')
-      .get();
-
     let proCount = 0;
     let mrrCents = 0;
     let aiUsageTotal = 0;
 
-    proSnap.docs.forEach(doc => {
-      const userData = doc.data();
-      const sub = userData.subscription;
-      if (sub && (sub.tier === 'pro' || sub.tier === 'lifetime')) {
-        proCount++;
-        if (sub.tier === 'pro' && sub.amount_cents) {
-          mrrCents += sub.amount_cents;
-        }
-      }
-      if (userData.usage_quotas?.ai_voice_notes_used) {
-        aiUsageTotal += userData.usage_quotas.ai_voice_notes_used;
-      }
-    });
+    const activeUsers = await usersRef
+      .where('profession', '==', data.profession)
+      .where('status', '==', 'active')
+      .get();
+
+    await Promise.all(activeUsers.docs.map(async (userDoc) => {
+      const [sub, quotaSnap] = await Promise.all([
+        getCurrentSubscription(userDoc.id),
+        db.doc(`users/${userDoc.id}/usage_quotas/current_month`).get(),
+      ]);
+
+      if (isPaidSubscription(sub)) proCount++;
+      mrrCents += monthlyRevenueCents(sub);
+      aiUsageTotal += quotaSnap.exists ? quotaSnap.data()?.ai_voice_notes_used || 0 : 0;
+    }));
 
     return {
       total_users: totalSnap.data().count,
@@ -73,7 +97,11 @@ export const getGlobalStats = functions.region('asia-south1').https.onCall(
     const allUsersSnap = await usersRef.get();
     const professionCounts: Record<string, { total: number; active: number; pro: number; mrr: number }> = {};
 
-    allUsersSnap.docs.forEach(doc => {
+    const subscriptions = await Promise.all(
+      allUsersSnap.docs.map(doc => getCurrentSubscription(doc.id))
+    );
+
+    allUsersSnap.docs.forEach((doc, index) => {
       const data = doc.data();
       const prof = data.profession || 'individual';
       if (!professionCounts[prof]) {
@@ -82,12 +110,10 @@ export const getGlobalStats = functions.region('asia-south1').https.onCall(
       professionCounts[prof].total++;
       if (data.status === 'active') {
         professionCounts[prof].active++;
-        const sub = data.subscription;
-        if (sub && (sub.tier === 'pro' || sub.tier === 'lifetime')) {
+        const sub = subscriptions[index];
+        if (isPaidSubscription(sub)) {
           professionCounts[prof].pro++;
-          if (sub.tier === 'pro' && sub.amount_cents) {
-            professionCounts[prof].mrr += sub.amount_cents;
-          }
+          professionCounts[prof].mrr += monthlyRevenueCents(sub);
         }
       }
     });
@@ -125,15 +151,29 @@ export const getProfessionUsers = functions.region('asia-south1').https.onCall(
     }
 
     const snap = await query.get();
-    const users = snap.docs.map(doc => ({
-      uid: doc.id,
-      email: doc.data().email,
-      name: doc.data().name,
-      status: doc.data().status,
-      profession: doc.data().profession,
-      verification_id: doc.data().slmc_number || doc.data().verification_id || '',
-      subscription_tier: doc.data().subscription?.tier || 'free',
-      created_at: doc.data().created_at?.toDate?.() || null,
+    const users = await Promise.all(snap.docs.map(async doc => {
+      const userData = doc.data();
+      const sub = await getCurrentSubscription(doc.id);
+      return {
+        uid: doc.id,
+        email: userData.email,
+        name: userData.name || userData.displayName || '',
+        status: userData.status || 'active',
+        profession: userData.profession,
+        verification_id:
+          userData.slmc_number ||
+          userData.bar_registration ||
+          userData.business_reg ||
+          userData.company_reg ||
+          userData.sltda_license ||
+          userData.naqda_license ||
+          userData.nic_number ||
+          userData.verification_id ||
+          '',
+        subscription_tier: isPaidSubscription(sub) ? (sub.plan_type === 'lifetime' ? 'lifetime' : sub.tier) : 'free',
+        subscription_status: sub.status,
+        created_at: userData.created_at?.toDate?.()?.toISOString?.() || null,
+      };
     }));
 
     return {

@@ -4,8 +4,7 @@ import {
   TableRow, Paper, Select, MenuItem, FormControl, InputLabel, IconButton,
   Chip, CircularProgress, Alert, Button, Tooltip,
 } from '@mui/material';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
+import { adminApi } from '../shared/api/adminApi';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import DownloadIcon from '@mui/icons-material/Download';
 
@@ -43,12 +42,11 @@ export default function AuditLogViewer() {
     try {
       setLoading(true);
       setError(null);
-      const getAuditLog = httpsCallable<any, { entries: AuditEntry[] }>(functions, 'getAuditLog');
-      const result = await getAuditLog({
+      const result = await adminApi.getAuditLog<{ entries: AuditEntry[] }>({
         action: actionFilter || undefined,
         limit,
       });
-      setEntries(result.data.entries);
+      setEntries(result.entries);
     } catch (err: any) {
       setError(err.message || 'Failed to load audit log');
     } finally {

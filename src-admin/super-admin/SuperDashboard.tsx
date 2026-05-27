@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Grid, Typography, Alert, CircularProgress } from '@mui/material';
-import { httpsCallable } from 'firebase/functions';
-import { functions } from '../../shared/firebase/config';
 import { PROFESSIONS } from '../../shared/constants/professions';
+import { adminApi } from '../shared/api/adminApi';
 import StatCard from '../shared/components/StatCard';
 import ProfessionTile from '../shared/components/ProfessionTile';
 import PeopleIcon from '@mui/icons-material/People';
@@ -31,9 +30,8 @@ export default function SuperDashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const getGlobalStats = httpsCallable<void, GlobalStats>(functions, 'getGlobalStats');
-        const result = await getGlobalStats();
-        setStats(result.data);
+        const result = await adminApi.getGlobalStats<GlobalStats>();
+        setStats(result);
       } catch (err: any) {
         setError(err.message || 'Failed to load dashboard data');
       } finally {

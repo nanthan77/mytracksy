@@ -8,52 +8,41 @@
 import * as admin from "firebase-admin";
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
+import { requireAdminAccessV2 } from "./adminPermissions";
 
 const db = admin.firestore();
-
-// ─── Helper: verify admin ───────────────────────────────────────
-
-async function requireAdmin(callerUid: string): Promise<void> {
-    const user = await admin.auth().getUser(callerUid);
-    if (user.customClaims?.admin !== true) {
-        // Also check Firestore admin list
-        const adminDoc = await db.doc("system_settings/admin_users").get();
-        const adminUids: string[] = adminDoc.data()?.uids || [];
-        if (!adminUids.includes(callerUid) && user.email !== "ceo@mytracksy.lk") {
-            throw new HttpsError("permission-denied", "Admin access required");
-        }
-    }
-}
 
 // ─── Approve Doctor ─────────────────────────────────────────────
 
 export const approveDoctor = onCall(
     { region: "asia-south1", memory: "256MiB" },
     async (request) => {
-        if (!request.auth) throw new HttpsError("unauthenticated", "Must be logged in");
-        await requireAdmin(request.auth.uid);
+        const caller = await requireAdminAccessV2(request, ["super_admin", "profession_admin", "support_agent"], "approve_users");
 
-        const userId = request.data?.userId as string;
+        const userId = (request.data?.userId || request.data?.uid) as string;
         if (!userId) throw new HttpsError("invalid-argument", "userId required");
 
         // Update user status
         await db.doc(`users/${userId}`).update({
             status: "active",
             verified_at: admin.firestore.FieldValue.serverTimestamp(),
-            verified_by: request.auth.uid,
+            verified_by: caller.uid,
         });
 
         // Log the action
         await db.collection("admin_audit_log").add({
-            action: "approve_doctor",
+            action: "approve_user",
             target_user: userId,
-            performed_by: request.auth.uid,
+            performed_by: caller.uid,
+            role: caller.role,
+            profession: "system",
+            ip_address: request.rawRequest?.ip || "unknown",
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        logger.info(`✅ Doctor ${userId} approved by admin ${request.auth.uid}`);
+        logger.info(`✅ User ${userId} approved by admin ${caller.uid}`);
 
-        return { success: true, message: "Doctor approved and activated" };
+        return { success: true, message: "User approved and activated" };
     }
 );
 
@@ -62,10 +51,9 @@ export const approveDoctor = onCall(
 export const suspendUser = onCall(
     { region: "asia-south1", memory: "256MiB" },
     async (request) => {
-        if (!request.auth) throw new HttpsError("unauthenticated", "Must be logged in");
-        await requireAdmin(request.auth.uid);
+        const caller = await requireAdminAccessV2(request, ["super_admin", "profession_admin", "support_agent"], "suspend_users");
 
-        const userId = request.data?.userId as string;
+        const userId = (request.data?.userId || request.data?.uid) as string;
         const reason = request.data?.reason as string || "Admin action";
         if (!userId) throw new HttpsError("invalid-argument", "userId required");
 
@@ -73,7 +61,7 @@ export const suspendUser = onCall(
         await db.doc(`users/${userId}`).update({
             status: "suspended",
             suspended_at: admin.firestore.FieldValue.serverTimestamp(),
-            suspended_by: request.auth.uid,
+            suspended_by: caller.uid,
             suspension_reason: reason,
         });
 
@@ -85,11 +73,14 @@ export const suspendUser = onCall(
             action: "suspend_user",
             target_user: userId,
             reason,
-            performed_by: request.auth.uid,
+            performed_by: caller.uid,
+            role: caller.role,
+            profession: "system",
+            ip_address: request.rawRequest?.ip || "unknown",
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        logger.info(`⚠️ User ${userId} suspended by admin ${request.auth.uid}: ${reason}`);
+        logger.info(`⚠️ User ${userId} suspended by admin ${caller.uid}: ${reason}`);
 
         return { success: true, message: `User suspended: ${reason}` };
     }
@@ -100,16 +91,15 @@ export const suspendUser = onCall(
 export const overrideSubscription = onCall(
     { region: "asia-south1", memory: "256MiB" },
     async (request) => {
-        if (!request.auth) throw new HttpsError("unauthenticated", "Must be logged in");
-        await requireAdmin(request.auth.uid);
+        const caller = await requireAdminAccessV2(request, ["super_admin", "profession_admin"], "override_subscriptions");
 
-        const userId = request.data?.userId as string;
-        const tier = request.data?.tier as string; // "free" | "pro" | "lifetime"
+        const userId = (request.data?.userId || request.data?.uid) as string;
+        const tier = (request.data?.tier || request.data?.newTier) as string; // "free" | "pro" | "chambers" | "lifetime"
         const reason = request.data?.reason as string || "Admin override";
 
         if (!userId || !tier) throw new HttpsError("invalid-argument", "userId and tier required");
 
-        const validTiers = ["free", "pro", "lifetime"];
+        const validTiers = ["free", "pro", "chambers", "lifetime"];
         if (!validTiers.includes(tier)) {
             throw new HttpsError("invalid-argument", `Invalid tier. Must be: ${validTiers.join(", ")}`);
         }
@@ -132,7 +122,7 @@ export const overrideSubscription = onCall(
             }
 
             await subRef.set({
-                tier: "pro",
+                tier: tier === "lifetime" ? "pro" : tier,
                 status: "active",
                 current_period_end: admin.firestore.Timestamp.fromDate(periodEnd),
                 provider: "admin_override",
@@ -150,11 +140,14 @@ export const overrideSubscription = onCall(
             target_user: userId,
             new_tier: tier,
             reason,
-            performed_by: request.auth.uid,
+            performed_by: caller.uid,
+            role: caller.role,
+            profession: "system",
+            ip_address: request.rawRequest?.ip || "unknown",
             timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-        logger.info(`🔄 Subscription override: ${userId} → ${tier} by admin ${request.auth.uid}`);
+        logger.info(`🔄 Subscription override: ${userId} → ${tier} by admin ${caller.uid}`);
 
         return { success: true, message: `Subscription set to ${tier}` };
     }
@@ -165,8 +158,7 @@ export const overrideSubscription = onCall(
 export const getAdminStats = onCall(
     { region: "asia-south1", memory: "256MiB", cpu: "gcf_gen1", maxInstances: 1 },
     async (request) => {
-        if (!request.auth) throw new HttpsError("unauthenticated", "Must be logged in");
-        await requireAdmin(request.auth.uid);
+        await requireAdminAccessV2(request, ["super_admin"], "view_dashboard");
 
         // Get user counts — PDPA safe: only counting, no reading sub-collections
         const usersSnap = await db.collection("users").select("status").get();
@@ -185,13 +177,20 @@ export const getAdminStats = onCall(
             else if (data.status === "suspended") suspendedUsers++;
         }
 
-        // Batch check subscriptions (more efficient than N+1)
-        const proQuery = await db.collectionGroup("subscription")
-            .where("tier", "==", "pro")
+        const paidSubs = await db.collectionGroup("subscription")
             .where("status", "==", "active")
-            .select()
+            .select("tier", "amount_cents", "plan_type")
             .get();
-        proUsers = proQuery.size;
+        let mrrCents = 0;
+        paidSubs.docs.forEach((doc) => {
+            const data = doc.data();
+            if (["pro", "chambers", "lifetime"].includes(data.tier)) {
+                proUsers++;
+                if (data.amount_cents && data.plan_type !== "lifetime") {
+                    mrrCents += data.plan_type === "annual" ? Math.round(data.amount_cents / 12) : data.amount_cents;
+                }
+            }
+        });
 
         return {
             totalUsers,
@@ -200,7 +199,7 @@ export const getAdminStats = onCall(
             suspendedUsers,
             proUsers,
             freeUsers: activeUsers - proUsers,
-            mrr: proUsers * 2900, // Estimated MRR in LKR
+            mrr: Math.round(mrrCents / 100),
         };
     }
 );
