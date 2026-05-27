@@ -5,6 +5,8 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import { useAdminAuthContext } from '../../auth/AdminAuthContext';
 import { DRAWER_WIDTH } from './AdminSidebar';
 
+const LOGO_SRC = '/mytracksy-logo.png';
+
 interface AdminHeaderProps {
   onMenuClick: () => void;
   title?: string;
@@ -44,9 +46,17 @@ export default function AdminHeader({ onMenuClick, title }: AdminHeaderProps) {
         </IconButton>
 
         {title && (
-          <Typography variant="h6" fontWeight={600} noWrap sx={{ flexGrow: 1 }}>
-            {title}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0, flexGrow: 1 }}>
+            <Box
+              component="img"
+              src={LOGO_SRC}
+              alt="MyTracksy"
+              sx={{ width: 34, height: 34, objectFit: 'contain', borderRadius: '8px', bgcolor: '#fff' }}
+            />
+            <Typography variant="h6" fontWeight={600} noWrap>
+              {title}
+            </Typography>
+          </Box>
         )}
         {!title && <Box sx={{ flexGrow: 1 }} />}
 

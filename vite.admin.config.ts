@@ -4,7 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  publicDir: false,
+  publicDir: 'src-admin/public',
   base: '/',
   resolve: {
     alias: {

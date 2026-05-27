@@ -13,6 +13,7 @@ import CreditCardIcon from '@mui/icons-material/CreditCard';
 import TuneIcon from '@mui/icons-material/Tune';
 
 const DRAWER_WIDTH = 260;
+const LOGO_SRC = '/mytracksy-logo.png';
 
 interface NavItem {
   label: string;
@@ -55,13 +56,21 @@ export default function AdminSidebar({ variant, professionId, professionLabel, p
   const drawerContent = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
       <Toolbar sx={{ px: 2, py: 1.5 }}>
-        <Box>
-          <Typography variant="h6" fontWeight={700} sx={{ color: '#6366f1', letterSpacing: '-0.5px' }}>
-            {variant === 'super' ? 'MyTracksy' : (professionIcon || '') + ' ' + (professionLabel || '')}
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            {variant === 'super' ? 'Super Admin Console' : 'Profession Admin'}
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, minWidth: 0 }}>
+          <Box
+            component="img"
+            src={LOGO_SRC}
+            alt="MyTracksy"
+            sx={{ width: 42, height: 42, objectFit: 'contain', borderRadius: '8px', bgcolor: '#fff', flexShrink: 0 }}
+          />
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="h6" fontWeight={700} noWrap sx={{ color: '#22c55e', letterSpacing: 0 }}>
+              {variant === 'super' ? 'MyTracksy' : (professionIcon || '') + ' ' + (professionLabel || '')}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>
+              {variant === 'super' ? 'Super Admin Console' : 'Profession Admin'}
+            </Typography>
+          </Box>
         </Box>
       </Toolbar>
       <Divider />

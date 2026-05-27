@@ -4,6 +4,8 @@ import { Box, Card, CardContent, TextField, Button, Typography, Alert, CircularP
 import GoogleIcon from '@mui/icons-material/Google';
 import { useAdminAuthContext } from './AdminAuthContext';
 
+const LOGO_SRC = '/mytracksy-logo.png';
+
 export default function AdminLogin() {
   const { login, loginWithGoogle, loading, error, user, role } = useAdminAuthContext();
   const [email, setEmail] = useState('');
@@ -23,10 +25,35 @@ export default function AdminLogin() {
     <Box sx={{
       minHeight: '100vh',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)',
+      px: 2,
+      py: { xs: 4, sm: 6 },
+      background: 'linear-gradient(135deg, #07111f 0%, #0f172a 48%, #112d22 100%)',
     }}>
-      <Card sx={{ maxWidth: 420, width: '100%', mx: 2 }}>
-        <CardContent sx={{ p: 4 }}>
+      <Card sx={{
+        maxWidth: 440,
+        width: '100%',
+        borderRadius: '8px',
+        border: '1px solid rgba(148, 163, 184, 0.18)',
+        boxShadow: '0 28px 90px rgba(2, 6, 23, 0.5)',
+        background: 'rgba(15, 23, 42, 0.92)',
+        backdropFilter: 'blur(18px)',
+      }}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 2 }}>
+            <Box
+              component="img"
+              src={LOGO_SRC}
+              alt="MyTracksy"
+              sx={{
+                width: { xs: 116, sm: 140 },
+                height: { xs: 116, sm: 140 },
+                objectFit: 'contain',
+                borderRadius: '8px',
+                boxShadow: '0 18px 45px rgba(0, 0, 0, 0.28)',
+                backgroundColor: 'rgba(255, 255, 255, 0.96)',
+              }}
+            />
+          </Box>
           <Typography variant="h5" fontWeight={700} textAlign="center" mb={1}>
             MyTracksy Admin
           </Typography>
