@@ -18,9 +18,9 @@ export default defineConfig({
     rollupOptions: {
       input: path.resolve(__dirname, 'admin.html'),
       output: {
-        entryFileNames: 'admin.js',
-        chunkFileNames: 'admin-[hash].js',
-        assetFileNames: 'admin-[name].[ext]',
+        entryFileNames: 'assets/admin-[hash].js',
+        chunkFileNames: 'assets/admin-[hash].js',
+        assetFileNames: 'assets/admin-[name]-[hash].[ext]',
       },
     },
   },
