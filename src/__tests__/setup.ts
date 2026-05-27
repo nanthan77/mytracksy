@@ -40,7 +40,11 @@ vi.mock('firebase/auth', () => ({
   createUserWithEmailAndPassword: vi.fn(),
   signOut: vi.fn(),
   sendPasswordResetEmail: vi.fn(),
-  GoogleAuthProvider: vi.fn(),
+  GoogleAuthProvider: vi.fn().mockImplementation(function GoogleAuthProviderMock() {
+    return {
+      setCustomParameters: vi.fn(),
+    };
+  }),
   signInWithPopup: vi.fn(),
   signInWithRedirect: vi.fn(),
   getRedirectResult: vi.fn(() => Promise.resolve(null)),

@@ -1,5 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { onAuthStateChanged, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, signOut, User } from 'firebase/auth';
+import {
+  getRedirectResult,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  User,
+} from 'firebase/auth';
 import { auth } from '../../shared/firebase/config';
 import { AdminRole, hasAdminPermission, hasAdminProfessionAccess } from '../../shared/types/admin';
 import { adminApi } from '../shared/api/adminApi';
@@ -16,6 +25,25 @@ interface AdminAuthState {
 }
 
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000; // 30 minutes
+
+const REDIRECT_FALLBACK_ERRORS = new Set([
+  'auth/popup-blocked',
+  'auth/cancelled-popup-request',
+  'auth/operation-not-supported-in-this-environment',
+]);
+
+function getAuthErrorMessage(error: any): string {
+  switch (error?.code) {
+    case 'auth/popup-closed-by-user':
+      return 'Google sign-in was cancelled.';
+    case 'auth/network-request-failed':
+      return 'Network error. Please check your connection and try again.';
+    case 'auth/unauthorized-domain':
+      return 'This admin domain is not authorized for Google sign-in.';
+    default:
+      return error?.message || 'Authentication failed. Please try again.';
+  }
+}
 
 export function useAdminAuth() {
   const [state, setState] = useState<AdminAuthState>({
@@ -39,6 +67,19 @@ export function useAdminAuth() {
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
   }, [resetIdleTimer]);
+
+  useEffect(() => {
+    let active = true;
+
+    getRedirectResult(auth).catch((err: any) => {
+      if (!active || err?.code === 'auth/no-auth-event') return;
+      setState(prev => ({ ...prev, loading: false, error: getAuthErrorMessage(err) }));
+    });
+
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -79,7 +120,7 @@ export function useAdminAuth() {
     try {
       await signInWithEmailAndPassword(auth, email, password);
     } catch (err: any) {
-      setState(prev => ({ ...prev, loading: false, error: err.message }));
+      setState(prev => ({ ...prev, loading: false, error: getAuthErrorMessage(err) }));
     }
   };
 
@@ -89,7 +130,17 @@ export function useAdminAuth() {
       await signInWithPopup(auth, googleProvider);
       // onAuthStateChanged will handle the rest
     } catch (err: any) {
-      setState(prev => ({ ...prev, loading: false, error: err.message }));
+      if (REDIRECT_FALLBACK_ERRORS.has(err?.code)) {
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          return;
+        } catch (redirectErr: any) {
+          setState(prev => ({ ...prev, loading: false, error: getAuthErrorMessage(redirectErr) }));
+          return;
+        }
+      }
+
+      setState(prev => ({ ...prev, loading: false, error: getAuthErrorMessage(err) }));
     }
   };
 
