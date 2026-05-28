@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
 
 interface CreatorLandingPageProps {
     onGetStarted: () => void;
@@ -220,6 +221,17 @@ const CreatorLandingPage: React.FC<CreatorLandingPageProps> = ({ onGetStarted, o
                     </button>
                 </div>
             </header>
+
+            <ProfessionDemoSection
+                id="creator-demo"
+                slug="creator"
+                eyebrow="CreatorTracksy demo"
+                heading="Watch creator income, USD payouts, and tax prep in one flow."
+                body="A local MP4 walkthrough for creators: brand deals, foreign income, invoices, gear write-offs, and creator-friendly tax exports."
+                accentColor="#a855f7"
+                variant="dark"
+                background="#18181b"
+            />
 
             {/* Agitate & Solve Grid */}
             <section style={{ padding: '100px 2rem', background: '#09090b', position: 'relative' }}>

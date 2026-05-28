@@ -252,7 +252,8 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                 @media (max-width: 900px) {
                     .hero-grid { grid-template-columns: 1fr !important; text-align: center; }
-                    .nav-links, .hero-image { display: none !important; }
+                    .nav-links { display: none !important; }
+                    .hero-image { display: block !important; width: 100%; max-width: 520px; margin: 32px auto 0; }
                     .lt-h1 { font-size: 2.5rem !important; }
                     .hero-btns { justify-content: center; flex-direction: column; align-items: center; }
                     .glass-card { padding: 24px !important; }
@@ -355,7 +356,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                         👉 Start Your 14-Day Free Trial
                                     </button>
                                     <button onClick={() => {
-                                        const hero = document.querySelector('.hero-image iframe') as HTMLIFrameElement;
+                                        const hero = document.querySelector('.hero-image video') as HTMLVideoElement;
                                         if (hero) {
                                             hero.scrollIntoView({ behavior: 'smooth', block: 'center' });
                                         } else {
@@ -367,7 +368,7 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                 </div>
 
                                 <div style={{ fontSize: 13, color: '#94a3b8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 8, opacity: 1 }}>
-                                    <span style={{ color: '#34d399' }}>✓</span> No App Store required. Professional software — may qualify as a tax-deductible business expense.*
+                                    <span style={{ color: '#34d399' }}>✓</span> No App Store required. Logged as professional software for auditor review.
                                 </div>
 
                                 {/* One-line PWA Install Direct Link */}
@@ -413,14 +414,21 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                                     </div>
 
                                     <div style={{ position: 'relative', paddingBottom: '56.25%', height: 0, overflow: 'hidden', borderRadius: 16, background: '#000' }}>
-                                        <iframe
-                                            src="https://www.youtube.com/embed/mId3maCwHXg?autoplay=1&mute=1&loop=1&playlist=mId3maCwHXg&controls=0&showinfo=0&rel=0&modestbranding=1"
-                                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-                                            allow="autoplay; encrypted-media"
-                                            allowFullScreen
-                                            title="MyTracksy Doctor App — Pricing Tiers Demo"
-                                            loading="lazy"
-                                        />
+                                        <video
+                                            src="/assets/videos/doctor-demo.mp4"
+                                            poster="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png"
+                                            autoPlay
+                                            muted
+                                            loop
+                                            playsInline
+                                            controls
+                                            preload="metadata"
+                                            controlsList="nodownload"
+                                            aria-label="MyTracksy Doctor App pricing tiers demo video"
+                                            style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none', objectFit: 'cover' }}
+                                        >
+                                            <a href="/assets/videos/doctor-demo.mp4">Watch the MyTracksy Doctor App demo video</a>
+                                        </video>
                                     </div>
                                 </div>
                                 <div style={{ position: 'absolute', inset: -20, background: 'linear-gradient(135deg, #0ea5e9, #6366f1)', filter: 'blur(60px)', opacity: 0.15, zIndex: -1, borderRadius: '50%' }} />
@@ -438,9 +446,9 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 <section id="platform" aria-labelledby="platform-heading" style={{ padding: '120px 0', background: '#f1f5f9', position: 'relative' }}>
                     <div className="lt-i">
                         <div className="sr" style={{ textAlign: 'center', marginBottom: 80 }}>
-                            <h2 id="platform-heading" style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Accounting Designed specifically For Clinicians</h2>
+                            <h2 id="platform-heading" style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Accounting Designed Specifically for Clinicians</h2>
                             <p style={{ fontSize: 18, color: '#475569', maxWidth: 700, margin: '0 auto', lineHeight: 1.7 }}>
-                                Discard legacy ledgers and complex accounting software. Manage your single-clinic bookkeeping, track your daily cash flow, and effortlessly compile RAMIS-ready tax exports. <strong>Core accounting is free forever.</strong>
+                                Discard legacy ledgers and complex accounting software. Manage practice bookkeeping, track daily cash flow, and compile auditor-ready income and expense exports. <strong>Core accounting is free forever.</strong>
                             </p>
                         </div>
 
@@ -457,11 +465,11 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                             <div className="glass-card sr" style={{ padding: 40, transitionDelay: '100ms' }}>
                                 <div style={{ width: 80, height: 80, borderRadius: 20, background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 32, boxShadow: '0 12px 30px -10px rgba(16,185,129,0.4)', border: '1px solid rgba(16,185,129,0.2)', overflow: 'hidden' }}>
-                                    <img src="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png" alt="Clinic revenue tracking dashboard with automated bank sync for medical practices" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                    <img src="/assets/healthcare/healthcare_clinic_revenue_1773217260607.png" alt="Clinic revenue tracking dashboard for medical practices" loading="lazy" decoding="async" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                                 </div>
-                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Zero-Touch Bank Integrations</h3>
+                                <h3 style={{ fontSize: 24, fontWeight: 800, color: '#0f172a', marginBottom: 16 }}>Channeling Payment Reconciliation</h3>
                                 <p style={{ fontSize: 16, color: '#475569', lineHeight: 1.7, marginBottom: 20 }}>
-                                    Establish automated email forwarding protocols from your banking institutions. The matrix reads securely forwarded alerts to log private channeling deposits instantly, exposing missing payments effortlessly.
+                                    Log hospital and clinic sessions, compare expected payouts, and keep WHT/AIT certificate follow-ups visible before month-end.
                                 </p>
                             </div>
 
@@ -494,11 +502,11 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                             <h2 id="ai-heading" style={{ fontSize: '3.5rem', fontWeight: 800, color: '#ffffff', letterSpacing: '-0.03em', marginBottom: 24, lineHeight: 1.1 }}>
                                 Upgrade Your Practice with<br />
                                 <span style={{ background: 'linear-gradient(135deg, #c084fc, #38bdf8)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                                    AI Clinical Superpowers.
+                                    AI Admin Add-ons.
                                 </span>
                             </h2>
                             <p style={{ fontSize: 18, color: '#cbd5e1', maxWidth: 700, margin: '0 auto', lineHeight: 1.7 }}>
-                                Need to do heavy lifting? Use your MyTracksy Token Wallet to access elite, time-saving AI tools instantly.
+                                Use your MyTracksy Token Wallet for time-saving admin tools where enabled, with every output kept review-first.
                             </p>
                         </div>
 
@@ -507,9 +515,9 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                             <div className="glass-card sr" style={{ padding: 40, background: 'rgba(30,41,59,0.4)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #8b5cf6, transparent)' }} />
                                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, rgba(139,92,246,0.2), rgba(139,92,246,0.05))', border: '1px solid rgba(139,92,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24, boxShadow: 'inset 0 0 20px rgba(139,92,246,0.1)' }}>📄</div>
-                                <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>1-Click Referral Letters</h3>
+                                <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>Referral Drafts</h3>
                                 <p style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.7, flex: 1 }}>
-                                    Turn a messy 30-second casual voice note into a beautifully formatted, highly polite PDF Referral Letter to a Consultant in <strong style={{ color: '#e2e8f0', fontWeight: 600 }}>5 seconds</strong>.
+                                    Turn a quick voice note into a structured referral draft that you can review, edit, and approve before sharing.
                                 </p>
                             </div>
 
@@ -517,9 +525,9 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                             <div className="glass-card sr" style={{ padding: 40, background: 'rgba(30,41,59,0.4)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', transitionDelay: '100ms' }}>
                                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #0ea5e9, transparent)' }} />
                                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, rgba(14,165,233,0.2), rgba(14,165,233,0.05))', border: '1px solid rgba(14,165,233,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24, boxShadow: 'inset 0 0 20px rgba(14,165,233,0.1)' }}>📉</div>
-                                <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>Vision AI Lab Trends</h3>
+                                <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>Lab Trend Summaries</h3>
                                 <p style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.7, flex: 1 }}>
-                                    Snap a photo of 4 faded, printed blood reports from the last 6 months. The AI instantly draws a clean trend-graph of the patient's Fasting Blood Sugar right on your screen.
+                                    Extract key values from patient-provided reports and prepare a clear trend summary for clinician review.
                                 </p>
                             </div>
 
@@ -527,9 +535,9 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                             <div className="glass-card sr" style={{ padding: 40, background: 'rgba(30,41,59,0.4)', borderRadius: 24, border: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(20px)', position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', transitionDelay: '200ms' }}>
                                 <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 2, background: 'linear-gradient(90deg, transparent, #10b981, transparent)' }} />
                                 <div style={{ width: 64, height: 64, borderRadius: 16, background: 'linear-gradient(135deg, rgba(16,185,129,0.2), rgba(16,185,129,0.05))', border: '1px solid rgba(16,185,129,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 32, marginBottom: 24, boxShadow: 'inset 0 0 20px rgba(16,185,129,0.1)' }}>🗣️</div>
-                                <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>Patient Translator</h3>
+                                <h3 style={{ fontSize: 22, fontWeight: 800, color: '#f8fafc', marginBottom: 16 }}>Patient Language Notes</h3>
                                 <p style={{ fontSize: 16, color: '#cbd5e1', lineHeight: 1.7, flex: 1 }}>
-                                    Dictate dosage instructions in English, and instantly generate a polite Sinhala/Tamil PDF "Take-Home Card" to WhatsApp to your patient.
+                                    Prepare Sinhala or Tamil instruction drafts from English notes, ready for clinician review before sending.
                                 </p>
                             </div>
                         </div>
@@ -565,12 +573,12 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                         {/* Trust Cards Grid */}
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 18 }}>
                             {[
-                                { icon: '🛡️', color: '#818cf8', label: 'SYSTEM INTEGRITY', title: 'PDPA-Aligned Data Handling', body: 'Designed for handling special-category medical data with role-based access controls, encryption in transit and at rest, and auditable processing controls.' },
+                                { icon: '🛡️', color: '#818cf8', label: 'SYSTEM INTEGRITY', title: 'PDPA-Ready Data Handling', body: 'Designed to support special-category medical data workflows with role-based access controls, encryption in transit and at rest, and auditable processing controls.' },
                                 { icon: '🔒', color: '#2dd4bf', label: 'PRIVACY CONTROLS', title: 'Automated Redaction & Pseudonymization', body: 'Patient-identifier redaction workflows applied based on your deployment policy and workflow configuration.' },
                                 { icon: '🎙️', color: '#fb7185', label: 'VOICE PROCESSING', title: 'Ephemeral Voice Handling', body: 'Voice inputs processed using ephemeral controls with vendor restrictions designed to minimize retention and prevent public model training use.' },
                                 { icon: '☁️', color: '#38bdf8', label: 'CLOUD INFRASTRUCTURE', title: 'Enterprise Cloud with Safeguards', body: 'Hosted on enterprise-grade cloud infrastructure with cross-border processing safeguards, encryption, and audit logging.' },
                                 { icon: '💳', color: '#34d399', label: 'PAYMENT PROCESSING', title: 'Sri Lanka-Licensed Channels', body: 'Integrates with Sri Lanka-licensed and authorized payment providers and acquiring channels, subject to merchant onboarding.' },
-                                { icon: '📋', color: '#fbbf24', label: 'TAX LOGIC', title: 'IRD-Aligned Tax Estimation', body: 'Tax workflows built against applicable Sri Lankan tax rules, designed for periodic review by qualified tax professionals including CA Sri Lanka members.' },
+                                { icon: '📋', color: '#fbbf24', label: 'TAX LOGIC', title: 'Auditor-Ready Tax Records', body: 'Tax workflows organize income, expenses, WHT/AIT notes, and evidence so a qualified tax professional can review and file with confidence.' },
                             ].map((card, i) => (
                                 <div key={i} style={{ background: '#1a2332', border: '1px solid rgba(255,255,255,0.06)', borderRadius: 16, padding: '28px 24px', transition: 'border-color 0.3s, transform 0.3s' }} onMouseOver={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(99,102,241,0.2)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; }} onMouseOut={e => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(0)'; }}>
                                     <span style={{ fontSize: 24, marginBottom: 16, display: 'block' }}>{card.icon}</span>
@@ -593,9 +601,9 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                     <div className="lt-i">
                         <div className="sr" style={{ textAlign: 'center', marginBottom: 60 }}>
                             <div className="pp-badge" style={{ display: 'inline-block', background: 'rgba(14,165,233,0.08)', color: '#0284c7', padding: '6px 16px', borderRadius: 99, fontSize: 13, fontWeight: 700, letterSpacing: '0.04em', textTransform: 'uppercase', marginBottom: 16 }}>Costs less than ONE channeling consultation</div>
-                            <h2 id="pricing-heading" style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Put your taxes and clinical notes on autopilot.</h2>
+                            <h2 id="pricing-heading" style={{ fontSize: '3rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.03em', marginBottom: 24 }}>Keep channeling income, expenses, and auditor files under control.</h2>
                             <p style={{ fontSize: 18, color: '#475569', maxWidth: 650, margin: '0 auto', lineHeight: 1.7 }}>
-                                Why spend LKR 50,000+ on accountant fees and lose hundreds of thousands in forgotten hospital payments?
+                                Built for doctors who need clean records across government salary, private channeling, receipts, and year-end accountant handoff.
                             </p>
                         </div>
 
@@ -660,18 +668,17 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
 
                                 <div style={{ fontSize: 13, color: '#cbd5e1', background: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 16, marginBottom: 32, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
                                     <div style={{ fontSize: 20 }}>🛡️</div>
-                                    <div style={{ lineHeight: 1.5 }}><strong>May qualify as a tax-deductible expense.</strong> When you subscribe, MyTracksy logs this invoice into your expense tracker as "Professional Medical Software," which may help reduce your taxable income. Consult your tax advisor.</div>
+                                    <div style={{ lineHeight: 1.5 }}><strong>Auditor-ready subscription record.</strong> When you subscribe, MyTracksy logs the invoice as "Professional Medical Software" for review with your accountant or tax advisor.</div>
                                 </div>
 
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
                                     {[
-                                        { t: 'Unlimited Offline AI Voice-to-Text Clinical Notes', i: '🎙️' },
-                                        { t: 'Zero-Touch Accounting — Bank Email Auto-Sync', i: '🏦' },
-                                        { t: 'Live IRD Tax Estimator (Real-time APIT/PAYE)', i: '⚖️' },
-                                        { t: 'Smart Receipt Scanner for SLMC/fuel deductions', i: '📸' },
+                                        { t: 'Multi-Hospital Channeling Income Tracker', i: '🏥' },
+                                        { t: 'WHT/AIT Certificate Checklist', i: '🧾' },
+                                        { t: 'Receipt Capture with Doctor Expense Categories', i: '📸' },
                                         { t: '1-Click Auditor Excel/ZIP Export', i: '📑' },
-                                        { t: 'Smart Commute — Live WhatsApp traffic alerts', i: '🚗' },
-                                        { t: '50 Free AI Tokens every month for Premium Add-ons!', i: '🎁' }
+                                        { t: 'Voice Notes for Fast Practice Logging', i: '🎙️' },
+                                        { t: 'Priority Sri Lanka Setup Support', i: '🎁' }
                                     ].map((f, i) => (
                                         <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, fontSize: 15, color: f.i === '🎁' ? '#fff' : '#e2e8f0', fontWeight: f.i === '🎁' ? 700 : 500 }}>
                                             <div style={{ fontSize: 16 }}>✅ {f.i}</div>

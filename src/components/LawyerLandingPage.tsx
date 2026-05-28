@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getPricingForProfession } from '../config/pricingConfig';
 import { MYTRACKSY_CONTACT } from '../config/contact';
+import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
 
 /* ───────────────────── Theme Constants ───────────────────── */
 const NAVY = '#0f172a';
@@ -373,7 +374,7 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                                 Sign In
                             </span>
                             <button
-                                onClick={onGetStarted}
+                                onClick={() => document.getElementById('legal-demo')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
                                 style={{
                                     background: GOLD,
                                     color: NAVY,
@@ -550,6 +551,17 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                         </div>
                     </div>
                 </header>
+
+                <ProfessionDemoSection
+                    id="legal-demo"
+                    slug="legal"
+                    eyebrow="LexTracksy demo"
+                    heading="Watch the trust ledger, fee note, and court-cost flow."
+                    body="A local MP4 walkthrough for lawyers: separate client funds, record legal expenses, issue fee notes, and prepare IRD-ready practice reports."
+                    accentColor={GOLD}
+                    variant="dark"
+                    background={NAVY}
+                />
 
                 {/* ═══════════════════════════════════════════════
                     3. THE LEGAL ACCOUNTING ENGINE — 4 PILLARS

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getPricingForProfession } from '../config/pricingConfig';
+import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
 
 interface LensTracksyLandingProps {
     onGetStarted: () => void;
@@ -473,6 +474,17 @@ const LensTracksyLanding: React.FC<LensTracksyLandingProps> = ({ onGetStarted, o
                     </div>
                 </div>
             </header>
+
+            <ProfessionDemoSection
+                id="studios-demo"
+                slug="studios"
+                eyebrow="LensTracksy demo"
+                heading="Watch wedding milestones and overdue balances stay visible."
+                body="A local MP4 walkthrough for studios: event folios, package milestones, crew payouts, album balances, gear value, and WhatsApp payment reminders."
+                accentColor="#f59e0b"
+                variant="dark"
+                background="#1c1917"
+            />
 
             <section style={{ padding: '0 0 92px' }}>
                 <div className="lens-shell">

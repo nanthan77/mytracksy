@@ -15,6 +15,7 @@ import {
   Users,
 } from "lucide-react";
 import { getPricingForProfession } from '../config/pricingConfig';
+import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
 
 interface TourTracksyLandingProps {
   onGetStarted: () => void;
@@ -609,6 +610,16 @@ export function TourTracksyLanding({
             </button>
           </div>
         </header>
+
+        <ProfessionDemoSection
+          id="tourism-demo"
+          slug="tourism"
+          eyebrow="TourTracksy demo"
+          heading="Watch itinerary money, suppliers, and tour margin line up."
+          body="A local MP4 walkthrough for tourism operators: multi-currency quotes, hotel and driver payouts, guide costs, advances, and final package margins."
+          accentColor="#4f46e5"
+          background="#eef2ff"
+        />
 
         {/* Trust Stats Banner */}
         <section style={{ padding: '32px 0', background: '#fff', borderBottom: '1px solid #f1f5f9' }}>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getPricingForProfession } from '../config/pricingConfig';
+import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
 
 /* ───────────────────── Theme Constants ───────────────────── */
 const OCEAN = '#0c4a6e';
@@ -290,6 +291,16 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
                         </div>
                     </div>
                 </section>
+
+                <ProfessionDemoSection
+                    id="aquaculture-demo"
+                    slug="aquaculture"
+                    eyebrow="AquaTracksy demo"
+                    heading="Watch pond costs turn into a harvest-margin dashboard."
+                    body="A local MP4 walkthrough for aquaculture farms: voice-led feed logs, labor costs, pond tagging, inventory updates, and harvest margin forecasts."
+                    accentColor={CYAN}
+                    background="#ecfeff"
+                />
 
                 {/* ═══ SECTION 2 — The Voice Engine ═══ */}
                 <section id="voice" style={{ padding: '80px 24px', background: WHITE }}>

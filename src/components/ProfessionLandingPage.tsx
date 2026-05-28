@@ -10,6 +10,7 @@ import BizTracksyLanding from './BizTracksyLanding';
 import AquaLandingPage from './AquaLandingPage';
 import LensTracksyLanding from './LensTracksyLanding';
 import { TourTracksyLanding } from './TourTracksyLanding';
+import ProfessionDemoVideo from './common/ProfessionDemoVideo';
 
 interface ProfessionLandingPageProps {
     slug: string;
@@ -450,7 +451,7 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                 @keyframes borderSpin { from { transform:rotate(0); } to { transform:rotate(360deg); } }
                 @keyframes shimmer { 0% { background-position:-200% 0; } 100% { background-position:200% 0; } }
                 @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-8px); } }
-                .pp-container { font-family:'Inter',-apple-system,sans-serif; color:#0f172a; line-height:1.6; -webkit-font-smoothing:antialiased; }
+                .pp-container { font-family:'Inter',-apple-system,sans-serif; color:#0f172a; line-height:1.6; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
                 .pp-section { padding:100px 24px; }
                 .pp-inner { max-width:1200px; margin:0 auto; }
                 .pp-sr { opacity:0; transform:translateY(30px); transition:all 0.8s cubic-bezier(0.16,1,0.3,1); }
@@ -476,24 +477,33 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                     .pp-section { padding:70px 20px; }
                     .pp-sec-g { grid-template-columns:1fr !important; }
                     .pp-foot-g { grid-template-columns:1fr !important; }
+                    .pp-nav-inner { padding:0 12px !important; gap:8px !important; }
+                    .pp-nav-left { min-width:0 !important; gap:8px !important; }
+                    .pp-nav-back { padding:8px !important; font-size:18px !important; flex:0 0 auto; }
+                    .pp-nav-back-label, .pp-nav-divider { display:none !important; }
+                    .pp-nav-title { max-width:112px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+                    .pp-nav-actions { gap:4px !important; flex:0 0 auto; }
+                    .pp-nav-login { padding:8px 8px !important; }
+                    .pp-nav-start { padding:9px 12px !important; }
+                    .pp-foot-links { justify-content:center; max-width:100%; }
                 }
             `}</style>
 
             <div className="pp-container">
                 {/* ===== NAVBAR ===== */}
                 <nav style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 1000, padding: '14px 0', background: navSolid ? 'rgba(255,255,255,0.95)' : 'rgba(255,255,255,0.6)', backdropFilter: 'blur(24px) saturate(180%)', WebkitBackdropFilter: 'blur(24px) saturate(180%)', borderBottom: navSolid ? '1px solid rgba(0,0,0,0.06)' : '1px solid transparent', transition: 'all 0.4s cubic-bezier(0.16,1,0.3,1)', boxShadow: navSolid ? '0 4px 30px -8px rgba(0,0,0,0.06)' : 'none' }}>
-                    <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                            <button onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>← All Professions</button>
-                            <div style={{ width: 1, height: 20, background: '#e2e8f0' }} />
+                    <div className="pp-nav-inner" style={{ maxWidth: 1200, margin: '0 auto', padding: '0 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <div className="pp-nav-left" style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <button className="pp-nav-back" onClick={onBack} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, color: '#64748b', fontFamily: 'inherit', display: 'flex', alignItems: 'center', gap: 6 }}>← <span className="pp-nav-back-label">All Professions</span></button>
+                            <div className="pp-nav-divider" style={{ width: 1, height: 20, background: '#e2e8f0' }} />
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ width: 32, height: 32, objectFit: 'contain' }} />
-                                <span style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>{routeShortName}</span>
+                                <span className="pp-nav-title" style={{ fontSize: 17, fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>{routeShortName}</span>
                             </div>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                            <button onClick={onLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: color, fontFamily: 'inherit', padding: '8px 16px' }}>Log in</button>
-                            <button onClick={onGetStarted} className="pp-btn" style={{ background: color, color: '#fff', padding: '10px 22px', fontSize: 13, boxShadow: `0 4px 15px ${color}40` }}>Start Free</button>
+                        <div className="pp-nav-actions" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <button className="pp-nav-login" onClick={onLogin} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: 600, color: color, fontFamily: 'inherit', padding: '8px 16px' }}>Log in</button>
+                            <button onClick={onGetStarted} className="pp-btn pp-nav-start" style={{ background: color, color: '#fff', padding: '10px 22px', fontSize: 13, boxShadow: `0 4px 15px ${color}40` }}>Start Free</button>
                         </div>
                     </div>
                 </nav>
@@ -529,19 +539,14 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                                     ))}
                                 </div>
                             </div>
-                            {/* Demo Video Embed */}
+                            {/* Demo Video */}
                             <div style={{ opacity: mounted ? 1 : 0, transform: mounted ? 'translateY(0)' : 'translateY(40px)', transition: 'all 1s cubic-bezier(0.16,1,0.3,1) 0.2s' }}>
-                                <div style={{ borderRadius: 24, overflow: 'hidden', background: '#000', aspectRatio: '16/10', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: `0 40px 80px -20px ${color}35, 0 0 0 1px ${color}15`, border: 'none', position: 'relative', transition: 'all 0.4s' }}>
-                                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: `linear-gradient(135deg, ${color}15, ${color}30)`, gap: 16 }}>
-                                        <div style={{ width: 64, height: 64, borderRadius: '50%', background: `${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${color}50` }}>
-                                            <svg width="28" height="28" viewBox="0 0 24 24" fill={color}><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                                        </div>
-                                        <span style={{ color: color, fontWeight: 700, fontSize: 15, letterSpacing: '-0.01em' }}>Watch {routeShortName} Demo</span>
-                                        <span style={{ color: '#64748b', fontSize: 13 }}>See how it works in 2 minutes</span>
-                                    </div>
-                                    {/* The absolute overlay ensures it looks integrated and blocks unwanted interactions if needed, but for a real video we might want controls enabled later. 
-                                        For this visual demo showing a "sleek clean frame" without UI, playing automatically is perfect. */}
-                                </div>
+                                <ProfessionDemoVideo
+                                    slug={route?.profession ?? slug}
+                                    title={`Watch ${routeShortName} Demo`}
+                                    caption={content.demoDesc}
+                                    accentColor={color}
+                                />
                             </div>
                         </div>
                     </div>
@@ -730,7 +735,7 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                             <span style={{ fontWeight: 700, color: '#fff', fontSize: 14, letterSpacing: '-0.01em' }}>{routeShortName}</span>
                         </div>
                         <div>© 2026 MyTracksy. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: color, textDecoration: 'none', fontWeight: 700 }}>SafeNetCreations</a></div>
-                        <div style={{ display: 'flex', gap: 16 }}>
+                        <div className="pp-foot-links" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
                             <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>All Professions</button>
                             <a href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Privacy</a>
                             <a href="/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Terms</a>

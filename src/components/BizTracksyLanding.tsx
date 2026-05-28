@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
 
 interface BizTracksyLandingProps {
     onGetStarted: () => void;
@@ -178,6 +179,17 @@ const BizTracksyLanding: React.FC<BizTracksyLandingProps> = ({ onGetStarted, onL
                     </div>
                 </div>
             </header>
+
+            <ProfessionDemoSection
+                id="business-demo"
+                slug="business"
+                eyebrow="BizTracksy demo"
+                heading="Watch the multi-company dashboard in action."
+                body="A local MP4 walkthrough for business owners: stock, supplier bills, VAT workflows, debtor chasing, and consolidated cash flow."
+                accentColor="#fbbf24"
+                variant="dark"
+                background="#0f172a"
+            />
 
             {/* Agitate & Solve Grid */}
             <section style={{ padding: '100px 2rem', background: '#09090b', position: 'relative' }}>

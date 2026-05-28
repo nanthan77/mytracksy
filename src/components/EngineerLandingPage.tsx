@@ -7,6 +7,7 @@ import {
     BarChart3, Grip, Star, Zap, Clock
 } from 'lucide-react';
 import { getPricingForProfession } from '../config/pricingConfig';
+import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
 
 interface EngineerLandingPageProps {
     onGetStarted: () => void;
@@ -323,7 +324,7 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                                         <ArrowRight style={{ width: 20, height: 20 }} />
                                     </button>
                                     <button
-                                        onClick={() => { const el = document.getElementById('features'); if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: y, behavior: 'smooth' }); } }}
+                                        onClick={() => { const el = document.getElementById('engineering-demo'); if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: y, behavior: 'smooth' }); } }}
                                         className="btn-secondary"
                                         style={{ padding: '18px 36px', fontSize: 18, display: 'flex', alignItems: 'center', gap: 8 }}
                                     >
@@ -409,6 +410,16 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                         </div>
                     </div>
                 </header>
+
+                <ProfessionDemoSection
+                    id="engineering-demo"
+                    slug="engineering"
+                    eyebrow="EngiTracksy demo"
+                    heading="Watch project costs move from site log to margin dashboard."
+                    body="A local MP4 walkthrough for engineers: BOQ variance, site cash, retention, labor, and project margin tracking without relying on a third-party embed."
+                    accentColor="#f97316"
+                    background="#fff7ed"
+                />
 
                 {/* Trust Stats Banner */}
                 <section style={{ background: '#fff', borderBottom: '1px solid #f1f5f9', padding: '40px 0' }}>
