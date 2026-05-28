@@ -501,7 +501,7 @@ class AdminManager {
             return {
                 maintenanceMode: false,
                 maxUsersPerPlan: 1000,
-                paymentGateway: 'both',
+                paymentGateway: 'manual',
                 ...settings
             };
         } catch (error) {

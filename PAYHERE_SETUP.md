@@ -3,6 +3,19 @@
 This file records the production PayHere setup for the Firebase project `tracksy-8e30c`.
 Do not commit merchant secret values, app secrets, test cards, or customer payment tokens.
 
+## Current Status: Paused
+
+As of 2026-05-28, MyTracksy online PayHere checkout is paused because the available PayHere merchant
+belongs to SafeNet Creations and must not be used as the merchant account for the MyTracksy domain.
+
+Do not use SafeNet merchant credentials, merchant secrets, or domain approvals for MyTracksy production
+checkout. Keep the app on manual MyTracksy invoice / bank-transfer activation until a MyTracksy-owned
+PayHere merchant account and domain approval are ready.
+
+The Cloud Functions checkout initializers fail closed unless `PAYHERE_CHECKOUT_ENABLED=true` is set in the
+functions runtime with MyTracksy-owned PayHere credentials. Leave this unset or false while approval is
+pending.
+
 ## Production URLs
 
 - App URL: `https://tracksy-8e30c.web.app`
@@ -51,6 +64,11 @@ These Secret Manager entries must exist in project `tracksy-8e30c`:
 - `PAYHERE_APP_ID`
 - `PAYHERE_APP_SECRET`
 
+Only set these with credentials issued to the MyTracksy merchant account.
+
+The non-secret runtime env flag `PAYHERE_CHECKOUT_ENABLED` defaults to `false` when absent. Keep it false
+until the MyTracksy merchant and domain are approved.
+
 The non-secret runtime env flag `PAYHERE_CHARGING_ENABLED` defaults to `false` when absent. Keep it false until PayHere
 confirms Merchant API IP whitelisting.
 
@@ -67,6 +85,14 @@ After rotating any PayHere secret, redeploy the payment functions:
 
 ```bash
 firebase deploy --only functions:initPayHerePreapproval,functions:initPayHereSubscription,functions:handlePayHereWalletWebhook,functions:handleSubscriptionWebhook,functions:oneClickTopUp,functions:processAutoReloads,functions:updatePayHereAutoReload --project tracksy-8e30c
+```
+
+After the MyTracksy-owned PayHere account and domain are approved, enable hosted checkout with a local
+functions env file before redeploying the checkout functions:
+
+```bash
+printf 'PAYHERE_CHECKOUT_ENABLED=true\n' > functions/.env.tracksy-8e30c
+firebase deploy --only functions:initPayHerePreapproval,functions:initPayHereSubscription,functions:handleSubscriptionWebhook --project tracksy-8e30c
 ```
 
 ## Merchant API: One-Click and Auto-Reload
@@ -110,7 +136,8 @@ curl -i -X POST https://asia-south1-tracksy-8e30c.cloudfunctions.net/handleSubsc
 
 Expected webhook reachability results for unsigned test posts:
 
-- Wallet webhook: `403 Invalid merchant`
-- Subscription webhook: `400 Unknown webhook format`
+- While `PAYHERE_CHECKOUT_ENABLED` is false, PayHere-shaped webhook posts should return `403 PayHere checkout disabled`.
+- Non-PayHere unsigned subscription posts should return `400 Unknown webhook format`.
 
-Those failures are correct because the endpoints are public but fail closed without a valid PayHere payload.
+Those failures are correct because the endpoints are public but fail closed while checkout is paused or
+without a valid PayHere payload.

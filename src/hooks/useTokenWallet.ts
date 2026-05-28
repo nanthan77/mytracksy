@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db as firestoreDb } from '../config/firebase';
+import { getPaymentRequestUrl, MYTRACKSY_PAYMENT_STATUS } from '../config/paymentStatus';
 import { submitPayHereForm, PayHereFormPayload } from '../utils/payhere';
 
 // ============================================
@@ -200,8 +201,22 @@ export function useTokenWallet(userId: string | null) {
     console.log(`[Wallet] Added ${tokens} tokens (LKR ${amountLKR.toLocaleString()})`);
   }, []);
 
+  const requestManualPayment = useCallback((context: string) => {
+    setWallet(prev => ({ ...prev, purchaseInProgress: false }));
+    if (typeof window !== 'undefined') {
+      window.open(getPaymentRequestUrl(context), '_blank', 'noopener,noreferrer');
+      window.alert(`${MYTRACKSY_PAYMENT_STATUS.notice}\n\n${MYTRACKSY_PAYMENT_STATUS.support}`);
+    }
+  }, []);
+
   const linkPayHereCard = useCallback(async (packageId?: string): Promise<boolean> => {
     if (!userId) return false;
+
+    if (!MYTRACKSY_PAYMENT_STATUS.onlineCheckoutEnabled) {
+      const pkg = packageId ? TOKEN_PACKAGES.find(p => p.id === packageId) : undefined;
+      requestManualPayment(pkg ? `${pkg.label} token top-up` : 'payment setup');
+      return false;
+    }
 
     setWallet(prev => ({ ...prev, purchaseInProgress: true }));
 
@@ -221,7 +236,7 @@ export function useTokenWallet(userId: string | null) {
       setWallet(prev => ({ ...prev, purchaseInProgress: false }));
       return false;
     }
-  }, [userId]);
+  }, [requestManualPayment, userId]);
 
   const toggleAutoReload = useCallback(async (enabled: boolean) => {
     if (enabled && !wallet.savedCard) {
@@ -268,6 +283,11 @@ export function useTokenWallet(userId: string | null) {
     const pkg = TOKEN_PACKAGES.find(p => p.id === packageId);
     if (!pkg) return false;
 
+    if (!MYTRACKSY_PAYMENT_STATUS.onlineCheckoutEnabled) {
+      requestManualPayment(`${pkg.label} token top-up`);
+      return false;
+    }
+
     if (!wallet.savedCard) {
       // No saved card — send the user through PayHere preapproval with this package.
       return linkPayHereCard(packageId);
@@ -303,7 +323,7 @@ export function useTokenWallet(userId: string | null) {
       }
       return false;
     }
-  }, [linkPayHereCard, wallet.savedCard]);
+  }, [linkPayHereCard, requestManualPayment, wallet.savedCard]);
 
   return {
     ...wallet,
@@ -317,6 +337,8 @@ export function useTokenWallet(userId: string | null) {
     linkPayHereCard,
     oneClickPurchase,
     purchaseTokens: oneClickPurchase,
+    onlineCheckoutEnabled: MYTRACKSY_PAYMENT_STATUS.onlineCheckoutEnabled,
+    paymentNotice: MYTRACKSY_PAYMENT_STATUS.notice,
   };
 }
 

@@ -1461,7 +1461,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                 color: 'white', borderRadius: 10, padding: '8px 16px', cursor: 'pointer',
                                 fontSize: '0.8rem', fontWeight: 600,
                             }}>
-                                🔗 Link Card
+                                {walletData.onlineCheckoutEnabled ? '🔗 Link Card' : '🧾 Request Setup'}
                             </button>
                         )}
                     </div>
@@ -1485,7 +1485,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding }}>
                 <h3 style={cardTitle}>💳 Buy Token Packages</h3>
                 <div style={{ fontSize: '0.8rem', color: '#64748b', marginBottom: '1rem' }}>
-                    Tokens are used for AI features. Purchase via web portal to avoid app store fees.
+                    {walletData.onlineCheckoutEnabled
+                        ? 'Tokens are used for AI features. Purchase via web portal to avoid app store fees.'
+                        : `${walletData.paymentNotice} Request a MyTracksy invoice to top up tokens.`}
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(auto-fill, minmax(180px, 1fr))', '1fr'), gap: '0.75rem' }}>
                     {TOKEN_PACKAGES.map((pkg: TokenPackage) => (
@@ -1535,19 +1537,25 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                             <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>Auto-Reload</div>
                             <div style={{ fontSize: '0.78rem', color: '#64748b' }}>Automatically top up when balance is low</div>
                         </div>
-                        <button onClick={() => walletData.toggleAutoReload(!walletData.autoReloadEnabled)} style={{
-                            width: 48, height: 26, borderRadius: 13, border: 'none', cursor: 'pointer',
-                            background: walletData.autoReloadEnabled ? '#6366f1' : '#cbd5e1',
+                        <button disabled={!walletData.onlineCheckoutEnabled} onClick={() => walletData.toggleAutoReload(!walletData.autoReloadEnabled)} style={{
+                            width: 48, height: 26, borderRadius: 13, border: 'none', cursor: walletData.onlineCheckoutEnabled ? 'pointer' : 'not-allowed',
+                            background: walletData.autoReloadEnabled && walletData.onlineCheckoutEnabled ? '#6366f1' : '#cbd5e1',
                             position: 'relative', transition: 'background 0.3s',
+                            opacity: walletData.onlineCheckoutEnabled ? 1 : 0.65,
                         }}>
                             <div style={{
                                 width: 20, height: 20, borderRadius: '50%', background: 'white',
                                 position: 'absolute', top: 3,
-                                left: walletData.autoReloadEnabled ? 25 : 3,
+                                left: walletData.autoReloadEnabled && walletData.onlineCheckoutEnabled ? 25 : 3,
                                 transition: 'left 0.3s', boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                             }} />
                         </button>
                     </div>
+                    {!walletData.onlineCheckoutEnabled && (
+                        <div style={{ padding: '0.75rem', background: '#fffbeb', borderRadius: 8, fontSize: '0.8rem', color: '#92400e', border: '1px solid #fde68a' }}>
+                            Auto-reload will be available after MyTracksy online checkout is approved.
+                        </div>
+                    )}
                     {walletData.autoReloadEnabled && (
                         <>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexDirection: isCompactMobile ? 'column' : 'row', gap: 10, padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
@@ -1562,7 +1570,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                             </div>
                         </>
                     )}
-                    {!walletData.savedCard && walletData.autoReloadEnabled && (
+                    {walletData.onlineCheckoutEnabled && !walletData.savedCard && walletData.autoReloadEnabled && (
                         <div style={{ padding: '0.75rem', background: '#fef2f2', borderRadius: 8, fontSize: '0.8rem', color: '#991b1b', border: '1px solid #fecaca' }}>
                             ⚠️ Link a card first to enable auto-reload. <button onClick={() => walletData.linkPayHereCard()} style={{ color: '#6366f1', fontWeight: 600, background: 'transparent', border: 0, padding: 0, cursor: 'pointer' }}>Link now →</button>
                         </div>

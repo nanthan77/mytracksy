@@ -213,7 +213,7 @@ class NewMonetizationStrategy {
                     'Sri Lankan tax calculator',
                     'Local bank integrations',
                     'Sinhala/Tamil language support',
-                    'Local payment methods (PayHere, bank transfers)'
+                    'Local invoice and bank-transfer activation'
                 ]
             },
             service_based_revenue: {

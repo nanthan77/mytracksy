@@ -37,7 +37,7 @@ const BizTracksyLanding: React.FC<BizTracksyLandingProps> = ({ onGetStarted, onL
         {
             icon: '💸',
             title: 'The PDC Vault & Debtor Chasing',
-            desc: 'Millions trapped in unpaid credit? Our dashboard flags 30-day debtors and sends polite, automated WhatsApp reminders with a 1-click PayHere link. Never let a Post-Dated Cheque bounce again.',
+            desc: 'Millions trapped in unpaid credit? Our dashboard flags 30-day debtors and sends polite, automated WhatsApp reminders with a secure payment request. Never let a Post-Dated Cheque bounce again.',
         }
     ];
 

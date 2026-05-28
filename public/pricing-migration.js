@@ -119,7 +119,7 @@ class PricingMigration {
                                 <li>✅ Better pricing designed for Sri Lankan market</li>
                                 <li>✅ More features and improved limits</li>
                                 <li>✅ Enhanced user experience</li>
-                                <li>✅ Local payment methods (PayHere)</li>
+                                <li>✅ Local invoice and bank-transfer activation</li>
                             </ul>
                         </div>
                         

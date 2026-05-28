@@ -94,6 +94,19 @@ function isPayHereChargingEnabled(): boolean {
   return process.env.PAYHERE_CHARGING_ENABLED === 'true';
 }
 
+function isPayHereCheckoutEnabled(): boolean {
+  return process.env.PAYHERE_CHECKOUT_ENABLED === 'true';
+}
+
+function requirePayHereCheckoutEnabled() {
+  if (!isPayHereCheckoutEnabled()) {
+    throw new functions.https.HttpsError(
+      'failed-precondition',
+      'MyTracksy online checkout is paused while the MyTracksy merchant account and domain approval are completed.'
+    );
+  }
+}
+
 function requirePayHereChargingEnabled() {
   if (!isPayHereChargingEnabled()) {
     throw new functions.https.HttpsError(
@@ -266,6 +279,7 @@ export const initPayHerePreapproval = functions
     if (!context.auth) {
       throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
     }
+    requirePayHereCheckoutEnabled();
 
     const merchantId = PAYHERE_MERCHANT_ID.value();
     const merchantSecret = PAYHERE_MERCHANT_SECRET.value();
@@ -335,6 +349,7 @@ export const initPayHereSubscription = functions
     if (!context.auth) {
       throw new functions.https.HttpsError('unauthenticated', 'Must be logged in');
     }
+    requirePayHereCheckoutEnabled();
 
     const merchantId = PAYHERE_MERCHANT_ID.value();
     const merchantSecret = PAYHERE_MERCHANT_SECRET.value();
@@ -401,6 +416,12 @@ async function payHerePreapprovalWebhookHandler(req: any, res: any): Promise<voi
 
   if (req.method !== 'POST') {
     res.status(405).send('Method not allowed');
+    return;
+  }
+
+  if (!isPayHereCheckoutEnabled()) {
+    console.warn('[PayHere Webhook] Rejected because MyTracksy checkout is paused');
+    res.status(403).send('PayHere checkout disabled');
     return;
   }
 

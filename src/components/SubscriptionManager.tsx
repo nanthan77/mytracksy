@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { doc, getDoc, setDoc, collection, getDocs, orderBy, query, limit } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions';
 import { db } from '../config/firebase';
 import { getPricingForProfession } from '../config/pricingConfig';
 import { MYTRACKSY_CONTACT } from '../config/contact';
+import { getPaymentRequestUrl, MYTRACKSY_PAYMENT_STATUS } from '../config/paymentStatus';
 import { ProfessionType } from '../types/profession';
-import { submitPayHereForm, PayHereFormPayload } from '../utils/payhere';
-
-const paymentFunctions = getFunctions(undefined, 'us-central1');
 
 interface SubData {
     tier: 'free' | 'pro' | 'chambers';
@@ -204,7 +201,16 @@ export default function SubscriptionManager() {
     const regField = REGISTRATION_FIELDS[profession];
 
     useEffect(() => {
-        if (currentUser?.uid) loadData();
+        if (currentUser?.uid) {
+            loadData();
+            return;
+        }
+
+        setSub({ tier: 'free', status: 'active' });
+        setQuota(null);
+        setInvoices([]);
+        setRegNumber('');
+        setLoading(false);
     }, [currentUser?.uid]);
 
     const loadData = async () => {
@@ -240,27 +246,20 @@ export default function SubscriptionManager() {
         }
     };
 
-    const handleActivateDemo = async () => {
-        if (!currentUser?.uid) return;
+    const handleActivateDemo = () => {
+        if (!currentUser?.uid) {
+            alert('Please sign in or register before upgrading so we can create your subscription and invoice history.');
+            return;
+        }
         setActivating(true);
         try {
-            // Call Cloud Function to create signed PayHere recurring checkout fields.
-            const initCheckout = httpsCallable(paymentFunctions, 'initPayHereSubscription');
-            const result = await initCheckout({
-                planType: 'monthly',
-                tier: 'pro',
-                profession,
-            });
-            const data = result.data as PayHereFormPayload;
-
-            if (data.actionUrl && data.fields) {
-                submitPayHereForm(data);
-            } else {
-                alert(`Payment gateway is being configured. Please contact ${MYTRACKSY_CONTACT.email} or WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay} for early access.`);
+            if (typeof window !== 'undefined') {
+                window.open(getPaymentRequestUrl(`${profession} Pro subscription`), '_blank', 'noopener,noreferrer');
+                alert(`${MYTRACKSY_PAYMENT_STATUS.notice}\n\n${MYTRACKSY_PAYMENT_STATUS.support}`);
             }
         } catch (err: any) {
-            console.error('Payment initiation error:', err);
-            alert(`Unable to connect to payment gateway. Please try again or contact ${MYTRACKSY_CONTACT.email} / WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay}.`);
+            console.error('Payment request error:', err);
+            alert(`Please contact ${MYTRACKSY_CONTACT.email} / WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay} for activation.`);
         } finally {
             setActivating(false);
         }
@@ -326,7 +325,7 @@ export default function SubscriptionManager() {
                 <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: 0 }}>
                     {isPro
                         ? `${sub?.plan_type === 'annual' ? 'Annual' : 'Monthly'} plan · ${sub?.provider === 'demo' ? 'Demo mode' :
-                            sub?.provider === 'payhere_web' ? 'via PayHere' :
+                            sub?.provider === 'payhere_web' ? 'via previous online checkout' :
                                 sub?.provider || 'Active'
                         }`
                         : `${FREE_QUOTA} AI voice notes/month · Manual accounting`
@@ -415,8 +414,16 @@ export default function SubscriptionManager() {
                             )}
                         </div>
                     ))}
-                    <div style={{ color: '#6ee7b7', fontSize: '0.75rem', marginBottom: '0.75rem' }}>
-                        🧾 100% Tax Deductible — auto-logged as expense
+                    <div style={{ color: '#047857', fontSize: '0.75rem', marginBottom: '0.75rem', fontWeight: 600 }}>
+                        🧾 Logged as professional software for auditor review
+                    </div>
+                    <div style={{
+                        color: '#475569',
+                        fontSize: '0.75rem',
+                        lineHeight: 1.45,
+                        marginBottom: '0.75rem',
+                    }}>
+                        {MYTRACKSY_PAYMENT_STATUS.notice}
                     </div>
                     <button
                         onClick={handleActivateDemo}
@@ -437,7 +444,7 @@ export default function SubscriptionManager() {
                             transition: 'all 0.2s ease',
                         }}
                     >
-                        {activating ? '⏳ Connecting to PayHere...' : '🚀 Upgrade Now'}
+                        {activating ? 'Opening payment request...' : currentUser?.uid ? 'Request Pro Invoice' : 'Sign in to Upgrade'}
                     </button>
                 </div>
             )}

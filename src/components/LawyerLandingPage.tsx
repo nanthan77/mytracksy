@@ -776,7 +776,7 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                                         Generate a polished PDF Fee Note in one click. The system automatically pulls your
                                         appearance fees, drafting fees, court stamp reimbursables, and deducts any retainer
                                         balance — producing a detailed, professional invoice. Share it instantly via
-                                        WhatsApp with a PayHere payment link embedded.
+                                        WhatsApp with a secure payment request embedded.
                                     </p>
 
                                     {/* Fee Note Breakdown */}
@@ -832,7 +832,7 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                                             background: '#dbeafe', color: '#1e40af',
                                             fontSize: 13, fontWeight: 700,
                                         }}>
-                                            💳 PayHere Link Embedded
+                                            💳 Payment Request Embedded
                                         </div>
                                         <div style={{
                                             display: 'flex', alignItems: 'center', gap: 8,

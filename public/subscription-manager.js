@@ -383,17 +383,13 @@ class SubscriptionManager {
                             </ul>
                         </div>
                         <div class="payment-methods">
-                            <h4>Choose Payment Method:</h4>
-                            <button class="payment-btn" onclick="subscriptionManager.processPayment('${tier}', 'payhere')">
-                                <img src="https://www.payhere.lk/downloads/images/payhere_logo.png" alt="PayHere" style="height: 30px;">
-                                PayHere
+                            <h4>Request Activation:</h4>
+                            <p class="payment-note">Online card checkout is temporarily paused while the MyTracksy merchant account and domain approval are completed.</p>
+                            <button class="payment-btn" onclick="subscriptionManager.processPayment('${tier}', 'invoice')">
+                                🧾 MyTracksy Invoice
                             </button>
-                            <button class="payment-btn" onclick="subscriptionManager.processPayment('${tier}', 'stripe')">
-                                <img src="https://stripe.com/img/v3/home/social.png" alt="Stripe" style="height: 30px;">
-                                International Cards
-                            </button>
-                            <button class="payment-btn" onclick="subscriptionManager.processPayment('${tier}', 'bank')">
-                                🏦 Bank Transfer
+                            <button class="payment-btn" onclick="subscriptionManager.processPayment('${tier}', 'bank_transfer')">
+                                🏦 Bank Transfer Details
                             </button>
                         </div>
                     </div>
@@ -408,15 +404,9 @@ class SubscriptionManager {
     // Process payment
     processPayment(tier, method) {
         const tierData = this.tiers[tier];
-        
-        // Show loading
-        this.showPaymentLoading();
-        
-        // Simulate payment processing
-        setTimeout(() => {
-            // For demo purposes, we'll simulate successful payment
-            this.simulateSuccessfulPayment(tier);
-        }, 2000);
+        const message = encodeURIComponent(`Hi MyTracksy, I want to activate ${tierData.name}. Please send me the MyTracksy invoice and payment options.`);
+        window.open(`https://wa.me/94703736555?text=${message}`, '_blank', 'noopener,noreferrer');
+        alert('Online card checkout is temporarily paused. Please request a MyTracksy invoice or bank-transfer details for activation.');
     }
 
     // Simulate successful payment (replace with real payment integration)
@@ -802,6 +792,13 @@ class SubscriptionManager {
             .payment-methods h4 {
                 margin-bottom: 1rem;
                 color: #1e293b;
+            }
+
+            .payment-note {
+                margin: 0 0 1rem;
+                color: #64748b;
+                font-size: 0.9rem;
+                line-height: 1.5;
             }
             
             .payment-btn {

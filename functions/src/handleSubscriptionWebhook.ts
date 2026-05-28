@@ -74,6 +74,10 @@ function normalizeTier(value: unknown): SubscriptionTier {
     return value === "chambers" ? "chambers" : "pro";
 }
 
+function isPayHereCheckoutEnabled(): boolean {
+    return process.env.PAYHERE_CHECKOUT_ENABLED === "true";
+}
+
 function getSubscriptionPlan(professionValue: unknown, tierValue: unknown): SubscriptionPlan {
     const profession = typeof professionValue === "string" ? professionValue : "individual";
     const tier = normalizeTier(tierValue);
@@ -196,6 +200,11 @@ export const handleSubscriptionWebhook = onRequest(
             const isPayHere = req.body && req.body.merchant_id && req.body.md5sig;
 
             if (isPayHere) {
+                if (!isPayHereCheckoutEnabled()) {
+                    logger.warn("PayHere webhook rejected because MyTracksy checkout is paused");
+                    res.status(403).send("PayHere checkout disabled");
+                    return;
+                }
                 await handlePayHereWebhook(req.body);
             } else if (isRevenueCat) {
                 const rawBody = JSON.stringify(req.body);
