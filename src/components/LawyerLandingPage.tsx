@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getPricingForProfession } from '../config/pricingConfig';
-import { MYTRACKSY_CONTACT } from '../config/contact';
 import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 /* ───────────────────── Theme Constants ───────────────────── */
 const NAVY = '#0f172a';
@@ -1469,82 +1469,27 @@ const LawyerLandingPage: React.FC<LawyerLandingPageProps> = ({ onGetStarted, onL
                     </div>
                 </section>
 
-                {/* ═══════════════════════════════════════════════
-                    7. FOOTER
-                ═══════════════════════════════════════════════ */}
-                <footer style={{
-                    background: NAVY, padding: '72px 0 40px',
-                    borderTop: `1px solid rgba(245,158,11,0.1)`,
-                }}>
-                    <div className="lex-container">
-                        {/* Logo + Description */}
-                        <div style={{ textAlign: 'center', marginBottom: 40 }}>
-                            <div style={{
-                                display: 'flex', alignItems: 'center', gap: 12,
-                                justifyContent: 'center', marginBottom: 16,
-                            }}>
-                                <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ width: 36, height: 36, objectFit: 'contain' }} />
-                                <span style={{
-                                    fontSize: 24, fontWeight: 800, color: GOLD,
-                                    fontFamily: FONT_HEADING,
-                                }}>
-                                    LexTracksy
-                                </span>
-                            </div>
-                            <p style={{
-                                fontSize: 15, color: GRAY_400, lineHeight: 1.7,
-                                maxWidth: 450, margin: '0 auto',
-                            }}>
-                                Complete legal accounting engine with AI-powered add-ons, built exclusively for Sri Lankan Attorneys-at-Law.
-                            </p>
-                        </div>
-
-                        {/* Links Row */}
-                        <div style={{
-                            display: 'flex', justifyContent: 'center', gap: 32,
-                            marginBottom: 40, flexWrap: 'wrap',
-                        }}>
-                            {['Terms', 'Privacy', 'PDPA'].map((link) => (
-                                <span key={link} style={{
-                                    fontSize: 14, color: GRAY_400, cursor: 'pointer',
-                                    fontWeight: 500, transition: 'color 0.2s',
-                                }}>
-                                    {link}
-                                </span>
-                            ))}
-                            <a href={`mailto:${MYTRACKSY_CONTACT.email}`} style={{ fontSize: 14, color: GRAY_400, fontWeight: 500, textDecoration: 'none' }}>{MYTRACKSY_CONTACT.email}</a>
-                            <a href={MYTRACKSY_CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: GRAY_400, fontWeight: 500, textDecoration: 'none' }}>WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}</a>
-                        </div>
-
-                        {/* Divider */}
-                        <div style={{
-                            height: 1,
-                            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)',
-                            marginBottom: 32,
-                        }} />
-
-                        {/* Bottom Bar */}
-                        <div className="lex-footer-bottom" style={{
-                            display: 'flex', justifyContent: 'space-between',
-                            alignItems: 'center', flexWrap: 'wrap', gap: 16,
-                        }}>
-                            <div style={{ fontSize: 13, color: GRAY_400 }}>
-                                Designed & Engineered by{' '}
-                                <a
-                                    href="https://safenetcreations.com"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    style={{ color: GOLD, textDecoration: 'none', fontWeight: 600 }}
-                                >
-                                    SafeNet Creations
-                                </a>
-                            </div>
-                            <div style={{ fontSize: 13, color: GRAY_400 }}>
-                                © 2026 LexTracksy. A MyTracksy Professional Product.
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                <ProfessionalFooter
+                    productName="LexTracksy"
+                    professionLabel="Legal practice finance"
+                    description="A premium legal landing page for Attorneys-at-Law managing retainers, fee notes, court disbursements, trust-ledger evidence, and IRD-ready practice reports."
+                    accentColor={GOLD}
+                    variant="dark"
+                    statusText="LexTracksy landing page ready"
+                    primaryCta="Start legal trial"
+                    whatsappMessage="Hi MyTracksy, I want to discuss LexTracksy for my legal practice."
+                    onGetStarted={onGetStarted}
+                    onLogin={onLogin}
+                    onBack={onBack}
+                    links={[
+                        { label: 'Accounting', onClick: () => document.getElementById('accounting')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Tax', onClick: () => document.getElementById('tax')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'AI tools', onClick: () => document.getElementById('ai-tools')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Pricing', onClick: () => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Privacy', href: '/privacy' },
+                        { label: 'Terms', href: '/terms' },
+                    ]}
+                />
 
             </div>
         </>

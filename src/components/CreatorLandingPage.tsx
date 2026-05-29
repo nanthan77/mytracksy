@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 interface CreatorLandingPageProps {
     onGetStarted: () => void;
@@ -266,7 +267,7 @@ const CreatorLandingPage: React.FC<CreatorLandingPageProps> = ({ onGetStarted, o
             </section>
 
             {/* Pricing Hook */}
-            <section style={{ padding: '80px 2rem', background: '#09090b' }}>
+            <section id="creator-pricing" style={{ padding: '80px 2rem', background: '#09090b' }}>
                 <div style={{
                     maxWidth: 800, margin: '0 auto', background: 'linear-gradient(135deg, rgba(24,24,27,0.8), rgba(9,9,11,0.9))',
                     borderRadius: 32, padding: '60px 40px', textAlign: 'center',
@@ -298,16 +299,25 @@ const CreatorLandingPage: React.FC<CreatorLandingPageProps> = ({ onGetStarted, o
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer style={{
-                padding: '40px 2rem', borderTop: '1px solid rgba(255,255,255,0.05)',
-                textAlign: 'center', background: '#09090b', color: '#71717a', fontSize: 14
-            }}>
-                <div style={{ marginBottom: 16 }}>
-                    Designed & Engineered by <a href="https://safenetcreations.com" target="_blank" rel="noopener noreferrer" style={{ color: '#c084fc', textDecoration: 'none', fontWeight: 500 }}>SafeNet Creations</a>
-                </div>
-                <div>© {new Date().getFullYear()} MyTracksy Creator. All rights reserved.</div>
-            </footer>
+            <ProfessionalFooter
+                productName="CreatorTracksy"
+                professionLabel="Creator income and tax"
+                description="A dedicated MyTracksy landing page for digital creators managing brand deals, foreign income, gear deductions, invoices, and bank-ready income proof."
+                accentColor="#a855f7"
+                variant="dark"
+                statusText="Creator landing page ready"
+                primaryCta="Start creator trial"
+                whatsappMessage="Hi MyTracksy, I want to discuss CreatorTracksy for creator income."
+                onGetStarted={onGetStarted}
+                onLogin={onLogin}
+                onBack={onBack}
+                links={[
+                    { label: 'Demo', onClick: () => document.getElementById('creator-demo')?.scrollIntoView({ behavior: 'smooth' }) },
+                    { label: 'Pricing', onClick: () => document.getElementById('creator-pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                    { label: 'Privacy', href: '/privacy' },
+                    { label: 'Terms', href: '/terms' },
+                ]}
+            />
         </div>
     );
 };

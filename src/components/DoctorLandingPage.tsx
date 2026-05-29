@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
-import { MYTRACKSY_CONTACT, mytracksyWhatsApp } from '../config/contact';
+import { mytracksyWhatsApp } from '../config/contact';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 interface DoctorLandingPageProps {
     onGetStarted: () => void;
@@ -800,72 +801,26 @@ const DoctorLandingPage: React.FC<DoctorLandingPageProps> = ({ onGetStarted, onL
                 </section>
 
                 </main>
-                {/* Footer - A11y: Fix heading hierarchy H4→H3, convert divs to buttons, fix contrast */}
-                <footer style={{ background: '#f8fafc', padding: '80px 0 40px', borderTop: '1px solid rgba(0,0,0,0.05)' }} role="contentinfo">
-                    <div className="lt-i">
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 80 }}>
-                            <div className="footer-grid-brand" style={{ gridColumn: 'span 2' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                    <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ height: 48, objectFit: 'contain' }} />
-                                    <span style={{ fontSize: 20, fontWeight: 800, color: '#0ea5e9' }}>Medical</span>
-                                </div>
-                                <p style={{ fontSize: 15, color: '#475569', lineHeight: 1.7, maxWidth: 350 }}>
-                                    The complete accounting and practice management platform trusted by doctors and surgeons across Sri Lanka.
-                                </p>
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>System Capabilities</h3>
-                                {['Clinical Intelligence', 'Revenue Syndication', 'Security Protocols', 'AI Extensibility'].map(l => {
-                                    const sectionMap: Record<string, string> = {
-                                        'Clinical Intelligence': 'platform',
-                                        'Revenue Syndication': 'platform',
-                                        'Security Protocols': 'security',
-                                        'AI Extensibility': 'ai-superpowers'
-                                    };
-                                    return (
-                                        <button key={l} className="footer-link-btn" onClick={() => {
-                                            const el = document.getElementById(sectionMap[l]);
-                                            if (el) {
-                                                const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                                                window.scrollTo({ top: y, behavior: 'smooth' });
-                                            }
-                                        }}>{l}</button>
-                                    )
-                                })}
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>Compliance</h3>
-                                {['PDPA-Ready Operations', 'Terms of Service', 'Data Protection Policy'].map(l => (
-                                    <button key={l} className="footer-link-btn" onClick={() => {
-                                        if (l === 'PDPA-Ready Operations') {
-                                            const el = document.getElementById('security');
-                                            if (el) {
-                                                const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                                                window.scrollTo({ top: y, behavior: 'smooth' });
-                                            }
-                                        }
-                                    }}>{l}</button>
-                                ))}
-                            </div>
-                            <div>
-                                <h3 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>Contact</h3>
-                                <a className="footer-link-btn" href={`mailto:${MYTRACKSY_CONTACT.email}`}>{MYTRACKSY_CONTACT.email}</a>
-                                <a className="footer-link-btn" href={MYTRACKSY_CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer">WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}</a>
-                                <a className="footer-link-btn" href={MYTRACKSY_CONTACT.phoneHref}>Call {MYTRACKSY_CONTACT.phoneDisplay}</a>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, paddingTop: 32, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                            <div style={{ fontSize: 14, color: '#475569' }}>
-                                © 2026 MyTracksy Enterprise Systems. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#2563EB', textDecoration: 'underline', fontWeight: 600 }}>SafeNetCreations</a>.
-                            </div>
-                            <div style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#059669', fontWeight: 600 }}>
-                                <span aria-hidden="true" style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }} />
-                                All Systems Operational
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                <ProfessionalFooter
+                    productName="MyTracksy Medical"
+                    professionLabel="Doctor finance and practice records"
+                    description="A premium MyTracksy landing page for Sri Lankan doctors managing channeling income, clinic expenses, WHT/AIT evidence, receipts, and auditor-ready exports."
+                    accentColor="#0ea5e9"
+                    variant="light"
+                    statusText="Medical landing page ready"
+                    primaryCta="Start medical setup"
+                    whatsappMessage="Hi MyTracksy, I want to discuss MyTracksy Medical for my practice."
+                    onGetStarted={onGetStarted}
+                    onLogin={onLogin}
+                    onBack={onBack}
+                    links={[
+                        { label: 'Platform', onClick: () => document.getElementById('platform')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'AI tools', onClick: () => document.getElementById('ai-superpowers')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Pricing', onClick: () => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Privacy', href: '/privacy' },
+                        { label: 'Terms', href: '/terms' },
+                    ]}
+                />
 
             </div>
         </>

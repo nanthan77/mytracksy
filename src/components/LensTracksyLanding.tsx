@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getPricingForProfession } from '../config/pricingConfig';
 import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 interface LensTracksyLandingProps {
     onGetStarted: () => void;
@@ -685,35 +686,25 @@ const LensTracksyLanding: React.FC<LensTracksyLandingProps> = ({ onGetStarted, o
                 </div>
             </section>
 
-            <footer style={{ padding: '0 0 42px' }}>
-                <div className="lens-shell" style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    gap: 18,
-                    flexWrap: 'wrap',
-                    paddingTop: 24,
-                    borderTop: '1px solid rgba(255,255,255,0.08)',
-                }}>
-                    <div>
-                        <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: '-0.03em' }}>Built for the visionaries of Sri Lanka.</div>
-                        <div className="lens-muted" style={{ fontSize: 14, marginTop: 4 }}>
-                            Designed and engineered by <a href="https://safenetcreations.com" target="_blank" rel="noopener noreferrer" style={{ color: '#fbbf24', fontWeight: 700 }}>SafeNet Creations</a>.
-                        </div>
-                    </div>
-                    <button
-                        onClick={onGetStarted}
-                        className="lens-btn"
-                        style={{
-                            padding: '13px 20px',
-                            background: 'linear-gradient(135deg, #f59e0b, #b45309)',
-                            color: '#fff',
-                        }}
-                    >
-                        Launch LensTracksy
-                    </button>
-                </div>
-            </footer>
+            <ProfessionalFooter
+                productName="LensTracksy"
+                professionLabel="Wedding studio finance"
+                description="A dedicated MyTracksy landing page for photographers and wedding studios managing event folios, milestone payments, gear deductions, crew payouts, and AI client protection tools."
+                accentColor="#f59e0b"
+                variant="dark"
+                statusText="Studio landing page ready"
+                primaryCta="Launch LensTracksy"
+                whatsappMessage="Hi MyTracksy, I want to discuss LensTracksy for my studio."
+                onGetStarted={onGetStarted}
+                onLogin={onLogin}
+                onBack={onBack}
+                links={[
+                    { label: 'Demo', onClick: () => document.getElementById('studios-demo')?.scrollIntoView({ behavior: 'smooth' }) },
+                    { label: 'Pricing', onClick: () => document.getElementById('lens-pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                    { label: 'Privacy', href: '/privacy' },
+                    { label: 'Terms', href: '/terms' },
+                ]}
+            />
         </div>
     );
 };

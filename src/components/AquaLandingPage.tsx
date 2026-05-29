@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { getPricingForProfession } from '../config/pricingConfig';
 import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 /* ───────────────────── Theme Constants ───────────────────── */
 const OCEAN = '#0c4a6e';
@@ -816,26 +817,27 @@ const AquaLandingPage: React.FC<AquaLandingPageProps> = ({ onGetStarted, onLogin
                     </div>
                 </section>
 
-                {/* ═══ Footer ═══ */}
-                <footer style={{ background: '#042f2e', padding: '40px 24px', borderTop: '1px solid rgba(6,182,212,0.2)' }}>
-                    <div style={{ maxWidth: 1000, margin: '0 auto', textAlign: 'center' }}>
-                        <p style={{ fontFamily: FONT_HEADING, fontWeight: 700, fontSize: 18, color: WHITE, marginBottom: 8 }}>
-                            🐟 Aqua<span style={{ color: CYAN_LIGHT }}>Tracksy</span>
-                        </p>
-                        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, marginBottom: 16 }}>
-                            Empowering the Northern &amp; Coastal Sri Lankan Export Economy
-                        </p>
-                        <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: 12 }}>
-                            Designed &amp; Engineered by{' '}
-                            <a href="https://safenetcreations.com" target="_blank" rel="noopener noreferrer" style={{ color: CYAN_LIGHT, fontWeight: 700, textDecoration: 'none' }}>
-                                SafeNet Creations
-                            </a>
-                        </p>
-                        <p style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 12 }}>
-                            © {new Date().getFullYear()} AquaTracksy by MyTracksy. All rights reserved.
-                        </p>
-                    </div>
-                </footer>
+                <ProfessionalFooter
+                    productName="AquaTracksy"
+                    professionLabel="Aquaculture voice finance"
+                    description="A dedicated MyTracksy landing page for pond owners, exporters, and blue-economy teams managing feed costs, harvest revenue, voice entries, AI tokens, and farm profitability."
+                    accentColor={CYAN}
+                    variant="dark"
+                    statusText="Aquaculture landing page ready"
+                    primaryCta="Start farm setup"
+                    whatsappMessage="Hi MyTracksy, I want to discuss AquaTracksy for aquaculture finance."
+                    onGetStarted={onGetStarted}
+                    onLogin={onLogin}
+                    onBack={onBack}
+                    links={[
+                        { label: 'Voice', onClick: () => document.getElementById('voice')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Accounting', onClick: () => document.getElementById('accounting')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'AI tokens', onClick: () => document.getElementById('ai-tokens')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Pricing', onClick: () => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Privacy', href: '/privacy' },
+                        { label: 'Terms', href: '/terms' },
+                    ]}
+                />
             </div>
         </>
     );

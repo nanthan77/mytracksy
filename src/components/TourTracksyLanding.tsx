@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getPricingForProfession } from '../config/pricingConfig';
 import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 interface TourTracksyLandingProps {
   onGetStarted: () => void;
@@ -1298,43 +1299,27 @@ export function TourTracksyLanding({
           </div>
         </section>
 
-        {/* Footer */}
-        <footer
-          style={{
-            background: "#f8fafc",
-            padding: "60px 0",
-            textAlign: "center",
-            borderTop: "1px solid rgba(0,0,0,0.05)",
-          }}
-        >
-          <div className="lt-i">
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 10,
-                marginBottom: 24,
-              }}
-            >
-              <Compass size={28} color="#0ea5e9" strokeWidth={2.5} />
-              <span
-                style={{
-                  fontSize: 24,
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: "#0f172a",
-                }}
-              >
-                TourTracksy
-              </span>
-            </div>
-            <p style={{ fontSize: 15, color: "#64748b" }}>
-              © {new Date().getFullYear()} TourTracksy. Designed & Built in Sri
-              Lanka.
-            </p>
-          </div>
-        </footer>
+        <ProfessionalFooter
+          productName="TourTracksy"
+          professionLabel="Tourism operator finance"
+          description="A dedicated MyTracksy landing page for Sri Lankan tour operators, chauffeur guides, and agencies managing trip folios, multi-currency cash, commissions, driver settlements, and SLTDA-ready records."
+          accentColor="#0ea5e9"
+          variant="light"
+          statusText="Tourism landing page ready"
+          primaryCta="Start tourism setup"
+          whatsappMessage="Hi MyTracksy, I want to discuss TourTracksy for tourism operations."
+          onGetStarted={onGetStarted}
+          onLogin={onLogin}
+          onBack={onBack}
+          links={[
+            { label: 'Demo', onClick: () => document.getElementById('tourism-demo')?.scrollIntoView({ behavior: 'smooth' }) },
+            { label: 'Solutions', onClick: () => document.getElementById('solutions')?.scrollIntoView({ behavior: 'smooth' }) },
+            { label: 'Features', onClick: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
+            { label: 'Pricing', onClick: () => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+            { label: 'Privacy', href: '/privacy' },
+            { label: 'Terms', href: '/terms' },
+          ]}
+        />
       </div>
     </>
   );

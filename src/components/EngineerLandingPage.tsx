@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { getPricingForProfession } from '../config/pricingConfig';
 import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 interface EngineerLandingPageProps {
     onGetStarted: () => void;
@@ -828,52 +829,27 @@ const EngineerLandingPage: React.FC<EngineerLandingPageProps> = ({ onGetStarted,
                     </div>
                 </section>
 
-                {/* Footer */}
-                <footer style={{ background: '#fff', padding: '80px 0 40px', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
-                    <div className="lt-i">
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 40, marginBottom: 80 }}>
-                            <div style={{ gridColumn: 'span 2' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                                    <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ height: 48, objectFit: 'contain' }} />
-                                    <span style={{ fontSize: 20, fontWeight: 800, color: '#ea580c' }}>EngiTracksy</span>
-                                </div>
-                                <p style={{ fontSize: 15, color: '#64748b', lineHeight: 1.7, maxWidth: 350 }}>
-                                    The definitive financial ERP utilized by leading civil engineers and construction firms across Sri Lanka.
-                                </p>
-                            </div>
-                            <div>
-                                <h4 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>System Capabilities</h4>
-                                {['BOQ Tracking', 'Subcontractor Ledger', 'Site AI Scanner', 'Retention Vault'].map(l => {
-                                    const sectionMap: Record<string, string> = {
-                                        'BOQ Tracking': 'features',
-                                        'Subcontractor Ledger': 'features',
-                                        'Site AI Scanner': 'ai',
-                                        'Retention Vault': 'features'
-                                    };
-                                    return (
-                                        <div key={l} onClick={() => { const el = document.getElementById(sectionMap[l]); if (el) { const y = el.getBoundingClientRect().top + window.scrollY - 80; window.scrollTo({ top: y, behavior: 'smooth' }); } }} style={{ fontSize: 15, color: '#64748b', marginBottom: 12, cursor: 'pointer' }}>{l}</div>
-                                    )
-                                })}
-                            </div>
-                            <div>
-                                <h4 style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 24 }}>Compliance</h4>
-                                {['CIDA/ICTAD Guidelines', 'Terms of Operations', 'Data Sovereignty Doctrine'].map(l => (
-                                    <div key={l} style={{ fontSize: 15, color: '#64748b', marginBottom: 12, cursor: 'pointer' }}>{l}</div>
-                                ))}
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16, paddingTop: 32, borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                            <div style={{ fontSize: 14, color: '#94a3b8' }}>
-                                © 2026 MyTracksy Enterprise Systems. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: '#ea580c', textDecoration: 'none', fontWeight: 600 }}>SafeNetCreations</a>.
-                            </div>
-                            <div style={{ fontSize: 13, display: 'flex', alignItems: 'center', gap: 8, color: '#10b981', fontWeight: 600 }}>
-                                <span style={{ display: 'inline-block', width: 8, height: 8, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 10px rgba(16,185,129,0.5)' }} />
-                                Engineering Infrastructure Operational
-                            </div>
-                        </div>
-                    </div>
-                </footer>
+                <ProfessionalFooter
+                    productName="EngiTracksy"
+                    professionLabel="Construction project finance"
+                    description="A dedicated MyTracksy landing page for engineers and construction teams managing BOQs, site cash, subcontractor ledgers, retention claims, and project profitability."
+                    accentColor="#ea580c"
+                    variant="light"
+                    statusText="Engineering landing page ready"
+                    primaryCta="Start engineering setup"
+                    whatsappMessage="Hi MyTracksy, I want to discuss EngiTracksy for engineering projects."
+                    onGetStarted={onGetStarted}
+                    onLogin={onLogin}
+                    onBack={onBack}
+                    links={[
+                        { label: 'Demo', onClick: () => document.getElementById('engineering-demo')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Features', onClick: () => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'AI tools', onClick: () => document.getElementById('ai')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Pricing', onClick: () => document.getElementById('pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Privacy', href: '/privacy' },
+                        { label: 'Terms', href: '/terms' },
+                    ]}
+                />
             </div>
         </>
     );

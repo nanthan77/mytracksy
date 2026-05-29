@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { PROFESSION_ROUTES, ProfessionRouteConfig } from '../config/professionRoutes';
-import { MYTRACKSY_CONTACT } from '../config/contact';
 import DoctorLandingPage from './DoctorLandingPage';
 import CreatorLandingPage from './CreatorLandingPage';
 import LawyerLandingPage from './LawyerLandingPage';
@@ -11,6 +10,7 @@ import AquaLandingPage from './AquaLandingPage';
 import LensTracksyLanding from './LensTracksyLanding';
 import { TourTracksyLanding } from './TourTracksyLanding';
 import ProfessionDemoVideo from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 interface ProfessionLandingPageProps {
     slug: string;
@@ -727,23 +727,25 @@ const GenericProfessionLandingPage: React.FC<ProfessionLandingPageProps> = ({ sl
                     </div>
                 </section>
 
-                {/* ===== FOOTER ===== */}
-                <footer style={{ padding: '48px 24px', background: '#0f172a', color: 'rgba(255,255,255,0.5)', fontSize: 13, borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-                    <div className="pp-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 16 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <img src="/logos/mytracksy-logo.png" alt="MyTracksy" style={{ width: 28, height: 28, objectFit: 'contain' }} />
-                            <span style={{ fontWeight: 700, color: '#fff', fontSize: 14, letterSpacing: '-0.01em' }}>{routeShortName}</span>
-                        </div>
-                        <div>© 2026 MyTracksy. Designed & Built in Sri Lanka by <a href="https://safenetcreations.com/" target="_blank" rel="noopener noreferrer" style={{ color: color, textDecoration: 'none', fontWeight: 700 }}>SafeNetCreations</a></div>
-                        <div className="pp-foot-links" style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-                            <button onClick={onBack} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }}>All Professions</button>
-                            <a href="/privacy" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Privacy</a>
-                            <a href="/terms" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>Terms</a>
-                            <a href={`mailto:${MYTRACKSY_CONTACT.email}`} style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>{MYTRACKSY_CONTACT.email}</a>
-                            <a href={MYTRACKSY_CONTACT.whatsappUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'rgba(255,255,255,0.5)', textDecoration: 'none' }}>WhatsApp {MYTRACKSY_CONTACT.phoneDisplay}</a>
-                        </div>
-                    </div>
-                </footer>
+                <ProfessionalFooter
+                    productName={routeName}
+                    professionLabel={`${routeIcon} ${routeShortName}`}
+                    description={`${routeName} is a dedicated MyTracksy landing page for ${routeShortName} workflows, local demos, tax-ready records, and mobile-first finance control.`}
+                    accentColor={color}
+                    variant="dark"
+                    statusText={`${routeShortName} landing page ready`}
+                    primaryCta="Start free"
+                    whatsappMessage={`Hi MyTracksy, I want to discuss ${routeName}.`}
+                    onGetStarted={onGetStarted}
+                    onLogin={onLogin}
+                    onBack={onBack}
+                    links={[
+                        { label: 'Features', onClick: () => document.querySelector('.pp-features-grid')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) },
+                        { label: 'Pricing', onClick: () => document.getElementById('pp-pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                        { label: 'Privacy', href: '/privacy' },
+                        { label: 'Terms', href: '/terms' },
+                    ]}
+                />
             </div>
         </>
     );

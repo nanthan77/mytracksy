@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { ProfessionDemoSection } from './common/ProfessionDemoVideo';
+import ProfessionalFooter from './common/ProfessionalFooter';
 
 interface BizTracksyLandingProps {
     onGetStarted: () => void;
@@ -224,7 +225,7 @@ const BizTracksyLanding: React.FC<BizTracksyLandingProps> = ({ onGetStarted, onL
             </section>
 
             {/* Pricing Strategy - The 3 Corporate Tiers */}
-            <section style={{ padding: '80px 2rem', background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+            <section id="business-pricing" style={{ padding: '80px 2rem', background: '#0f172a', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                 <div style={{ maxWidth: 1200, margin: '0 auto' }}>
                     <div style={{ textAlign: 'center', marginBottom: 60 }}>
                         <h2 style={{ fontSize: '2.5rem', fontWeight: 800, marginBottom: 16, color: '#f8fafc' }}>Scaling Corporate Tiers</h2>
@@ -308,16 +309,25 @@ const BizTracksyLanding: React.FC<BizTracksyLandingProps> = ({ onGetStarted, onL
                 </div>
             </section>
 
-            {/* Footer */}
-            <footer style={{
-                padding: '40px 2rem', borderTop: '1px solid rgba(255,255,255,0.05)',
-                textAlign: 'center', background: '#09090b', color: '#64748b', fontSize: 14
-            }}>
-                <div style={{ marginBottom: 16 }}>
-                    Built for the Sri Lankan SME Economy. Designed & Engineered by <a href="https://safenetcreations.com" target="_blank" rel="noopener noreferrer" style={{ color: '#fbbf24', textDecoration: 'none', fontWeight: 600 }}>SafeNet Creations</a>
-                </div>
-                <div>© {new Date().getFullYear()} BizTracksy Enterprise. All rights reserved.</div>
-            </footer>
+            <ProfessionalFooter
+                productName="BizTracksy"
+                professionLabel="SME multi-company ERP"
+                description="A dedicated MyTracksy landing page for Sri Lankan business owners managing multi-company accounts, stock, supplier bills, VAT/SSCL visibility, debtor chasing, and daily cash flow."
+                accentColor="#fbbf24"
+                variant="dark"
+                statusText="Business landing page ready"
+                primaryCta="Deploy business suite"
+                whatsappMessage="Hi MyTracksy, I want to discuss BizTracksy for my business."
+                onGetStarted={onGetStarted}
+                onLogin={onLogin}
+                onBack={onBack}
+                links={[
+                    { label: 'Demo', onClick: () => document.getElementById('business-demo')?.scrollIntoView({ behavior: 'smooth' }) },
+                    { label: 'Pricing', onClick: () => document.getElementById('business-pricing')?.scrollIntoView({ behavior: 'smooth' }) },
+                    { label: 'Privacy', href: '/privacy' },
+                    { label: 'Terms', href: '/terms' },
+                ]}
+            />
         </div>
     );
 };
