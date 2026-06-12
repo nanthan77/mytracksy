@@ -112,6 +112,16 @@ const legalExpenseCategories = [
 const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfession, onLogout }) => {
   const { currentUser } = useAuth();
   const uid = currentUser?.uid;
+  // Demo/guest sessions have no Firebase user — fall back to the locally
+  // stored session identity so on-device persistence (Dexie) still works.
+  const localUid = useMemo(() => {
+    if (uid) return uid;
+    try {
+      return (JSON.parse(localStorage.getItem('tracksyUser') || 'null') as { uid?: string } | null)?.uid || undefined;
+    } catch {
+      return undefined;
+    }
+  }, [uid]);
   const walletData = useTokenWallet(uid || '');
   const isCompactMobile = useIsCompactMobile();
 
@@ -141,25 +151,71 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
   // Settings state
   const [legalSettings, setLegalSettings] = useState({
     barRegistration: '', specialization: '', practisingCertificate: '',
+    practisingCertExpiry: '', indemnityExpiry: '',
     primaryCourt: '', chambers: '', professionalIndemnity: '',
     irdTIN: '', taxYear: '2025/2026 (April – March)', currency: 'LKR (Sri Lankan Rupee)',
   });
   const [editingSettings, setEditingSettings] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
 
-  const [newDiary, setNewDiary] = useState({ date: '', court: '', judge: '', caseNumber: '', notes: '', time: '09:00' });
+  const [newDiary, setNewDiary] = useState({ date: '', court: '', judge: '', caseNumber: '', notes: '', time: '09:00', appearanceFee: '' });
+  // Adjournment engine: inline next-date picker state
+  const [adjournEntryId, setAdjournEntryId] = useState<number | null>(null);
+  const [adjournDate, setAdjournDate] = useState('');
   const [newCase, setNewCase] = useState({ clientName: '', caseTitle: '', caseNumber: '', caseType: 'civil' as const, court: '', judge: '', clientPhone: '', clientEmail: '' });
   const [newTransaction, setNewTransaction] = useState({ caseId: '', type: 'deposit' as const, amount: '', description: '', date: '' });
   const [expenseForm, setExpenseForm] = useState({ amount: '', description: '', category: '', date: new Date().toISOString().split('T')[0] });
 
-  const diaryEntries = useLiveQuery(() => uid ? db.court_diary.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
-  const cases = useLiveQuery(() => uid ? db.case_records.where('userId').equals(uid).toArray() : [], [uid]) || [];
-  const trustTransactions = useLiveQuery(() => uid ? db.trust_transactions.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
+  const diaryEntries = useLiveQuery(() => localUid ? db.court_diary.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+  const cases = useLiveQuery(() => localUid ? db.case_records.where('userId').equals(localUid).toArray() : [], [localUid]) || [];
+  const trustTransactions = useLiveQuery(() => localUid ? db.trust_transactions.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
 
   const totalIncome = invoices.reduce((s, t) => s + t.amount, 0);
   const totalExpensesAmt = expenses.reduce((s, t) => s + t.amount, 0);
   const pendingHearings = diaryEntries.filter((e: { date: string }) => new Date(e.date) >= new Date()).length;
   const trustBalance = trustTransactions.reduce((s: number, t: { type: string; amount: number }) => t.type === 'retainer_receipt' ? s + t.amount : s - t.amount, 0);
+
+  // Month-scoped + tax-year figures (the overview cards previously showed
+  // ALL-TIME totals labelled "This Month", and TaxSpeedometer received raw
+  // lifetime totals as "annual" income).
+  const isInMonth = (dateStr: string, ref = new Date()) => {
+    const d = new Date(`${dateStr}T00:00:00`);
+    return !Number.isNaN(d.getTime()) && d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+  };
+  const monthIncome = useMemo(() => invoices.filter(t => isInMonth(t.date)).reduce((s, t) => s + t.amount, 0), [invoices]);
+  const monthExpenses = useMemo(() => expenses.filter(t => isInMonth(t.date)).reduce((s, t) => s + t.amount, 0), [expenses]);
+
+  // Annualised from TAX-YEAR-TO-DATE (Apr–Mar), mirroring the medical dashboard.
+  const annualise = useCallback((txns: Transaction[]) => {
+    const now = new Date();
+    const taxYearStart = new Date(now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1, 3, 1);
+    const ytd = txns.reduce((sum, t) => {
+      const d = new Date(`${t.date}T00:00:00`);
+      return !Number.isNaN(d.getTime()) && d >= taxYearStart && d <= now ? sum + t.amount : sum;
+    }, 0);
+    const monthsElapsed = Math.max(1, (now.getFullYear() - taxYearStart.getFullYear()) * 12 + (now.getMonth() - taxYearStart.getMonth()) + 1);
+    return Math.round((ytd / monthsElapsed) * 12);
+  }, []);
+  const annualFees = useMemo(() => annualise(invoices), [invoices, annualise]);
+  const annualPracticeExpenses = useMemo(() => annualise(expenses), [expenses, annualise]);
+  // 5% AIT/WHT is withheld by corporate payers on professional fees.
+  const estAnnualWht = Math.round(annualFees * 0.05);
+
+  // Practice admin reminders (practising certificate / indemnity expiry)
+  const practiceReminders = useMemo(() => {
+    const out: { id: string; label: string; dueDate: string; daysLeft: number; severity: 'overdue' | 'urgent' | 'warning' }[] = [];
+    const push = (id: string, label: string, dueDate?: string) => {
+      if (!dueDate) return;
+      const due = new Date(`${dueDate}T00:00:00`);
+      if (Number.isNaN(due.getTime())) return;
+      const daysLeft = Math.ceil((due.getTime() - Date.now()) / 86_400_000);
+      if (daysLeft > 60) return;
+      out.push({ id, label, dueDate, daysLeft, severity: daysLeft < 0 ? 'overdue' : daysLeft <= 14 ? 'urgent' : 'warning' });
+    };
+    push('cert', 'Practising Certificate Renewal', legalSettings.practisingCertExpiry);
+    push('indemnity', `Professional Indemnity${legalSettings.professionalIndemnity ? ` (${legalSettings.professionalIndemnity})` : ''}`, legalSettings.indemnityExpiry);
+    return out.sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [legalSettings.practisingCertExpiry, legalSettings.indemnityExpiry, legalSettings.professionalIndemnity]);
 
   const activeNavItem = useMemo(() => navItems.find(n => n.id === activeNav) || navItems[0], [activeNav]);
   const activeMobileTab = useMemo(() => getLegalMobileTab(activeNav), [activeNav]);
@@ -181,17 +237,23 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
     return () => { stopSync(); stopLegalAutoSync(); };
   }, [uid]);
 
-  // Load legal settings from Firestore
+  // Load legal settings — Firestore for signed-in users, localStorage for demo/guest
   useEffect(() => {
-    if (!uid) return;
-    const settingsRef = doc(firestoreDb, 'users', uid, 'legal_settings', 'practice');
-    getDoc(settingsRef).then(snap => {
-      if (snap.exists()) {
-        const d = snap.data();
-        setLegalSettings(prev => ({ ...prev, ...d }));
-      }
-    }).catch(console.error);
-  }, [uid]);
+    if (uid) {
+      const settingsRef = doc(firestoreDb, 'users', uid, 'legal_settings', 'practice');
+      getDoc(settingsRef).then(snap => {
+        if (snap.exists()) {
+          const d = snap.data();
+          setLegalSettings(prev => ({ ...prev, ...d }));
+        }
+      }).catch(console.error);
+    } else if (localUid) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(`legalSettings_${localUid}`) || 'null');
+        if (stored) setLegalSettings(prev => ({ ...prev, ...stored }));
+      } catch { /* ignore */ }
+    }
+  }, [uid, localUid]);
 
   useEffect(() => {
     if (!uid) return;
@@ -227,23 +289,106 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
   }, []);
 
   const handleAddDiary = async () => {
-    if (!uid || !newDiary.date || !newDiary.court) return;
-    await db.court_diary.add({ date: newDiary.date, caseId: newDiary.caseNumber || '', caseTitle: newDiary.caseNumber || '', court: newDiary.court, courtNo: '', time: newDiary.time || '09:00', judge: newDiary.judge || '', hearingType: 'mention', notes: newDiary.notes || '', status: 'confirmed', courtLocation: 'hulftsdorp', sync_status: 'pending', userId: uid, createdAt: Date.now() });
-    setNewDiary({ date: '', court: '', judge: '', caseNumber: '', notes: '', time: '09:00' });
+    if (!localUid || !newDiary.date || !newDiary.court) return;
+    await db.court_diary.add({ date: newDiary.date, caseId: newDiary.caseNumber || '', caseTitle: newDiary.caseNumber || '', court: newDiary.court, courtNo: '', time: newDiary.time || '09:00', judge: newDiary.judge || '', hearingType: 'mention', notes: newDiary.notes || '', status: 'confirmed', courtLocation: 'hulftsdorp', appearanceFee: parseFloat(newDiary.appearanceFee) || 0, feePaid: false, sync_status: 'pending', userId: localUid, createdAt: Date.now() });
+    setNewDiary({ date: '', court: '', judge: '', caseNumber: '', notes: '', time: '09:00', appearanceFee: '' });
     setShowDiaryModal(false);
   };
 
+  /* ===== ADJOURNMENT ENGINE =====
+     Most SL hearings end in a postponement (1.13M case backlog). One tap logs
+     the outcome; "Adjourned" auto-creates the next diary entry so no case is
+     ever left without a next date. */
+  const logOutcome = async (entry: typeof diaryEntries[number], outcome: 'concluded' | 'no_appearance') => {
+    if (entry.id === undefined) return;
+    await db.court_diary.update(entry.id, {
+      outcome,
+      status: outcome === 'concluded' ? 'completed' as const : 'cancelled' as const,
+      sync_status: 'pending' as const,
+    });
+  };
+
+  const confirmAdjournment = async (entry: typeof diaryEntries[number]) => {
+    if (!localUid || entry.id === undefined || !adjournDate) return;
+    await db.court_diary.update(entry.id, { outcome: 'adjourned' as const, status: 'adjourned' as const, nextDate: adjournDate, sync_status: 'pending' as const });
+    // Auto-create the next hearing — same case, court, judge, time, fee
+    await db.court_diary.add({
+      date: adjournDate, caseId: entry.caseId, caseTitle: entry.caseTitle, court: entry.court,
+      courtNo: entry.courtNo || '', time: entry.time || '09:00', judge: entry.judge || '',
+      hearingType: entry.hearingType || 'mention', notes: '', status: 'confirmed',
+      courtLocation: entry.courtLocation || 'hulftsdorp',
+      appearanceFee: entry.appearanceFee || 0, feePaid: false,
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
+    });
+    setAdjournEntryId(null);
+    setAdjournDate('');
+  };
+
+  const toggleFeePaid = async (entry: typeof diaryEntries[number]) => {
+    if (entry.id === undefined) return;
+    await db.court_diary.update(entry.id, { feePaid: !entry.feePaid, sync_status: 'pending' as const });
+  };
+
+  // Dropped-ball detector: active cases (with a case number) that have NO
+  // upcoming diary entry — in a postponement-driven system this is how
+  // matters silently die.
+  const todayStr = new Date().toISOString().split('T')[0];
+  const casesWithoutNextDate = useMemo(() => {
+    const upcomingCaseIds = new Set(diaryEntries.filter(e => e.date >= todayStr && e.status !== 'cancelled' && e.status !== 'completed' && e.status !== 'adjourned').map(e => e.caseId).filter(Boolean));
+    return cases.filter(c => c.status === 'active' && c.caseNumber && !upcomingCaseIds.has(c.caseNumber));
+  }, [cases, diaryEntries, todayStr]);
+
+  // Unpaid appearance fees, grouped by case
+  const unpaidFees = useMemo(() => {
+    const unpaid = diaryEntries.filter(e => (e.appearanceFee || 0) > 0 && !e.feePaid && e.date <= todayStr && e.status !== 'cancelled');
+    const byCase = new Map<string, { label: string; total: number; count: number }>();
+    for (const e of unpaid) {
+      const key = e.caseId || e.caseTitle || 'General';
+      const row = byCase.get(key) || { label: e.caseTitle || e.caseId || 'General appearances', total: 0, count: 0 };
+      row.total += e.appearanceFee || 0;
+      row.count += 1;
+      byCase.set(key, row);
+    }
+    const groups = Array.from(byCase.entries()).map(([key, v]) => ({ key, ...v })).sort((a, b) => b.total - a.total);
+    return { groups, total: groups.reduce((s, g) => s + g.total, 0), count: unpaid.length };
+  }, [diaryEntries, todayStr]);
+
+  // Today's hearings grouped by court — the lawyer's morning view
+  const todayByCourt = useMemo(() => {
+    const entries = diaryEntries.filter(e => e.date === todayStr && e.status !== 'cancelled').sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+    const map = new Map<string, typeof entries>();
+    for (const e of entries) {
+      const list = map.get(e.court) || [];
+      list.push(e);
+      map.set(e.court, list);
+    }
+    return Array.from(map.entries());
+  }, [diaryEntries, todayStr]);
+
+  // e-Courts status deep link (SC/CoA have public case search; Sept 2025 e-Courts rollout)
+  const eCourtsLink = (court: string): string | null => {
+    const c = (court || '').toLowerCase();
+    if (c.includes('supreme')) return 'https://www.supremecourt.lk/';
+    if (c.includes('appeal')) return 'https://courtofappeal.lk/?page_id=13533';
+    return null;
+  };
+
+  const clientPhoneForEntry = (entry: typeof diaryEntries[number]): { phone: string; clientName: string } | null => {
+    const c = cases.find(cs => cs.caseNumber && cs.caseNumber === entry.caseId);
+    return c?.clientPhone ? { phone: c.clientPhone, clientName: c.clientName } : null;
+  };
+
   const handleAddCase = async () => {
-    if (!uid || !newCase.clientName || !newCase.caseTitle) return;
-    await db.case_records.add({ clientName: newCase.clientName, caseTitle: newCase.caseTitle, caseNumber: newCase.caseNumber || '', caseType: (newCase.caseType as 'civil' | 'criminal' | 'corporate' | 'estate' | 'ip' | 'family' | 'labour' | 'other') || 'civil', court: newCase.court || '', judge: newCase.judge || '', clientPhone: newCase.clientPhone || '', clientEmail: newCase.clientEmail || '', status: 'active', retainerBalance: 0, totalBilled: 0, totalPaid: 0, sync_status: 'pending', userId: uid, createdAt: Date.now() });
+    if (!localUid || !newCase.clientName || !newCase.caseTitle) return;
+    await db.case_records.add({ clientName: newCase.clientName, caseTitle: newCase.caseTitle, caseNumber: newCase.caseNumber || '', caseType: (newCase.caseType as 'civil' | 'criminal' | 'corporate' | 'estate' | 'ip' | 'family' | 'labour' | 'other') || 'civil', court: newCase.court || '', judge: newCase.judge || '', clientPhone: newCase.clientPhone || '', clientEmail: newCase.clientEmail || '', status: 'active', retainerBalance: 0, totalBilled: 0, totalPaid: 0, sync_status: 'pending', userId: localUid, createdAt: Date.now() });
     setNewCase({ clientName: '', caseTitle: '', caseNumber: '', caseType: 'civil', court: '', judge: '', clientPhone: '', clientEmail: '' });
     setShowCaseModal(false);
   };
 
   const handleAddTransaction = async () => {
-    if (!uid || !newTransaction.amount) return;
+    if (!localUid || !newTransaction.amount) return;
     const txType = newTransaction.type === 'deposit' ? 'retainer_receipt' as const : 'refund' as const;
-    await db.trust_transactions.add({ userId: uid, caseId: newTransaction.caseId || '', clientId: '', clientName: '', type: txType, amount: parseFloat(newTransaction.amount), description: newTransaction.description || '', category: '', account: 'trust', date: newTransaction.date || new Date().toISOString().split('T')[0], sync_status: 'pending', createdAt: Date.now() });
+    await db.trust_transactions.add({ userId: localUid, caseId: newTransaction.caseId || '', clientId: '', clientName: '', type: txType, amount: parseFloat(newTransaction.amount), description: newTransaction.description || '', category: '', account: 'trust', date: newTransaction.date || new Date().toISOString().split('T')[0], sync_status: 'pending', createdAt: Date.now() });
     setNewTransaction({ caseId: '', type: 'deposit', amount: '', description: '', date: '' });
     setShowTransactionModal(false);
   };
@@ -254,11 +399,19 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
       case 'income': {
         const t: Transaction = { id: `v-${Date.now()}`, type: 'income', amount: action.amount || 0, description: action.description || 'Voice entry', category: action.category || 'Appearance Fee', date: dateStr, status: 'paid' };
         setInvoices(prev => [t, ...prev]);
+        // Persist — previously voice entries vanished on refresh
+        if (uid && t.amount > 0) {
+          addTransaction(uid, { type: 'income', amount_cents: toCents(t.amount), description: t.description, category_name: t.category, date: dateStr, status: 'cleared', source: 'voice_ai', vendor: '', category_id: '', metadata: { wht_rate: 0.05, wht_deducted_cents: toCents(Math.round(t.amount * 0.05)), wht_note: 'Estimated 5% AIT/WHT if withheld by a corporate payer. Confirm with the WHT certificate.' } }).catch(err => console.error('Failed to save voice income:', err));
+        }
         break;
       }
       case 'expense': {
         const t: Transaction = { id: `v-${Date.now()}`, type: 'expense', amount: action.amount || 0, description: action.description || 'Voice entry', category: action.category || 'Court Fees', date: dateStr, status: 'completed' };
         setExpenses(prev => [t, ...prev]);
+        // Persist — previously voice entries vanished on refresh
+        if (uid && t.amount > 0) {
+          addTransaction(uid, { type: 'expense', amount_cents: toCents(t.amount), description: t.description, category_name: t.category, date: dateStr, status: 'cleared', source: 'voice_ai', vendor: '', category_id: '' }).catch(err => console.error('Failed to save voice expense:', err));
+        }
         break;
       }
       case 'appointment': setActiveNav('diary'); break;
@@ -268,7 +421,17 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
 
   const handleCreateInvoice = async (data: InvoiceData) => {
     if (!uid) return;
-    await addTransaction(uid, { type: 'income', amount_cents: toCents(data.amount), description: `${data.serviceType} — ${data.patientName}`, category_name: 'Appearance Fee', date: data.date || new Date().toISOString().split('T')[0], status: 'cleared', source: 'manual_entry', vendor: data.hospital || '', category_id: '' });
+    await addTransaction(uid, {
+      type: 'income', amount_cents: toCents(data.amount),
+      description: `${data.serviceType} — ${data.patientName}`, category_name: 'Appearance Fee',
+      date: data.date || new Date().toISOString().split('T')[0], status: 'cleared',
+      source: 'manual_entry', vendor: data.hospital || '', category_id: '',
+      metadata: {
+        wht_rate: 0.05,
+        wht_deducted_cents: toCents(Math.round(data.amount * 0.05)),
+        wht_note: 'Estimated 5% AIT/WHT if withheld by a corporate payer. Reconcile against the payer\'s WHT certificate before filing.',
+      },
+    });
     setShowInvoiceForm(false);
   };
 
@@ -303,20 +466,24 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
     }
   }, [uid]);
 
-  // Settings save handler
+  // Settings save handler — Firestore for signed-in users, localStorage for demo/guest
   const handleSaveSettings = useCallback(async () => {
-    if (!uid) return;
+    if (!localUid) return;
     setSettingsSaving(true);
     try {
-      const settingsRef = doc(firestoreDb, 'users', uid, 'legal_settings', 'practice');
-      await setDoc(settingsRef, { ...legalSettings, updatedAt: new Date().toISOString() }, { merge: true });
+      if (uid) {
+        const settingsRef = doc(firestoreDb, 'users', uid, 'legal_settings', 'practice');
+        await setDoc(settingsRef, { ...legalSettings, updatedAt: new Date().toISOString() }, { merge: true });
+      } else {
+        localStorage.setItem(`legalSettings_${localUid}`, JSON.stringify(legalSettings));
+      }
       setEditingSettings(false);
     } catch (err) {
       console.error('Failed to save settings:', err);
     } finally {
       setSettingsSaving(false);
     }
-  }, [uid, legalSettings]);
+  }, [uid, localUid, legalSettings]);
 
   // Document template handler
   const handleOpenTemplate = (tpl: DocumentTemplate) => {
@@ -363,22 +530,81 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
   /* ============ RENDER: Overview ============ */
   const renderOverview = () => (
     <div style={stackGap(20)}>
+      {/* Trust account breach alert — client money rule */}
+      {trustBalance < 0 && (
+        <div onClick={() => setActiveNav('trust')} style={{ ...cardStyle, cursor: 'pointer', background: '#fef2f2', border: '2px solid #fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 26 }}>🚨</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>Trust Account Breach — balance is {formatLKR(trustBalance)}</div>
+              <div style={{ fontSize: 13, color: '#b91c1c' }}>Client funds must never be overdrawn. Review trust transactions immediately →</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Dropped-ball alert — active cases without a next court date */}
+      {casesWithoutNextDate.length > 0 && (
+        <div onClick={() => setActiveNav('diary')} style={{ ...cardStyle, cursor: 'pointer', padding: '0.85rem 1.25rem', background: '#fffbeb', border: '2px solid #fde68a' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 22 }}>🚩</div>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#92400e' }}>{casesWithoutNextDate.length} active case{casesWithoutNextDate.length > 1 ? 's' : ''} with no next court date</div>
+              <div style={{ fontSize: 12.5, color: '#a16207' }}>Don't let a matter silently die — tap to set next dates →</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Unpaid appearance fees */}
+      {unpaidFees.total > 0 && (
+        <div onClick={() => setActiveNav('diary')} style={{ ...cardStyle, cursor: 'pointer', padding: '0.85rem 1.25rem', background: '#fff7ed', border: '2px solid #fed7aa' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 22 }}>💸</div>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: '#9a3412' }}>{formatLKR(unpaidFees.total)} in unpaid appearance fees ({unpaidFees.count} appearance{unpaidFees.count > 1 ? 's' : ''})</div>
+              <div style={{ fontSize: 12.5, color: '#9a3412' }}>{unpaidFees.groups.slice(0, 2).map(g => `${g.label}: ${formatLKR(g.total)}`).join(' · ')}{unpaidFees.groups.length > 2 ? ` +${unpaidFees.groups.length - 2} more` : ''} →</div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Practice admin reminders — practising certificate / indemnity */}
+      {practiceReminders.map(r => (
+        <div key={r.id} onClick={() => setActiveNav('settings')} style={{ ...cardStyle, cursor: 'pointer', padding: '0.85rem 1.25rem', background: r.severity === 'overdue' ? '#fef2f2' : r.severity === 'urgent' ? '#fff7ed' : '#fffbeb', border: `2px solid ${r.severity === 'overdue' ? '#fecaca' : r.severity === 'urgent' ? '#fed7aa' : '#fde68a'}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 22 }}>{r.id === 'cert' ? '📜' : '🛡️'}</div>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: r.severity === 'overdue' ? '#991b1b' : '#9a3412' }}>
+                {r.label} — {r.daysLeft < 0 ? `${Math.abs(r.daysLeft)} days OVERDUE` : `${r.daysLeft} days left`}
+              </div>
+              <div style={{ fontSize: 12.5, color: '#92400e' }}>Due {r.dueDate}. Tap to review in Settings →</div>
+            </div>
+          </div>
+        </div>
+      ))}
+
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
         <KPICard label="Active Cases" value={String(cases.filter(c => c.status === 'active').length)} icon="📁" color="#3b82f6" />
         <KPICard label="Pending Hearings" value={String(pendingHearings)} icon="📅" color={GOLD} />
-        <KPICard label="Trust Balance" value={formatLKR(trustBalance)} icon="🏦" color="#10b981" />
+        <KPICard label="Trust Balance" value={formatLKR(trustBalance)} icon="🏦" color={trustBalance < 0 ? '#ef4444' : '#10b981'} />
         <KPICard label="AI Tokens" value={walletData.tokenBalance.toLocaleString()} icon="🪙" color="#8b5cf6" />
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
         <div style={cardStyle}>
           <h3 style={cardTitle}>Income This Month</h3>
-          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#10b981', margin: 0 }}>Rs. {fmt(totalIncome)}</p>
-          <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0.25rem 0 0' }}>{invoices.length} fee notes</p>
+          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#10b981', margin: 0 }}>Rs. {fmt(monthIncome)}</p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0.25rem 0 0' }}>Rs. {fmt(totalIncome)} all-time · {invoices.length} fee notes</p>
         </div>
         <div style={cardStyle}>
           <h3 style={cardTitle}>Expenses This Month</h3>
-          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#ef4444', margin: 0 }}>Rs. {fmt(totalExpensesAmt)}</p>
-          <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0.25rem 0 0' }}>{expenses.length} expenses</p>
+          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#ef4444', margin: 0 }}>Rs. {fmt(monthExpenses)}</p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0.25rem 0 0' }}>Rs. {fmt(totalExpensesAmt)} all-time · {expenses.length} expenses</p>
+        </div>
+        <div style={cardStyle}>
+          <h3 style={cardTitle}>Est. WHT/AIT (5%) This Year</h3>
+          <p style={{ fontSize: '1.75rem', fontWeight: 700, color: '#f59e0b', margin: 0 }}>Rs. {fmt(estAnnualWht)}</p>
+          <p style={{ fontSize: '0.875rem', color: '#64748b', margin: '0.25rem 0 0' }}>Credit against final tax — collect payer WHT certificates</p>
         </div>
       </div>
       <div style={cardStyle}>
@@ -405,11 +631,58 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
           <button onClick={() => setShowDiaryModal(true)} style={actionBtn('#3b82f6')}>+ Add Entry</button>
         </div>
       </div>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        <KPICard label="Total Entries" value={String(diaryEntries.length)} icon="📅" color="#3b82f6" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
+        <KPICard label="Today" value={String(todayByCourt.reduce((s, [, list]) => s + list.length, 0))} icon="⚖️" color={NAVY} />
         <KPICard label="Upcoming" value={String(pendingHearings)} icon="⏳" color={GOLD} />
-        <KPICard label="Completed" value={String(diaryEntries.filter(e => new Date(e.date) < new Date()).length)} icon="✅" color="#10b981" />
+        <KPICard label="No Next Date" value={String(casesWithoutNextDate.length)} icon="🚩" color={casesWithoutNextDate.length > 0 ? '#ef4444' : '#10b981'} />
+        <KPICard label="Unpaid Fees" value={formatLKR(unpaidFees.total)} icon="💸" color={unpaidFees.total > 0 ? '#f59e0b' : '#10b981'} />
       </div>
+
+      {/* ===== TODAY AT COURT — morning view, grouped by court ===== */}
+      {todayByCourt.length > 0 && (
+        <div style={{ ...cardStyle, border: `2px solid ${NAVY}22` }}>
+          <h3 style={{ ...cardTitle, marginBottom: '0.75rem' }}>⚖️ Today at Court</h3>
+          {todayByCourt.map(([court, entries]) => (
+            <div key={court} style={{ marginBottom: '0.75rem' }}>
+              <div style={{ fontSize: 12, fontWeight: 800, color: NAVY, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                🏛️ {court}
+                {eCourtsLink(court) && (
+                  <a href={eCourtsLink(court)!} target="_blank" rel="noopener noreferrer" style={{ marginLeft: 10, fontSize: 11, color: '#6366f1', fontWeight: 700 }}>🔎 Check status online</a>
+                )}
+              </div>
+              {entries.map(e => {
+                const client = clientPhoneForEntry(e);
+                return (
+                  <div key={e.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: '#f8fafc', borderRadius: 8, marginBottom: 4 }}>
+                    <div style={{ fontSize: 13.5 }}>
+                      <strong>{e.time || '09:00'}</strong> — {e.caseTitle || e.caseId || 'Hearing'}{e.judge ? ` · ${e.judge}` : ''}
+                    </div>
+                    {client && (
+                      <a href={generateWhatsAppLink(client.phone, hearingReminderMessage({ clientName: client.clientName, caseTitle: e.caseTitle || e.caseId || '', court: e.court, courtNo: e.courtNo || '', date: e.date, time: e.time || '', hearingType: e.hearingType || 'mention' }))}
+                        target="_blank" rel="noopener noreferrer" style={{ ...actionBtn('#25d366'), padding: '3px 10px', fontSize: '0.72rem', textDecoration: 'none' }}>💬 Notify client</a>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ===== DROPPED-BALL DETECTOR — active cases with no next date ===== */}
+      {casesWithoutNextDate.length > 0 && (
+        <div style={{ ...cardStyle, background: '#fffbeb', border: '2px solid #fde68a' }}>
+          <h3 style={{ ...cardTitle, color: '#92400e', marginBottom: '0.5rem' }}>🚩 {casesWithoutNextDate.length} active case{casesWithoutNextDate.length > 1 ? 's' : ''} with NO next court date</h3>
+          <p style={{ fontSize: 12.5, color: '#a16207', margin: '0 0 0.6rem' }}>In a postponement-driven system this is how matters silently die. Fix each with one tap:</p>
+          {casesWithoutNextDate.map(c => (
+            <div key={c.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: 'white', borderRadius: 8, marginBottom: 4 }}>
+              <div style={{ fontSize: 13.5 }}><strong>{c.caseTitle}</strong> · {c.clientName}{c.caseNumber ? ` · #${c.caseNumber}` : ''}</div>
+              <button onClick={() => { setNewDiary(p => ({ ...p, caseNumber: c.caseNumber || '', court: c.court || '', judge: c.judge || '' })); setShowDiaryModal(true); }} style={{ ...actionBtn('#f59e0b'), padding: '4px 12px', fontSize: '0.75rem' }}>+ Set next date</button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {diaryEntries.length === 0 ? (
         <div style={{ ...cardStyle, textAlign: 'center', padding: '3rem' }}>
           <p style={{ fontSize: '2rem', margin: '0 0 0.5rem' }}>📅</p>
@@ -417,24 +690,54 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
         </div>
       ) : (
         <div style={stackGap(12)}>
-          {diaryEntries.map((entry) => (
-            <div key={entry.id} style={{ ...cardStyle, borderLeft: `4px solid ${new Date(entry.date) >= new Date() ? GOLD : '#10b981'}` }}>
+          {diaryEntries.map((entry) => {
+            const isUpcoming = entry.date >= todayStr;
+            const isOpen = entry.status !== 'completed' && entry.status !== 'cancelled' && entry.status !== 'adjourned';
+            const borderColor = entry.status === 'adjourned' ? '#6366f1' : entry.status === 'completed' ? '#10b981' : entry.status === 'cancelled' ? '#94a3b8' : isUpcoming ? GOLD : '#ef4444';
+            return (
+            <div key={entry.id} style={{ ...cardStyle, borderLeft: `4px solid ${borderColor}` }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 8 }}>
                 <div>
                   <div style={{ fontWeight: 700, color: NAVY }}>{new Date(entry.date).toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })} at {entry.time || '09:00'}</div>
                   <div style={{ color: '#475569', marginTop: 4 }}>🏛️ {entry.court}{entry.judge ? ` • Judge: ${entry.judge}` : ''}</div>
                   {entry.caseTitle && <div style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 2 }}>Case: {entry.caseTitle}</div>}
                   {entry.notes && <div style={{ color: '#64748b', fontSize: '0.875rem', marginTop: 4 }}>{entry.notes}</div>}
+                  {(entry.appearanceFee || 0) > 0 && (
+                    <button onClick={() => toggleFeePaid(entry)} title="Toggle fee paid" style={{ marginTop: 6, padding: '3px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: 'pointer', border: entry.feePaid ? 'none' : '1.5px dashed #f59e0b', background: entry.feePaid ? '#d1fae5' : '#fffbeb', color: entry.feePaid ? '#065f46' : '#b45309' }}>
+                      💰 {formatLKR(entry.appearanceFee || 0)} · {entry.feePaid ? 'Paid ✓' : 'Unpaid — tap when received'}
+                    </button>
+                  )}
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
                   <button onClick={() => downloadSingleEntryICS(entry)} style={{ ...actionBtn('#6366f1'), padding: '4px 10px', fontSize: '0.75rem' }}>📅 .ics</button>
-                  <span style={{ ...badgeBase, background: new Date(entry.date) >= new Date() ? '#fef3c7' : '#d1fae5', color: new Date(entry.date) >= new Date() ? '#92400e' : '#065f46' }}>
-                    {new Date(entry.date) >= new Date() ? 'Upcoming' : 'Past'}
+                  <span style={{ ...badgeBase, background: entry.status === 'adjourned' ? '#e0e7ff' : entry.status === 'completed' ? '#d1fae5' : entry.status === 'cancelled' ? '#f1f5f9' : isUpcoming ? '#fef3c7' : '#fee2e2', color: entry.status === 'adjourned' ? '#3730a3' : entry.status === 'completed' ? '#065f46' : entry.status === 'cancelled' ? '#475569' : isUpcoming ? '#92400e' : '#991b1b' }}>
+                    {entry.status === 'adjourned' ? `Adjourned → ${entry.nextDate}` : entry.status === 'completed' ? 'Concluded' : entry.status === 'cancelled' ? 'No appearance' : isUpcoming ? 'Upcoming' : 'Outcome?'}
                   </span>
                 </div>
               </div>
+              {/* One-tap outcome logging — the SL litigator's daily reality */}
+              {isOpen && entry.date <= todayStr && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10, paddingTop: 10, borderTop: '1px solid #f1f5f9', alignItems: 'center' }}>
+                  {adjournEntryId === entry.id ? (
+                    <>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: NAVY }}>Next date:</span>
+                      <input type="date" value={adjournDate} min={todayStr} onChange={e => setAdjournDate(e.target.value)} style={{ ...inputStyle, width: 170, padding: '6px 10px' }} />
+                      <button onClick={() => confirmAdjournment(entry)} disabled={!adjournDate} style={{ ...actionBtn('#6366f1'), padding: '6px 14px', fontSize: '0.78rem', opacity: adjournDate ? 1 : 0.5 }}>✓ Adjourn & create next entry</button>
+                      <button onClick={() => { setAdjournEntryId(null); setAdjournDate(''); }} style={{ ...actionBtn('#94a3b8'), padding: '6px 12px', fontSize: '0.78rem' }}>Cancel</button>
+                    </>
+                  ) : (
+                    <>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#64748b' }}>Log outcome:</span>
+                      <button onClick={() => { setAdjournEntryId(entry.id ?? null); setAdjournDate(''); }} style={{ ...actionBtn('#6366f1'), padding: '5px 12px', fontSize: '0.75rem' }}>📅 Adjourned…</button>
+                      <button onClick={() => logOutcome(entry, 'concluded')} style={{ ...actionBtn('#10b981'), padding: '5px 12px', fontSize: '0.75rem' }}>✅ Concluded</button>
+                      <button onClick={() => logOutcome(entry, 'no_appearance')} style={{ ...actionBtn('#94a3b8'), padding: '5px 12px', fontSize: '0.75rem' }}>🚫 No appearance</button>
+                    </>
+                  )}
+                </div>
+              )}
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
@@ -614,6 +917,7 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
         <div style={stackGap(12)}>
           <div><label style={labelStyle}>Date *</label><input type="date" value={newDiary.date} onChange={e => setNewDiary(p => ({ ...p, date: e.target.value }))} style={inputStyle} required /></div>
           <div><label style={labelStyle}>Time</label><input type="time" value={newDiary.time} onChange={e => setNewDiary(p => ({ ...p, time: e.target.value }))} style={inputStyle} /></div>
+          <div><label style={labelStyle}>Appearance Fee (Rs., optional)</label><input type="number" min="0" value={newDiary.appearanceFee} onChange={e => setNewDiary(p => ({ ...p, appearanceFee: e.target.value }))} placeholder="e.g. 15000" style={inputStyle} /></div>
           <div><label style={labelStyle}>Court *</label><input value={newDiary.court} onChange={e => setNewDiary(p => ({ ...p, court: e.target.value }))} style={inputStyle} placeholder="e.g. Colombo High Court" required /></div>
           <div><label style={labelStyle}>Judge</label><input value={newDiary.judge} onChange={e => setNewDiary(p => ({ ...p, judge: e.target.value }))} style={inputStyle} placeholder="Judge name" /></div>
           <div><label style={labelStyle}>Case Number</label><input value={newDiary.caseNumber} onChange={e => setNewDiary(p => ({ ...p, caseNumber: e.target.value }))} style={inputStyle} placeholder="Case reference" /></div>
@@ -1120,13 +1424,15 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
     </div>
   );
 
-  const SETTINGS_FIELDS: { key: keyof typeof legalSettings; label: string; icon: string; placeholder: string }[] = [
+  const SETTINGS_FIELDS: { key: keyof typeof legalSettings; label: string; icon: string; placeholder: string; type?: 'date' }[] = [
     { key: 'barRegistration', label: 'Bar Association #', icon: '⚖️', placeholder: 'e.g. BASL/2024/1234' },
     { key: 'specialization', label: 'Specialization', icon: '📚', placeholder: 'e.g. Commercial Litigation' },
-    { key: 'practisingCertificate', label: 'Practising Certificate Expiry', icon: '📜', placeholder: 'e.g. 2026' },
+    { key: 'practisingCertificate', label: 'Practising Certificate #', icon: '📜', placeholder: 'e.g. PC/2026/0123' },
+    { key: 'practisingCertExpiry', label: 'Practising Cert. Renewal Due', icon: '🗓️', placeholder: 'YYYY-MM-DD', type: 'date' },
     { key: 'primaryCourt', label: 'Primary Court', icon: '🏛️', placeholder: 'e.g. Commercial High Court, Colombo' },
     { key: 'chambers', label: 'Chambers Address', icon: '🏢', placeholder: 'e.g. Hulftsdorp Street, Colombo 12' },
     { key: 'professionalIndemnity', label: 'Indemnity Insurer', icon: '🛡️', placeholder: 'e.g. SLIC — Policy Active' },
+    { key: 'indemnityExpiry', label: 'Indemnity Expiry', icon: '⏳', placeholder: 'YYYY-MM-DD', type: 'date' },
     { key: 'currency', label: 'Currency', icon: '💱', placeholder: 'e.g. LKR' },
     { key: 'taxYear', label: 'Tax Year', icon: '📋', placeholder: 'e.g. 2025/2026 (April – March)' },
     { key: 'irdTIN', label: 'IRD TIN', icon: '🔑', placeholder: 'Required for APIT filing' },
@@ -1157,6 +1463,7 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
               </div>
               {editingSettings ? (
                 <input
+                  type={s.type || 'text'}
                   value={legalSettings[s.key] || ''}
                   onChange={e => setLegalSettings(prev => ({ ...prev, [s.key]: e.target.value }))}
                   placeholder={s.placeholder}
@@ -1215,7 +1522,7 @@ const LegalDashboard: React.FC<LegalDashboardProps> = ({ userName, onChangeProfe
       case 'trust': return <BiometricGate sectionName="Trust Accounting">{renderTrust()}</BiometricGate>;
       case 'income': return <BiometricGate sectionName="Income & Fee Notes">{renderIncome()}</BiometricGate>;
       case 'expenses': return renderExpenses();
-      case 'tax': return <TaxSpeedometer annualPrivateIncome={totalIncome} annualGovIncome={0} annualExpenses={totalExpensesAmt} whtDeducted={0} />;
+      case 'tax': return <TaxSpeedometer annualPrivateIncome={annualFees} annualGovIncome={0} annualExpenses={annualPracticeExpenses} whtDeducted={estAnnualWht} />;
       case 'receipts': return <ReceiptScanner />;
       case 'documents': return renderDocuments();
       case 'reports': return renderReports();

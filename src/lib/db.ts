@@ -93,6 +93,12 @@ export interface CourtDiaryEntry {
   notes?: string;
   status: 'confirmed' | 'tentative' | 'adjourned' | 'completed' | 'cancelled';
   courtLocation: 'hulftsdorp' | 'outstation';
+  // Adjournment engine — most SL hearings end in a postponement; the outcome
+  // is logged one-tap and an adjournment auto-creates the next diary entry.
+  outcome?: 'adjourned' | 'concluded' | 'no_appearance';
+  nextDate?: string;          // set when adjourned
+  appearanceFee?: number;     // LKR fee for this appearance (per-appearance billing)
+  feePaid?: boolean;
   sync_status: 'pending' | 'synced' | 'error';
   userId: string;
   createdAt: number;
