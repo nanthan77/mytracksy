@@ -122,9 +122,9 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   // Settings state
   const [engSettings, setEngSettings] = useState({
-    firmName: '', ieslReg: '', ictadGrade: '', cidaReg: '', specialization: '',
+    firmName: '', ieslReg: '', ieslRenewalDate: '', ictadGrade: '', cidaReg: '', cidaRenewalDate: '', specialization: '',
     vatReg: '', irdTin: '', financialYear: '2025/2026 (April – March)',
-    retentionPolicy: '10% for 12 months', piInsurance: '',
+    retentionPolicy: '10% for 12 months', piInsurance: '', piExpiry: '',
   });
   const [editingSettings, setEditingSettings] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -137,12 +137,23 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   const [newRetention, setNewRetention] = useState({ projectId: '', retentionPct: '10', retentionAmount: '', releaseDate: '', whtRate: '2', notes: '' });
   const [expenseForm, setExpenseForm] = useState({ amount: '', description: '', category: '', date: new Date().toISOString().split('T')[0] });
 
+  // Demo/guest sessions have no Firebase user — fall back to the locally
+  // stored session identity so on-device persistence (Dexie) still works.
+  const localUid = useMemo(() => {
+    if (uid) return uid;
+    try {
+      return (JSON.parse(localStorage.getItem('tracksyUser') || 'null') as { uid?: string } | null)?.uid || undefined;
+    } catch {
+      return undefined;
+    }
+  }, [uid]);
+
   // Dexie live queries
-  const projects = useLiveQuery(() => uid ? db.engineering_projects.where('userId').equals(uid).toArray() : [], [uid]) || [];
-  const boqItems = useLiveQuery(() => uid ? db.boq_items.where('userId').equals(uid).toArray() : [], [uid]) || [];
-  const inspections = useLiveQuery(() => uid ? db.site_inspections.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
-  const baasEntries = useLiveQuery(() => uid ? db.baas_ledger.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
-  const retentionRecords = useLiveQuery(() => uid ? db.retention_records.where('userId').equals(uid).toArray() : [], [uid]) || [];
+  const projects = useLiveQuery(() => localUid ? db.engineering_projects.where('userId').equals(localUid).toArray() : [], [localUid]) || [];
+  const boqItems = useLiveQuery(() => localUid ? db.boq_items.where('userId').equals(localUid).toArray() : [], [localUid]) || [];
+  const inspections = useLiveQuery(() => localUid ? db.site_inspections.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+  const baasEntries = useLiveQuery(() => localUid ? db.baas_ledger.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+  const retentionRecords = useLiveQuery(() => localUid ? db.retention_records.where('userId').equals(localUid).toArray() : [], [localUid]) || [];
 
   // Computed values
   const totalIncome = invoices.reduce((s, t) => s + t.amount, 0);
@@ -152,6 +163,60 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   const boqTotal = boqItems.reduce((s, b) => s + b.qty * b.estimatedRate, 0);
   const totalRetentionHeld = retentionRecords.filter(r => r.status === 'held').reduce((s, r) => s + r.retentionAmount, 0);
   const baasOutstanding = baasEntries.reduce((s, b) => b.type === 'advance' ? s + b.amount : s - b.amount, 0);
+
+  // ===== RETENTION RELEASE RADAR =====
+  // Research: retention is the engineer's locked-up money; releases are missed
+  // because no one tracks defect-liability end dates. Flag claimable + upcoming.
+  const todayStr = new Date().toISOString().split('T')[0];
+  const retentionClaimable = useMemo(() =>
+    retentionRecords.filter(r => r.status === 'held' && r.releaseDate && r.releaseDate <= todayStr),
+    [retentionRecords, todayStr]);
+  const retentionUpcoming = useMemo(() => {
+    const soon = new Date(); soon.setDate(soon.getDate() + 30);
+    const soonStr = soon.toISOString().split('T')[0];
+    return retentionRecords.filter(r => r.status === 'held' && r.releaseDate && r.releaseDate > todayStr && r.releaseDate <= soonStr);
+  }, [retentionRecords, todayStr]);
+  const claimableTotal = retentionClaimable.reduce((s, r) => s + r.retentionAmount, 0);
+
+  // Month-scoped figures + tax-year annualisation (TaxSpeedometer previously
+  // received raw lifetime totals as "annual" income)
+  const isInMonth = (dateStr: string, ref = new Date()) => {
+    const d = new Date(`${dateStr}T00:00:00`);
+    return !Number.isNaN(d.getTime()) && d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+  };
+  const monthIncome = useMemo(() => invoices.filter(t => isInMonth(t.date)).reduce((s, t) => s + t.amount, 0), [invoices]);
+  const monthExpenses = useMemo(() => expenses.filter(t => isInMonth(t.date)).reduce((s, t) => s + t.amount, 0), [expenses]);
+  const annualise = useCallback((txns: Transaction[]) => {
+    const now = new Date();
+    const taxYearStart = new Date(now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1, 3, 1);
+    const ytd = txns.reduce((sum, t) => {
+      const d = new Date(`${t.date}T00:00:00`);
+      return !Number.isNaN(d.getTime()) && d >= taxYearStart && d <= now ? sum + t.amount : sum;
+    }, 0);
+    const monthsElapsed = Math.max(1, (now.getFullYear() - taxYearStart.getFullYear()) * 12 + (now.getMonth() - taxYearStart.getMonth()) + 1);
+    return Math.round((ytd / monthsElapsed) * 12);
+  }, []);
+  const annualConsultancyFees = useMemo(() => annualise(invoices), [invoices, annualise]);
+  const annualPracticeExpenses = useMemo(() => annualise(expenses), [expenses, annualise]);
+  // 5% AIT/WHT typically withheld by corporate payers on professional service fees
+  const estAnnualWht = Math.round(annualConsultancyFees * 0.05);
+
+  // CIDA / IESL / PI renewal reminders (annual renewals per CIDA scheme)
+  const practiceReminders = useMemo(() => {
+    const out: { id: string; label: string; dueDate: string; daysLeft: number; severity: 'overdue' | 'urgent' | 'warning' }[] = [];
+    const push = (id: string, label: string, dueDate?: string) => {
+      if (!dueDate) return;
+      const due = new Date(`${dueDate}T00:00:00`);
+      if (Number.isNaN(due.getTime())) return;
+      const daysLeft = Math.ceil((due.getTime() - Date.now()) / 86_400_000);
+      if (daysLeft > 60) return;
+      out.push({ id, label, dueDate, daysLeft, severity: daysLeft < 0 ? 'overdue' : daysLeft <= 14 ? 'urgent' : 'warning' });
+    };
+    push('cida', 'CIDA Registration Renewal', engSettings.cidaRenewalDate);
+    push('iesl', 'IESL Membership Renewal', engSettings.ieslRenewalDate);
+    push('pi', `PI Insurance${engSettings.piInsurance ? ` (${engSettings.piInsurance})` : ''}`, engSettings.piExpiry);
+    return out.sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [engSettings.cidaRenewalDate, engSettings.ieslRenewalDate, engSettings.piExpiry, engSettings.piInsurance]);
 
   const activeNavItem = useMemo(() => navItems.find(n => n.id === activeNav) || navItems[0], [activeNav]);
   const activeMobileTab = useMemo(() => getEngMobileTab(activeNav), [activeNav]);
@@ -168,7 +233,16 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   /* ============ Effects ============ */
   useEffect(() => {
-    if (!uid) return;
+    if (!uid) {
+      // Demo/guest: settings from localStorage
+      if (localUid) {
+        try {
+          const stored = JSON.parse(localStorage.getItem(`engSettings_${localUid}`) || 'null');
+          if (stored) setEngSettings(prev => ({ ...prev, ...stored }));
+        } catch { /* ignore */ }
+      }
+      return;
+    }
     seedChartOfAccounts(uid);
     const stopSync = startEngineeringAutoSync(uid);
 
@@ -178,7 +252,7 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
     });
 
     return () => { stopSync(); stopEngineeringAutoSync(); };
-  }, [uid]);
+  }, [uid, localUid]);
 
   useEffect(() => {
     if (!uid) return;
@@ -189,21 +263,21 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   /* ============ Handlers ============ */
   const handleAddProject = async () => {
-    if (!uid || !newProject.name || !newProject.client) return;
+    if (!localUid || !newProject.name || !newProject.client) return;
     await db.engineering_projects.add({
       name: newProject.name, client: newProject.client,
       value: toCents(parseFloat(newProject.value) || 0),
       stage: newProject.stage, pct: 0, ictadGrade: newProject.ictadGrade,
       retentionPct: parseFloat(newProject.retentionPct) || 10,
       startDate: newProject.startDate, notes: newProject.notes,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewProject({ name: '', client: '', value: '', stage: 'design', ictadGrade: 'C1', retentionPct: '10', startDate: '', notes: '' });
     setShowProjectModal(false);
   };
 
   const handleAddBOQ = async () => {
-    if (!uid || !newBOQ.item || !newBOQ.qty) return;
+    if (!localUid || !newBOQ.item || !newBOQ.qty) return;
     const projId = parseInt(newBOQ.projectId) || 0;
     const proj = projects.find(p => p.id === projId);
     await db.boq_items.add({
@@ -213,14 +287,14 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       estimatedRate: parseFloat(newBOQ.estimatedRate) || 0,
       actualRate: newBOQ.actualRate ? parseFloat(newBOQ.actualRate) : undefined,
       status: 'pending', category: newBOQ.category, notes: newBOQ.notes,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewBOQ({ projectId: '', item: '', unit: 'nos', qty: '', estimatedRate: '', actualRate: '', category: '', notes: '' });
     setShowBOQModal(false);
   };
 
   const handleAddInspection = async () => {
-    if (!uid || !newInspection.findings) return;
+    if (!localUid || !newInspection.findings) return;
     const projId = parseInt(newInspection.projectId) || 0;
     const proj = projects.find(p => p.id === projId);
     await db.site_inspections.add({
@@ -228,14 +302,14 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       date: newInspection.date, inspector: newInspection.inspector,
       type: newInspection.type, findings: newInspection.findings,
       status: newInspection.status,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewInspection({ projectId: '', date: new Date().toISOString().split('T')[0], inspector: '', type: 'structural', findings: '', status: 'passed' });
     setShowInspectionModal(false);
   };
 
   const handleAddBaas = async () => {
-    if (!uid || !newBaas.baasName || !newBaas.amount) return;
+    if (!localUid || !newBaas.baasName || !newBaas.amount) return;
     const projId = parseInt(newBaas.projectId) || 0;
     const proj = projects.find(p => p.id === projId);
     await db.baas_ledger.add({
@@ -244,14 +318,14 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       type: newBaas.type, amount: toCents(parseFloat(newBaas.amount) || 0),
       description: newBaas.description, date: newBaas.date,
       workDescription: newBaas.workDescription,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewBaas({ projectId: '', baasName: '', baasPhone: '', type: 'advance', amount: '', description: '', date: new Date().toISOString().split('T')[0], workDescription: '' });
     setShowBaasModal(false);
   };
 
   const handleAddRetention = async () => {
-    if (!uid || !newRetention.retentionAmount || !newRetention.projectId) return;
+    if (!localUid || !newRetention.retentionAmount || !newRetention.projectId) return;
     const projId = parseInt(newRetention.projectId) || 0;
     const proj = projects.find(p => p.id === projId);
     const retAmt = toCents(parseFloat(newRetention.retentionAmount) || 0);
@@ -263,7 +337,7 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       retentionAmount: retAmt, releaseDate: newRetention.releaseDate,
       whtRate, whtAmount: whtAmt, netRelease: retAmt - whtAmt,
       status: 'held', notes: newRetention.notes,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewRetention({ projectId: '', retentionPct: '10', retentionAmount: '', releaseDate: '', whtRate: '2', notes: '' });
     setShowRetentionModal(false);
@@ -304,18 +378,26 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   }, [uid]);
 
   const handleSaveSettings = async () => {
-    if (!uid) return;
+    if (!localUid) return;
     setSettingsSaving(true);
     try {
-      await setDoc(doc(firestoreDb, 'users', uid, 'engineering_settings', 'practice'), engSettings, { merge: true });
+      if (uid) {
+        await setDoc(doc(firestoreDb, 'users', uid, 'engineering_settings', 'practice'), engSettings, { merge: true });
+      } else {
+        localStorage.setItem(`engSettings_${localUid}`, JSON.stringify(engSettings));
+      }
       setEditingSettings(false);
     } catch (err) { console.error('Settings save failed', err); }
     finally { setSettingsSaving(false); }
   };
 
   const handleVoiceAction = (action: ParsedVoiceAction) => {
+    const dateStr = new Date().toISOString().split('T')[0];
     if (action.intent === 'expense' && uid) {
-      addTransaction(uid, { date: new Date().toISOString().split('T')[0], amount: action.amount || 0, category: action.category || 'Site Materials', type: 'expense', description: action.description || 'Voice expense' });
+      addTransaction(uid, { date: dateStr, amount: action.amount || 0, category: action.category || 'Site Materials', type: 'expense', description: action.description || 'Voice expense' });
+    }
+    if (action.intent === 'income' && uid && (action.amount || 0) > 0) {
+      addTransaction(uid, { date: dateStr, amount: action.amount || 0, category: action.category || 'Progress Claim', type: 'income', description: action.description || 'Voice income' });
     }
   };
 
@@ -335,7 +417,7 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
           <div>
             <div style={{ fontSize: '0.85rem', opacity: 0.85, marginBottom: 4 }}>Welcome back, {userName}</div>
             <div style={{ fontSize: isCompactMobile ? '2rem' : '2.5rem', fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1 }}>
-              {formatLKR(fromCents(totalIncome - totalExpensesAmt))}
+              {formatLKR(totalIncome - totalExpensesAmt)}
             </div>
             <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: 6 }}>Net Profit · {activeProjects.length} Active Projects</div>
           </div>
@@ -345,10 +427,43 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
           </div>
         </div>
       </div>
+      {/* Retention release radar — the engineer's locked-up money */}
+      {claimableTotal > 0 && (
+        <div onClick={() => setActiveNav('retention')} style={{ ...cardStyle, cursor: 'pointer', background: '#fef2f2', border: '2px solid #fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 26 }}>💰</div>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#991b1b' }}>{formatLKR(fromCents(claimableTotal))} retention past release date — claim it now!</div>
+              <div style={{ fontSize: 13, color: '#b91c1c' }}>{retentionClaimable.length} record{retentionClaimable.length > 1 ? 's' : ''} where the defect-liability period has ended. Tap to review →</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {retentionUpcoming.length > 0 && (
+        <div onClick={() => setActiveNav('retention')} style={{ ...cardStyle, cursor: 'pointer', padding: '0.85rem 1.25rem', background: '#fffbeb', border: '2px solid #fde68a' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>⏳ {retentionUpcoming.length} retention release{retentionUpcoming.length > 1 ? 's' : ''} due within 30 days — prepare sign-off documents →</div>
+        </div>
+      )}
+
+      {/* CIDA / IESL / PI renewal reminders */}
+      {practiceReminders.map(r => (
+        <div key={r.id} onClick={() => setActiveNav('settings')} style={{ ...cardStyle, cursor: 'pointer', padding: '0.85rem 1.25rem', background: r.severity === 'overdue' ? '#fef2f2' : r.severity === 'urgent' ? '#fff7ed' : '#fffbeb', border: `2px solid ${r.severity === 'overdue' ? '#fecaca' : r.severity === 'urgent' ? '#fed7aa' : '#fde68a'}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ fontSize: 22 }}>{r.id === 'cida' ? '📜' : r.id === 'iesl' ? '📋' : '🛡️'}</div>
+            <div>
+              <div style={{ fontSize: 13.5, fontWeight: 700, color: r.severity === 'overdue' ? '#991b1b' : '#9a3412' }}>
+                {r.label} — {r.daysLeft < 0 ? `${Math.abs(r.daysLeft)} days OVERDUE` : `${r.daysLeft} days left`}
+              </div>
+              <div style={{ fontSize: 12.5, color: '#92400e' }}>Due {r.dueDate}. Tap to review in Settings →</div>
+            </div>
+          </div>
+        </div>
+      ))}
+
       <div style={gridColumns(4)}>
         <KPICard icon="🏗️" label="Active Projects" value={String(activeProjects.length)} changeType="neutral" color="#3b82f6" />
-        <KPICard icon="💰" label="Income" value={formatLKR(totalIncome)} changeType="up" color="#22c55e" />
-        <KPICard icon="💸" label="Expenses" value={formatLKR(totalExpensesAmt)} changeType="neutral" color="#ef4444" />
+        <KPICard icon="💰" label="Income This Month" value={formatLKR(monthIncome)} changeType="up" color="#22c55e" />
+        <KPICard icon="💸" label="Expenses This Month" value={formatLKR(monthExpenses)} changeType="neutral" color="#ef4444" />
         <KPICard icon="🔒" label="Retention Held" value={formatLKR(fromCents(totalRetentionHeld))} changeType="neutral" color="#f59e0b" />
       </div>
       <div style={gridColumns(2)}>
@@ -618,11 +733,31 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   const renderRetention = () => (
     <div style={stackGap(20)}>
-      <div style={gridColumns(3)}>
+      <div style={gridColumns(4)}>
         <KPICard icon="🔒" label="Held" value={formatLKR(fromCents(totalRetentionHeld))} changeType="neutral" color="#f59e0b" />
+        <KPICard icon="💰" label="Claimable NOW" value={formatLKR(fromCents(claimableTotal))} changeType={claimableTotal > 0 ? 'up' : 'neutral'} color={claimableTotal > 0 ? '#ef4444' : '#22c55e'} />
         <KPICard icon="📅" label="Pending Release" value={String(retentionRecords.filter(r => r.status === 'held').length)} changeType="neutral" color="#6366f1" />
         <KPICard icon="✅" label="Released" value={String(retentionRecords.filter(r => r.status === 'released').length)} changeType="up" color="#22c55e" />
       </div>
+
+      {/* RELEASE RADAR — claimable + upcoming */}
+      {retentionClaimable.length > 0 && (
+        <div style={{ ...cardStyle, background: '#fef2f2', border: '2px solid #fecaca' }}>
+          <h3 style={{ ...cardTitle, color: '#991b1b', marginBottom: '0.5rem' }}>🚨 {formatLKR(fromCents(claimableTotal))} retention is past its release date — claim it!</h3>
+          {retentionClaimable.map(r => (
+            <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 8, padding: '8px 12px', background: 'white', borderRadius: 8, marginBottom: 4 }}>
+              <div style={{ fontSize: 13.5 }}><strong>{r.projectName}</strong> · {r.client} · due {r.releaseDate} · net {formatLKR(fromCents(r.netRelease))}</div>
+              <button onClick={() => r.id !== undefined && db.retention_records.update(r.id, { status: 'released' as const, sync_status: 'pending' as const })} style={{ ...actionBtn('#22c55e'), padding: '4px 12px', fontSize: '0.75rem' }}>✓ Mark Released</button>
+            </div>
+          ))}
+        </div>
+      )}
+      {retentionUpcoming.length > 0 && (
+        <div style={{ ...cardStyle, background: '#fffbeb', border: '1px solid #fde68a', padding: '0.85rem 1.25rem' }}>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#92400e' }}>⏳ {retentionUpcoming.length} retention release{retentionUpcoming.length > 1 ? 's' : ''} due within 30 days — prepare defect-liability sign-off documents.</div>
+        </div>
+      )}
+
       <button onClick={() => setShowRetentionModal(true)} style={primaryBtn}>+ Add Retention</button>
       <div style={cardStyle}>
         <h3 style={cardTitle}>🔒 Retention Vault</h3>
@@ -651,6 +786,9 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
                       color: r.status === 'released' ? '#22c55e' : r.status === 'held' ? '#f59e0b' : '#ef4444',
                       background: r.status === 'released' ? '#dcfce7' : r.status === 'held' ? '#fef3c7' : '#fee2e2',
                     }}>{r.status}</span>
+                    {r.status === 'held' && (
+                      <button onClick={() => r.id !== undefined && db.retention_records.update(r.id, { status: 'released' as const, sync_status: 'pending' as const })} title="Mark as released/received" style={{ marginLeft: 6, padding: '2px 8px', borderRadius: 6, fontSize: '0.68rem', fontWeight: 700, cursor: 'pointer', border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a' }}>✓ Released</button>
+                    )}
                   </td>
                 </tr>
               ))}</tbody>
@@ -838,17 +976,20 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   );
 
   // Settings
-  const SETTINGS_FIELDS: { key: keyof typeof engSettings; label: string; icon: string; placeholder: string }[] = [
+  const SETTINGS_FIELDS: { key: keyof typeof engSettings; label: string; icon: string; placeholder: string; type?: 'date' }[] = [
     { key: 'firmName', label: 'Firm Name', icon: '🏗️', placeholder: 'e.g. My Engineering Firm (Pvt) Ltd' },
     { key: 'ieslReg', label: 'IESL Registration', icon: '📋', placeholder: 'e.g. IESL/CM/2020/4567' },
+    { key: 'ieslRenewalDate', label: 'IESL Renewal Due', icon: '🗓️', placeholder: 'YYYY-MM-DD', type: 'date' },
     { key: 'ictadGrade', label: 'ICTAD Grade', icon: '🏛️', placeholder: 'e.g. C1 — Building & Civil' },
     { key: 'cidaReg', label: 'CIDA Registration', icon: '📜', placeholder: 'e.g. CIDA/2024/CS/892' },
+    { key: 'cidaRenewalDate', label: 'CIDA Renewal Due (annual)', icon: '🗓️', placeholder: 'YYYY-MM-DD', type: 'date' },
     { key: 'specialization', label: 'Specialization', icon: '🔧', placeholder: 'e.g. Civil & Structural' },
     { key: 'vatReg', label: 'VAT Registration', icon: '🧾', placeholder: 'e.g. VAT-LK-005678 (18%)' },
     { key: 'irdTin', label: 'IRD TIN', icon: '🔑', placeholder: 'e.g. 567890123' },
     { key: 'financialYear', label: 'Financial Year', icon: '📅', placeholder: 'April 2025 – March 2026' },
     { key: 'retentionPolicy', label: 'Retention Policy', icon: '🏦', placeholder: '10% for 12 months' },
     { key: 'piInsurance', label: 'PI Insurance', icon: '⚠️', placeholder: 'e.g. SLIC Policy — Active' },
+    { key: 'piExpiry', label: 'PI Insurance Expiry', icon: '⏳', placeholder: 'YYYY-MM-DD', type: 'date' },
   ];
 
   const renderSettings = () => (
@@ -875,7 +1016,7 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
                 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>{s.label}</span>
               </div>
               {editingSettings ? (
-                <input value={engSettings[s.key] || ''} onChange={e => setEngSettings(p => ({ ...p, [s.key]: e.target.value }))} placeholder={s.placeholder}
+                <input type={s.type || 'text'} value={engSettings[s.key] || ''} onChange={e => setEngSettings(p => ({ ...p, [s.key]: e.target.value }))} placeholder={s.placeholder}
                   style={{ ...inputStyle, flex: 1, minWidth: isCompactMobile ? '100%' : 200 }} />
               ) : (
                 <span style={{ fontSize: '0.875rem', fontWeight: 500, color: !engSettings[s.key] ? '#dc2626' : '#334155' }}>
@@ -1084,7 +1225,7 @@ const EngineeringDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       case 'retention': return <BiometricGate sectionName="Retention Vault">{renderRetention()}</BiometricGate>;
       case 'income': return renderIncome();
       case 'expenses': return renderExpenses();
-      case 'tax': return <TaxSpeedometer annualPrivateIncome={totalIncome} annualGovIncome={0} annualExpenses={totalExpensesAmt} whtDeducted={0} />;
+      case 'tax': return <TaxSpeedometer annualPrivateIncome={annualConsultancyFees} annualGovIncome={0} annualExpenses={annualPracticeExpenses} whtDeducted={estAnnualWht} />;
       case 'receipts': return <ReceiptScanner />;
       case 'reports': return renderReports();
       case 'export': return <AuditorExport invoices={invoices} expenses={expenses} />;
