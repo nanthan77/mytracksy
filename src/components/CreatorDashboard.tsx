@@ -166,11 +166,22 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
     amount: '', description: '', taxDeductible: true,
   });
 
+  // Demo/guest sessions have no Firebase user — fall back to the locally
+  // stored session identity so on-device persistence (Dexie) still works.
+  const localUid = useMemo(() => {
+    if (uid) return uid;
+    try {
+      return (JSON.parse(localStorage.getItem('tracksyUser') || 'null') as { uid?: string } | null)?.uid || undefined;
+    } catch {
+      return undefined;
+    }
+  }, [uid]);
+
   // Dexie live queries
-  const brandDeals = useLiveQuery(() => uid ? db.creator_brand_deals.where('userId').equals(uid).reverse().sortBy('createdAt') : [], [uid]) || [];
-  const gearItems = useLiveQuery(() => uid ? db.creator_gear_items.where('userId').equals(uid).toArray() : [], [uid]) || [];
-  const revenueEntries = useLiveQuery(() => uid ? db.creator_revenue.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
-  const creatorExpenses = useLiveQuery(() => uid ? db.creator_expenses.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
+  const brandDeals = useLiveQuery(() => localUid ? db.creator_brand_deals.where('userId').equals(localUid).reverse().sortBy('createdAt') : [], [localUid]) || [];
+  const gearItems = useLiveQuery(() => localUid ? db.creator_gear_items.where('userId').equals(localUid).toArray() : [], [localUid]) || [];
+  const revenueEntries = useLiveQuery(() => localUid ? db.creator_revenue.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+  const creatorExpenses = useLiveQuery(() => localUid ? db.creator_expenses.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
 
   // Computed values
   const totalRevenueLKR = revenueEntries.reduce((s, r) => s + r.lkrAmount, 0);
@@ -187,6 +198,49 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
     const amt = d.currency === 'USD' ? d.amount * (parseFloat(creatorSettings.cbslRate) || 300) : d.amount;
     return s + amt;
   }, 0);
+
+  // ===== DUAL-REGIME TAX ESTIMATE (post-Feb-2025 rules) =====
+  // The blanket "service export" exemption for foreign income ENDED on
+  // 1 Feb 2025. Foreign-currency income remitted via a Sri Lankan bank is now
+  // taxed concessionally (first Rs 1.8M relief, next Rs 1M at 6%, balance
+  // capped at 15%). Local income (brand deals in LKR) follows the normal
+  // progressive schedule, with 5% AIT typically withheld by corporate payers.
+  const annualiseValues = useCallback((rows: { date: string; value: number }[]) => {
+    const now = new Date();
+    const taxYearStart = new Date(now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1, 3, 1);
+    const ytd = rows.reduce((sum, r) => {
+      const d = new Date(`${r.date}T00:00:00`);
+      return !Number.isNaN(d.getTime()) && d >= taxYearStart && d <= now ? sum + r.value : sum;
+    }, 0);
+    const monthsElapsed = Math.max(1, (now.getFullYear() - taxYearStart.getFullYear()) * 12 + (now.getMonth() - taxYearStart.getMonth()) + 1);
+    return Math.round((ytd / monthsElapsed) * 12);
+  }, []);
+  const annualForeignLKR = useMemo(() =>
+    annualiseValues(revenueEntries.filter(r => r.currency === 'USD').map(r => ({ date: r.date, value: r.lkrAmount }))),
+    [revenueEntries, annualiseValues]);
+  const annualLocalLKR = useMemo(() =>
+    annualiseValues(revenueEntries.filter(r => r.currency !== 'USD').map(r => ({ date: r.date, value: r.lkrAmount }))),
+    [revenueEntries, annualiseValues]);
+  const annualDeductibleExpenses = useMemo(() =>
+    annualiseValues(creatorExpenses.filter(e => e.taxDeductible).map(e => ({ date: e.date, value: e.amount }))) + gearDepreciation,
+    [creatorExpenses, gearDepreciation, annualiseValues]);
+  // Concessionary foreign-income tax: 1.8M relief → 1M @6% → balance @15%
+  const foreignTaxEst = useMemo(() => {
+    let remaining = Math.max(0, annualForeignLKR - 1_800_000);
+    const at6 = Math.min(remaining, 1_000_000);
+    remaining -= at6;
+    return Math.round(at6 * 0.06 + remaining * 0.15);
+  }, [annualForeignLKR]);
+  const estLocalWht = Math.round(annualLocalLKR * 0.05);
+
+  // Deal deadline radar — overdue deliverables + stale unpaid invoices
+  const overdueDeliverables = useMemo(() =>
+    brandDeals.filter(d => d.stage === 'shoot_booked' && !!d.dueDate && d.dueDate < new Date().toISOString().slice(0, 10)),
+    [brandDeals]);
+  const staleInvoices = useMemo(() => {
+    const cutoff = Date.now() - 14 * 86_400_000;
+    return brandDeals.filter(d => d.stage === 'invoice_sent' && ((d as { updatedAt?: number }).updatedAt || d.createdAt) < cutoff);
+  }, [brandDeals]);
 
   // Revenue by source
   const revenueBySource: Record<string, number> = {};
@@ -210,7 +264,16 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
 
   /* ============ Effects ============ */
   useEffect(() => {
-    if (!uid) return;
+    if (!uid) {
+      // Demo/guest: settings from localStorage
+      if (localUid) {
+        try {
+          const stored = JSON.parse(localStorage.getItem(`creatorSettings_${localUid}`) || 'null');
+          if (stored) setCreatorSettings(prev => ({ ...prev, ...stored }));
+        } catch { /* ignore */ }
+      }
+      return;
+    }
     seedChartOfAccounts(uid);
     const stopSync = startCreatorAutoSync(uid);
 
@@ -219,7 +282,7 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
     });
 
     return () => { stopSync(); stopCreatorAutoSync(); };
-  }, [uid]);
+  }, [uid, localUid]);
 
   useEffect(() => {
     if (!uid) return;
@@ -230,13 +293,13 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
 
   /* ============ Handlers ============ */
   const handleAddDeal = async () => {
-    if (!uid || !newDeal.brand || !newDeal.platform) return;
+    if (!localUid || !newDeal.brand || !newDeal.platform) return;
     await db.creator_brand_deals.add({
       brand: newDeal.brand, platform: newDeal.platform, stage: newDeal.stage,
       amount: parseFloat(newDeal.amount) || 0, currency: newDeal.currency,
       deliverables: newDeal.deliverables, dueDate: newDeal.dueDate,
       contactName: newDeal.contactName, contactPhone: newDeal.contactPhone,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewDeal({ brand: '', platform: 'YouTube', stage: 'pitch', amount: '', currency: 'LKR', deliverables: '', dueDate: '', contactName: '', contactPhone: '' });
     setShowAddDeal(false);
@@ -251,7 +314,7 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
   };
 
   const handleAddGear = async () => {
-    if (!uid || !newGear.name) return;
+    if (!localUid || !newGear.name) return;
     const cost = parseFloat(newGear.purchaseCost) || 0;
     const life = parseInt(newGear.usefulLifeYears) || 5;
     await db.creator_gear_items.add({
@@ -259,7 +322,7 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
       purchaseCost: cost, purchaseDate: newGear.purchaseDate,
       usefulLifeYears: life, annualDepreciation: Math.round(cost / life),
       invoiceRef: newGear.invoiceRef, serialNumber: newGear.serialNumber,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewGear({ name: '', category: 'Camera', purchaseCost: '', purchaseDate: today, usefulLifeYears: '5', invoiceRef: '', serialNumber: '' });
     setShowAddGear(false);
@@ -270,7 +333,7 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
   };
 
   const handleAddRevenue = async () => {
-    if (!uid || !newRevenue.amount) return;
+    if (!localUid || !newRevenue.amount) return;
     const amt = parseFloat(newRevenue.amount) || 0;
     const cbslRate = parseFloat(creatorSettings.cbslRate) || 300;
     const lkrAmount = newRevenue.currency === 'USD' ? Math.round(amt * cbslRate) : amt;
@@ -280,32 +343,36 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
       lkrAmount, cbslRate: newRevenue.currency === 'USD' ? cbslRate : undefined,
       description: newRevenue.description,
       brandDealId: newRevenue.brandDealId ? parseInt(newRevenue.brandDealId) : undefined,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
-    await addTransaction(uid, {
-      date: newRevenue.date, amount: lkrAmount,
-      category: newRevenue.source, type: 'income',
-      description: `${newRevenue.source}${newRevenue.currency === 'USD' ? ` ($${amt} @ ${cbslRate})` : ''} — ${newRevenue.description}`,
-      paymentMethod: 'bank',
-    });
+    if (uid) {
+      await addTransaction(uid, {
+        date: newRevenue.date, amount: lkrAmount,
+        category: newRevenue.source, type: 'income',
+        description: `${newRevenue.source}${newRevenue.currency === 'USD' ? ` ($${amt} @ ${cbslRate})` : ''} — ${newRevenue.description}`,
+        paymentMethod: 'bank',
+      });
+    }
     setNewRevenue({ date: today, source: 'AdSense', amount: '', currency: 'LKR', description: '', brandDealId: '' });
     setShowAddRevenue(false);
   };
 
   const handleAddExpense = async () => {
-    if (!uid || !newExpenseForm.amount || !newExpenseForm.description) return;
+    if (!localUid || !newExpenseForm.amount || !newExpenseForm.description) return;
     const amt = parseFloat(newExpenseForm.amount) || 0;
     await db.creator_expenses.add({
       date: newExpenseForm.date, category: newExpenseForm.category,
       amount: amt, description: newExpenseForm.description,
       taxDeductible: newExpenseForm.taxDeductible,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
-    await addTransaction(uid, {
-      date: newExpenseForm.date, amount: amt,
-      category: newExpenseForm.category, type: 'expense',
-      description: newExpenseForm.description, paymentMethod: 'cash',
-    });
+    if (uid) {
+      await addTransaction(uid, {
+        date: newExpenseForm.date, amount: amt,
+        category: newExpenseForm.category, type: 'expense',
+        description: newExpenseForm.description, paymentMethod: 'cash',
+      });
+    }
     setNewExpenseForm({ date: today, category: 'Production', amount: '', description: '', taxDeductible: true });
     setShowAddExpense(false);
   };
@@ -333,10 +400,14 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
   }, [uid]);
 
   const handleSaveSettings = async () => {
-    if (!uid) return;
+    if (!localUid) return;
     setSettingsSaving(true);
     try {
-      await setDoc(doc(firestoreDb, 'users', uid, 'creator_settings', 'profile'), creatorSettings, { merge: true });
+      if (uid) {
+        await setDoc(doc(firestoreDb, 'users', uid, 'creator_settings', 'profile'), creatorSettings, { merge: true });
+      } else {
+        localStorage.setItem(`creatorSettings_${localUid}`, JSON.stringify(creatorSettings));
+      }
       setEditingSettings(false);
     } catch (err) { console.error('Settings save failed', err); }
     finally { setSettingsSaving(false); }
@@ -344,11 +415,19 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
 
   const handleVoiceAction = (action: ParsedVoiceAction) => {
     if (!uid) return;
+    const dateStr = new Date().toISOString().split('T')[0];
     if (action.intent === 'expense') {
       addTransaction(uid, {
-        date: new Date().toISOString().split('T')[0], amount: action.amount || 0,
+        date: dateStr, amount: action.amount || 0,
         category: action.category || 'Production', type: 'expense',
         description: action.description || 'Voice expense',
+      });
+    }
+    if (action.intent === 'income' && (action.amount || 0) > 0) {
+      addTransaction(uid, {
+        date: dateStr, amount: action.amount || 0,
+        category: action.category || 'Brand Deal', type: 'income',
+        description: action.description || 'Voice income',
       });
     }
   };
@@ -421,7 +500,30 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
           })}
         </div>
       </div>
-      {brandDeals.filter(d => d.stage === 'invoice_sent').length > 0 && (
+      {/* Deal deadline radar */}
+      {overdueDeliverables.length > 0 && (
+        <div onClick={() => setActiveNav('deals')} style={{ ...cs, cursor: 'pointer', background: '#fef2f2', borderColor: '#fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '1.2rem' }}>🚨</span>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#991b1b' }}>{overdueDeliverables.length} deliverable{overdueDeliverables.length > 1 ? 's' : ''} OVERDUE</div>
+              <div style={{ fontSize: '0.8rem', color: '#b91c1c' }}>{overdueDeliverables.slice(0, 2).map(d => `${d.brand} (was due ${d.dueDate})`).join(' · ')}{overdueDeliverables.length > 2 ? ' +more' : ''} — brands remember missed deadlines →</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {staleInvoices.length > 0 && (
+        <div onClick={() => setActiveNav('deals')} style={{ ...cs, cursor: 'pointer', background: '#fef2f2', borderColor: '#fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: '1.2rem' }}>💸</span>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#991b1b' }}>{staleInvoices.length} invoice{staleInvoices.length > 1 ? 's' : ''} unpaid for 14+ days</div>
+              <div style={{ fontSize: '0.8rem', color: '#b91c1c' }}>{staleInvoices.slice(0, 2).map(d => d.brand).join(' · ')}{staleInvoices.length > 2 ? ' +more' : ''} — send a payment chase today →</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {brandDeals.filter(d => d.stage === 'invoice_sent').length > staleInvoices.length && (
         <div style={{ ...cs, background: '#fef3c7', borderColor: '#fbbf24' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <span style={{ fontSize: '1.2rem' }}>💳</span>
@@ -949,7 +1051,36 @@ const CreatorDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
       case 'deals': return renderDeals();
       case 'revenue': return renderRevenue();
       case 'expenses': return renderExpenses();
-      case 'tax': return <TaxSpeedometer annualPrivateIncome={totalIncome} annualGovIncome={0} annualExpenses={totalExpensesTxn} whtDeducted={0} />;
+      case 'tax': return (
+        <div style={stackGap(20)}>
+          {/* Dual-regime creator tax card — foreign income rules changed 1 Feb 2025 */}
+          <div style={{ ...cs, border: '2px solid #06b6d422' }}>
+            <h3 style={ct}>🌍 Creator Dual-Regime Tax Estimate (2025/26 rules)</h3>
+            <div style={gridColumns(3)}>
+              <div style={{ padding: '0.85rem', background: '#ecfeff', borderRadius: 10, border: '1px solid #a5f3fc' }}>
+                <div style={{ fontSize: '0.78rem', color: '#155e75', fontWeight: 600 }}>Foreign Income (remitted, est./yr)</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#0e7490' }}>{fmt(annualForeignLKR)}</div>
+                <div style={{ fontSize: '0.74rem', color: '#155e75', marginTop: 4 }}>Concessionary tax est: <strong>{fmt(foreignTaxEst)}</strong></div>
+              </div>
+              <div style={{ padding: '0.85rem', background: '#faf5ff', borderRadius: 10, border: '1px solid #e9d5ff' }}>
+                <div style={{ fontSize: '0.78rem', color: '#6b21a8', fontWeight: 600 }}>Local Income (est./yr)</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#7e22ce' }}>{fmt(annualLocalLKR)}</div>
+                <div style={{ fontSize: '0.74rem', color: '#6b21a8', marginTop: 4 }}>Progressive rates below · est. 5% AIT withheld: <strong>{fmt(estLocalWht)}</strong></div>
+              </div>
+              <div style={{ padding: '0.85rem', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
+                <div style={{ fontSize: '0.78rem', color: '#92400e', fontWeight: 600 }}>Deductions (est./yr)</div>
+                <div style={{ fontSize: '1.25rem', fontWeight: 800, color: '#b45309' }}>{fmt(annualDeductibleExpenses)}</div>
+                <div style={{ fontSize: '0.74rem', color: '#92400e', marginTop: 4 }}>incl. gear depreciation {fmt(gearDepreciation)}/yr</div>
+              </div>
+            </div>
+            <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.85rem', background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca', fontSize: '0.76rem', color: '#991b1b' }}>
+              ⚠️ <strong>Rule change:</strong> the foreign-income "service export" exemption ended on 1 Feb 2025. Foreign earnings remitted through a Sri Lankan bank are now taxed at concessionary rates (Rs 1.8M relief → Rs 1M @ 6% → balance capped at 15%). Keep bank remittance records for every AdSense/Wise/PayPal receipt. Estimates only — confirm with your tax advisor.
+            </div>
+          </div>
+          {/* Progressive schedule applies to LOCAL income */}
+          <TaxSpeedometer annualPrivateIncome={annualLocalLKR} annualGovIncome={0} annualExpenses={annualDeductibleExpenses} whtDeducted={estLocalWht} />
+        </div>
+      );
       case 'receipts': return <ReceiptScanner />;
       case 'gear': return <SubscriptionGate featureName="Gear Vault" featureIcon="📸">{renderGear()}</SubscriptionGate>;
       case 'ai': return <SubscriptionGate featureName="AI Studio" featureIcon="🧠">{renderAI()}</SubscriptionGate>;

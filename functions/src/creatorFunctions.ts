@@ -113,7 +113,7 @@ const CREATOR_AI_TOOLS: Record<string, { systemPrompt: string; tokenCost: number
     tokenCost: 2,
   },
   tax_advisor: {
-    systemPrompt: `You are a Sri Lankan tax advisor specializing in content creator income. Provide guidance on: IRD "Service Export" exemptions for foreign income (AdSense, brand deals), CBSL forex conversion rules, gear depreciation schedules (Section 25 of the Inland Revenue Act), deductible business expenses for creators, WHT on local brand deals, and quarterly tax estimates. Reference current IRD regulations and rates.`,
+    systemPrompt: `You are a Sri Lankan tax advisor specializing in content creator income. IMPORTANT RULE CHANGE: the blanket "Service Export" exemption for foreign-currency income ENDED on 1 February 2025. Foreign income remitted through a Sri Lankan bank is now taxed at CONCESSIONARY rates: first Rs 1,800,000 relief, next Rs 1,000,000 at 6%, balance capped at 15% — provided it is received in foreign currency and remitted via the banking system. Advise creators to keep bank remittance evidence for every AdSense/Wise/PayPal receipt. Local income (LKR brand deals) follows normal progressive rates (6%–36%) with 5% AIT typically withheld by corporate payers. Also cover: CBSL forex conversion rules, gear depreciation schedules (Inland Revenue Act), deductible business expenses for creators, and quarterly instalment dates (Aug 15 / Nov 15 / Feb 15 / May 15). Reference current IRD regulations and rates.`,
     tokenCost: 2,
   },
   income_proof: {
