@@ -30,6 +30,15 @@ export interface SubscriptionData {
 export interface UsageQuota {
     month_id: string;
     ai_voice_notes_used: number;
+    [counter: string]: string | number | undefined;
+}
+
+/** Per-feature quota configuration for the generic guard. */
+export interface QuotaOptions {
+    /** Firestore counter field in usage_quotas/current_month (default: ai_voice_notes_used) */
+    quotaField?: string;
+    /** Free-tier monthly allowance for this feature (default: FREE_VOICE_NOTE_QUOTA) */
+    freeQuota?: number;
 }
 
 // ─── Helper: get current month ID ───────────────────────────────
@@ -53,8 +62,11 @@ function getCurrentMonthId(): string {
  */
 export async function verifyProOrCheckQuota(
     userId: string,
-    feature: string = "ai_voice_note"
+    feature: string = "ai_voice_note",
+    options: QuotaOptions = {}
 ): Promise<{ allowed: boolean; tier: string; remaining?: number }> {
+    const quotaField = options.quotaField ?? "ai_voice_notes_used";
+    const freeQuota = options.freeQuota ?? FREE_VOICE_NOTE_QUOTA;
     const subRef = db.doc(`users/${userId}/subscription/current`);
     const subSnap = await subRef.get();
 
@@ -91,45 +103,119 @@ export async function verifyProOrCheckQuota(
         if (quotaSnap.exists) {
             const data = quotaSnap.data() as UsageQuota;
 
-            // If it's a new month, reset the counter
+            // If it's a new month, reset ALL counters (doc is replaced)
             if (data.month_id !== monthId) {
                 tx.set(quotaRef, {
                     month_id: monthId,
-                    ai_voice_notes_used: 1,
+                    [quotaField]: 1,
                 });
-                logger.info(`🔄 New month ${monthId} — reset quota for ${userId}, using 1/${FREE_VOICE_NOTE_QUOTA}`);
-                return { allowed: true, tier: "free", remaining: FREE_VOICE_NOTE_QUOTA - 1 };
+                logger.info(`🔄 New month ${monthId} — reset quota for ${userId}, using 1/${freeQuota} ${feature}`);
+                return { allowed: true, tier: "free", remaining: freeQuota - 1 };
             }
 
-            used = data.ai_voice_notes_used || 0;
+            used = (data[quotaField] as number) || 0;
         }
 
         // Check if over limit
-        if (used >= FREE_VOICE_NOTE_QUOTA) {
-            logger.warn(`🚫 User ${userId} hit free quota: ${used}/${FREE_VOICE_NOTE_QUOTA} ${feature}`);
+        if (used >= freeQuota) {
+            logger.warn(`🚫 User ${userId} hit free quota: ${used}/${freeQuota} ${feature}`);
             throw new HttpsError(
                 "resource-exhausted",
-                `Monthly AI limit reached (${FREE_VOICE_NOTE_QUOTA}/${FREE_VOICE_NOTE_QUOTA} used). Upgrade to Pro for unlimited access.`
+                `Monthly free limit reached for this feature (${freeQuota}/${freeQuota} used). Upgrade to Pro for unlimited access.`
             );
         }
 
         // Under limit — increment
         if (quotaSnap.exists) {
             tx.update(quotaRef, {
-                ai_voice_notes_used: admin.firestore.FieldValue.increment(1),
+                [quotaField]: admin.firestore.FieldValue.increment(1),
             });
         } else {
             // First usage ever — create the document
             tx.set(quotaRef, {
                 month_id: monthId,
-                ai_voice_notes_used: 1,
+                [quotaField]: 1,
             });
         }
 
-        const remaining = FREE_VOICE_NOTE_QUOTA - used - 1;
-        logger.info(`📊 Free user ${userId}: ${used + 1}/${FREE_VOICE_NOTE_QUOTA} ${feature} used (${remaining} remaining)`);
+        const remaining = freeQuota - used - 1;
+        logger.info(`📊 Free user ${userId}: ${used + 1}/${freeQuota} ${feature} used (${remaining} remaining)`);
         return { allowed: true, tier: "free", remaining };
     });
+}
+
+/**
+ * Strict Pro gate — no free quota. Throws unless the user has an active,
+ * unexpired Pro subscription. Use for Pro-exclusive compute.
+ */
+export async function requirePro(userId: string, feature: string): Promise<void> {
+    if (await isProUser(userId)) return;
+    logger.warn(`🚫 ${feature}: user ${userId} is not Pro`);
+    throw new HttpsError(
+        "permission-denied",
+        `${feature} requires an active Pro subscription. Upgrade to continue.`
+    );
+}
+
+// ─── Canonical AI-token wallet ──────────────────────────────────
+// The ONE wallet location: users/{uid}/wallet/current_balance, field
+// `ai_tokens`. PayHere top-ups credit it, spendTokens debits it, and
+// useTokenWallet renders it. (Profession AI functions previously read
+// `wallet/balance.tokens` or `users/{uid}.token_balance` — paths that are
+// never credited, so paying users were always rejected.)
+
+/**
+ * Atomically spend AI tokens from the canonical wallet. Throws
+ * resource-exhausted if the balance is insufficient. Logs the spend.
+ */
+export async function spendWalletTokens(
+    userId: string,
+    cost: number,
+    feature: string
+): Promise<{ remaining: number }> {
+    if (!Number.isInteger(cost) || cost <= 0) {
+        throw new HttpsError("invalid-argument", "Invalid token cost");
+    }
+    const walletRef = db.doc(`users/${userId}/wallet/current_balance`);
+    return db.runTransaction(async (tx) => {
+        const snap = await tx.get(walletRef);
+        const current = snap.exists ? (snap.data()?.ai_tokens || 0) : 0;
+        if (current < cost) {
+            throw new HttpsError(
+                "resource-exhausted",
+                `Insufficient tokens. Need ${cost}, have ${current}. Please top up.`
+            );
+        }
+        tx.set(walletRef, {
+            ai_tokens: current - cost,
+            last_spent_at: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+        const logRef = db.collection(`users/${userId}/wallet_transactions`).doc();
+        tx.set(logRef, {
+            type: "spend",
+            tokens: -cost,
+            feature,
+            createdAt: Date.now(),
+        });
+        logger.info(`🪙 ${userId} spent ${cost} tokens on ${feature} (${current - cost} left)`);
+        return { remaining: current - cost };
+    });
+}
+
+/**
+ * Refund tokens after a failed AI call (spend-first, refund-on-error pattern
+ * so users are never charged for failures).
+ */
+export async function refundWalletTokens(userId: string, cost: number, feature: string): Promise<void> {
+    const walletRef = db.doc(`users/${userId}/wallet/current_balance`);
+    await walletRef.set({ ai_tokens: admin.firestore.FieldValue.increment(cost) }, { merge: true });
+    await db.collection(`users/${userId}/wallet_transactions`).add({
+        type: "refund",
+        tokens: cost,
+        feature,
+        createdAt: Date.now(),
+    });
+    logger.info(`↩️ Refunded ${cost} tokens to ${userId} (${feature} failed)`);
 }
 
 /**

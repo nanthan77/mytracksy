@@ -1,4 +1,4 @@
-import { db, type LocalTransaction, type ClinicalNote, type LocalReceipt, type WalletTransaction } from './db';
+import { db, type LocalTransaction, type ClinicalNote, type LocalReceipt, type WalletTransaction, type MedicalChannelingShift } from './db';
 import { getFirestore, collection, writeBatch, doc, getDocs, query, where, orderBy, limit } from 'firebase/firestore';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
@@ -114,6 +114,14 @@ class SyncEngine {
         totalErrors += result.errors;
       }
 
+      // 6. Sync Medical Channeling Shifts (financial — no patient identifiers)
+      const pendingShifts = await db.medical_channeling_shifts.where('sync_status').equals('pending').toArray();
+      if (pendingShifts.length > 0) {
+        const result = await this.syncCollection(firestore, 'medical_channeling_shifts', pendingShifts, 'medical_channeling_shifts');
+        totalSynced += result.synced;
+        totalErrors += result.errors;
+      }
+
       this.setStatus('idle');
       return { success: totalErrors === 0, synced: totalSynced, errors: totalErrors, timestamp: Date.now() };
     } catch (err) {
@@ -129,8 +137,8 @@ class SyncEngine {
   private async syncCollection(
     firestore: ReturnType<typeof getFirestore>,
     collectionName: string,
-    items: (LocalTransaction | ClinicalNote | WalletTransaction)[],
-    tableName: 'transactions' | 'clinical_notes' | 'wallet_transactions'
+    items: (LocalTransaction | ClinicalNote | WalletTransaction | MedicalChannelingShift)[],
+    tableName: 'transactions' | 'clinical_notes' | 'wallet_transactions' | 'medical_channeling_shifts'
   ): Promise<{ synced: number; errors: number }> {
     let synced = 0;
     let errors = 0;
@@ -139,24 +147,28 @@ class SyncEngine {
     for (let i = 0; i < items.length; i += this.MAX_BATCH_SIZE) {
       const chunk = items.slice(i, i + this.MAX_BATCH_SIZE);
       const batch = writeBatch(firestore);
+      const writtenRefs: { item: (typeof chunk)[number]; refId: string }[] = [];
 
       for (const item of chunk) {
         const userId = item.userId;
         const docRef = item.firestoreId
           ? doc(firestore, `users/${userId}/${collectionName}`, item.firestoreId)
           : doc(collection(firestore, `users/${userId}/${collectionName}`));
-        
+
         // Strip local-only fields before sending to cloud
         const { id, sync_status, ...cloudData } = item as any;
         batch.set(docRef, { ...cloudData, firestoreId: docRef.id, updatedAt: Date.now() }, { merge: true });
+        writtenRefs.push({ item, refId: docRef.id });
       }
 
       try {
         await batch.commit();
-        // Mark local records as synced
-        for (const item of chunk) {
+        // Mark local records as synced AND remember the cloud doc id —
+        // without storing firestoreId locally, a later edit would push to a
+        // NEW document and silently duplicate the record in Firestore.
+        for (const { item, refId } of writtenRefs) {
           if (item.id !== undefined) {
-            await db[tableName].update(item.id, { sync_status: 'synced' } as any);
+            await db[tableName].update(item.id, { sync_status: 'synced', firestoreId: refId } as any);
           }
         }
         synced += chunk.length;
@@ -307,6 +319,22 @@ class SyncEngine {
           const wallet = walletSnap.docs.map(d => ({ ...d.data(), firestoreId: d.id, sync_status: 'synced' as const, userId }));
           await db.wallet_transactions.bulkPut(wallet as any[]);
           console.log(`[SyncEngine] Restored ${wallet.length} wallet transactions`);
+        }
+      }
+
+      // Restore channeling shifts independently (new table — may be empty even
+      // when transactions exist locally)
+      const localShiftCount = await db.medical_channeling_shifts.where({ userId }).count();
+      if (localShiftCount === 0) {
+        const shiftSnap = await getDocs(
+          query(collection(firestore, `users/${userId}/medical_channeling_shifts`), orderBy('createdAt', 'desc'), limit(1000))
+        );
+        if (!shiftSnap.empty) {
+          // medical_channeling_shifts uses a string primary key `id` (not
+          // auto-increment) — fall back to the Firestore doc id when absent.
+          const shifts = shiftSnap.docs.map(d => ({ ...d.data(), id: (d.data() as { id?: string }).id ?? d.id, firestoreId: d.id, sync_status: 'synced' as const, userId }));
+          await db.medical_channeling_shifts.bulkPut(shifts as any[]);
+          console.log(`[SyncEngine] Restored ${shifts.length} channeling shifts`);
         }
       }
 

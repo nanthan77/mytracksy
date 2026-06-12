@@ -6,7 +6,7 @@ import InvoiceForm, { InvoiceData } from './InvoiceForm';
 import { useRouteNav } from '../../hooks/useRouteNav';
 import VoiceInput, { ParsedVoiceAction } from '../VoiceInput';
 import PrescriptionPad from '../PrescriptionPad';
-import TaxSpeedometer from '../TaxSpeedometer';
+import TaxSpeedometer, { calculateTax, PERSONAL_RELIEF } from '../TaxSpeedometer';
 import ReceiptScanner from '../ReceiptScanner';
 import AuditorExport from '../AuditorExport';
 import TransactionInbox from '../TransactionInbox';
@@ -27,6 +27,16 @@ import {
 import { useIsCompactMobile } from './useIsCompactMobile';
 import { useSubscriptionTier } from '../../hooks/useSubscriptionTier';
 import { isFeatureAccessible, getFeatureTierInfo } from '../../config/featureGating';
+import {
+    listChannelingShifts, addChannelingShift, updateChannelingShift, autoMarkOverdueShifts,
+    listQuickNotes, addQuickNote, deleteQuickNote,
+    listAppointments, addAppointment, updateAppointment,
+    listPatients, addPatient, recordPatientVisit,
+    getPracticeProfile, savePracticeProfile, getPracticeReminders, getIrdQuarterSchedule,
+    whtSummaryByHospital, SL_CHANNELING_HOSPITALS,
+    type MedicalChannelingShift, type MedicalQuickNote, type MedicalAppointment,
+    type MedicalPatient, type MedicalPracticeProfile,
+} from '../../services/medicalPracticeService';
 
 interface MedicalDashboardProps {
     userName: string;
@@ -106,10 +116,38 @@ function getMedicalMobileTab(activeNav: string): MedicalMobileTabId {
 // Use GOLDEN_LIST from shared config — legally-grounded tax categories
 const medicalExpenseCategories = GOLDEN_LIST.map(c => ({ name: c.name, icon: c.icon, color: c.color }));
 
-// Production-ready: All data comes from Firestore — no hardcoded sample data
-// Empty arrays are used as initial state; Firestore subscriptions populate real data
+// Production-ready: financial data comes from Firestore subscriptions;
+// practice data (shifts, notes, appointments, patients) is local-first via
+// Dexie (medicalPracticeService) and survives refresh/offline.
 
-const channelingData: { id: string; hospital: string; day: string; time: string; fee: number; doctorShare: number; hospitalShare: number; avgPatients: number }[] = [];
+const parseTxnDate = (value: string): Date | null => {
+    const parsed = new Date(`${value}T00:00:00`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isSameMonth = (value: string, reference = new Date()) => {
+    const parsed = parseTxnDate(value);
+    return !!parsed && parsed.getFullYear() === reference.getFullYear() && parsed.getMonth() === reference.getMonth();
+};
+
+const isThisWeek = (value: string, reference = new Date()) => {
+    const parsed = parseTxnDate(value);
+    if (!parsed) return false;
+    const start = new Date(reference);
+    const day = start.getDay() || 7;
+    start.setDate(start.getDate() - day + 1);
+    start.setHours(0, 0, 0, 0);
+    return parsed >= start && parsed <= reference;
+};
+
+const safePct = (value: number, total: number) => (total > 0 ? Math.round((value / total) * 100) : 0);
+
+const loggedCentersLabel = (shifts: { hospital: string }[]) => {
+    const centers = Array.from(new Set(shifts.map(s => s.hospital).filter(Boolean)));
+    if (centers.length === 0) return '';
+    if (centers.length <= 2) return centers.join(', ');
+    return `${centers.slice(0, 2).join(', ')} +${centers.length - 2} more`;
+};
 
 const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     userName,
@@ -118,6 +156,17 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 }) => {
     const { currentUser } = useAuth();
     const uid = currentUser?.uid;
+    // Demo/guest sessions have no Firebase user — fall back to the locally
+    // stored session identity so on-device persistence (Dexie) still works.
+    // medicalPracticeService skips Firestore for guest_/demo_ uids.
+    const localUid = useMemo(() => {
+        if (uid) return uid;
+        try {
+            return (JSON.parse(localStorage.getItem('tracksyUser') || 'null') as { uid?: string } | null)?.uid || undefined;
+        } catch {
+            return undefined;
+        }
+    }, [uid]);
     const subscriptionState = useSubscriptionTier();
 
     const validNavIds = useMemo(() => navItems.map(n => n.id), []);
@@ -129,22 +178,34 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const [showAddExpense, setShowAddExpense] = useState(false);
     const [expenseForm, setExpenseForm] = useState({ description: '', amount: 0, category: GOLDEN_LIST[0].name, date: new Date().toISOString().split('T')[0] });
     const [showGoldenList, setShowGoldenList] = useState(false);
-    const [quickNotes, setQuickNotes] = useState<{ id: string; text: string; time: string; patient?: string; type: string }[]>([]);
+    const [quickNotes, setQuickNotes] = useState<MedicalQuickNote[]>([]);
     const [appointmentStatuses, setAppointmentStatuses] = useState<Record<string, string>>({});
     const [noteText, setNoteText] = useState('');
 
-    // Production state — populated from Firestore, empty by default
-    const [samplePatients, setSamplePatients] = useState<{ id: string; name: string; nic: string; phone: string; age: number; blood: string; allergies: string; lastVisit: string; visits: number }[]>([]);
-    const [sampleBankAccounts, setSampleBankAccounts] = useState<{ id: string; name: string; bank: string; balance: number; type: string }[]>([]);
-    const [sampleCheques, setSampleCheques] = useState<{ id: string; number: string; party: string; amount: number; date: string; type: string; status: string }[]>([]);
-    const [appointmentsData, setAppointmentsData] = useState<{ id: string; patient: string; type: string; time: string; hospital: string; date: string; status: 'confirmed' | 'pending' }[]>([]);
+    // Persistent state — loaded from local-first storage (Dexie); patient data
+    // stays on-device per PDPA, channeling shifts sync to the cloud.
+    const [patients, setPatients] = useState<MedicalPatient[]>([]);
+    const [sampleBankAccounts] = useState<{ id: string; name: string; bank: string; balance: number; type: string }[]>([]);
+    const [sampleCheques] = useState<{ id: string; number: string; party: string; amount: number; date: string; type: string; status: string }[]>([]);
+    const [appointmentsData, setAppointmentsData] = useState<MedicalAppointment[]>([]);
+    const [practiceProfile, setPracticeProfile] = useState<MedicalPracticeProfile | null>(null);
+
+    // Add-record forms
+    const [showAddAppointment, setShowAddAppointment] = useState(false);
+    const [appointmentForm, setAppointmentForm] = useState({ patient: '', type: 'Consultation', time: '', hospital: '', date: new Date().toISOString().split('T')[0] });
+    const [showAddPatient, setShowAddPatient] = useState(false);
+    const [patientForm, setPatientForm] = useState({ name: '', nic: '', phone: '', age: 0, blood: 'O+', allergies: 'None' });
+    const [profileForm, setProfileForm] = useState({ slmcNo: '', specialization: '', slmcRenewalDate: '', indemnityProvider: '', indemnityExpiry: '', cpdPoints: 0, irdTin: '' });
+    const [profileSaved, setProfileSaved] = useState(false);
 
     // ===== Dual-Income State (loaded from Firestore config) =====
     const [govSalary, setGovSalary] = useState(0);
     const [datAllowance, setDatAllowance] = useState(0);
     const govMonthly = govSalary + datAllowance;
     const govAnnual = govMonthly * 12;
-    const govAPIT = govAnnual > 0 ? Math.round(govAnnual * 0.12) : 0;
+    // Progressive APIT estimate using IRD 2025/26 brackets (was a flat 12%).
+    // Personal relief is applied against employment income first.
+    const govAPIT = govAnnual > 0 ? calculateTax(Math.max(0, govAnnual - PERSONAL_RELIEF)).tax : 0;
 
     // ===== AUTO-SEED CHART OF ACCOUNTS =====
     useEffect(() => {
@@ -200,10 +261,48 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         };
     }, [uid]);
 
-    // ===== Channeling Payment Tracker State =====
-    const [channelingShifts, setChannelingShifts] = useState<{ id: string; hospital: string; date: string; patients: number; expected: number; status: 'pending' | 'received' | 'overdue'; receivedDate?: string }[]>([]);
+    // ===== Channeling Payment Tracker State (persisted via Dexie + cloud sync) =====
+    const [channelingShifts, setChannelingShifts] = useState<MedicalChannelingShift[]>([]);
     const [showAddShift, setShowAddShift] = useState(false);
     const [shiftForm, setShiftForm] = useState({ hospital: '', date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
+
+    // ===== LOAD PERSISTED MEDICAL DATA (local-first, survives refresh) =====
+    useEffect(() => {
+        if (!localUid) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                await autoMarkOverdueShifts(localUid);
+                const [shifts, notes, appts, pts, profile] = await Promise.all([
+                    listChannelingShifts(localUid),
+                    listQuickNotes(localUid),
+                    listAppointments(localUid),
+                    listPatients(localUid),
+                    getPracticeProfile(localUid),
+                ]);
+                if (cancelled) return;
+                setChannelingShifts(shifts);
+                setQuickNotes(notes);
+                setAppointmentsData(appts);
+                setPatients(pts);
+                setPracticeProfile(profile);
+                if (profile) {
+                    setProfileForm({
+                        slmcNo: profile.slmcNo || '',
+                        specialization: profile.specialization || '',
+                        slmcRenewalDate: profile.slmcRenewalDate || '',
+                        indemnityProvider: profile.indemnityProvider || '',
+                        indemnityExpiry: profile.indemnityExpiry || '',
+                        cpdPoints: profile.cpdPoints || 0,
+                        irdTin: profile.irdTin || '',
+                    });
+                }
+            } catch (err) {
+                console.error('Failed to load persisted medical data:', err);
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [localUid]);
 
     const walletData = useTokenWallet(uid || '');
     const isCompactMobile = useIsCompactMobile();
@@ -337,7 +436,13 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 break;
             }
             case 'note': {
-                setQuickNotes(prev => [{ id: `qn-${Date.now()}`, text: action.description || action.raw, time: timeStr, patient: action.patient, type: 'note' }, ...prev]);
+                if (localUid) {
+                    addQuickNote(localUid, { text: action.description || action.raw, patient: action.patient })
+                        .then(saved => setQuickNotes(prev => [saved, ...prev]))
+                        .catch(err => console.error('Failed to save voice note:', err));
+                } else {
+                    setQuickNotes(prev => [{ id: `qn-${Date.now()}`, text: action.description || action.raw, time: timeStr, date: dateStr, type: 'note', userId: '', createdAt: Date.now(), patient: action.patient }, ...prev]);
+                }
                 setActiveNav('quicknotes');
                 break;
             }
@@ -374,7 +479,11 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 category_id: '',
                 category_name: invoice.serviceType,
                 description: `${invoice.serviceType} — ${invoice.patientName}`,
-                metadata: { wht_deducted_cents: toCents(Math.round(invoice.amount * 0.05)) },
+                metadata: {
+                    wht_deducted_cents: toCents(Math.round(invoice.amount * 0.05)),
+                    wht_rate: 0.05,
+                    wht_note: 'Estimated service-fee AIT/WHT. Confirm actual certificate amounts with the hospital or auditor.',
+                },
             }).catch(err => console.error('Failed to save income:', err));
         }
     };
@@ -415,23 +524,102 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     const totalExpenses = expenses.reduce((s, t) => s + t.amount, 0);
     const netProfit = totalIncome - totalExpenses;
     const pendingInvoices = invoices.filter((i) => i.status === 'pending' || i.status === 'overdue').length;
+    const currentMonthIncome = useMemo(
+        () => invoices.filter(t => isSameMonth(t.date)).reduce((s, t) => s + t.amount, 0),
+        [invoices]
+    );
+    const currentMonthExpenses = useMemo(
+        () => expenses.filter(t => isSameMonth(t.date)).reduce((s, t) => s + t.amount, 0),
+        [expenses]
+    );
+    const thisWeekExpenses = useMemo(
+        () => expenses.filter(t => isThisWeek(t.date)).reduce((s, t) => s + t.amount, 0),
+        [expenses]
+    );
+    const avgDailyExpense = currentMonthExpenses > 0 ? Math.round(currentMonthExpenses / Math.max(1, new Date().getDate())) : 0;
+    const incomeSources = useMemo(() => {
+        const sourceTotals = new Map<string, number>();
+        invoices.forEach((invoice) => {
+            const source = invoice.category || 'Private Practice';
+            sourceTotals.set(source, (sourceTotals.get(source) || 0) + invoice.amount);
+        });
+        return Array.from(sourceTotals.entries())
+            .map(([name, amount], i) => ({
+                name,
+                amount,
+                color: ['#6366f1', '#8b5cf6', '#22c55e', '#06b6d4', '#f59e0b'][i % 5],
+            }))
+            .sort((a, b) => b.amount - a.amount);
+    }, [invoices]);
+    const expenseBreakdown = useMemo(() => {
+        return medicalExpenseCategories
+            .map(cat => ({
+                ...cat,
+                amount: expenses.filter((e) => e.category === cat.name).reduce((s, e) => s + e.amount, 0),
+            }))
+            .filter(cat => cat.amount > 0)
+            .sort((a, b) => b.amount - a.amount);
+    }, [expenses]);
+    const monthlyTrend = useMemo(() => {
+        const now = new Date();
+        return Array.from({ length: 6 }, (_, idx) => {
+            const date = new Date(now.getFullYear(), now.getMonth() - (5 - idx), 1);
+            const monthIncome = invoices
+                .filter(t => {
+                    const parsed = parseTxnDate(t.date);
+                    return !!parsed && parsed.getFullYear() === date.getFullYear() && parsed.getMonth() === date.getMonth();
+                })
+                .reduce((s, t) => s + t.amount, 0);
+            const monthExpenses = expenses
+                .filter(t => {
+                    const parsed = parseTxnDate(t.date);
+                    return !!parsed && parsed.getFullYear() === date.getFullYear() && parsed.getMonth() === date.getMonth();
+                })
+                .reduce((s, t) => s + t.amount, 0);
+            return {
+                month: date.toLocaleDateString('en-LK', { month: 'short' }),
+                income: monthIncome,
+                expenses: monthExpenses,
+            };
+        });
+    }, [invoices, expenses]);
+    const trendMax = Math.max(...monthlyTrend.flatMap(m => [m.income, m.expenses]), 1);
+    const hasTrendData = monthlyTrend.some(m => m.income > 0 || m.expenses > 0);
+    const recentTransactions = useMemo(
+        () => [...invoices, ...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8),
+        [invoices, expenses]
+    );
 
-    const fmt = (n: number) => `LKR ${n.toLocaleString('en-LK')}`;
+    const fmt = (n: number) => `LKR ${Number.isFinite(n) ? Math.round(n).toLocaleString('en-LK') : '0'}`;
     const gridColumns = (desktop: string, mobile = '1fr') => isCompactMobile ? mobile : desktop;
     const stackGap = isCompactMobile ? '0.85rem' : '1rem';
     const currentDateLabel = new Date().toLocaleDateString('en-LK', { weekday: 'short', month: 'short', day: 'numeric' });
 
-    // Private income calculations
-    const privateIncome = invoices.reduce((s, t) => s + t.amount, 0);
-    const privateAnnual = privateIncome * 12;
+    // Private income calculations — annualised from TAX-YEAR-TO-DATE income
+    // (Apr–Mar), not a single month × 12, which skewed projections badly.
+    const privateAnnual = useMemo(() => {
+        const now = new Date();
+        const taxYearStart = new Date(now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1, 3, 1);
+        const ytd = invoices.reduce((sum, t) => {
+            const parsed = parseTxnDate(t.date);
+            return parsed && parsed >= taxYearStart && parsed <= now ? sum + t.amount : sum;
+        }, 0);
+        const monthsElapsed = Math.max(1,
+            (now.getFullYear() - taxYearStart.getFullYear()) * 12 + (now.getMonth() - taxYearStart.getMonth()) + 1);
+        return Math.round((ytd / monthsElapsed) * 12);
+    }, [invoices]);
     const totalWHT = Math.round(privateAnnual * 0.05);
+
+    // Practice admin reminders (SLMC / indemnity) + next IRD instalment date
+    const practiceReminders = useMemo(() => getPracticeReminders(practiceProfile), [practiceProfile]);
+    const nextIrdQuarter = useMemo(() => getIrdQuarterSchedule().find(q => q.status !== 'past') || null, []);
 
     // ===== FEATURE GATE WRAPPER =====
     // Wraps content of pro-only features with a gate that checks subscription
     const renderFeatureGated = (featureId: string, featureName: string, featureIcon: string, content: React.ReactNode) => {
         if (!isFeatureAccessible(featureId, subscriptionState.tier, 'medical')) {
             return (
-                <SubscriptionGate featureName={featureName} featureIcon={featureIcon}>
+                <SubscriptionGate featureName={featureName} featureIcon={featureIcon} requirePro onUpgrade={() => setActiveNav('subscription')}>
                     {content}
                 </SubscriptionGate>
             );
@@ -450,7 +638,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             case 'voicevault':
                 return (
                     <BiometricGate sectionName="Voice Vault" sectionIcon="🎙️">
-                        <SubscriptionGate featureName="AI Voice Vault" featureIcon="🎙️">
+                        <SubscriptionGate featureName="AI Voice Vault" featureIcon="🎙️" requirePro onUpgrade={() => setActiveNav('subscription')}>
                             <AIVoiceVault />
                         </SubscriptionGate>
                     </BiometricGate>
@@ -498,27 +686,56 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 
     /* ========== TODAY'S SCHEDULE ========== */
     const renderTodaySchedule = () => {
-        const govSchedule = [
-            { time: '8:00 AM', activity: 'Ward Round — General Ward', type: 'gov', status: 'completed' },
-            { time: '9:30 AM', activity: 'OPD Clinic', type: 'gov', status: 'completed' },
-            { time: '11:00 AM', activity: 'Theatre — Appendectomy', type: 'gov', status: 'completed' },
-            { time: '1:00 PM', activity: 'Lunch Break', type: 'break', status: 'completed' },
-        ];
-        const privateSchedule = [
-            { time: '4:00 PM', activity: 'Asiri Central — Channeling', type: 'private', status: 'active', patients: 15 },
-            { time: '7:30 PM', activity: 'Travel to Lanka Hospitals', type: 'travel', status: 'upcoming' },
-            { time: '8:00 PM', activity: 'Lanka Hospitals — Channeling', type: 'private', status: 'upcoming', patients: 8 },
+        type TodaySlot = {
+            id: string;
+            time: string;
+            activity: string;
+            type: 'gov' | 'private' | 'travel' | 'break';
+            status: 'completed' | 'active' | 'upcoming' | 'pending' | 'overdue';
+            patients?: number;
+        };
+
+        const todayStr = new Date().toISOString().split('T')[0];
+        const todaysAppointments = appointmentsData.filter(a => a.date === todayStr);
+        const todaysShifts = channelingShifts.filter(s => s.date === todayStr);
+        const govSchedule: TodaySlot[] = [];
+        const privateSchedule: TodaySlot[] = [
+            ...todaysAppointments.map((appointment): TodaySlot => ({
+                id: `appt-${appointment.id}`,
+                time: appointment.time || 'Time not set',
+                activity: `${appointment.hospital || 'Clinic'} — ${appointment.type || 'Appointment'}${appointment.patient ? ` for ${appointment.patient}` : ''}`,
+                type: 'private',
+                status: appointment.status === 'confirmed' ? 'upcoming' : 'pending',
+            })),
+            ...todaysShifts.map((shift): TodaySlot => ({
+                id: `shift-${shift.id}`,
+                time: 'Logged shift',
+                activity: `${shift.hospital || 'Private clinic'} — Channeling payout`,
+                type: 'private',
+                status: shift.status === 'received' ? 'completed' : shift.status === 'overdue' ? 'overdue' : 'pending',
+                patients: shift.patients,
+            })),
         ];
         const allSlots = [...govSchedule, ...privateSchedule];
         const completedCount = allSlots.filter(s => s.status === 'completed').length;
-        const todayEarnings = 37500;
+        const todayLoggedAmount =
+            invoices.filter(txn => txn.date === todayStr).reduce((sum, txn) => sum + txn.amount, 0) +
+            todaysShifts.reduce((sum, shift) => sum + shift.expected, 0);
+        const todayPatients = todaysShifts.reduce((sum, shift) => sum + shift.patients, 0);
+        const statusColor = (status: TodaySlot['status']) => {
+            if (status === 'completed') return '#22c55e';
+            if (status === 'active') return '#f59e0b';
+            if (status === 'overdue') return '#ef4444';
+            if (status === 'pending') return '#f59e0b';
+            return '#e2e8f0';
+        };
         return (
             <div>
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: stackGap, marginBottom: '1.2rem' }}>
-                    <KPICard icon="🏥" label="Gov Hospital" value="Done" change="4 activities" changeType="up" color="#22c55e" compact={isCompactMobile} />
-                    <KPICard icon="🩺" label="Private Clinics" value="2 sessions" change="23 patients est." changeType="neutral" color="#6366f1" compact={isCompactMobile} />
-                    <KPICard icon="💰" label="Today's Earnings" value={fmt(todayEarnings)} change="So far" changeType="up" color="#f59e0b" compact={isCompactMobile} />
-                    <KPICard icon="✅" label="Completed" value={`${completedCount}/${allSlots.length}`} changeType="neutral" color="#3b82f6" compact={isCompactMobile} />
+                    <KPICard icon="🏥" label="Gov Hospital" value={govMonthly > 0 ? 'Configured' : 'Not set'} change={govMonthly > 0 ? `${fmt(govMonthly)}/mo salary` : 'Add salary / DAT'} changeType={govMonthly > 0 ? 'up' : 'neutral'} color="#22c55e" compact={isCompactMobile} />
+                    <KPICard icon="🩺" label="Private Clinics" value={`${privateSchedule.length} items`} change={todayPatients > 0 ? `${todayPatients} patients logged` : 'No patient count yet'} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
+                    <KPICard icon="💰" label="Today Logged" value={fmt(todayLoggedAmount)} change="Income + shifts" changeType={todayLoggedAmount > 0 ? 'up' : 'neutral'} color="#f59e0b" compact={isCompactMobile} />
+                    <KPICard icon="✅" label="Completed" value={allSlots.length ? `${completedCount}/${allSlots.length}` : '0/0'} changeType="neutral" color="#3b82f6" compact={isCompactMobile} />
                 </div>
 
                 {/* Timeline */}
@@ -530,8 +747,11 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 
                         {/* Gov section header */}
                         <div style={{ padding: '8px 0 4px', fontSize: 11, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', letterSpacing: '0.06em' }}>🏛️ Government Hospital</div>
-                        {govSchedule.map((s, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', flexDirection: isCompactMobile ? 'column' : 'row', gap: 8, padding: '10px 0', position: 'relative' }}>
+                        {govSchedule.length === 0 && (
+                            <div style={{ padding: '10px 0', color: '#64748b', fontSize: 13 }}>No government hospital sessions logged today.</div>
+                        )}
+                        {govSchedule.map((s) => (
+                            <div key={s.id} style={{ display: 'flex', alignItems: 'flex-start', flexDirection: isCompactMobile ? 'column' : 'row', gap: 8, padding: '10px 0', position: 'relative' }}>
                                 <div style={{ position: 'absolute', left: -22, width: 12, height: 12, borderRadius: '50%', background: s.status === 'completed' ? '#22c55e' : '#e2e8f0', border: '2px solid white', boxShadow: '0 0 0 2px ' + (s.status === 'completed' ? '#22c55e' : '#e2e8f0') }} />
                                 <div style={{ fontSize: 13, fontWeight: 700, color: '#64748b', minWidth: isCompactMobile ? 'unset' : 65 }}>{s.time}</div>
                                 <div style={{ fontSize: isCompactMobile ? 13.5 : 14.5, fontWeight: 500, color: s.status === 'completed' ? '#64748b' : '#1e293b', textDecoration: s.status === 'completed' ? 'line-through' : 'none' }}>{s.activity}</div>
@@ -541,13 +761,19 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 
                         {/* Private section header */}
                         <div style={{ padding: '12px 0 4px', fontSize: 11, fontWeight: 700, color: '#6366f1', textTransform: 'uppercase', letterSpacing: '0.06em' }}>🩺 Private Practice</div>
-                        {privateSchedule.map((s, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', flexDirection: isCompactMobile ? 'column' : 'row', gap: 8, padding: '10px 0', position: 'relative' }}>
-                                <div style={{ position: 'absolute', left: -22, width: 12, height: 12, borderRadius: '50%', background: s.status === 'active' ? '#f59e0b' : s.status === 'completed' ? '#22c55e' : '#e2e8f0', border: '2px solid white', boxShadow: '0 0 0 2px ' + (s.status === 'active' ? '#f59e0b' : '#e2e8f0'), animation: s.status === 'active' ? 'voicePulse 2s infinite' : 'none' }} />
+                        {privateSchedule.length === 0 && (
+                            <div style={{ padding: '10px 0', color: '#64748b', fontSize: 13 }}>No private appointments or channeling shifts logged today.</div>
+                        )}
+                        {privateSchedule.map((s) => (
+                            <div key={s.id} style={{ display: 'flex', alignItems: 'flex-start', flexDirection: isCompactMobile ? 'column' : 'row', gap: 8, padding: '10px 0', position: 'relative' }}>
+                                <div style={{ position: 'absolute', left: -22, width: 12, height: 12, borderRadius: '50%', background: statusColor(s.status), border: '2px solid white', boxShadow: `0 0 0 2px ${statusColor(s.status)}`, animation: s.status === 'active' ? 'voicePulse 2s infinite' : 'none' }} />
                                 <div style={{ fontSize: 13, fontWeight: 700, color: s.status === 'active' ? '#d97706' : '#64748b', minWidth: isCompactMobile ? 'unset' : 65 }}>{s.time}</div>
                                 <div style={{ fontSize: 14, fontWeight: s.status === 'active' ? 700 : 500, color: s.status === 'active' ? '#1e293b' : '#64748b' }}>{s.activity}</div>
-                                {'patients' in s && <span style={{ fontSize: 11, background: 'rgba(99,102,241,0.08)', color: '#6366f1', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>{(s as any).patients} patients</span>}
+                                {typeof s.patients === 'number' && s.patients > 0 && <span style={{ fontSize: 11, background: 'rgba(99,102,241,0.08)', color: '#6366f1', padding: '2px 8px', borderRadius: 6, fontWeight: 600 }}>{s.patients} patients</span>}
                                 {s.status === 'active' && <span style={{ fontSize: 11, background: '#fef3c7', color: '#f59e0b', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>🔴 NOW</span>}
+                                {s.status === 'overdue' && <span style={{ fontSize: 11, background: '#fee2e2', color: '#ef4444', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>Overdue</span>}
+                                {s.status === 'pending' && <span style={{ fontSize: 11, background: '#fef3c7', color: '#d97706', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>Pending</span>}
+                                {s.status === 'completed' && <span style={{ fontSize: 11, background: '#dcfce7', color: '#22c55e', padding: '2px 8px', borderRadius: 6, fontWeight: 700 }}>Received</span>}
                             </div>
                         ))}
                     </div>
@@ -566,10 +792,15 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             prescription: { icon: '💊', color: '#22c55e' },
         };
         const addNote = () => {
-            if (!noteText.trim()) return;
-            const now = new Date();
-            setQuickNotes(prev => [{ id: `qn-${Date.now()}`, text: noteText, time: now.toLocaleTimeString('en-LK', { hour: '2-digit', minute: '2-digit' }), type: 'note' }, ...prev]);
+            if (!noteText.trim() || !localUid) return;
+            addQuickNote(localUid, { text: noteText.trim() })
+                .then(saved => setQuickNotes(prev => [saved, ...prev]))
+                .catch(err => console.error('Failed to save note:', err));
             setNoteText('');
+        };
+        const removeNote = (id: string) => {
+            setQuickNotes(prev => prev.filter(n => n.id !== id));
+            deleteQuickNote(id).catch(err => console.error('Failed to delete note:', err));
         };
         return (
             <div>
@@ -606,7 +837,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                             <span style={{ background: `${nt.color}15`, color: nt.color, padding: '1px 8px', borderRadius: 6, fontSize: 11, fontWeight: 600 }}>{note.type}</span>
                                         </div>
                                     </div>
-                                    <button onClick={() => setQuickNotes(prev => prev.filter(n => n.id !== note.id))} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 16, padding: 4, fontWeight: 600 }}>✕</button>
+                                    <button onClick={() => removeNote(note.id)} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: 16, padding: 4, fontWeight: 600 }}>✕</button>
                                 </div>
                             );
                         })}
@@ -620,11 +851,21 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
     /* ========== OVERVIEW (Dual-Income Dashboard) ========== */
     const renderOverview = () => {
         const govNetMonthly = govMonthly - Math.round(govAPIT / 12);
-        const privateNet = totalIncome; // Monthly private
-        const totalTakeHome = govNetMonthly + privateNet - totalExpenses;
+        const privateNet = currentMonthIncome;
+        const currentMonthWht = Math.round(privateNet * 0.05);
+        const netPrivateMonthly = privateNet - currentMonthWht - currentMonthExpenses;
+        const totalTakeHome = govNetMonthly + netPrivateMonthly;
+        const incomeMixTotal = govNetMonthly + privateNet;
         const overdueCount = channelingShifts.filter(s => s.status === 'overdue').length;
         const pendingAmount = channelingShifts.filter(s => s.status === 'pending').reduce((s, c) => s + c.expected, 0);
         const overdueAmount = channelingShifts.filter(s => s.status === 'overdue').reduce((s, c) => s + c.expected, 0);
+        const setupTasks = [
+            { label: 'Add salary / DAT allowance', done: govMonthly > 0, nav: 'settings' },
+            { label: 'Log first channeling income', done: invoices.length > 0, nav: 'income' },
+            { label: 'Record one private-practice expense', done: expenses.length > 0, nav: 'expenses' },
+            { label: 'Track a hospital payout / WHT certificate', done: channelingShifts.length > 0, nav: 'channeling' },
+        ];
+        const completedSetup = setupTasks.filter(task => task.done).length;
 
         return (
             <div>
@@ -664,20 +905,20 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: gridColumns('1fr 1fr'), gap: '0.75rem' }}>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Channeling/Clinic</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(totalIncome)}</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Channeling/Clinic This Month</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{fmt(privateNet)}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>WHT Deducted (5%)</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(Math.round(totalIncome * 0.05))}</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Est. WHT/AIT (5%)</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(currentMonthWht)}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.1)', padding: '0.75rem', borderRadius: 10 }}>
-                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Practice Expenses</div>
-                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(totalExpenses)}</div>
+                                <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Practice Expenses This Month</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fca5a5' }}>−{fmt(currentMonthExpenses)}</div>
                             </div>
                             <div style={{ background: 'rgba(255,255,255,0.2)', padding: '0.75rem', borderRadius: 10 }}>
                                 <div style={{ fontSize: 12, opacity: 0.8, fontWeight: 500 }}>Net Private Income</div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{fmt(privateNet - Math.round(totalIncome * 0.05) - totalExpenses)}</div>
+                                <div style={{ fontSize: '1.2rem', fontWeight: 800 }}>{fmt(netPrivateMonthly)}</div>
                             </div>
                         </div>
                     </div>
@@ -692,11 +933,11 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: 11, opacity: 0.5 }}>Gov %</div>
-                            <div style={{ fontSize: 16, fontWeight: 700 }}>{Math.round((govNetMonthly / (govNetMonthly + privateNet)) * 100)}%</div>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{safePct(govNetMonthly, incomeMixTotal)}%</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
                             <div style={{ fontSize: 11, opacity: 0.5 }}>Private %</div>
-                            <div style={{ fontSize: 16, fontWeight: 700 }}>{Math.round((privateNet / (govNetMonthly + privateNet)) * 100)}%</div>
+                            <div style={{ fontSize: 16, fontWeight: 700 }}>{safePct(privateNet, incomeMixTotal)}%</div>
                         </div>
                     </div>
                 </div>
@@ -714,87 +955,249 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     </div>
                 )}
 
+                {/* Practice Admin Reminders — SLMC / Indemnity renewals */}
+                {practiceReminders.filter(r => r.severity !== 'ok').map(r => (
+                    <div key={r.id} onClick={() => setActiveNav('settings')} style={{ ...cardStyle, marginBottom: '0.85rem', cursor: 'pointer', padding: '0.85rem 1.25rem', background: r.severity === 'overdue' ? '#fef2f2' : r.severity === 'urgent' ? '#fff7ed' : '#fffbeb', border: `2px solid ${r.severity === 'overdue' ? '#fecaca' : r.severity === 'urgent' ? '#fed7aa' : '#fde68a'}` }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ fontSize: 22 }}>{r.id === 'slmc' ? '🩺' : '🛡️'}</div>
+                            <div>
+                                <div style={{ fontSize: 13.5, fontWeight: 700, color: r.severity === 'overdue' ? '#991b1b' : '#9a3412' }}>
+                                    {r.label} — {r.daysLeft < 0 ? `${Math.abs(r.daysLeft)} days OVERDUE` : `${r.daysLeft} days left`}
+                                </div>
+                                <div style={{ fontSize: 12.5, color: '#92400e' }}>Due {r.dueDate}. Tap to review in Settings →</div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+
+                {/* IRD Quarterly Instalment Reminder */}
+                {nextIrdQuarter && nextIrdQuarter.status === 'due-soon' && (
+                    <div onClick={() => handleGatedNavChange('tax')} style={{ ...cardStyle, marginBottom: '1.25rem', cursor: 'pointer', padding: '0.85rem 1.25rem', background: '#eff6ff', border: '2px solid #bfdbfe' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <div style={{ fontSize: 22 }}>🧾</div>
+                            <div>
+                                <div style={{ fontSize: 13.5, fontWeight: 700, color: '#1e40af' }}>
+                                    IRD {nextIrdQuarter.q} instalment due {nextIrdQuarter.dueLabel} — {nextIrdQuarter.daysLeft} days left
+                                </div>
+                                <div style={{ fontSize: 12.5, color: '#1d4ed8' }}>Period {nextIrdQuarter.period}. Open Tax & IRD to see the amount to set aside →</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div style={{
+                    ...cardStyle,
+                    marginBottom: '1.25rem',
+                    padding: isCompactMobile ? '1rem' : '1.25rem',
+                    background: 'linear-gradient(135deg, #eff6ff 0%, #eef2ff 52%, #f8fafc 100%)',
+                    border: '1px solid rgba(99,102,241,0.18)',
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 16, alignItems: isCompactMobile ? 'flex-start' : 'center', flexDirection: isCompactMobile ? 'column' : 'row' }}>
+                        <div>
+                            <div style={{ fontSize: 12, fontWeight: 800, color: '#2563eb', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Doctor Money Tracker MVP</div>
+                            <h3 style={{ margin: '5px 0 6px', fontSize: isCompactMobile ? '1.05rem' : '1.2rem', color: '#0f172a', letterSpacing: '-0.02em' }}>Start with the 4 records your auditor will actually ask for.</h3>
+                            <p style={{ margin: 0, color: '#475569', fontSize: '0.9rem', lineHeight: 1.55 }}>
+                                Keep clinical tools optional. The paid value is clean income, WHT, expenses, and exportable evidence.
+                            </p>
+                        </div>
+                        <div style={{ minWidth: isCompactMobile ? '100%' : 180 }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#334155', marginBottom: 6 }}>
+                                <span>Launch readiness</span>
+                                <span>{completedSetup}/4</span>
+                            </div>
+                            <div style={{ height: 10, borderRadius: 999, background: 'rgba(148,163,184,0.25)', overflow: 'hidden' }}>
+                                <div style={{ height: '100%', width: `${(completedSetup / setupTasks.length) * 100}%`, background: 'linear-gradient(90deg, #0ea5e9, #6366f1)', borderRadius: 999 }} />
+                            </div>
+                        </div>
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr'), gap: 10, marginTop: '1rem' }}>
+                        {setupTasks.map(task => (
+                            <button key={task.label} onClick={() => handleGatedNavChange(task.nav)} style={{
+                                border: '1px solid rgba(148,163,184,0.22)',
+                                background: task.done ? 'rgba(34,197,94,0.1)' : 'rgba(255,255,255,0.82)',
+                                color: task.done ? '#166534' : '#334155',
+                                borderRadius: 12,
+                                padding: '0.75rem',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                fontSize: 13,
+                                fontWeight: 650,
+                                minHeight: 66,
+                            }}>
+                                <span style={{ display: 'block', fontSize: 17, marginBottom: 4 }}>{task.done ? '✓' : '○'}</span>
+                                {task.label}
+                            </button>
+                        ))}
+                    </div>
+                </div>
+
                 {/* Quick Actions */}
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, minmax(0, 1fr))', '1fr 1fr'), gap: 10, marginBottom: '1.25rem' }}>
                     <button onClick={() => setShowInvoiceForm(true)} style={actionBtn('#6366f1')}>+ Create Invoice</button>
                     <button onClick={() => { setActiveNav('expenses'); setShowAddExpense(true); }} style={actionBtn('#ef4444')}>+ Add Expense</button>
                     <button onClick={() => setActiveNav('quicknotes')} style={actionBtn('#8b5cf6')}>📝 Quick Note</button>
                     <button onClick={() => setActiveNav('today')} style={actionBtn('#f59e0b')}>🕐 Today</button>
-                    <button onClick={() => setActiveNav('tax')} style={actionBtn('#06b6d4')}>🧾 Tax & IRD</button>
+                    <button onClick={() => handleGatedNavChange('tax')} style={actionBtn('#06b6d4')}>🧾 Tax & IRD</button>
                     <button onClick={() => setActiveNav('receipts')} style={actionBtn('#22c55e')}>📸 Scan Receipt</button>
-                    <button onClick={() => setActiveNav('export')} style={actionBtn('#1e293b')}>📦 Auditor Export</button>
+                    <button onClick={() => handleGatedNavChange('export')} style={actionBtn('#1e293b')}>📦 Auditor Export</button>
                 </div>
 
                 {/* Charts Row */}
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('1.5fr 1fr'), gap: stackGap, marginBottom: '1.25rem' }}>
                     <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding }}>
                         <h3 style={cardTitle}>📊 Income vs Expenses (Last 6 Months)</h3>
-                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', height: 180, padding: '1rem 0' }}>
-                            {['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].map((month, i) => {
-                                const incomeH = [65, 72, 58, 80, 75, 85];
-                                const expenseH = [30, 35, 40, 28, 32, 36];
-                                return (
-                                    <div key={month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
-                                        <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 150 }}>
-                                            <div style={{ width: 16, height: `${incomeH[i]}%`, background: 'linear-gradient(to top, #22c55e, #4ade80)', borderRadius: 4 }} />
-                                            <div style={{ width: 16, height: `${expenseH[i]}%`, background: 'linear-gradient(to top, #ef4444, #f87171)', borderRadius: 4 }} />
-                                        </div>
-                                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{month}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
-                            <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>● Income</span>
-                            <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>● Expenses</span>
-                        </div>
+                        {hasTrendData ? (
+                            <>
+                                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-end', height: 180, padding: '1rem 0' }}>
+                                    {monthlyTrend.map((month) => {
+                                        const incomeH = Math.max(4, (month.income / trendMax) * 100);
+                                        const expenseH = Math.max(4, (month.expenses / trendMax) * 100);
+                                        return (
+                                            <div key={month.month} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                                                <div style={{ display: 'flex', gap: 3, alignItems: 'flex-end', height: 150 }}>
+                                                    <div title={fmt(month.income)} style={{ width: 16, height: `${month.income > 0 ? incomeH : 0}%`, background: 'linear-gradient(to top, #22c55e, #4ade80)', borderRadius: 4 }} />
+                                                    <div title={fmt(month.expenses)} style={{ width: 16, height: `${month.expenses > 0 ? expenseH : 0}%`, background: 'linear-gradient(to top, #ef4444, #f87171)', borderRadius: 4 }} />
+                                                </div>
+                                                <span style={{ fontSize: '0.8rem', color: '#64748b' }}>{month.month}</span>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                                    <span style={{ fontSize: '0.75rem', color: '#22c55e' }}>● Income</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#ef4444' }}>● Expenses</span>
+                                </div>
+                            </>
+                        ) : (
+                            <div style={{ padding: '2rem 1rem', borderRadius: 14, background: '#f8fafc', border: '1px dashed #cbd5e1', color: '#64748b', textAlign: 'center', fontSize: 13.5 }}>
+                                Add your first income or expense to build a real trend chart. No sample numbers are shown here.
+                            </div>
+                        )}
                     </div>
 
                     <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding }}>
                         <h3 style={cardTitle}>📂 Expense Categories</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', padding: '0.5rem 0' }}>
-                            {medicalExpenseCategories.slice(0, 5).map((cat, i) => {
-                                const amounts = [35000, 12000, 8500, 5200, 3000];
-                                const pct = [45, 30, 20, 12, 8];
-                                return (
+                        {expenseBreakdown.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', padding: '0.5rem 0' }}>
+                                {expenseBreakdown.slice(0, 5).map((cat) => (
                                     <div key={cat.name}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                                             <span style={{ fontSize: '0.8rem', fontWeight: 500 }}>{cat.icon} {cat.name}</span>
-                                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>{fmt(amounts[i])}</span>
+                                            <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#1e293b' }}>{fmt(cat.amount)}</span>
                                         </div>
                                         <div style={{ height: 6, background: '#f1f5f9', borderRadius: 3 }}>
-                                            <div style={{ height: '100%', width: `${pct[i]}%`, background: cat.color, borderRadius: 3, transition: 'width 0.5s ease' }} />
+                                            <div style={{ height: '100%', width: `${safePct(cat.amount, totalExpenses)}%`, background: cat.color, borderRadius: 3, transition: 'width 0.5s ease' }} />
                                         </div>
                                     </div>
-                                );
-                            })}
-                        </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div style={{ padding: '1.5rem 1rem', borderRadius: 14, background: '#f8fafc', border: '1px dashed #cbd5e1', color: '#64748b', textAlign: 'center', fontSize: 13.5 }}>
+                                Expense categories will appear after your first receipt or manual expense.
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Recent Transactions */}
-                <TransactionList transactions={[...invoices, ...expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8)} title="Recent Transactions" compact={isCompactMobile} />
+                <TransactionList transactions={recentTransactions} title="Recent Transactions" compact={isCompactMobile} />
             </div>
         );
     };
 
-    /* ========== PATIENTS ========== */
-    const renderPatients = () => (
+    /* ========== PATIENTS (local-only registry — PDPA) ========== */
+    const renderPatients = () => {
+        const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).getTime();
+        const seenThisMonth = patients.filter(p => p.lastVisit && isSameMonth(p.lastVisit)).length;
+        const newThisMonth = patients.filter(p => p.createdAt >= monthStart).length;
+
+        const handleAddPatient = async (e: React.FormEvent) => {
+            e.preventDefault();
+            if (!patientForm.name.trim() || !localUid) return;
+            try {
+                const saved = await addPatient(localUid, {
+                    name: patientForm.name.trim(),
+                    nic: patientForm.nic.trim(),
+                    phone: patientForm.phone.trim(),
+                    age: patientForm.age || 0,
+                    blood: patientForm.blood,
+                    allergies: patientForm.allergies.trim() || 'None',
+                });
+                setPatients(prev => [saved, ...prev]);
+            } catch (err) {
+                console.error('Failed to save patient:', err);
+            }
+            setShowAddPatient(false);
+            setPatientForm({ name: '', nic: '', phone: '', age: 0, blood: 'O+', allergies: 'None' });
+        };
+
+        const logVisit = (id: string) => {
+            const today = new Date().toISOString().split('T')[0];
+            setPatients(prev => prev.map(p => p.id === id ? { ...p, visits: (p.visits || 0) + 1, lastVisit: today } : p));
+            recordPatientVisit(id).catch(err => console.error('Failed to record visit:', err));
+        };
+
+        return (
         <div>
             <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: stackGap, marginBottom: '1.25rem' }}>
-                <KPICard icon="🧑‍⚕️" label="Total Patients" value={String(samplePatients.length)} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
-                <KPICard icon="📅" label="This Month" value="12" change="+4" changeType="up" color="#22c55e" compact={isCompactMobile} />
-                <KPICard icon="🔁" label="Returning" value={String(samplePatients.filter(p => p.visits > 5).length)} changeType="neutral" color="#3b82f6" compact={isCompactMobile} />
-                <KPICard icon="⚠️" label="Allergies Noted" value={String(samplePatients.filter(p => p.allergies !== 'None').length)} changeType="neutral" color="#f59e0b" compact={isCompactMobile} />
+                <KPICard icon="🧑‍⚕️" label="Total Patients" value={String(patients.length)} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
+                <KPICard icon="📅" label="Seen This Month" value={String(seenThisMonth)} change={newThisMonth > 0 ? `+${newThisMonth} new` : ''} changeType={seenThisMonth > 0 ? 'up' : 'neutral'} color="#22c55e" compact={isCompactMobile} />
+                <KPICard icon="🔁" label="Returning" value={String(patients.filter(p => p.visits > 5).length)} changeType="neutral" color="#3b82f6" compact={isCompactMobile} />
+                <KPICard icon="⚠️" label="Allergies Noted" value={String(patients.filter(p => p.allergies !== 'None').length)} changeType="neutral" color="#f59e0b" compact={isCompactMobile} />
             </div>
+
+            {showAddPatient && (
+                <form onSubmit={handleAddPatient} style={{ ...cardStyle, padding: '1rem', marginBottom: '1rem', border: '2px solid rgba(99,102,241,0.2)' }}>
+                    <h3 style={{ ...cardTitle, margin: '0 0 0.75rem' }}>🧑‍⚕️ Register Patient</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(3, 1fr)'), gap: '0.75rem' }}>
+                        <div>
+                            <label style={labelStyle}>Full Name *</label>
+                            <input value={patientForm.name} onChange={e => setPatientForm(p => ({ ...p, name: e.target.value }))} placeholder="e.g. W. A. Perera" style={inputStyle} required />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>NIC</label>
+                            <input value={patientForm.nic} onChange={e => setPatientForm(p => ({ ...p, nic: e.target.value }))} placeholder="200012345678 / 991234567V" style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Phone</label>
+                            <input value={patientForm.phone} onChange={e => setPatientForm(p => ({ ...p, phone: e.target.value }))} placeholder="07X XXX XXXX" style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Age</label>
+                            <input type="number" min="0" max="120" value={patientForm.age || ''} onChange={e => setPatientForm(p => ({ ...p, age: parseInt(e.target.value) || 0 }))} style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Blood Group</label>
+                            <select value={patientForm.blood} onChange={e => setPatientForm(p => ({ ...p, blood: e.target.value }))} style={inputStyle}>
+                                {['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'Unknown'].map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                        </div>
+                        <div>
+                            <label style={labelStyle}>Allergies</label>
+                            <input value={patientForm.allergies} onChange={e => setPatientForm(p => ({ ...p, allergies: e.target.value }))} placeholder="None" style={inputStyle} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: '0.75rem', flexDirection: isCompactMobile ? 'column-reverse' : 'row' }}>
+                        <button type="button" onClick={() => setShowAddPatient(false)} style={{ ...actionBtn('#94a3b8'), background: '#f1f5f9', color: '#64748b' }}>Cancel</button>
+                        <button type="submit" style={actionBtn('#22c55e')}>✅ Register Patient</button>
+                    </div>
+                    <div style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>🔒 PDPA: the registry is stored on this device only — patient data is never uploaded to the cloud.</div>
+                </form>
+            )}
+
             <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ ...cardTitle, margin: 0 }}>🧑‍⚕️ Patient Registry</h3>
-                    <button style={actionBtn('#6366f1')}>+ Add Patient</button>
+                    <h3 style={{ ...cardTitle, margin: 0 }}>🧑‍⚕️ Patient Registry <span style={{ fontSize: 11, fontWeight: 700, background: '#dcfce7', color: '#166534', padding: '2px 8px', borderRadius: 6, marginLeft: 8, verticalAlign: 'middle' }}>ON-DEVICE (PDPA)</span></h3>
+                    <button onClick={() => setShowAddPatient(true)} style={actionBtn('#6366f1')}>+ Add Patient</button>
                 </div>
+                {patients.length === 0 && !showAddPatient && (
+                    <div style={{ padding: '1.5rem', borderRadius: 12, background: '#f8fafc', border: '1px dashed #cbd5e1', color: '#64748b', fontSize: 13.5, textAlign: 'center' }}>
+                        No patients registered yet. Tap <strong>+ Add Patient</strong> to build your on-device registry.
+                    </div>
+                )}
                 {isCompactMobile ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {samplePatients.map(p => (
+                        {patients.map(p => (
                             <div key={p.id} style={{ padding: '14px', borderRadius: 14, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12, marginBottom: 10 }}>
                                     <div>
@@ -806,44 +1209,49 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12.5, color: '#475569' }}>
                                     <div>📞 {p.phone}</div>
                                     <div>🎂 {p.age} yrs</div>
-                                    <div>🗓️ {p.lastVisit}</div>
+                                    <div>🗓️ {p.lastVisit || 'No visits yet'}</div>
                                     <div>🔁 {p.visits} visits</div>
                                 </div>
                                 <div style={{ marginTop: 10, fontSize: 12.5, color: p.allergies !== 'None' ? '#ef4444' : '#64748b', fontWeight: p.allergies !== 'None' ? 600 : 500 }}>
                                     Allergies: {p.allergies}
                                 </div>
+                                <button onClick={() => logVisit(p.id)} style={{ ...actionBtn('#22c55e'), marginTop: 10, padding: '8px 14px', fontSize: '0.8rem' }}>+ Log Visit Today</button>
                             </div>
                         ))}
                     </div>
                 ) : (
                     <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                         <thead><tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                            {['Name', 'NIC', 'Phone', 'Age', 'Blood', 'Allergies', 'Last Visit', 'Visits'].map(h => (
+                            {['Name', 'NIC', 'Phone', 'Age', 'Blood', 'Allergies', 'Last Visit', 'Visits', ''].map(h => (
                                 <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#475569', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{h}</th>
                             ))}
                         </tr></thead>
-                        <tbody>{samplePatients.map(p => (
+                        <tbody>{patients.map(p => (
                             <tr key={p.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                <td style={{ padding: '0.5rem', fontWeight: 600 }}>{p.name}</td>
+                                <td style={{ padding: '0.5rem', fontWeight: 600, color: '#0f172a' }}>{p.name}</td>
                                 <td style={{ padding: '0.5rem', color: '#6366f1', fontFamily: 'monospace', fontSize: '0.8rem' }}>{p.nic}</td>
-                                <td style={{ padding: '0.5rem' }}>{p.phone}</td>
-                                <td style={{ padding: '0.5rem' }}>{p.age}</td>
+                                <td style={{ padding: '0.5rem', color: '#334155' }}>{p.phone}</td>
+                                <td style={{ padding: '0.5rem', color: '#334155' }}>{p.age}</td>
                                 <td style={{ padding: '0.5rem' }}><span style={{ padding: '2px 8px', borderRadius: 8, fontSize: '0.82rem', fontWeight: 700, background: '#fef2f2', color: '#dc2626' }}>{p.blood}</span></td>
                                 <td style={{ padding: '0.5rem', color: p.allergies !== 'None' ? '#ef4444' : '#64748b', fontWeight: p.allergies !== 'None' ? 600 : 400 }}>{p.allergies}</td>
-                                <td style={{ padding: '0.5rem', color: '#64748b' }}>{p.lastVisit}</td>
+                                <td style={{ padding: '0.5rem', color: '#64748b' }}>{p.lastVisit || '—'}</td>
                                 <td style={{ padding: '0.5rem', fontWeight: 600, color: '#6366f1' }}>{p.visits}</td>
+                                <td style={{ padding: '0.5rem' }}><button onClick={() => logVisit(p.id)} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: 'pointer', border: '1px solid #bbf7d0', background: '#f0fdf4', color: '#16a34a' }}>+ Visit</button></td>
                             </tr>
                         ))}</tbody>
                     </table>
                 )}
             </div>
         </div>
-    );
+        );
+    };
 
     /* ========== CHANNELING + PAYMENT TRACKER ========== */
     const renderChanneling = () => {
-        const totalMonthlyEst = channelingData.reduce((s, c) => s + (c.doctorShare * c.avgPatients * 4), 0);
+        const totalMonthlyEst = channelingShifts.reduce((s, c) => s + c.expected, 0);
         const wht = Math.round(totalMonthlyEst * 0.05);
+        const loggedCenters = new Set(channelingShifts.map(s => s.hospital).filter(Boolean));
+        const centerCount = loggedCenters.size;
         const pendingShifts = channelingShifts.filter(s => s.status === 'pending');
         const overdueShifts = channelingShifts.filter(s => s.status === 'overdue');
         const receivedShifts = channelingShifts.filter(s => s.status === 'received');
@@ -851,20 +1259,42 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         const overdueTotal = overdueShifts.reduce((s, c) => s + c.expected, 0);
         const receivedTotal = receivedShifts.reduce((s, c) => s + c.expected, 0);
 
-        const handleAddShift = (e: React.FormEvent) => {
+        const handleAddShift = async (e: React.FormEvent) => {
             e.preventDefault();
-            if (!shiftForm.patients || !shiftForm.expected) return;
-            setChannelingShifts(prev => [{ id: `cs-${Date.now()}`, hospital: shiftForm.hospital, date: shiftForm.date, patients: shiftForm.patients, expected: shiftForm.expected, status: 'pending' }, ...prev]);
+            if (!shiftForm.hospital.trim() || !shiftForm.patients || !shiftForm.expected || !localUid) return;
+            try {
+                const saved = await addChannelingShift(localUid, {
+                    hospital: shiftForm.hospital.trim(),
+                    date: shiftForm.date,
+                    patients: shiftForm.patients,
+                    expected: shiftForm.expected,
+                    status: 'pending',
+                });
+                setChannelingShifts(prev => [saved, ...prev]);
+            } catch (err) {
+                console.error('Failed to save channeling shift:', err);
+            }
             setShowAddShift(false);
-            setShiftForm({ hospital: channelingData.length > 0 ? channelingData[0].hospital : '', date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
+            setShiftForm({ hospital: '', date: new Date().toISOString().split('T')[0], patients: 0, expected: 0 });
         };
 
-        const markReceived = (id: string) => setChannelingShifts(prev => prev.map(s => s.id === id ? { ...s, status: 'received' as const, receivedDate: new Date().toISOString().split('T')[0] } : s));
+        const markReceived = (id: string) => {
+            const receivedDate = new Date().toISOString().split('T')[0];
+            setChannelingShifts(prev => prev.map(s => s.id === id ? { ...s, status: 'received' as const, receivedDate } : s));
+            if (localUid) updateChannelingShift(localUid, id, { status: 'received', receivedDate }).catch(err => console.error('Failed to update shift:', err));
+        };
+
+        const toggleWhtCert = (id: string, current?: boolean) => {
+            setChannelingShifts(prev => prev.map(s => s.id === id ? { ...s, whtCertReceived: !current } : s));
+            if (localUid) updateChannelingShift(localUid, id, { whtCertReceived: !current }).catch(err => console.error('Failed to update WHT cert:', err));
+        };
+
+        const hospitalWht = whtSummaryByHospital(channelingShifts);
 
         return (
             <div>
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: stackGap, marginBottom: '1.25rem' }}>
-                    <KPICard icon="🏥" label="Centers" value={String(channelingData.length)} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
+                    <KPICard icon="🏥" label="Centers" value={String(centerCount)} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
                     <KPICard icon="💰" label="Est. Monthly" value={fmt(totalMonthlyEst)} changeType="up" color="#22c55e" compact={isCompactMobile} />
                     <KPICard icon="⏳" label="Pending" value={fmt(pendingTotal)} change={`${pendingShifts.length} shifts`} changeType="neutral" color="#f59e0b" compact={isCompactMobile} />
                     <KPICard icon="🚨" label="Overdue" value={fmt(overdueTotal)} change={overdueShifts.length > 0 ? `${overdueShifts.length} unpaid!` : 'All clear'} changeType={overdueShifts.length > 0 ? 'down' : 'up'} color="#ef4444" compact={isCompactMobile} />
@@ -883,9 +1313,10 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                             <div style={{ display: 'grid', gridTemplateColumns: gridColumns('1fr 1fr 1fr 1fr'), gap: '0.75rem' }}>
                                 <div>
                                     <label style={labelStyle}>Hospital</label>
-                                    <select value={shiftForm.hospital} onChange={e => setShiftForm(p => ({ ...p, hospital: e.target.value }))} style={inputStyle}>
-                                        {channelingData.map(c => <option key={c.id} value={c.hospital}>{c.hospital}</option>)}
-                                    </select>
+                                    <input list="sl-hospitals" value={shiftForm.hospital} onChange={e => setShiftForm(p => ({ ...p, hospital: e.target.value }))} placeholder="e.g. Asiri Central, Lanka Hospitals, private clinic" style={inputStyle} />
+                                    <datalist id="sl-hospitals">
+                                        {SL_CHANNELING_HOSPITALS.map(h => <option key={h} value={h} />)}
+                                    </datalist>
                                 </div>
                                 <div>
                                     <label style={labelStyle}>Date</label>
@@ -942,17 +1373,22 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         </div>
                     )}
 
-                    {/* Received Shifts (GREEN) */}
+                    {/* Received Shifts (GREEN) — with WHT/AIT certificate tracking */}
                     {receivedShifts.length > 0 && (
                         <div>
                             <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', textTransform: 'uppercase', marginBottom: 6 }}>✅ Confirmed Payments</div>
-                            {receivedShifts.slice(0, 3).map(s => (
+                            {receivedShifts.slice(0, 5).map(s => (
                                 <div key={s.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: isCompactMobile ? 'stretch' : 'center', flexDirection: isCompactMobile ? 'column' : 'row', gap: 8, padding: '8px 14px', background: '#f0fdf4', borderRadius: 8, border: '1px solid #dcfce7', marginBottom: 4 }}>
                                     <div>
                                         <div style={{ fontSize: 13, fontWeight: 500, color: '#166534' }}>{s.hospital}</div>
                                         <div style={{ fontSize: 12, color: '#15803d' }}>{s.date} · {s.patients} pts · Deposited: {s.receivedDate}</div>
                                     </div>
-                                    <span style={{ fontSize: 13, fontWeight: 700, color: '#22c55e' }}>✓ {fmt(s.expected)}</span>
+                                    <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                                        <button onClick={() => toggleWhtCert(s.id, s.whtCertReceived)} title="Toggle WHT/AIT certificate collected" style={{ padding: '4px 10px', borderRadius: 6, fontSize: 11.5, fontWeight: 700, cursor: 'pointer', border: s.whtCertReceived ? 'none' : '1.5px dashed #f59e0b', background: s.whtCertReceived ? '#dcfce7' : '#fffbeb', color: s.whtCertReceived ? '#16a34a' : '#b45309' }}>
+                                            {s.whtCertReceived ? '🧾 Cert ✓' : '🧾 Cert missing'}
+                                        </button>
+                                        <span style={{ fontSize: 13, fontWeight: 700, color: '#22c55e' }}>✓ {fmt(s.expected)}</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -975,45 +1411,43 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                     </div>
                 </div>
 
-                {/* Original Channeling Schedule */}
+                {/* Per-Hospital WHT/AIT Certificate Tracker — what the auditor asks for */}
                 <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding }}>
-                    <h3 style={cardTitle}>🏥 Channeling Schedule & Fee Split</h3>
-                    {isCompactMobile ? (
+                    <h3 style={cardTitle}>🏥 Per-Hospital WHT/AIT Certificate Tracker</h3>
+                    {hospitalWht.length === 0 ? (
+                        <div style={{ padding: '1.25rem', borderRadius: 12, background: '#f8fafc', border: '1px dashed #cbd5e1', color: '#64748b', fontSize: 13.5 }}>
+                            Once payouts are marked ✅ Received, each hospital appears here with its estimated 5% WHT and certificate checklist — exactly what you hand your auditor at filing time.
+                        </div>
+                    ) : isCompactMobile ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                            {channelingData.map(c => (
-                                <div key={c.id} style={{ padding: '14px', borderRadius: 14, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, marginBottom: 8 }}>
-                                        <div>
-                                            <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a' }}>{c.hospital}</div>
-                                            <div style={{ fontSize: 12, color: '#6366f1' }}>{c.day} • {c.time}</div>
-                                        </div>
-                                        <div style={{ fontSize: 12, fontWeight: 700, color: '#3b82f6' }}>{c.avgPatients} pts</div>
+                            {hospitalWht.map(h => (
+                                <div key={h.hospital} style={{ padding: '14px', borderRadius: 14, background: '#f8fafc', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ fontSize: 14, fontWeight: 700, color: '#0f172a', marginBottom: 8 }}>{h.hospital}</div>
+                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12.5 }}>
+                                        <div>Payouts: <strong>{h.shifts}</strong></div>
+                                        <div>Gross: <strong>{fmt(h.grossReceived)}</strong></div>
+                                        <div>Est. WHT 5%: <strong style={{ color: '#ef4444' }}>{fmt(h.whtEstimated)}</strong></div>
+                                        <div>Certs: <strong style={{ color: h.certsMissing > 0 ? '#b45309' : '#16a34a' }}>{h.certsCollected}/{h.shifts}</strong></div>
                                     </div>
-                                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, fontSize: 12.5 }}>
-                                        <div>Fee: <strong>{fmt(c.fee)}</strong></div>
-                                        <div>Doctor: <strong style={{ color: '#22c55e' }}>{fmt(c.doctorShare)}</strong></div>
-                                        <div>Hospital: <strong style={{ color: '#64748b' }}>{fmt(c.hospitalShare)}</strong></div>
-                                        <div>Average: <strong>{c.avgPatients} patients</strong></div>
-                                    </div>
+                                    {h.certsMissing > 0 && <div style={{ marginTop: 8, fontSize: 12, color: '#b45309', fontWeight: 600 }}>⚠️ {h.certsMissing} certificate{h.certsMissing > 1 ? 's' : ''} to collect from accounts dept.</div>}
                                 </div>
                             ))}
                         </div>
                     ) : (
                         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                             <thead><tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                                {['Hospital/Clinic', 'Day', 'Time', 'Fee', 'Doctor Share', 'Hospital Share', 'Avg Patients'].map(h => (
+                                {['Hospital/Clinic', 'Payouts', 'Gross Received', 'Est. WHT (5%)', 'Certificates', 'Action'].map(h => (
                                     <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#475569', fontWeight: 600, fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.03em' }}>{h}</th>
                                 ))}
                             </tr></thead>
-                            <tbody>{channelingData.map(c => (
-                                <tr key={c.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                    <td style={{ padding: '0.5rem', fontWeight: 600 }}>{c.hospital}</td>
-                                    <td style={{ padding: '0.5rem' }}>{c.day}</td>
-                                    <td style={{ padding: '0.5rem', color: '#6366f1' }}>{c.time}</td>
-                                    <td style={{ padding: '0.5rem', fontWeight: 600 }}>{fmt(c.fee)}</td>
-                                    <td style={{ padding: '0.5rem', color: '#22c55e', fontWeight: 600 }}>{fmt(c.doctorShare)}</td>
-                                    <td style={{ padding: '0.5rem', color: '#64748b' }}>{fmt(c.hospitalShare)}</td>
-                                    <td style={{ padding: '0.5rem', fontWeight: 600, color: '#3b82f6' }}>{c.avgPatients}</td>
+                            <tbody>{hospitalWht.map(h => (
+                                <tr key={h.hospital} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                    <td style={{ padding: '0.5rem', fontWeight: 600, color: '#0f172a' }}>{h.hospital}</td>
+                                    <td style={{ padding: '0.5rem', color: '#334155' }}>{h.shifts}</td>
+                                    <td style={{ padding: '0.5rem', fontWeight: 600, color: '#22c55e' }}>{fmt(h.grossReceived)}</td>
+                                    <td style={{ padding: '0.5rem', color: '#ef4444', fontWeight: 600 }}>{fmt(h.whtEstimated)}</td>
+                                    <td style={{ padding: '0.5rem', fontWeight: 700, color: h.certsMissing > 0 ? '#b45309' : '#16a34a' }}>{h.certsCollected}/{h.shifts} collected</td>
+                                    <td style={{ padding: '0.5rem', fontSize: '0.8rem', color: h.certsMissing > 0 ? '#b45309' : '#16a34a' }}>{h.certsMissing > 0 ? `Collect ${h.certsMissing} cert${h.certsMissing > 1 ? 's' : ''}` : 'Filing-ready ✓'}</td>
                                 </tr>
                             ))}</tbody>
                         </table>
@@ -1036,7 +1470,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         </div>
                     </div>
                     <div style={{ marginTop: '0.75rem', fontSize: '0.78rem', color: '#92400e' }}>
-                        ⚠️ Hospitals deduct 5% WHT on channeling fees (IRD requirement). Claim credit on your APIT return.
+                        ⚠️ 5% service-fee AIT/WHT may apply when the payer withholds tax. Confirm actual deductions using hospital WHT certificates before filing.
                     </div>
                 </div>
             </div>
@@ -1048,14 +1482,82 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         const todayStr = new Date().toISOString().split('T')[0];
         const today = appointmentsData.filter(a => a.date === todayStr);
         const upcoming = appointmentsData.filter(a => a.date > todayStr);
+
+        const handleAddAppointment = async (e: React.FormEvent) => {
+            e.preventDefault();
+            if (!appointmentForm.patient.trim() || !appointmentForm.date || !localUid) return;
+            try {
+                const saved = await addAppointment(localUid, {
+                    patient: appointmentForm.patient.trim(),
+                    type: appointmentForm.type,
+                    time: appointmentForm.time || 'Time not set',
+                    hospital: appointmentForm.hospital.trim() || 'Clinic',
+                    date: appointmentForm.date,
+                    status: 'confirmed',
+                });
+                setAppointmentsData(prev => [...prev, saved].sort((a, b) => a.date.localeCompare(b.date) || a.time.localeCompare(b.time)));
+            } catch (err) {
+                console.error('Failed to save appointment:', err);
+            }
+            setShowAddAppointment(false);
+            setAppointmentForm({ patient: '', type: 'Consultation', time: '', hospital: '', date: new Date().toISOString().split('T')[0] });
+        };
+
+        const setProgress = (id: string, progress: 'arrived' | 'completed' | 'no-show') => {
+            setAppointmentStatuses(prev => ({ ...prev, [id]: progress }));
+            updateAppointment(id, { progress }).catch(err => console.error('Failed to update appointment:', err));
+        };
+
         return (
             <div>
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: stackGap, marginBottom: '1.25rem' }}>
                     <KPICard icon="📅" label="Today" value={String(today.length)} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
-                    <KPICard icon="📋" label="This Week" value={String(appointmentsData.length)} changeType="neutral" color="#3b82f6" compact={isCompactMobile} />
+                    <KPICard icon="📋" label="Upcoming" value={String(upcoming.length)} changeType="neutral" color="#3b82f6" compact={isCompactMobile} />
                     <KPICard icon="✅" label="Confirmed" value={String(appointmentsData.filter(a => a.status === 'confirmed').length)} changeType="up" color="#22c55e" compact={isCompactMobile} />
                     <KPICard icon="⏳" label="Pending" value={String(appointmentsData.filter(a => a.status === 'pending').length)} changeType="neutral" color="#f59e0b" compact={isCompactMobile} />
                 </div>
+
+                {/* Add Appointment */}
+                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
+                    <button onClick={() => setShowAddAppointment(true)} style={actionBtn('#6366f1')}>+ Add Appointment</button>
+                </div>
+                {showAddAppointment && (
+                    <form onSubmit={handleAddAppointment} style={{ ...cardStyle, padding: '1rem', marginBottom: '1rem', border: '2px solid rgba(99,102,241,0.2)' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(5, 1fr)'), gap: '0.75rem' }}>
+                            <div>
+                                <label style={labelStyle}>Patient *</label>
+                                <input value={appointmentForm.patient} onChange={e => setAppointmentForm(p => ({ ...p, patient: e.target.value }))} placeholder="Patient name" style={inputStyle} required />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Type</label>
+                                <select value={appointmentForm.type} onChange={e => setAppointmentForm(p => ({ ...p, type: e.target.value }))} style={inputStyle}>
+                                    {['Consultation', 'Follow-up', 'Lab Review', 'Procedure', 'Channeling'].map(t => <option key={t} value={t}>{t}</option>)}
+                                </select>
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Date *</label>
+                                <input type="date" value={appointmentForm.date} onChange={e => setAppointmentForm(p => ({ ...p, date: e.target.value }))} style={inputStyle} required />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Time</label>
+                                <input type="time" value={appointmentForm.time} onChange={e => setAppointmentForm(p => ({ ...p, time: e.target.value }))} style={inputStyle} />
+                            </div>
+                            <div>
+                                <label style={labelStyle}>Hospital/Clinic</label>
+                                <input list="sl-hospitals-appt" value={appointmentForm.hospital} onChange={e => setAppointmentForm(p => ({ ...p, hospital: e.target.value }))} placeholder="Clinic" style={inputStyle} />
+                                <datalist id="sl-hospitals-appt">
+                                    {SL_CHANNELING_HOSPITALS.map(h => <option key={h} value={h} />)}
+                                </datalist>
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: '0.75rem', flexDirection: isCompactMobile ? 'column-reverse' : 'row' }}>
+                            <button type="button" onClick={() => setShowAddAppointment(false)} style={{ ...actionBtn('#94a3b8'), background: '#f1f5f9', color: '#64748b' }}>Cancel</button>
+                            <button type="submit" style={actionBtn('#22c55e')}>✅ Save Appointment</button>
+                        </div>
+                        <div style={{ marginTop: 8, fontSize: 12, color: '#64748b' }}>🔒 Appointments are stored on this device only (PDPA — patient data never leaves your phone/computer).</div>
+                    </form>
+                )}
+
                 {/* Today's appointments */}
                 <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding, marginBottom: '1rem' }}>
                     <h3 style={cardTitle}>📅 Today's Appointments — {today.length > 0 ? today[0].hospital : 'No appointments'}</h3>
@@ -1071,13 +1573,13 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                                 </div>
                             </div>
                             <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
-                                {['arrived', 'completed', 'no-show'].map(s => {
-                                    const current = appointmentStatuses[a.id] || a.status;
+                                {(['arrived', 'completed', 'no-show'] as const).map(s => {
+                                    const current = appointmentStatuses[a.id] || a.progress || a.status;
                                     const isActive = current === s;
                                     const colors: Record<string, string> = { arrived: '#3b82f6', completed: '#22c55e', 'no-show': '#ef4444' };
                                     const icons: Record<string, string> = { arrived: '👋', completed: '✅', 'no-show': '❌' };
                                     return (
-                                        <button key={s} onClick={() => setAppointmentStatuses(prev => ({ ...prev, [a.id]: s }))}
+                                        <button key={s} onClick={() => setProgress(a.id, s)}
                                             style={{ padding: '5px 10px', borderRadius: 7, fontSize: '0.8rem', fontWeight: 600, cursor: 'pointer', border: isActive ? 'none' : '1px solid #e2e8f0', background: isActive ? `${colors[s]}15` : '#f8fafc', color: isActive ? colors[s] : '#64748b', transition: 'all 0.15s' }}>
                                             {icons[s]} {s}
                                         </button>
@@ -1109,7 +1611,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         <div>
             {/* Income KPIs */}
             <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(3, 1fr)', '1fr 1fr'), gap: stackGap, marginBottom: '1.25rem' }}>
-                <KPICard icon="💰" label="Total Income" value={fmt(totalIncome)} change="+12.5%" changeType="up" color="#22c55e" compact={isCompactMobile} />
+                <KPICard icon="💰" label="This Month" value={fmt(currentMonthIncome)} change={invoices.length ? `${invoices.length} records` : 'No records yet'} changeType="neutral" color="#22c55e" compact={isCompactMobile} />
                 <KPICard icon="📋" label="Pending Invoices" value={String(pendingInvoices)} changeType="neutral" color="#f59e0b" compact={isCompactMobile} />
                 <KPICard icon="⚠️" label="Overdue" value={String(invoices.filter((i) => i.status === 'overdue').length)} changeType="down" color="#ef4444" compact={isCompactMobile} />
             </div>
@@ -1122,19 +1624,20 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             {/* Income Sources */}
             <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding, marginBottom: '1.5rem' }}>
                 <h3 style={cardTitle}>🏥 Income by Source</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: '0.75rem', padding: '0.5rem 0' }}>
-                    {[
-                        { name: 'Asiri Hospital', amount: 125000, color: '#6366f1' },
-                        { name: 'Lanka Hospitals', amount: 185000, color: '#8b5cf6' },
-                        { name: 'Private Clinic', amount: 95000, color: '#22c55e' },
-                        { name: 'Consultancy', amount: 45000, color: '#06b6d4' },
-                    ].map((src) => (
-                        <div key={src.name} style={{ padding: '0.75rem', background: `${src.color}08`, borderRadius: 10, border: `1px solid ${src.color}20` }}>
-                            <div style={{ fontSize: '0.875rem', color: '#475569', marginBottom: 5, fontWeight: 500 }}>{src.name}</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{fmt(src.amount)}</div>
-                        </div>
-                    ))}
-                </div>
+                {incomeSources.length > 0 ? (
+                    <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: '0.75rem', padding: '0.5rem 0' }}>
+                        {incomeSources.slice(0, 4).map((src) => (
+                            <div key={src.name} style={{ padding: '0.75rem', background: `${src.color}08`, borderRadius: 10, border: `1px solid ${src.color}20` }}>
+                                <div style={{ fontSize: '0.875rem', color: '#475569', marginBottom: 5, fontWeight: 500 }}>{src.name}</div>
+                                <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#1e293b' }}>{fmt(src.amount)}</div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div style={{ padding: '1.5rem', borderRadius: 14, background: '#f8fafc', border: '1px dashed #cbd5e1', color: '#64748b', fontSize: 13.5 }}>
+                        Start by logging one channeling, clinic, or consultancy payment. Source cards will build from your real records.
+                    </div>
+                )}
             </div>
 
             {/* Invoice List */}
@@ -1149,9 +1652,9 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
             <div>
                 {/* Expense KPIs */}
                 <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(3, 1fr)', '1fr 1fr'), gap: stackGap, marginBottom: '1.25rem' }}>
-                    <KPICard icon="💸" label="Total Expenses" value={fmt(totalExpenses)} change="-3.2%" changeType="down" color="#ef4444" compact={isCompactMobile} />
-                    <KPICard icon="📊" label="This Week" value={fmt(17200)} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
-                    <KPICard icon="📉" label="Avg Daily" value={fmt(2460)} changeType="neutral" color="#8b5cf6" compact={isCompactMobile} />
+                    <KPICard icon="💸" label="This Month" value={fmt(currentMonthExpenses)} change={expenses.length ? `${expenses.length} records` : 'No records yet'} changeType="neutral" color="#ef4444" compact={isCompactMobile} />
+                    <KPICard icon="📊" label="This Week" value={fmt(thisWeekExpenses)} changeType="neutral" color="#6366f1" compact={isCompactMobile} />
+                    <KPICard icon="📉" label="Avg Daily" value={fmt(avgDailyExpense)} changeType="neutral" color="#8b5cf6" compact={isCompactMobile} />
                 </div>
 
                 {/* Add Expense Button */}
@@ -1164,11 +1667,11 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                 {showGoldenList && (
                     <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding, marginBottom: '1.5rem', background: 'linear-gradient(135deg, #fffbeb, #fef3c7)', border: '2px solid #fbbf24' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#92400e' }}>📜 The Golden List — What Sri Lankan Doctors Can Legally Claim</h3>
+                            <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#92400e' }}>📜 The Golden List — Auditor-Ready Claim Categories</h3>
                             <button onClick={() => setShowGoldenList(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 16, color: '#92400e' }}>✕</button>
                         </div>
                         <div style={{ padding: '0.5rem', background: '#fef9c3', borderRadius: 8, marginBottom: '0.75rem', fontSize: 12, color: '#854d0e' }}>
-                            ⚠️ <strong>Important:</strong> Under Sri Lankan law, expenses CANNOT be claimed against Government salary (APIT income). These deductions apply ONLY to your private/business practice income.
+                            ⚠️ <strong>Important:</strong> Keep claims tied to private/business practice income and supporting receipts. Final treatment should be confirmed with your auditor or tax advisor.
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(2, 1fr)'), gap: '0.75rem' }}>
                             {GOLDEN_LIST.filter(c => c.id !== 'other').map(cat => (
@@ -1184,7 +1687,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                             ))}
                         </div>
                         <div style={{ marginTop: '0.75rem', padding: '0.5rem 0.75rem', background: '#a855f715', borderRadius: 8, border: '1px solid #a855f730', fontSize: 12, color: '#7c3aed' }}>
-                            ✨ <strong>Pro Tip:</strong> Your MyTracksy subscription is a 100% tax-deductible professional business expense!
+                            ✨ <strong>Pro Tip:</strong> MyTracksy logs itself as professional software for auditor review instead of promising automatic deductibility.
                         </div>
                     </div>
                 )}
@@ -1219,7 +1722,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                             </div>
                             <div style={{ display: 'grid', gridTemplateColumns: gridColumns('1fr 1fr'), gap: '0.75rem', marginBottom: '0.5rem' }}>
                                 <div>
-                                    <label style={labelStyle}>Category (Tax Deductible)</label>
+                                    <label style={labelStyle}>Category (Auditor Review)</label>
                                     <select
                                         value={expenseForm.category}
                                         onChange={(e) => setExpenseForm((p) => ({ ...p, category: e.target.value }))}
@@ -1259,7 +1762,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
 
                 {/* Category Cards with Tax Notes */}
                 <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding, marginBottom: '1.5rem' }}>
-                    <h3 style={cardTitle}>📂 Expense Categories (Tax Deductible)</h3>
+                    <h3 style={cardTitle}>📂 Expense Categories (Auditor Review)</h3>
                     <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(4, 1fr)', '1fr 1fr'), gap: '0.75rem', padding: '0.5rem 0' }}>
                         {medicalExpenseCategories.map((cat) => {
                             const catTotal = expenses.filter((e) => e.category === cat.name).reduce((s, e) => s + e.amount, 0);
@@ -1580,29 +2083,84 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
         </div>
     );
 
+    const handleSaveProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!localUid) return;
+        try {
+            const saved = await savePracticeProfile(localUid, {
+                slmcNo: profileForm.slmcNo.trim() || undefined,
+                specialization: profileForm.specialization.trim() || undefined,
+                slmcRenewalDate: profileForm.slmcRenewalDate || undefined,
+                indemnityProvider: profileForm.indemnityProvider.trim() || undefined,
+                indemnityExpiry: profileForm.indemnityExpiry || undefined,
+                cpdPoints: profileForm.cpdPoints || 0,
+                irdTin: profileForm.irdTin.trim() || undefined,
+                primaryHospital: loggedCentersLabel(channelingShifts) || undefined,
+            });
+            setPracticeProfile(saved);
+            setProfileSaved(true);
+            setTimeout(() => setProfileSaved(false), 2500);
+        } catch (err) {
+            console.error('Failed to save practice profile:', err);
+        }
+    };
+
     const renderSettings = () => (
         <div>
             <div style={{ ...cardStyle, padding: isCompactMobile ? '1rem' : cardStyle.padding }}>
                 <h3 style={cardTitle}>⚙️ Medical Practice Settings</h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', padding: '0.5rem 0' }}>
+                <form onSubmit={handleSaveProfile}>
+                    <div style={{ display: 'grid', gridTemplateColumns: gridColumns('repeat(2, 1fr)'), gap: '0.75rem' }}>
+                        <div>
+                            <label style={labelStyle}>🩺 SLMC Registration #</label>
+                            <input value={profileForm.slmcNo} onChange={e => setProfileForm(p => ({ ...p, slmcNo: e.target.value }))} placeholder="e.g. 35421" style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>🔬 Specialization</label>
+                            <input value={profileForm.specialization} onChange={e => setProfileForm(p => ({ ...p, specialization: e.target.value }))} placeholder="e.g. General Practice, Cardiology" style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>📅 SLMC Renewal Due</label>
+                            <input type="date" value={profileForm.slmcRenewalDate} onChange={e => setProfileForm(p => ({ ...p, slmcRenewalDate: e.target.value }))} style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>📚 CPD Points (This Year)</label>
+                            <input type="number" min="0" value={profileForm.cpdPoints || ''} onChange={e => setProfileForm(p => ({ ...p, cpdPoints: parseInt(e.target.value) || 0 }))} placeholder="0" style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>🛡️ Indemnity Provider</label>
+                            <input value={profileForm.indemnityProvider} onChange={e => setProfileForm(p => ({ ...p, indemnityProvider: e.target.value }))} placeholder="e.g. SLMA / Ceylinco / AIA" style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>🗓️ Indemnity Expiry</label>
+                            <input type="date" value={profileForm.indemnityExpiry} onChange={e => setProfileForm(p => ({ ...p, indemnityExpiry: e.target.value }))} style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>🔑 IRD TIN (required for APIT)</label>
+                            <input value={profileForm.irdTin} onChange={e => setProfileForm(p => ({ ...p, irdTin: e.target.value }))} placeholder="Taxpayer Identification Number" style={inputStyle} />
+                        </div>
+                        <div>
+                            <label style={labelStyle}>🏥 Primary Hospital (auto)</label>
+                            <input value={loggedCentersLabel(channelingShifts) || 'Logged from channeling shifts'} disabled style={{ ...inputStyle, background: '#f8fafc', color: '#64748b' }} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10, alignItems: 'center', justifyContent: 'flex-end', marginTop: '0.85rem' }}>
+                        {profileSaved && <span style={{ fontSize: 13, fontWeight: 700, color: '#16a34a' }}>✓ Saved</span>}
+                        <button type="submit" style={actionBtn('#6366f1')}>💾 Save Practice Profile</button>
+                    </div>
+                </form>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem', marginTop: '0.85rem' }}>
                     {[
-                        { label: 'SLMC Registration #', value: 'SLMC/12345', icon: '🩺' },
-                        { label: 'Specialization', value: 'General Medicine', icon: '🔬' },
-                        { label: 'SLMC Renewal Due', value: '2026-12-31', icon: '📅' },
-                        { label: 'CPD Points (This Year)', value: '18 / 30 required', icon: '📚' },
-                        { label: 'Primary Hospital', value: 'Asiri Central Hospital', icon: '🏥' },
-                        { label: 'Indemnity Insurance', value: 'SLIC — Policy Active', icon: '🛡️' },
-                        { label: 'WHT Certificate Status', value: '2 certificates pending', icon: '🧾' },
+                        { label: 'WHT Certificate Status', value: channelingShifts.length ? `${channelingShifts.filter(s => s.status === 'received' && !s.whtCertReceived).length} certificates to collect` : 'No payout records yet', icon: '🧾' },
                         { label: 'Currency', value: 'LKR (Sri Lankan Rupee)', icon: '💱' },
                         { label: 'Tax Year', value: '2025/2026 (April – March)', icon: '📋' },
-                        { label: 'IRD TIN', value: 'Not set — required for APIT', icon: '🔑' },
                     ].map((s) => (
                         <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: isCompactMobile ? 'flex-start' : 'center', flexDirection: isCompactMobile ? 'column' : 'row', gap: 8, padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                                 <span style={{ fontSize: '1.1rem' }}>{s.icon}</span>
                                 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>{s.label}</span>
                             </div>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: s.value.includes('Not set') || s.value.includes('pending') ? '#dc2626' : '#334155' }}>{s.value}</span>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#334155' }}>{s.value}</span>
                         </div>
                     ))}
                 </div>
@@ -1617,7 +2175,7 @@ const MedicalDashboard: React.FC<MedicalDashboardProps> = ({
                         { label: 'Saved Payment Card', value: walletData.savedCard ? `${walletData.savedCard.type} •••• ${walletData.savedCard.masked}` : 'Not linked', icon: '💳' },
                         { label: 'Auto-Reload', value: walletData.autoReloadEnabled ? 'Enabled' : 'Disabled', icon: '🔄' },
                         { label: 'Total Spent', value: `LKR ${walletData.totalSpentLKR.toLocaleString()}`, icon: '💰' },
-                        { label: 'Tax Deductible (IT/Software)', value: `LKR ${walletData.totalSpentLKR.toLocaleString()} — claim under S.32`, icon: '🧾' },
+                        { label: 'Professional Software', value: `LKR ${walletData.totalSpentLKR.toLocaleString()} — queued for auditor review`, icon: '🧾' },
                     ].map((s) => (
                         <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: isCompactMobile ? 'flex-start' : 'center', flexDirection: isCompactMobile ? 'column' : 'row', gap: 8, padding: '0.875rem 1rem', background: '#f8fafc', borderRadius: 10, border: '1px solid #e2e8f0' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>

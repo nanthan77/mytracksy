@@ -5,8 +5,19 @@ import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 
 export type AdminRole = 'super_admin' | 'profession_admin' | 'support_agent' | 'viewer';
 
-const FOUNDER_UID = 'eyuHN6ZeYZgi2fSBM3bmslfzAhX2';
-const FOUNDER_EMAILS = ['ceo@mytracksy.lk', 'nanthan77@gmail.com'];
+// Founder/super-admin bootstrap accounts.
+// Configurable via environment so access is revocable WITHOUT a code change:
+//   firebase functions:secrets:set or .env → FOUNDER_UIDS="uid1,uid2"  FOUNDER_EMAILS="a@b.lk"
+// Set FOUNDER_UIDS="-" and FOUNDER_EMAILS="-" to disable the bypass entirely
+// (then admin access comes only from custom claims / admin_users docs).
+const parseCsvEnv = (raw: string | undefined, fallback: string[]): string[] => {
+  if (raw === undefined) return fallback;
+  if (raw.trim() === '-' || raw.trim() === '') return [];
+  return raw.split(',').map(s => s.trim()).filter(Boolean);
+};
+
+const FOUNDER_UIDS = parseCsvEnv(process.env.FOUNDER_UIDS, ['eyuHN6ZeYZgi2fSBM3bmslfzAhX2']);
+const FOUNDER_EMAILS = parseCsvEnv(process.env.FOUNDER_EMAILS, ['ceo@mytracksy.lk', 'nanthan77@gmail.com']);
 
 export const ADMIN_PERMISSIONS: Record<AdminRole, string[]> = {
   super_admin: [
@@ -66,7 +77,7 @@ function tokenString(token: Record<string, unknown> | undefined, key: string): s
 }
 
 function isFounder(uid: string, email: string): boolean {
-  return uid === FOUNDER_UID || FOUNDER_EMAILS.includes(email);
+  return FOUNDER_UIDS.includes(uid) || (email !== '' && FOUNDER_EMAILS.includes(email));
 }
 
 function roleFromRecord(user: UserRecord, token?: Record<string, unknown>): AdminRole | null {

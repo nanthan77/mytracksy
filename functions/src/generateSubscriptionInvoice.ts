@@ -6,7 +6,7 @@
  * If status transitions to "active" (new purchase or renewal):
  *   1. Generate professional PDF invoice with SLMC number
  *   2. Upload to Firebase Storage
- *   3. Auto-log as tax-deductible expense in transactions
+ *   3. Auto-log as professional software expense in transactions
  */
 
 import * as admin from "firebase-admin";
@@ -134,7 +134,7 @@ export const generateSubscriptionInvoice = onDocumentUpdated(
                 created_at: admin.firestore.FieldValue.serverTimestamp(),
             });
 
-            // ── Auto-log as tax-deductible expense ──
+            // ── Auto-log as professional software expense ──
             const txId = `sub_expense_${invoiceId}`;
             await db.doc(`users/${userId}/transactions/${txId}`).set({
                 amount_cents: amountCents,
@@ -181,7 +181,7 @@ function buildInvoiceText(data: {
 
     return `
 ════════════════════════════════════════════════════════════════
-                        TAX INVOICE
+                    SUBSCRIPTION INVOICE
 ════════════════════════════════════════════════════════════════
 
 From:
@@ -210,10 +210,9 @@ ${data.planLabel}
 TOTAL                                                 LKR ${data.amountLKR}
 ────────────────────────────────────────────────────────────────
 
-Note: This is a 100% tax-deductible professional business expense
-under Sri Lanka Inland Revenue Department (IRD) regulations.
-Software used for managing professional records qualifies as a
-deductible expense under Section 32 of the Inland Revenue Act.
+Note: This subscription has been logged as professional software
+for auditor review. Deductibility depends on business use, supporting
+records, and the user's accountant/IRD guidance.
 
 This invoice has been automatically added to your expense ledger
 under the category "Professional Software" for your convenience.

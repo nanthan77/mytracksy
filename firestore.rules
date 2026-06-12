@@ -545,5 +545,31 @@ service cloud.firestore {
     match /income/{incomeId} {
       allow read: if request.auth != null && request.auth.uid == resource.data.userId;
     }
+
+    // ════════════════════════════════════════════════════════════
+    //  Medical practice data (doctor profession)
+    // ════════════════════════════════════════════════════════════
+    // Channeling shift payouts — financial records, synced via SyncEngine.
+    match /users/{userId}/medical_channeling_shifts/{shiftId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+    // Practice profile (SLMC #, renewals, TIN) — owner only, no patient data.
+    match /users/{userId}/practice/{docId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // ════════════════════════════════════════════════════════════
+    //  Server-only collections — explicit deny (Cloud Functions use
+    //  the Admin SDK which bypasses rules; clients must never touch).
+    // ════════════════════════════════════════════════════════════
+    match /webhook_events/{eventId} {
+      allow read, write: if false;
+    }
+    match /admin_sessions/{sessionId} {
+      allow read, write: if false;
+    }
+    match /payment_locks/{lockId} {
+      allow read, write: if false;
+    }
   }
 }

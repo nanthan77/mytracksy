@@ -395,6 +395,79 @@ export interface CreatorExpense {
   firestoreId?: string;
 }
 
+// ============================================
+// Medical Tables (MyTracksy Doctor)
+// PDPA note: patients, quick notes and appointments are LOCAL-ONLY by design
+// (never synced to the cloud). Channeling shifts are financial records and
+// sync via SyncEngine. The practice profile contains no patient data.
+// ============================================
+
+export interface MedicalChannelingShift {
+  id: string;                  // app-generated, e.g. `cs-<timestamp>`
+  hospital: string;
+  date: string;                // YYYY-MM-DD
+  patients: number;
+  expected: number;            // expected payout (LKR)
+  status: 'pending' | 'received' | 'overdue';
+  receivedDate?: string;
+  whtCertReceived?: boolean;   // AIT/WHT certificate collected from hospital
+  sync_status: 'pending' | 'synced' | 'error';
+  userId: string;
+  createdAt: number;
+  firestoreId?: string;
+}
+
+export interface MedicalQuickNote {
+  id: string;
+  text: string;
+  time: string;
+  date: string;                // YYYY-MM-DD
+  patient?: string;
+  type: string;                // note | vitals | follow-up | referral | prescription
+  userId: string;
+  createdAt: number;
+}
+
+export interface MedicalAppointment {
+  id: string;
+  patient: string;
+  type: string;                // Consultation | Follow-up | Lab Review | ...
+  time: string;
+  hospital: string;
+  date: string;                // YYYY-MM-DD
+  status: 'confirmed' | 'pending';
+  progress?: 'arrived' | 'completed' | 'no-show';
+  userId: string;
+  createdAt: number;
+}
+
+export interface MedicalPatient {
+  id: string;
+  name: string;
+  nic: string;
+  phone: string;
+  age: number;
+  blood: string;
+  allergies: string;
+  lastVisit: string;           // YYYY-MM-DD or ''
+  visits: number;
+  userId: string;
+  createdAt: number;
+}
+
+export interface MedicalPracticeProfile {
+  userId: string;              // primary key
+  slmcNo?: string;
+  specialization?: string;
+  slmcRenewalDate?: string;    // YYYY-MM-DD
+  indemnityProvider?: string;
+  indemnityExpiry?: string;    // YYYY-MM-DD
+  cpdPoints?: number;
+  irdTin?: string;
+  primaryHospital?: string;
+  updatedAt: number;
+}
+
 class MyTracksyLocalDB extends Dexie {
   transactions!: Table<LocalTransaction>;
   clinical_notes!: Table<ClinicalNote>;
@@ -420,6 +493,12 @@ class MyTracksyLocalDB extends Dexie {
   creator_gear_items!: Table<CreatorGearItem>;
   creator_revenue!: Table<CreatorRevenue>;
   creator_expenses!: Table<CreatorExpense>;
+  // Medical tables (MyTracksy Doctor)
+  medical_channeling_shifts!: Table<MedicalChannelingShift>;
+  medical_quick_notes!: Table<MedicalQuickNote>;
+  medical_appointments!: Table<MedicalAppointment>;
+  medical_patients!: Table<MedicalPatient>;
+  medical_practice_profile!: Table<MedicalPracticeProfile>;
 
   constructor() {
     super('MyTracksyLocalDB');
@@ -506,6 +585,38 @@ class MyTracksyLocalDB extends Dexie {
       creator_gear_items: '++id, name, category, sync_status, userId, createdAt, firestoreId',
       creator_revenue: '++id, date, source, currency, sync_status, userId, createdAt, firestoreId',
       creator_expenses: '++id, date, category, sync_status, userId, createdAt, firestoreId',
+    });
+
+    // Medical tables (MyTracksy Doctor) — fixes data loss where channeling
+    // shifts, quick notes and appointments lived only in React state.
+    this.version(6).stores({
+      transactions: '++id, date, amount, category, type, sync_status, userId, createdAt, firestoreId',
+      clinical_notes: '++id, date, patientId, noteType, sync_status, userId, createdAt, firestoreId',
+      offline_audio_queue: '++id, timestamp, status, userId, purpose',
+      wallet_transactions: '++id, type, status, userId, createdAt, sync_status, firestoreId',
+      receipts: '++id, date, amount, vendor, category, sync_status, userId, createdAt, firestoreId',
+      court_diary: '++id, date, caseId, court, courtNo, time, hearingType, status, courtLocation, sync_status, userId, firestoreId',
+      trust_transactions: '++id, date, clientId, type, amount, account, caseId, sync_status, userId, firestoreId',
+      case_records: '++id, caseNumber, caseType, court, status, clientName, sync_status, userId, firestoreId',
+      aqua_ponds: '++id, name, species, stage, sync_status, userId, createdAt, firestoreId',
+      aqua_feed_logs: '++id, date, pondId, sync_status, userId, createdAt, firestoreId',
+      aqua_water_logs: '++id, date, pondId, sync_status, userId, createdAt, firestoreId',
+      aqua_harvest_sales: '++id, date, species, sync_status, userId, createdAt, firestoreId',
+      aqua_expenses: '++id, date, category, sync_status, userId, createdAt, firestoreId',
+      engineering_projects: '++id, name, client, stage, ictadGrade, sync_status, userId, createdAt, firestoreId',
+      boq_items: '++id, projectId, item, status, sync_status, userId, createdAt, firestoreId',
+      site_inspections: '++id, projectId, date, type, status, sync_status, userId, createdAt, firestoreId',
+      baas_ledger: '++id, projectId, baasName, type, date, sync_status, userId, createdAt, firestoreId',
+      retention_records: '++id, projectId, client, status, releaseDate, sync_status, userId, createdAt, firestoreId',
+      creator_brand_deals: '++id, brand, stage, platform, sync_status, userId, createdAt, firestoreId',
+      creator_gear_items: '++id, name, category, sync_status, userId, createdAt, firestoreId',
+      creator_revenue: '++id, date, source, currency, sync_status, userId, createdAt, firestoreId',
+      creator_expenses: '++id, date, category, sync_status, userId, createdAt, firestoreId',
+      medical_channeling_shifts: 'id, date, hospital, status, sync_status, userId, createdAt, firestoreId',
+      medical_quick_notes: 'id, date, type, userId, createdAt',
+      medical_appointments: 'id, date, patient, status, userId, createdAt',
+      medical_patients: 'id, name, nic, userId, createdAt',
+      medical_practice_profile: 'userId, updatedAt',
     });
   }
 }

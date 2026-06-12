@@ -146,6 +146,10 @@ const SUBSCRIPTION_PRICES: Record<string, Record<SubscriptionTier, SubscriptionP
     pro: { tier: 'pro', monthlyPrice: 2900, annualPrice: 29000, label: 'MyTracksy Independent Counsel' },
     chambers: { tier: 'chambers', monthlyPrice: 9900, annualPrice: 99000, label: 'MyTracksy Chambers Plan' },
   },
+  medical: {
+    pro: { tier: 'pro', monthlyPrice: 2900, annualPrice: 25000, label: 'MyTracksy Doctor Pro' },
+    chambers: undefined,
+  },
   aquaculture: {
     pro: { tier: 'pro', monthlyPrice: 3900, annualPrice: 39000, label: 'MyTracksy Single Farm' },
     chambers: { tier: 'chambers', monthlyPrice: 14900, annualPrice: 149000, label: 'MyTracksy Commercial Hatchery' },
@@ -527,7 +531,7 @@ async function payHerePreapprovalWebhookHandler(req: any, res: any): Promise<voi
             last_topup_at: admin.firestore.FieldValue.serverTimestamp(),
           }, { merge: true });
 
-          // Accounting log — tax-deductible software expense
+          // Accounting log — professional software expense
           const txnRef = db.collection(`users/${userId}/transactions`).doc();
           txn.set(txnRef, {
             type: 'expense',
@@ -701,7 +705,7 @@ export const oneClickTopUp = functions.runWith({ secrets: [PAYHERE_APP_ID, PAYHE
         last_topup_at: admin.firestore.FieldValue.serverTimestamp(),
       }, { merge: true });
 
-      // b) Accounting auto-log — tax-deductible software expense
+      // b) Accounting auto-log — professional software expense
       const txnRef = db.collection(`users/${userId}/transactions`).doc();
       txn.set(txnRef, {
         type: 'expense',
@@ -1051,7 +1055,9 @@ export const spendTokens = functions.https.onCall(async (data, context) => {
   const userId = context.auth.uid;
   const { amount, feature, description } = data;
 
-  if (!amount || amount <= 0) {
+  // Strict validation: integer tokens only, sane upper bound (prevents
+  // fractional-drip abuse and absurd values).
+  if (!Number.isInteger(amount) || amount <= 0 || amount > 10000) {
     throw new functions.https.HttpsError('invalid-argument', 'Invalid token amount');
   }
 

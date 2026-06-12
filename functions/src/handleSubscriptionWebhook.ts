@@ -48,6 +48,10 @@ const SUBSCRIPTION_PRICES: Record<string, Record<SubscriptionTier, SubscriptionP
         pro: { tier: "pro", monthlyPrice: 2900, annualPrice: 29000, label: "MyTracksy Independent Counsel" },
         chambers: { tier: "chambers", monthlyPrice: 9900, annualPrice: 99000, label: "MyTracksy Chambers Plan" },
     },
+    medical: {
+        pro: { tier: "pro", monthlyPrice: 2900, annualPrice: 25000, label: "MyTracksy Doctor Pro" },
+        chambers: undefined,
+    },
     aquaculture: {
         pro: { tier: "pro", monthlyPrice: 3900, annualPrice: 39000, label: "MyTracksy Single Farm" },
         chambers: { tier: "chambers", monthlyPrice: 14900, annualPrice: 149000, label: "MyTracksy Commercial Hatchery" },
@@ -303,7 +307,9 @@ async function handlePayHereWebhook(body: any): Promise<void> {
     // Validate payment amount and currency
     const expectedAmountCents = amountCents(plan, planType);
     const receivedAmountCents = Math.round(parseFloat(payhere_amount) * 100);
-    if (receivedAmountCents < expectedAmountCents * 0.95) {
+    // Strict amount check: allow at most LKR 1 (100 cents) rounding difference.
+    // (Previously 5% tolerance — exploitable as a systematic underpayment window.)
+    if (receivedAmountCents < expectedAmountCents - 100) {
         logger.error(`❌ Amount mismatch: received ${receivedAmountCents}, expected ${expectedAmountCents}`);
         throw new Error("Payment amount mismatch");
     }

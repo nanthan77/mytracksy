@@ -1,6 +1,7 @@
 import * as functions from 'firebase-functions/v1';
 import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { defineSecret } from 'firebase-functions/params';
+import { verifyProOrCheckQuota } from './subscriptionGuard';
 
 // SECURITY: API key stored in Firebase Secret Manager — never exposed to clients
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
@@ -36,6 +37,13 @@ export const processGeminiVoiceCommand = onCall(
       throw new HttpsError('invalid-argument', 'transcript is required and must be a string.');
     }
 
+    // SERVER-SIDE TIER ENFORCEMENT: Pro = unlimited; free = 10 commands/month.
+    // Without this, the Gemini key was billable by any authenticated client.
+    await verifyProOrCheckQuota(request.auth.uid, 'gemini_voice_command', {
+      quotaField: 'gemini_commands_used',
+      freeQuota: 10,
+    });
+
     const apiKey = geminiApiKey.value();
     if (!apiKey) {
       throw new HttpsError('failed-precondition', 'Gemini API key not configured on server.');
@@ -69,6 +77,12 @@ export const categorizeExpenseWithGemini = onCall(
     if (!request.auth) {
       throw new HttpsError('unauthenticated', 'You must be logged in.');
     }
+
+    // SERVER-SIDE TIER ENFORCEMENT: Pro = unlimited; free = 20 categorizations/month.
+    await verifyProOrCheckQuota(request.auth.uid, 'gemini_categorize', {
+      quotaField: 'gemini_categorize_used',
+      freeQuota: 20,
+    });
 
     const { description, amount } = request.data as CategorizeRequest;
 

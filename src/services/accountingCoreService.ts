@@ -19,7 +19,7 @@
 import {
     collection, doc, addDoc, updateDoc, deleteDoc, getDocs,
     onSnapshot, query, orderBy, where,
-    serverTimestamp, setDoc, getDoc, writeBatch
+    serverTimestamp, setDoc, getDoc, writeBatch, runTransaction
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { getDefaultAccounts } from '../config/defaultChartOfAccounts';
@@ -208,24 +208,25 @@ export async function addTransaction(
     const normalized = normalizeTransactionInput(entry);
     const idemKey = await generateIdempotencyKey(normalized.date, normalized.amount_cents, normalized.vendor);
 
-    // Idempotency check — skip if duplicate
-    const existing = query(
-        userCol(uid, 'transactions'),
-        where('idempotency_key', '==', idemKey)
-    );
-    const existingSnap = await getDocs(existing);
-    if (!existingSnap.empty) {
-        console.warn('Duplicate transaction detected, skipping:', idemKey);
-        return existingSnap.docs[0].id;
-    }
-
-    const ref = await addDoc(userCol(uid, 'transactions'), {
-        ...normalized,
-        idempotency_key: idemKey,
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+    // ATOMIC idempotency: the idempotency key IS the document ID and the
+    // existence check + write happen inside a Firestore transaction, so two
+    // concurrent submissions of the same entry can never both create a record.
+    // (Previously: getDocs → addDoc, a check-then-write race.)
+    const txnRef = userDocRef(uid, 'transactions', idemKey);
+    await runTransaction(db, async (txn) => {
+        const snap = await txn.get(txnRef);
+        if (snap.exists()) {
+            console.warn('Duplicate transaction detected, skipping:', idemKey);
+            return;
+        }
+        txn.set(txnRef, {
+            ...normalized,
+            idempotency_key: idemKey,
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp(),
+        });
     });
-    return ref.id;
+    return idemKey;
 }
 
 /** Update a transaction (e.g. change status, edit description). */

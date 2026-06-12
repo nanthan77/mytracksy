@@ -10,6 +10,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
+import { spendWalletTokens, refundWalletTokens } from './subscriptionGuard';
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 const db = admin.firestore();
@@ -186,55 +187,41 @@ export const processAquacultureAI = onCall(
     const toolConfig = AQUA_AI_TOOLS[tool];
     if (!toolConfig) throw new HttpsError('invalid-argument', `Unknown tool: ${tool}`);
 
-    // Check token balance
-    const userRef = db.collection('users').doc(uid);
-    const userSnap = await userRef.get();
-    const balance = userSnap.data()?.token_balance || 0;
+    // Spend from the CANONICAL wallet (users/{uid}/wallet/current_balance.ai_tokens)
+    // — the doc PayHere top-ups actually credit. Spend-first, refund-on-error.
+    const { remaining } = await spendWalletTokens(uid, toolConfig.tokensNeeded, `aqua_ai_${tool}`);
 
-    if (balance < toolConfig.tokensNeeded) {
-      throw new HttpsError('resource-exhausted', `Need ${toolConfig.tokensNeeded} tokens, have ${balance}`);
-    }
+    try {
+      // Call Gemini
+      const apiKey = geminiApiKey.value();
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: toolConfig.systemPrompt }] },
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
+          }),
+        }
+      );
 
-    // Call Gemini
-    const apiKey = geminiApiKey.value();
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: toolConfig.systemPrompt }] },
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { temperature: 0.3, maxOutputTokens: 2048 },
-        }),
+      if (!geminiRes.ok) {
+        const errBody = await geminiRes.text();
+        logger.error('Gemini API error', errBody);
+        throw new HttpsError('internal', 'AI processing failed');
       }
-    );
 
-    if (!geminiRes.ok) {
-      const errBody = await geminiRes.text();
-      logger.error('Gemini API error', errBody);
-      throw new HttpsError('internal', 'AI processing failed');
+      const geminiData = await geminiRes.json();
+      const result = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
+
+      logger.info(`🐟 AI tool [${tool}] used by ${uid}, ${toolConfig.tokensNeeded} tokens deducted`);
+
+      return { result, tokensUsed: toolConfig.tokensNeeded, remainingBalance: remaining };
+    } catch (error) {
+      await refundWalletTokens(uid, toolConfig.tokensNeeded, `aqua_ai_${tool}`).catch(() => undefined);
+      throw error;
     }
-
-    const geminiData = await geminiRes.json();
-    const result = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated';
-
-    // Deduct tokens
-    await userRef.update({
-      token_balance: admin.firestore.FieldValue.increment(-toolConfig.tokensNeeded),
-    });
-
-    // Log usage
-    await db.collection('users').doc(uid).collection('wallet_transactions').add({
-      type: 'debit',
-      amount: toolConfig.tokensNeeded,
-      tool: `aqua_${tool}`,
-      status: 'completed',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    logger.info(`🐟 AI tool [${tool}] used by ${uid}, ${toolConfig.tokensNeeded} tokens deducted`);
-
-    return { result, tokensUsed: toolConfig.tokensNeeded, remainingBalance: balance - toolConfig.tokensNeeded };
   }
 );

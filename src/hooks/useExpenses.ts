@@ -1,31 +1,51 @@
-import { useState, useEffect, useCallback } from 'react';
-import {
-  collection,
-  addDoc,
-  deleteDoc,
-  updateDoc,
-  doc,
-  query,
-  orderBy,
-  onSnapshot,
-  where,
-  Timestamp
-} from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { useState, useEffect } from 'react';
 import { useAuth } from './useAuth';
+import {
+  subscribeTransactions,
+  addTransaction,
+  updateTransaction,
+  deleteTransaction,
+  toCents,
+  fromCents,
+  type UniversalTransaction,
+} from '../services/accountingCoreService';
+
+/**
+ * useExpenses — expense CRUD over the UNIFIED ledger.
+ *
+ * Previously this hook wrote to the legacy flat `/expenses` collection, which
+ * is READ-ONLY in firestore.rules — every add/update/delete silently failed
+ * with permission-denied. It now reads and writes
+ * `users/{uid}/transactions` (type=expense) via accountingCoreService, the
+ * same backend the profession dashboards use. The hook's public API is
+ * unchanged, so SMSBanking / VoiceEnhanced keep working.
+ */
 
 interface Expense {
   id: string;
-  amount: number;
+  amount: number;          // rupees (converted from integer cents)
   category: string;
   description: string;
-  date: string;
+  date: string;            // YYYY-MM-DD
   paymentMethod?: string;
   location?: string;
   tags?: string[];
   createdAt: string;
   userId: string;
 }
+
+const toExpense = (t: UniversalTransaction, userId: string): Expense => ({
+  id: t.id || '',
+  amount: fromCents(t.amount_cents),
+  category: t.category_name || '',
+  description: t.description,
+  date: t.date,
+  paymentMethod: t.metadata?.paymentMethod,
+  location: t.metadata?.location,
+  tags: t.metadata?.tags,
+  createdAt: t.createdAt instanceof Date ? t.createdAt.toISOString() : new Date().toISOString(),
+  userId,
+});
 
 export const useExpenses = () => {
   const { user } = useAuth();
@@ -40,33 +60,16 @@ export const useExpenses = () => {
       return;
     }
 
-    const expensesRef = collection(db, 'expenses');
-    const q = query(
-      expensesRef,
-      where('userId', '==', user.uid),
-      orderBy('createdAt', 'desc')
-    );
-
-    const unsubscribe = onSnapshot(
-      q,
-      (snapshot) => {
-        const expenseData = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-          date: doc.data().date?.toDate?.()?.toISOString() || doc.data().date
-        })) as Expense[];
-        
-        setExpenses(expenseData);
-        setLoading(false);
+    const unsubscribe = subscribeTransactions(user.uid, (txns) => {
+      try {
+        setExpenses(txns.map(t => toExpense(t, user.uid)));
         setError(null);
-      },
-      (error) => {
-        console.error('Error fetching expenses:', error);
+      } catch (err) {
+        console.error('Error mapping expenses:', err);
         setError('Failed to fetch expenses');
-        setLoading(false);
       }
-    );
+      setLoading(false);
+    }, { type: 'expense' });
 
     return () => unsubscribe();
   }, [user]);
@@ -74,51 +77,39 @@ export const useExpenses = () => {
   const addExpense = async (expenseData: Omit<Expense, 'id' | 'userId'>) => {
     if (!user) throw new Error('User not authenticated');
 
-    try {
-      const docData = {
-        ...expenseData,
-        userId: user.uid,
-        createdAt: Timestamp.now(),
-        date: Timestamp.fromDate(new Date(expenseData.date))
-      };
-
-      await addDoc(collection(db, 'expenses'), docData);
-    } catch (error) {
-      console.error('Error adding expense:', error);
-      throw error;
-    }
+    await addTransaction(user.uid, {
+      date: expenseData.date?.split('T')[0] || new Date().toISOString().split('T')[0],
+      amount_cents: toCents(expenseData.amount),
+      type: 'expense',
+      status: 'cleared',
+      source: 'manual_entry',
+      vendor: expenseData.location || '',
+      category_id: '',
+      category_name: expenseData.category,
+      description: expenseData.description,
+      metadata: {
+        ...(expenseData.paymentMethod ? { paymentMethod: expenseData.paymentMethod } : {}),
+        ...(expenseData.location ? { location: expenseData.location } : {}),
+        ...(expenseData.tags?.length ? { tags: expenseData.tags } : {}),
+      },
+    });
   };
 
   const deleteExpense = async (expenseId: string) => {
     if (!user) throw new Error('User not authenticated');
-
-    try {
-      await deleteDoc(doc(db, 'expenses', expenseId));
-    } catch (error) {
-      console.error('Error deleting expense:', error);
-      throw error;
-    }
+    await deleteTransaction(user.uid, expenseId);
   };
 
   const updateExpense = async (expenseId: string, updates: Partial<Expense>) => {
     if (!user) throw new Error('User not authenticated');
 
-    try {
-      const docRef = doc(db, 'expenses', expenseId);
-      const updateData = {
-        ...updates,
-        updatedAt: Timestamp.now()
-      };
+    const patch: Partial<UniversalTransaction> = {};
+    if (updates.amount !== undefined) patch.amount_cents = toCents(updates.amount);
+    if (updates.category !== undefined) patch.category_name = updates.category;
+    if (updates.description !== undefined) patch.description = updates.description;
+    if (updates.date !== undefined) patch.date = updates.date.split('T')[0];
 
-      if (updates.date) {
-        updateData.date = Timestamp.fromDate(new Date(updates.date));
-      }
-
-      await updateDoc(docRef, updateData);
-    } catch (error) {
-      console.error('Error updating expense:', error);
-      throw error;
-    }
+    await updateTransaction(user.uid, expenseId, patch);
   };
 
   // Analytics functions
@@ -161,4 +152,3 @@ export const useExpenses = () => {
     getExpensesByDateRange
   };
 };
-

@@ -4,8 +4,8 @@
  * Under Sri Lankan law, doctors CANNOT claim expenses against Government salary.
  * However, they CAN deduct expenses incurred in production of PRIVATE/BUSINESS income.
  * 
- * These categories are pre-built so doctors know exactly what they can legally claim,
- * making the app pay for itself through tax savings.
+ * These categories help doctors prepare auditor-ready expense records.
+ * Final deductibility still depends on the user's facts and accountant/IRD guidance.
  */
 
 export interface GoldenCategory {
@@ -25,7 +25,7 @@ export const GOLDEN_LIST: GoldenCategory[] = [
         name: 'Professional Fees & Memberships',
         icon: '🏛️',
         color: '#6366f1',
-        taxNote: 'Fully deductible against private income. SLMC, GMOA, and specialist college fees.',
+        taxNote: 'Usually claimable when directly connected to private practice income. Confirm treatment with your auditor.',
         examples: ['SLMC Annual Renewal', 'GMOA Membership', 'College of Surgeons', 'Ceylon College of Physicians', 'College of Radiologists'],
         vendors: ['slmc', 'medical council', 'gmoa', 'college of surgeons', 'college of physicians', 'specialist college', 'membership', 'registration fee'],
     },
@@ -34,7 +34,7 @@ export const GOLDEN_LIST: GoldenCategory[] = [
         name: 'CME / Training & Education',
         icon: '📚',
         color: '#8b5cf6',
-        taxNote: 'Conference fees, journal subscriptions, PGIM exam fees — all deductible.',
+        taxNote: 'Training and professional learning costs may be claimable when tied to private practice income.',
         examples: ['SLMA Conference', 'International CME', 'BMJ Subscription', 'UpToDate Subscription', 'PGIM Exam Fees', 'Medical Journals'],
         vendors: ['conference', 'seminar', 'workshop', 'training', 'slma', 'pgim', 'bmj', 'uptodate', 'lancet', 'journal', 'cme', 'education', 'exam fee', 'registration'],
     },
@@ -98,7 +98,7 @@ export const GOLDEN_LIST: GoldenCategory[] = [
         name: 'Professional Indemnity & Insurance',
         icon: '🛡️',
         color: '#3b82f6',
-        taxNote: 'Medical malpractice insurance / professional indemnity — deductible against private income.',
+        taxNote: 'Professional indemnity and clinic insurance may be claimable against private practice income.',
         examples: ['Medical Indemnity', 'Professional Insurance', 'Clinic Insurance', 'Fire Insurance (Clinic)'],
         vendors: ['insurance', 'indemnity', 'sri lanka insurance', 'allianz', 'ceylinco', 'aia', 'janashakthi', 'cooperative insurance'],
     },
@@ -116,7 +116,7 @@ export const GOLDEN_LIST: GoldenCategory[] = [
         name: 'MyTracksy Subscription',
         icon: '✨',
         color: '#a855f7',
-        taxNote: '100% deductible! Your MyTracksy subscription is a professional business expense.',
+        taxNote: 'Logged as professional software for auditor review. Deductibility depends on business use and tax advice.',
         examples: ['MyTracksy Monthly', 'MyTracksy Annual Plan'],
         vendors: ['mytracksy', 'tracksy'],
     },

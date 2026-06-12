@@ -32,7 +32,8 @@ import { advancedVoiceService, MultiStepTransaction } from '../../services/advan
 import { culturalIntegrationService } from '../../services/culturalIntegrationService';
 import { offlineVoiceService } from '../../services/offlineVoiceService';
 import { offlineStorageService } from '../../services/offlineStorageService';
-import { syncService } from '../../services/syncService';
+import { syncEngine } from '../../lib/SyncEngine';
+import { db as localDb } from '../../lib/db';
 import { useExpenses } from '../../hooks/useExpenses';
 import { useNotifications } from '../../hooks/useNotifications';
 
@@ -245,34 +246,42 @@ export const VoiceEnhanced: React.FC<VoiceEnhancedProps> = ({
     setCulturalContext(context);
     setVoiceLanguage(context.language);
     
-    // Setup offline/online listeners
+    // Setup offline/online listeners — backed by the REAL SyncEngine
+    // (the old syncService used localStorage as a fake server and is removed)
+    const refreshPendingCount = async (state: string) => {
+      try {
+        const pendingItems = await localDb.transactions.where('sync_status').equals('pending').count();
+        setSyncStatus({ state, pendingItems });
+      } catch {
+        setSyncStatus({ state, pendingItems: 0 });
+      }
+    };
+
     const handleOnline = () => {
       setIsOffline(false);
       // Trigger sync when coming back online
-      syncService.performSync();
+      void syncEngine.pushPendingDataToCloud();
     };
-    
+
     const handleOffline = () => {
       setIsOffline(true);
     };
-    
+
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
-    
+
     // Setup sync status listener
-    const handleSyncStatusChange = (status: any) => {
-      setSyncStatus(status);
-    };
-    
-    syncService.addSyncListener(handleSyncStatusChange);
-    
+    const unsubscribeSync = syncEngine.onStatusChange((status) => {
+      void refreshPendingCount(status);
+    });
+
     // Load initial sync status
-    syncService.getSyncStatus().then(setSyncStatus);
-    
+    void refreshPendingCount(syncEngine.getStatus());
+
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      syncService.removeSyncListener(handleSyncStatusChange);
+      unsubscribeSync();
     };
   }, []);
 

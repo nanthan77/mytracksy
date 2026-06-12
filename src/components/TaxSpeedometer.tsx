@@ -47,6 +47,24 @@ export function calculateTax(taxableIncome: number): { tax: number; bracket: str
 
 const fmt = (n: number) => `Rs. ${n.toLocaleString('en-LK')}`;
 
+/** Date-driven IRD instalment schedule for the current Sri Lankan tax year (Apr–Mar). */
+function getQuarterSchedule(reference = new Date()) {
+    const startYear = reference.getMonth() >= 3 ? reference.getFullYear() : reference.getFullYear() - 1;
+    const quarters = [
+        { q: 'Q1', period: 'Apr–Jun', dueDate: `${startYear}-08-15` },
+        { q: 'Q2', period: 'Jul–Sep', dueDate: `${startYear}-11-15` },
+        { q: 'Q3', period: 'Oct–Dec', dueDate: `${startYear + 1}-02-15` },
+        { q: 'Q4', period: 'Jan–Mar', dueDate: `${startYear + 1}-05-15` },
+    ];
+    return quarters.map(({ q, period, dueDate }) => {
+        const due = new Date(`${dueDate}T00:00:00`);
+        const daysLeft = Math.ceil((due.getTime() - reference.getTime()) / 86_400_000);
+        const status: 'past' | 'due-soon' | 'upcoming' = daysLeft < 0 ? 'past' : daysLeft <= 30 ? 'due-soon' : 'upcoming';
+        const dueLabel = due.toLocaleDateString('en-LK', { month: 'short', day: 'numeric', year: 'numeric' });
+        return { q, period, dueDate, dueLabel, daysLeft, status };
+    });
+}
+
 const TaxSpeedometer: React.FC<TaxSpeedometerProps> = ({
     annualPrivateIncome,
     annualGovIncome,
@@ -195,32 +213,28 @@ const TaxSpeedometer: React.FC<TaxSpeedometerProps> = ({
                 </div>
             </div>
 
-            {/* Quarterly Payment Schedule */}
+            {/* Quarterly Payment Schedule — date-driven for the current tax year */}
             <div style={card}>
                 <h3 style={cardTitle}>📅 Quarterly Tax Payment Schedule (IRD)</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-                    {[
-                        { q: 'Q1', due: 'Aug 15', period: 'Apr–Jun', status: 'paid' },
-                        { q: 'Q2', due: 'Nov 15', period: 'Jul–Sep', status: 'upcoming' },
-                        { q: 'Q3', due: 'Feb 15', period: 'Oct–Dec', status: 'upcoming' },
-                        { q: 'Q4', due: 'May 15', period: 'Jan–Mar', status: 'upcoming' },
-                    ].map(item => (
+                    {getQuarterSchedule().map(item => (
                         <div key={item.q} style={{
                             padding: '1rem', borderRadius: 10, textAlign: 'center',
-                            background: item.status === 'paid' ? '#dcfce7' : '#f8fafc',
-                            border: `2px solid ${item.status === 'paid' ? '#22c55e' : '#e2e8f0'}`,
+                            background: item.status === 'past' ? '#f1f5f9' : item.status === 'due-soon' ? '#fff7ed' : '#f8fafc',
+                            border: `2px solid ${item.status === 'past' ? '#cbd5e1' : item.status === 'due-soon' ? '#fb923c' : '#e2e8f0'}`,
                         }}>
-                            <div style={{ fontSize: 20, fontWeight: 800, color: item.status === 'paid' ? '#22c55e' : '#1e293b' }}>{item.q}</div>
+                            <div style={{ fontSize: 20, fontWeight: 800, color: item.status === 'past' ? '#94a3b8' : '#1e293b' }}>{item.q}</div>
                             <div style={{ fontSize: 13, color: '#64748b', margin: '4px 0' }}>{item.period}</div>
-                            <div style={{ fontSize: 16, fontWeight: 700, color: item.status === 'paid' ? '#22c55e' : '#f59e0b' }}>{fmt(quarterlyPayment)}</div>
-                            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Due: {item.due}</div>
-                            {item.status === 'paid' && <div style={{ fontSize: 12, fontWeight: 700, color: '#22c55e', marginTop: 4 }}>✅ Paid</div>}
+                            <div style={{ fontSize: 16, fontWeight: 700, color: item.status === 'past' ? '#94a3b8' : '#f59e0b' }}>{fmt(quarterlyPayment)}</div>
+                            <div style={{ fontSize: 11, color: '#94a3b8', marginTop: 4 }}>Due: {item.dueLabel}</div>
+                            {item.status === 'past' && <div style={{ fontSize: 12, fontWeight: 700, color: '#64748b', marginTop: 4 }}>🗓️ Deadline passed</div>}
+                            {item.status === 'due-soon' && <div style={{ fontSize: 12, fontWeight: 700, color: '#ea580c', marginTop: 4 }}>⏰ {item.daysLeft} days left</div>}
                             {item.status === 'upcoming' && <div style={{ fontSize: 12, fontWeight: 600, color: '#f59e0b', marginTop: 4 }}>⏳ Upcoming</div>}
                         </div>
                     ))}
                 </div>
                 <div style={{ marginTop: '1rem', padding: '10px 14px', background: '#fffbeb', borderRadius: 8, border: '1px solid #fef3c7', fontSize: 12, color: '#92400e' }}>
-                    ⚠️ Tax year runs April to March. Quarterly payments are due on the 15th of the month following each quarter. Late payments incur 20% penalty + interest.
+                    ⚠️ Tax year runs April to March. Quarterly instalments are commonly tracked around Aug 15, Nov 15, Feb 15, and May 15. Confirm exact liability, credits, penalties, and interest with your auditor before filing.
                 </div>
             </div>
         </div>

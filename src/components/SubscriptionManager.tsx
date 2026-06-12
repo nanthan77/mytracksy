@@ -33,7 +33,7 @@ const FREE_QUOTA = 5;
 
 /** Profession-specific registration field config */
 const REGISTRATION_FIELDS: Record<string, { icon: string; label: string; placeholder: string; firestoreKey: string; description: string }> = {
-    medical: { icon: '🏥', label: 'SLMC Registration Number', placeholder: 'e.g. 28475', firestoreKey: 'slmc_number', description: 'Required for tax-deductible invoice generation' },
+    medical: { icon: '🏥', label: 'SLMC Registration Number', placeholder: 'e.g. 28475', firestoreKey: 'slmc_number', description: 'Used on subscription invoices and auditor-ready exports' },
     legal: { icon: '⚖️', label: 'BASL Registration Number', placeholder: 'e.g. 12345', firestoreKey: 'basl_number', description: 'Bar Association of Sri Lanka registration' },
     engineering: { icon: '🔧', label: 'IESL Membership Number', placeholder: 'e.g. AM-12345', firestoreKey: 'iesl_number', description: 'Institution of Engineers Sri Lanka membership' },
     tourism: { icon: '🏖️', label: 'SLTDA License Number', placeholder: 'e.g. TG-2024-001', firestoreKey: 'sltda_number', description: 'Sri Lanka Tourism Development Authority license' },
@@ -44,12 +44,12 @@ const REGISTRATION_FIELDS: Record<string, { icon: string; label: string; placeho
 /** Profession-specific Pro features */
 const PRO_FEATURES: Record<string, [string, string][]> = {
     medical: [
-        ['🎙️', 'Unlimited AI Voice-to-Text Clinical Vault'],
-        ['🤖', 'Zero-Touch Accounting: Bank Email Auto-Sync'],
-        ['📊', 'Automated IRD Tax Estimator & Auditor Export'],
-        ['👥', 'Assistant Login Portal for clinic staff'],
-        ['📅', 'Smart Traffic Alerts & Schedule Optimizer'],
-        ['📱', 'Priority Support & Early Access to Features'],
+        ['🏥', 'Multi-hospital channeling income and payout tracker'],
+        ['🧾', 'WHT/AIT certificate checklist and tax estimator'],
+        ['📸', 'Receipt capture with doctor-specific expense categories'],
+        ['📦', 'Clean auditor export for income, expenses, and evidence'],
+        ['🎙️', 'AI voice notes for quick finance and practice logging'],
+        ['📱', 'Priority setup support for Sri Lankan doctors'],
     ],
     legal: [
         ['⚖️', 'Trust vs Operating Accounting with 1-Click Fee Notes'],
@@ -378,39 +378,40 @@ export default function SubscriptionManager() {
             {/* Upgrade button (Free only) */}
             {!isPro && (
                 <div style={{
-                    background: 'linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.15))',
+                    background: 'linear-gradient(135deg, #eef2ff, #f8fafc)',
                     borderRadius: '0.75rem',
                     padding: '1.25rem',
                     marginBottom: '1rem',
-                    border: '1px solid rgba(139,92,246,0.3)',
+                    border: '1px solid #c7d2fe',
+                    boxShadow: '0 10px 24px -18px rgba(79,70,229,0.55)',
                     textAlign: 'center',
                 }}>
-                    <h4 style={{ color: '#c7d2fe', fontSize: '0.95rem', margin: '0 0 0.5rem' }}>
+                    <h4 style={{ color: '#312e81', fontSize: '0.95rem', margin: '0 0 0.5rem' }}>
                         🚀 Upgrade to {pricing.tiers.find(t => t.tierKey === 'pro')?.name || 'Pro'}
                     </h4>
                     {pricing.tiers.filter(t => t.tierKey !== 'free').map((tier) => (
                         <div key={tier.id} style={{
-                            background: tier.highlighted ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.03)',
+                            background: tier.highlighted ? '#ffffff' : '#f8fafc',
                             borderRadius: '0.75rem',
                             padding: '0.75rem',
                             marginBottom: '0.5rem',
-                            border: tier.highlighted ? '1px solid rgba(139,92,246,0.4)' : '1px solid rgba(255,255,255,0.08)',
+                            border: tier.highlighted ? '1px solid #a5b4fc' : '1px solid #e2e8f0',
                         }}>
-                            <div style={{ color: '#e2e8f0', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.25rem' }}>
-                                {tier.name} {tier.badge && <span style={{ fontSize: '0.65rem', color: '#6ee7b7' }}>({tier.badge})</span>}
+                            <div style={{ color: '#1e293b', fontSize: '0.85rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                                {tier.name} {tier.badge && <span style={{ fontSize: '0.65rem', color: '#047857' }}>({tier.badge})</span>}
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                <div style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '0.5rem', padding: '0.35rem 0.6rem' }}>
-                                    <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>LKR {tier.monthlyPrice.toLocaleString()}</div>
-                                    <div style={{ color: '#94a3b8', fontSize: '0.65rem' }}>per month</div>
+                                <div style={{ background: '#f8fafc', borderRadius: '0.5rem', padding: '0.35rem 0.6rem', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ color: '#0f172a', fontWeight: 700, fontSize: '0.85rem' }}>LKR {tier.monthlyPrice.toLocaleString()}</div>
+                                    <div style={{ color: '#64748b', fontSize: '0.65rem' }}>per month</div>
                                 </div>
-                                <div style={{ background: 'rgba(99,102,241,0.2)', borderRadius: '0.5rem', padding: '0.35rem 0.6rem', border: '1px solid rgba(139,92,246,0.3)' }}>
-                                    <div style={{ color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>LKR {tier.annualPrice.toLocaleString()}</div>
-                                    <div style={{ color: '#6ee7b7', fontSize: '0.65rem' }}>per year (SAVE {Math.round((1 - tier.annualPrice / (tier.monthlyPrice * 12)) * 100)}%)</div>
+                                <div style={{ background: '#eef2ff', borderRadius: '0.5rem', padding: '0.35rem 0.6rem', border: '1px solid #c7d2fe' }}>
+                                    <div style={{ color: '#0f172a', fontWeight: 700, fontSize: '0.85rem' }}>LKR {tier.annualPrice.toLocaleString()}</div>
+                                    <div style={{ color: '#047857', fontSize: '0.65rem' }}>per year (SAVE {Math.round((1 - tier.annualPrice / (tier.monthlyPrice * 12)) * 100)}%)</div>
                                 </div>
                             </div>
                             {tier.aiTokens > 0 && (
-                                <div style={{ color: '#a5b4fc', fontSize: '0.7rem' }}>🤖 {tier.aiTokens} AI Tokens/month</div>
+                                <div style={{ color: '#4f46e5', fontSize: '0.7rem', fontWeight: 600 }}>🤖 {tier.aiTokens} AI Tokens/month</div>
                             )}
                         </div>
                     ))}
@@ -469,6 +470,7 @@ export default function SubscriptionManager() {
                             value={regNumber}
                             onChange={e => setRegNumber(e.target.value)}
                             placeholder={regField.placeholder}
+                            disabled={!currentUser?.uid}
                             style={{
                                 flex: 1,
                                 padding: '0.6rem 0.75rem',
@@ -477,11 +479,12 @@ export default function SubscriptionManager() {
                                 borderRadius: '0.5rem',
                                 color: '#fff',
                                 fontSize: '0.9rem',
+                                opacity: currentUser?.uid ? 1 : 0.65,
                             }}
                         />
                         <button
                             onClick={handleSaveRegNumber}
-                            disabled={savingReg}
+                            disabled={savingReg || !currentUser?.uid}
                             style={{
                                 padding: '0.6rem 1rem',
                                 background: '#4338ca',
@@ -491,6 +494,7 @@ export default function SubscriptionManager() {
                                 cursor: 'pointer',
                                 fontWeight: 600,
                                 fontSize: '0.8rem',
+                                opacity: currentUser?.uid ? 1 : 0.6,
                             }}
                         >
                             {savingReg ? '...' : 'Save'}
@@ -555,13 +559,13 @@ export default function SubscriptionManager() {
 
             {/* Pro features list */}
             <div style={{
-                background: 'rgba(99,102,241,0.05)',
+                background: '#f8fafc',
                 borderRadius: '0.75rem',
                 padding: '1rem',
                 marginTop: '1rem',
-                border: '1px solid rgba(99,102,241,0.1)',
+                border: '1px solid #e0e7ff',
             }}>
-                <h4 style={{ color: '#c7d2fe', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
+                <h4 style={{ color: '#3730a3', fontSize: '0.85rem', margin: '0 0 0.5rem' }}>
                     {isPro ? '✅ Your Pro Features' : '🔒 Pro Features Include'}
                 </h4>
                 {(PRO_FEATURES[profession] || DEFAULT_PRO_FEATURES).map(([icon, text], i) => (
@@ -570,7 +574,7 @@ export default function SubscriptionManager() {
                         alignItems: 'center',
                         gap: '0.5rem',
                         padding: '0.35rem 0',
-                        color: isPro ? '#e2e8f0' : '#94a3b8',
+                        color: '#475569',
                         fontSize: '0.8rem',
                     }}>
                         <span>{icon}</span>

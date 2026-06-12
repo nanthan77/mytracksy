@@ -5,11 +5,14 @@ import { db } from '../config/firebase';
 import { getPricingForProfession, PAYWALL_ANCHORS } from '../config/pricingConfig';
 import { MYTRACKSY_CONTACT } from '../config/contact';
 import { ProfessionType } from '../types/profession';
+import { getRouteByProfession } from '../config/professionRoutes';
 
 interface SubscriptionGateProps {
     children: React.ReactNode;
     featureName?: string;
     featureIcon?: string;
+    requirePro?: boolean;
+    onUpgrade?: () => void;
 }
 
 interface SubscriptionData {
@@ -191,13 +194,12 @@ function detectProfession(): ProfessionType {
     return 'individual';
 }
 
-export default function SubscriptionGate({ children, featureName = 'AI Voice Vault', featureIcon = '🎙️' }: SubscriptionGateProps) {
+export default function SubscriptionGate({ children, featureName = 'AI Voice Vault', featureIcon = '🎙️', requirePro = false, onUpgrade }: SubscriptionGateProps) {
     const { currentUser } = useAuth();
     const [loading, setLoading] = useState(true);
     const [isPro, setIsPro] = useState(false);
     const [quotaUsed, setQuotaUsed] = useState(0);
     const [showPaywall, setShowPaywall] = useState(false);
-    const [activating, setActivating] = useState(false);
     const profession = detectProfession();
     const pricing = getPricingForProfession(profession);
     const proTier = pricing.tiers.find(t => t.tierKey === 'pro');
@@ -253,10 +255,20 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
         return `${now.getFullYear()}_${String(now.getMonth() + 1).padStart(2, '0')}`;
     };
 
-    const handleActivateDemo = async () => {
-        // In production, redirect to payment flow
-        // Demo mode: show coming soon message
-        alert(`Payment integration coming soon! Contact ${MYTRACKSY_CONTACT.email} or WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay} for early access.`);
+    const handleUpgrade = () => {
+        if (onUpgrade) {
+            onUpgrade();
+            return;
+        }
+
+        const route = getRouteByProfession(profession);
+        if (route) {
+            window.history.pushState({}, '', `/${route.slug}/subscription`);
+            window.dispatchEvent(new PopStateEvent('popstate'));
+            return;
+        }
+
+        alert(`Please open Subscription from the sidebar, or contact ${MYTRACKSY_CONTACT.email} / WhatsApp ${MYTRACKSY_CONTACT.phoneDisplay}.`);
     };
 
     if (loading) {
@@ -273,8 +285,9 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
     // Pro user — show content normally
     if (isPro) return <>{children}</>;
 
-    // Free user under quota — show content with quota bar
-    if (!showPaywall) {
+    // Quota-gated features can show limited free usage.
+    // Tier-gated features must remain locked until Pro is active.
+    if (!requirePro && !showPaywall) {
         return (
             <div>
                 {/* Quota indicator */}
@@ -317,12 +330,13 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
                 <div style={styles.icon}>{featureIcon}</div>
                 <h2 style={styles.title}>Unlock {featureName}</h2>
                 <p style={styles.subtitle}>
-                    You've used all {FREE_QUOTA} free AI voice notes this month.
-                    Upgrade to Pro for unlimited access.
+                    {requirePro
+                        ? 'This module is part of the Doctor Pro plan, built for auditor-ready finance, tax, and practice workflows.'
+                        : `You've used all ${FREE_QUOTA} free AI voice notes this month. Upgrade to Pro for unlimited access.`}
                 </p>
 
                 {/* Quota bar */}
-                <div style={styles.quotaBar}>
+                {!requirePro && <div style={styles.quotaBar}>
                     <div style={styles.quotaText}>
                         {quotaUsed} / {FREE_QUOTA} Free Notes Used
                     </div>
@@ -335,7 +349,7 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
                                 : 'linear-gradient(90deg, #8b5cf6, #6366f1)',
                         }} />
                     </div>
-                </div>
+                </div>}
 
                 {/* Pricing */}
                 <div style={styles.priceSection}>
@@ -357,22 +371,24 @@ export default function SubscriptionGate({ children, featureName = 'AI Voice Vau
                 </p>
 
                 <div style={styles.taxBadge}>
-                    🧾 100% Tax Deductible — Auto-logged to your expenses
+                    🧾 May qualify as a professional expense — auto-logged for auditor review
                 </div>
 
                 <button
                     style={styles.btnPro}
-                    onClick={handleActivateDemo}
+                    onClick={handleUpgrade}
                     disabled={false}
                 >
-                    {'🚀 Upgrade to Pro'}
+                    {'🚀 View Pro Plan'}
                 </button>
-                <button
-                    style={styles.btnSkip}
-                    onClick={() => setShowPaywall(false)}
-                >
-                    Maybe later
-                </button>
+                {!requirePro && (
+                    <button
+                        style={styles.btnSkip}
+                        onClick={() => setShowPaywall(false)}
+                    >
+                        Maybe later
+                    </button>
+                )}
             </div>
         </div>
     );

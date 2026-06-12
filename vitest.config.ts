@@ -5,6 +5,13 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  // Force the DEVELOPMENT build of React in tests.
+  // Without this, react resolves to react.production.min.js and
+  // @testing-library's act() throws "act(...) is not supported in
+  // production builds of React" (was failing useAdminAuth.test.tsx).
+  define: {
+    'process.env.NODE_ENV': JSON.stringify('test'),
+  },
   test: {
     globals: true,
     environment: 'jsdom',

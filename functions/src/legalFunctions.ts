@@ -10,6 +10,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
+import { spendWalletTokens, refundWalletTokens } from './subscriptionGuard';
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 const db = admin.firestore();
@@ -172,20 +173,14 @@ export const processLegalAIQuery = onCall(
       throw new HttpsError('invalid-argument', `Unknown tool: ${tool}`);
     }
 
-    // Check token balance
-    const walletRef = db.doc(`users/${uid}/wallet/balance`);
-    const walletSnap = await walletRef.get();
-    const currentBalance = walletSnap.exists ? (walletSnap.data()?.tokens || 0) : 0;
-
-    if (currentBalance < toolConfig.cost) {
-      throw new HttpsError('resource-exhausted',
-        `Insufficient tokens. Need ${toolConfig.cost}, have ${currentBalance}. Please top up.`);
-    }
-
     const apiKey = geminiApiKey.value();
     if (!apiKey) {
       throw new HttpsError('failed-precondition', 'Gemini API key not configured');
     }
+
+    // Spend from the CANONICAL wallet (users/{uid}/wallet/current_balance.ai_tokens)
+    // — the doc PayHere top-ups actually credit. Spend-first, refund-on-error.
+    const { remaining } = await spendWalletTokens(uid, toolConfig.cost, `legal_ai_${tool}`);
 
     try {
       const { GoogleGenerativeAI } = await import('@google/generative-ai');
@@ -198,26 +193,12 @@ export const processLegalAIQuery = onCall(
       const response = await result.response;
       const text = response.text();
 
-      // Deduct tokens
-      await walletRef.set(
-        { tokens: admin.firestore.FieldValue.increment(-toolConfig.cost) },
-        { merge: true }
-      );
-
-      // Log usage
-      await db.collection(`users/${uid}/wallet_transactions`).add({
-        type: 'spend',
-        tokens: -toolConfig.cost,
-        description: `AI: ${tool.replace(/_/g, ' ')}`,
-        status: 'completed',
-        createdAt: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
       logger.info(`⚖️ Legal AI query: ${tool} for user ${uid}, cost ${toolConfig.cost} tokens`);
 
-      return { result: text, tokensUsed: toolConfig.cost, remainingTokens: currentBalance - toolConfig.cost };
+      return { result: text, tokensUsed: toolConfig.cost, remainingTokens: remaining };
     } catch (error: any) {
       logger.error('Legal AI query error:', error);
+      await refundWalletTokens(uid, toolConfig.cost, `legal_ai_${tool}`).catch(() => undefined);
       throw new HttpsError('internal', 'AI processing failed. Please try again.');
     }
   }

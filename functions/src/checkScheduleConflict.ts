@@ -11,6 +11,7 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import { logger } from "firebase-functions/v2";
 import * as admin from "firebase-admin";
+import { verifyProOrCheckQuota } from "./subscriptionGuard";
 
 export const checkScheduleConflict = onCall(
     {
@@ -36,6 +37,13 @@ export const checkScheduleConflict = onCall(
         if (isNaN(startTs.getTime()) || isNaN(endTs.getTime())) {
             throw new HttpsError("invalid-argument", "Invalid date format.");
         }
+
+        // SERVER-SIDE TIER ENFORCEMENT: Smart Scheduler is a Pro feature.
+        // Free users get 10 conflict checks/month to trial it.
+        await verifyProOrCheckQuota(userId, "schedule_conflict_check", {
+            quotaField: "schedule_checks_used",
+            freeQuota: 10,
+        });
 
         logger.info(`🔍 Checking conflicts for user ${userId}: ${start_time} → ${end_time}`);
 

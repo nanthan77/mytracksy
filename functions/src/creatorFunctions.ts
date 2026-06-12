@@ -10,6 +10,7 @@ import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { logger } from 'firebase-functions/v2';
 import { defineSecret } from 'firebase-functions/params';
 import * as admin from 'firebase-admin';
+import { spendWalletTokens, refundWalletTokens } from './subscriptionGuard';
 
 const geminiApiKey = defineSecret('GEMINI_API_KEY');
 const db = admin.firestore();
@@ -139,51 +140,39 @@ export const processCreatorAI = onCall(
 
     const uid = request.auth.uid;
 
-    // Check token balance
-    const walletRef = db.collection('users').doc(uid).collection('wallet').doc('balance');
-    const walletSnap = await walletRef.get();
-    const balance = walletSnap.exists ? (walletSnap.data()?.tokens ?? 0) : 0;
+    // Spend from the CANONICAL wallet (users/{uid}/wallet/current_balance.ai_tokens)
+    // — the doc PayHere top-ups actually credit. Spend-first, refund-on-error.
+    const { remaining } = await spendWalletTokens(uid, toolConfig.tokenCost, `creator_ai_${tool}`);
 
-    if (balance < toolConfig.tokenCost) {
-      throw new HttpsError('resource-exhausted', `Insufficient tokens. Need ${toolConfig.tokenCost}, have ${balance}`);
+    try {
+      // Call Gemini
+      const apiKey = geminiApiKey.value();
+      const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      const geminiRes = await fetch(geminiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          systemInstruction: { parts: [{ text: toolConfig.systemPrompt }] },
+          generationConfig: { maxOutputTokens: 4096, temperature: 0.3 },
+        }),
+      });
+
+      if (!geminiRes.ok) {
+        logger.error('Gemini API error', await geminiRes.text());
+        throw new HttpsError('internal', 'AI service error');
+      }
+
+      const geminiData = await geminiRes.json();
+      const resultText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
+
+      logger.info(`🎬 Creator AI [${tool}] for ${uid}, cost: ${toolConfig.tokenCost} tokens`);
+
+      return { result: resultText, tokensUsed: toolConfig.tokenCost, remainingTokens: remaining };
+    } catch (error) {
+      await refundWalletTokens(uid, toolConfig.tokenCost, `creator_ai_${tool}`).catch(() => undefined);
+      throw error;
     }
-
-    // Call Gemini
-    const apiKey = geminiApiKey.value();
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
-
-    const geminiRes = await fetch(geminiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        systemInstruction: { parts: [{ text: toolConfig.systemPrompt }] },
-        generationConfig: { maxOutputTokens: 4096, temperature: 0.3 },
-      }),
-    });
-
-    if (!geminiRes.ok) {
-      logger.error('Gemini API error', await geminiRes.text());
-      throw new HttpsError('internal', 'AI service error');
-    }
-
-    const geminiData = await geminiRes.json();
-    const resultText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response generated.';
-
-    // Deduct tokens
-    await walletRef.set({ tokens: admin.firestore.FieldValue.increment(-toolConfig.tokenCost) }, { merge: true });
-
-    // Log usage
-    await db.collection('users').doc(uid).collection('wallet_transactions').add({
-      type: 'spend',
-      tokens: toolConfig.tokenCost,
-      description: `CreatorTracksy AI: ${tool}`,
-      status: 'completed',
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    logger.info(`🎬 Creator AI [${tool}] for ${uid}, cost: ${toolConfig.tokenCost} tokens`);
-
-    return { result: resultText, tokensUsed: toolConfig.tokenCost };
   }
 );
