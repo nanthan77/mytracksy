@@ -211,6 +211,8 @@ export interface AquaHarvestSale {
   grade?: 'A' | 'B' | 'C';
   currency: 'LKR' | 'USD';
   description?: string;
+  // Harvest receivable tracking — export agents and collectors often pay late
+  paymentReceived?: boolean;
   sync_status: 'pending' | 'synced' | 'error';
   userId: string;
   createdAt: number;

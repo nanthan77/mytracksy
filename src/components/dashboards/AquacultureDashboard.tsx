@@ -129,9 +129,9 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   // Settings state
   const [aquaSettings, setAquaSettings] = useState({
-    farmName: '', naqdaReg: '', location: '', exportLicence: '',
+    farmName: '', naqdaReg: '', naqdaRenewalDate: '', location: '', exportLicence: '', exportLicenceExpiry: '',
     species: '', vatReg: '', irdTin: '', financialYear: '2025/2026 (April – March)',
-    bankAccount: '', piInsurance: '',
+    bankAccount: '', piInsurance: '', usdRate: '300',
   });
   const [editingSettings, setEditingSettings] = useState(false);
   const [settingsSaving, setSettingsSaving] = useState(false);
@@ -144,11 +144,70 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   const [newExpense, setNewExpense] = useState({ date: new Date().toISOString().slice(0, 10), category: 'Feed' as AquaExpense['category'], amount: '', description: '', pondId: '' });
 
   // Dexie live queries
-  const ponds = useLiveQuery(() => uid ? db.aqua_ponds.where('userId').equals(uid).toArray() : [], [uid]) || [];
-  const feedLogs = useLiveQuery(() => uid ? db.aqua_feed_logs.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
-  const waterLogs = useLiveQuery(() => uid ? db.aqua_water_logs.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
-  const harvestSales = useLiveQuery(() => uid ? db.aqua_harvest_sales.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
-  const aquaExpenses = useLiveQuery(() => uid ? db.aqua_expenses.where('userId').equals(uid).reverse().sortBy('date') : [], [uid]) || [];
+  // Demo/guest sessions have no Firebase user — fall back to the locally
+  // stored session identity so on-device persistence (Dexie) still works.
+  const localUid = useMemo(() => {
+    if (uid) return uid;
+    try {
+      return (JSON.parse(localStorage.getItem('tracksyUser') || 'null') as { uid?: string } | null)?.uid || undefined;
+    } catch {
+      return undefined;
+    }
+  }, [uid]);
+
+  const ponds = useLiveQuery(() => localUid ? db.aqua_ponds.where('userId').equals(localUid).toArray() : [], [localUid]) || [];
+  const feedLogs = useLiveQuery(() => localUid ? db.aqua_feed_logs.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+  const waterLogs = useLiveQuery(() => localUid ? db.aqua_water_logs.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+  const harvestSales = useLiveQuery(() => localUid ? db.aqua_harvest_sales.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+  const aquaExpenses = useLiveQuery(() => localUid ? db.aqua_expenses.where('userId').equals(localUid).reverse().sortBy('date') : [], [localUid]) || [];
+
+  // ===== DUAL-REGIME TAX + HARVEST RECEIVABLES =====
+  // Exports (USD) remitted via bank: concessionary (1.8M relief → 1M @6% →
+  // 15% cap, post-Feb-2025). Local sales: progressive rates.
+  const USD_RATE = parseFloat(aquaSettings.usdRate) || 300;
+  const annualiseValues = useCallback((rows: { date: string; value: number }[]) => {
+    const now = new Date();
+    const taxYearStart = new Date(now.getMonth() >= 3 ? now.getFullYear() : now.getFullYear() - 1, 3, 1);
+    const ytd = rows.reduce((sum, r) => {
+      const d = new Date(`${r.date}T00:00:00`);
+      return !Number.isNaN(d.getTime()) && d >= taxYearStart && d <= now ? sum + r.value : sum;
+    }, 0);
+    const monthsElapsed = Math.max(1, (now.getFullYear() - taxYearStart.getFullYear()) * 12 + (now.getMonth() - taxYearStart.getMonth()) + 1);
+    return Math.round((ytd / monthsElapsed) * 12);
+  }, []);
+  const annualExportLKR = useMemo(() =>
+    annualiseValues(harvestSales.filter(h => h.currency === 'USD').map(h => ({ date: h.date, value: h.totalAmount * USD_RATE }))),
+    [harvestSales, USD_RATE, annualiseValues]);
+  const annualLocalSalesLKR = useMemo(() =>
+    annualiseValues(harvestSales.filter(h => h.currency !== 'USD').map(h => ({ date: h.date, value: h.totalAmount }))),
+    [harvestSales, annualiseValues]);
+  const annualFarmExpenses = useMemo(() =>
+    annualiseValues(aquaExpenses.map(e => ({ date: e.date, value: e.amount }))),
+    [aquaExpenses, annualiseValues]);
+  const exportTaxEst = useMemo(() => {
+    let remaining = Math.max(0, annualExportLKR - 1_800_000);
+    const at6 = Math.min(remaining, 1_000_000);
+    remaining -= at6;
+    return Math.round(at6 * 0.06 + remaining * 0.15);
+  }, [annualExportLKR]);
+  const unpaidHarvests = useMemo(() => harvestSales.filter(h => !h.paymentReceived), [harvestSales]);
+  const unpaidHarvestTotal = unpaidHarvests.reduce((s, h) => s + (h.currency === 'USD' ? h.totalAmount * USD_RATE : h.totalAmount), 0);
+
+  // NAQDA licence / export licence renewal reminders
+  const practiceReminders = useMemo(() => {
+    const out: { id: string; label: string; dueDate: string; daysLeft: number; severity: 'overdue' | 'urgent' | 'warning' }[] = [];
+    const push = (id: string, label: string, dueDate?: string) => {
+      if (!dueDate) return;
+      const due = new Date(`${dueDate}T00:00:00`);
+      if (Number.isNaN(due.getTime())) return;
+      const daysLeft = Math.ceil((due.getTime() - Date.now()) / 86_400_000);
+      if (daysLeft > 60) return;
+      out.push({ id, label, dueDate, daysLeft, severity: daysLeft < 0 ? 'overdue' : daysLeft <= 14 ? 'urgent' : 'warning' });
+    };
+    push('naqda', 'NAQDA Licence Renewal (BMP compliance)', aquaSettings.naqdaRenewalDate);
+    push('export', 'Export Licence Renewal', aquaSettings.exportLicenceExpiry);
+    return out.sort((a, b) => a.daysLeft - b.daysLeft);
+  }, [aquaSettings.naqdaRenewalDate, aquaSettings.exportLicenceExpiry]);
 
   // Computed values
   const totalIncome = invoices.reduce((s, t) => s + t.amount, 0);
@@ -195,7 +254,15 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   /* ============ Effects ============ */
   useEffect(() => {
-    if (!uid) return;
+    if (!uid) {
+      if (localUid) {
+        try {
+          const stored = JSON.parse(localStorage.getItem(`aquaSettings_${localUid}`) || 'null');
+          if (stored) setAquaSettings(prev => ({ ...prev, ...stored }));
+        } catch { /* ignore */ }
+      }
+      return;
+    }
     seedChartOfAccounts(uid);
     const stopSync = startAquacultureAutoSync(uid);
 
@@ -204,7 +271,7 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
     });
 
     return () => { stopSync(); stopAquacultureAutoSync(); };
-  }, [uid]);
+  }, [uid, localUid]);
 
   useEffect(() => {
     if (!uid) return;
@@ -215,12 +282,12 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   /* ============ Handlers ============ */
   const handleAddPond = async () => {
-    if (!uid || !newPond.name || !newPond.species) return;
+    if (!localUid || !newPond.name || !newPond.species) return;
     await db.aqua_ponds.add({
       name: newPond.name, species: newPond.species, area: newPond.area,
       stockCount: parseInt(newPond.stockCount) || 0, stage: newPond.stage,
       estHarvest: newPond.estHarvest, waterQuality: 'Good',
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewPond({ name: '', species: '', area: '', stockCount: '', stage: 'fingerling', estHarvest: '' });
     setShowAddPond(false);
@@ -235,7 +302,7 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   };
 
   const handleAddFeed = async () => {
-    if (!uid || !newFeed.pondId || !newFeed.feedType) return;
+    if (!localUid || !newFeed.pondId || !newFeed.feedType) return;
     const pondId = parseInt(newFeed.pondId);
     const pond = ponds.find(p => p.id === pondId);
     await db.aqua_feed_logs.add({
@@ -243,14 +310,14 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       feedType: newFeed.feedType, quantity: parseFloat(newFeed.quantity) || 0,
       cost: parseFloat(newFeed.cost) || 0,
       fcr: newFeed.fcr ? parseFloat(newFeed.fcr) : undefined,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     setNewFeed({ date: today, pondId: '', feedType: '', quantity: '', cost: '', fcr: '' });
     setShowAddFeed(false);
   };
 
   const handleAddWater = async () => {
-    if (!uid || !newWater.pondId) return;
+    if (!localUid || !newWater.pondId) return;
     const pondId = parseInt(newWater.pondId);
     const pond = ponds.find(p => p.id === pondId);
     const ph = parseFloat(newWater.ph); const ammonia = parseFloat(newWater.ammonia);
@@ -261,7 +328,7 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       date: newWater.date, pondId, pondName: pond?.name || '',
       ph, dissolvedOxygen: dO, temperature: parseFloat(newWater.temperature) || 28,
       ammonia, salinity: newWater.salinity, status,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
     if (pond?.id) await db.aqua_ponds.update(pond.id, { waterQuality: status, sync_status: 'pending' });
     setNewWater({ date: today, pondId: '', ph: '7.0', dissolvedOxygen: '5.0', temperature: '28', ammonia: '0', salinity: '' });
@@ -269,7 +336,7 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   };
 
   const handleAddHarvest = async () => {
-    if (!uid || !newHarvest.species || !newHarvest.quantity) return;
+    if (!localUid || !newHarvest.species || !newHarvest.quantity) return;
     const pondId = parseInt(newHarvest.pondId) || 0;
     const pond = ponds.find(p => p.id === pondId);
     const qty = parseFloat(newHarvest.quantity) || 0;
@@ -279,21 +346,23 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       species: newHarvest.species, quantity: qty, pricePerKg: ppk,
       totalAmount: qty * ppk, buyer: newHarvest.buyer, grade: newHarvest.grade,
       currency: newHarvest.currency,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
-    // Also add as income transaction
-    await addTransaction(uid, {
-      date: newHarvest.date, amount: qty * ppk,
-      category: 'Harvest Sales', type: 'income',
-      description: `${newHarvest.species} — ${qty}kg @ ${ppk}/${newHarvest.currency === 'USD' ? '$' : 'Rs.'}`,
-      paymentMethod: 'bank',
-    });
+    // Also add as income transaction (signed-in users)
+    if (uid) {
+      await addTransaction(uid, {
+        date: newHarvest.date, amount: qty * ppk,
+        category: 'Harvest Sales', type: 'income',
+        description: `${newHarvest.species} — ${qty}kg @ ${ppk}/${newHarvest.currency === 'USD' ? '$' : 'Rs.'}`,
+        paymentMethod: 'bank',
+      });
+    }
     setNewHarvest({ date: today, pondId: '', species: '', quantity: '', pricePerKg: '', buyer: '', grade: 'A', currency: 'LKR' });
     setShowAddHarvest(false);
   };
 
   const handleAddExpense = async () => {
-    if (!uid || !newExpense.amount || !newExpense.description) return;
+    if (!localUid || !newExpense.amount || !newExpense.description) return;
     const pondId = parseInt(newExpense.pondId) || 0;
     const pond = ponds.find(p => p.id === pondId);
     const amt = parseFloat(newExpense.amount) || 0;
@@ -301,13 +370,15 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       date: newExpense.date, category: newExpense.category, amount: amt,
       description: newExpense.description,
       pondId: pondId || undefined, pondName: pond?.name || undefined,
-      sync_status: 'pending', userId: uid, createdAt: Date.now(),
+      sync_status: 'pending', userId: localUid, createdAt: Date.now(),
     });
-    await addTransaction(uid, {
-      date: newExpense.date, amount: amt,
-      category: newExpense.category, type: 'expense',
-      description: newExpense.description, paymentMethod: 'cash',
-    });
+    if (uid) {
+      await addTransaction(uid, {
+        date: newExpense.date, amount: amt,
+        category: newExpense.category, type: 'expense',
+        description: newExpense.description, paymentMethod: 'cash',
+      });
+    }
     setNewExpense({ date: today, category: 'Feed', amount: '', description: '', pondId: '' });
     setShowAddExpense(false);
   };
@@ -335,10 +406,14 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   }, [uid]);
 
   const handleSaveSettings = async () => {
-    if (!uid) return;
+    if (!localUid) return;
     setSettingsSaving(true);
     try {
-      await setDoc(doc(firestoreDb, 'users', uid, 'aquaculture_settings', 'farm'), aquaSettings, { merge: true });
+      if (uid) {
+        await setDoc(doc(firestoreDb, 'users', uid, 'aquaculture_settings', 'farm'), aquaSettings, { merge: true });
+      } else {
+        localStorage.setItem(`aquaSettings_${localUid}`, JSON.stringify(aquaSettings));
+      }
       setEditingSettings(false);
     } catch (err) { console.error('Settings save failed', err); }
     finally { setSettingsSaving(false); }
@@ -346,11 +421,19 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   const handleVoiceAction = (action: ParsedVoiceAction) => {
     if (!uid) return;
+    const dateStr = new Date().toISOString().split('T')[0];
     if (action.intent === 'expense') {
       addTransaction(uid, {
-        date: new Date().toISOString().split('T')[0], amount: action.amount || 0,
+        date: dateStr, amount: action.amount || 0,
         category: action.category || 'Feed', type: 'expense',
         description: action.description || 'Voice expense',
+      });
+    }
+    if (action.intent === 'income' && (action.amount || 0) > 0) {
+      addTransaction(uid, {
+        date: dateStr, amount: action.amount || 0,
+        category: action.category || 'Harvest Sales', type: 'income',
+        description: action.description || 'Voice income',
       });
     }
   };
@@ -366,6 +449,30 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
 
   const renderOverview = () => (
     <div style={stackGap(20)}>
+      {/* Harvest receivables — collectors/export agents often pay late */}
+      {unpaidHarvestTotal > 0 && (
+        <div onClick={() => setActiveNav('harvest')} style={{ ...cs, cursor: 'pointer', background: '#fef2f2', border: '2px solid #fecaca' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: '1.4rem' }}>💸</span>
+            <div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#991b1b' }}>{fmt(unpaidHarvestTotal)} in unpaid harvest deliveries ({unpaidHarvests.length})</div>
+              <div style={{ fontSize: '0.8rem', color: '#b91c1c' }}>Chase your buyers — tap each delivery ✓ Paid when money lands →</div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* NAQDA / export licence renewals */}
+      {practiceReminders.map(r => (
+        <div key={r.id} onClick={() => setActiveNav('settings')} style={{ ...cs, cursor: 'pointer', padding: '0.85rem 1.25rem', background: r.severity === 'overdue' ? '#fef2f2' : r.severity === 'urgent' ? '#fff7ed' : '#fffbeb', border: `2px solid ${r.severity === 'overdue' ? '#fecaca' : r.severity === 'urgent' ? '#fed7aa' : '#fde68a'}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <span style={{ fontSize: '1.2rem' }}>{r.id === 'naqda' ? '📋' : '🌍'}</span>
+            <div>
+              <div style={{ fontSize: '0.85rem', fontWeight: 700, color: r.severity === 'overdue' ? '#991b1b' : '#9a3412' }}>{r.label} — {r.daysLeft < 0 ? `${Math.abs(r.daysLeft)} days OVERDUE` : `${r.daysLeft} days left`}</div>
+              <div style={{ fontSize: '0.78rem', color: '#92400e' }}>Due {r.dueDate}. Tap to review in Settings →</div>
+            </div>
+          </div>
+        </div>
+      ))}
       <div style={{ background: `linear-gradient(135deg, ${OCEAN}, #0369a1)`, borderRadius: 16, padding: isCompactMobile ? '1.1rem' : '2rem', color: 'white' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexDirection: isCompactMobile ? 'column' : 'row', gap: 12 }}>
           <div>
@@ -667,7 +774,7 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
             <div style={{ overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', minWidth: 700 }}>
                 <thead><tr style={{ borderBottom: '2px solid #e2e8f0' }}>
-                  {['Date', 'Species', 'Pond', 'Qty (kg)', 'Price/kg', 'Total', 'Buyer', 'Grade'].map(h => (
+                  {['Date', 'Species', 'Pond', 'Qty (kg)', 'Price/kg', 'Total', 'Buyer', 'Grade', 'Payment'].map(h => (
                     <th key={h} style={{ padding: '0.5rem', textAlign: 'left', color: '#64748b', fontWeight: 600, fontSize: '0.75rem' }}>{h}</th>
                   ))}
                 </tr></thead>
@@ -683,6 +790,11 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
                       <span>{h.buyer} {h.buyer && <a href={generateWhatsAppLink(h.buyer, `Hi, regarding harvest delivery of ${h.quantity}kg ${h.species}`)} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>💬</a>}</span>
                     ) : '—'}</td>
                     <td style={{ padding: '0.5rem' }}><span style={{ padding: '2px 8px', borderRadius: 8, fontSize: '0.72rem', fontWeight: 600, background: h.grade === 'A' ? '#dcfce7' : h.grade === 'B' ? '#fef3c7' : '#fee2e2', color: h.grade === 'A' ? '#22c55e' : h.grade === 'B' ? '#f59e0b' : '#ef4444' }}>Grade {h.grade}</span></td>
+                    <td style={{ padding: '0.5rem' }}>
+                      <button onClick={() => h.id !== undefined && db.aqua_harvest_sales.update(h.id, { paymentReceived: !h.paymentReceived, sync_status: 'pending' as const })} title="Toggle payment received" style={{ padding: '3px 10px', borderRadius: 6, fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer', border: h.paymentReceived ? 'none' : '1.5px dashed #f59e0b', background: h.paymentReceived ? '#dcfce7' : '#fffbeb', color: h.paymentReceived ? '#16a34a' : '#b45309' }}>
+                        {h.paymentReceived ? '✓ Paid' : 'Unpaid'}
+                      </button>
+                    </td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -909,11 +1021,14 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
   );
 
   // Settings
-  const SETTINGS_FIELDS: { key: keyof typeof aquaSettings; label: string; icon: string; placeholder: string }[] = [
+  const SETTINGS_FIELDS: { key: keyof typeof aquaSettings; label: string; icon: string; placeholder: string; type?: 'date' }[] = [
     { key: 'farmName', label: 'Farm Name', icon: '🐟', placeholder: 'e.g. Puttalam Aqua Farm' },
     { key: 'naqdaReg', label: 'NAQDA Registration', icon: '📋', placeholder: 'e.g. NAQDA/2024/AQ/456' },
+    { key: 'naqdaRenewalDate', label: 'NAQDA Renewal Due (annual)', icon: '🗓️', placeholder: 'YYYY-MM-DD', type: 'date' },
     { key: 'location', label: 'Farm Location', icon: '📍', placeholder: 'e.g. Kalpitiya, Puttalam District' },
     { key: 'exportLicence', label: 'Export Licence', icon: '🌍', placeholder: 'e.g. EXP/2024/SC/789' },
+    { key: 'exportLicenceExpiry', label: 'Export Licence Expiry', icon: '⏳', placeholder: 'YYYY-MM-DD', type: 'date' },
+    { key: 'usdRate', label: 'USD→LKR Rate (for exports)', icon: '💱', placeholder: 'e.g. 300' },
     { key: 'species', label: 'Primary Species', icon: '🦐', placeholder: 'e.g. Vannamei Shrimp, Sea Cucumber' },
     { key: 'vatReg', label: 'VAT Registration', icon: '🧾', placeholder: 'e.g. VAT-LK-005678' },
     { key: 'irdTin', label: 'IRD TIN', icon: '🔑', placeholder: 'e.g. 567890123' },
@@ -946,7 +1061,7 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
                 <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#1e293b' }}>{s.label}</span>
               </div>
               {editingSettings ? (
-                <input value={aquaSettings[s.key] || ''} onChange={e => setAquaSettings(p => ({ ...p, [s.key]: e.target.value }))} placeholder={s.placeholder}
+                <input type={s.type || 'text'} value={aquaSettings[s.key] || ''} onChange={e => setAquaSettings(p => ({ ...p, [s.key]: e.target.value }))} placeholder={s.placeholder}
                   style={{ ...inputStyle, flex: 1, minWidth: isCompactMobile ? '100%' : 200 }} />
               ) : (
                 <span style={{ fontSize: '0.875rem', fontWeight: 500, color: !aquaSettings[s.key] ? '#dc2626' : '#334155' }}>
@@ -1174,7 +1289,34 @@ const AquacultureDashboard: React.FC<Props> = ({ userName, onChangeProfession, o
       case 'harvest': return renderHarvest();
       case 'income': return renderIncome();
       case 'expenses': return renderExpenses();
-      case 'tax': return <TaxSpeedometer annualPrivateIncome={totalIncome} annualGovIncome={0} annualExpenses={totalExpensesAmt} whtDeducted={0} />;
+      case 'tax': return (
+        <div style={stackGap(20)}>
+          <div style={{ ...cs, border: '2px solid #0ea5e922' }}>
+            <h3 style={ct}>🌍 Farm Dual-Regime Tax Estimate (2025/26 rules)</h3>
+            <div style={gridColumns(3)}>
+              <div style={{ padding: '0.85rem', background: '#ecfeff', borderRadius: 10, border: '1px solid #a5f3fc' }}>
+                <div style={{ fontSize: '0.78rem', color: '#155e75', fontWeight: 600 }}>Export Sales (USD, est./yr)</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#0e7490' }}>{fmt(annualExportLKR)}</div>
+                <div style={{ fontSize: '0.74rem', color: '#155e75', marginTop: 4 }}>Concessionary tax est: <strong>{fmt(exportTaxEst)}</strong> (15% cap)</div>
+              </div>
+              <div style={{ padding: '0.85rem', background: '#f0fdf4', borderRadius: 10, border: '1px solid #bbf7d0' }}>
+                <div style={{ fontSize: '0.78rem', color: '#166534', fontWeight: 600 }}>Local Sales (est./yr)</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#16a34a' }}>{fmt(annualLocalSalesLKR)}</div>
+                <div style={{ fontSize: '0.74rem', color: '#166534', marginTop: 4 }}>Progressive rates below</div>
+              </div>
+              <div style={{ padding: '0.85rem', background: '#fffbeb', borderRadius: 10, border: '1px solid #fde68a' }}>
+                <div style={{ fontSize: '0.78rem', color: '#92400e', fontWeight: 600 }}>Farm Expenses (est./yr)</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#b45309' }}>{fmt(annualFarmExpenses)}</div>
+                <div style={{ fontSize: '0.74rem', color: '#92400e', marginTop: 4 }}>Feed ≈ 60% of farm cost</div>
+              </div>
+            </div>
+            <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.85rem', background: '#fef2f2', borderRadius: 8, border: '1px solid #fecaca', fontSize: '0.76rem', color: '#991b1b' }}>
+              ⚠️ Foreign-currency export earnings remitted via a Sri Lankan bank are taxed concessionally since 1 Feb 2025 (Rs 1.8M relief → Rs 1M @ 6% → 15% cap). Keep bank remittance records per shipment. Estimates only — confirm with your tax advisor.
+            </div>
+          </div>
+          <TaxSpeedometer annualPrivateIncome={annualLocalSalesLKR} annualGovIncome={0} annualExpenses={annualFarmExpenses} whtDeducted={0} />
+        </div>
+      );
       case 'receipts': return <ReceiptScanner />;
       case 'reports': return renderReports();
       case 'export': return <AuditorExport invoices={invoices} expenses={expenseTxns} />;
