@@ -3,6 +3,8 @@ import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
 import { useRouteNav } from '../../hooks/useRouteNav';
+import { useProfessionLedger } from '../../hooks/useProfessionLedger';
+import QuickLedgerCard from './QuickLedgerCard';
 
 interface Props { userName: string; onChangeProfession: () => void; onLogout: () => void; }
 
@@ -71,6 +73,7 @@ const ct: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontW
 const IndividualDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogout }) => {
     const validNavIds = useMemo(() => navItems.map(n => n.id), []);
     const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
+    const ledger = useProfessionLedger();
     const totI = incomeData.reduce((s, t) => s + t.amount, 0);
     const totE = expenseData.reduce((s, t) => s + t.amount, 0);
     const savings = totI - totE;
@@ -115,7 +118,8 @@ const IndividualDashboard: React.FC<Props> = ({ userName, onChangeProfession, on
                     ))}
                 </div>
             </div>
-            <TransactionList transactions={[...incomeData, ...expenseData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
+            <QuickLedgerCard ledger={ledger} accent="#6366f1" incomeCategories={['Salary', 'Side Income', 'Other']} expenseCategories={['Groceries', 'Transport', 'Utilities', 'Education', 'Health', 'Other']} />
+            <TransactionList transactions={[...ledger.invoices, ...ledger.expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
         </div>
     );
 
@@ -127,7 +131,7 @@ const IndividualDashboard: React.FC<Props> = ({ userName, onChangeProfession, on
                 <KPICard icon="🏠" label="Rental" value={fmt(12000)} changeType="neutral" color="#8b5cf6" />
                 <KPICard icon="📈" label="Investments" value={fmt(8500)} changeType="up" color="#f59e0b" />
             </div>
-            <TransactionList transactions={incomeData} title="All Income" showFilter={false} />
+            <TransactionList transactions={ledger.invoices} title="All Income" showFilter={false} />
         </div>
     );
 
@@ -138,7 +142,7 @@ const IndividualDashboard: React.FC<Props> = ({ userName, onChangeProfession, on
                 <KPICard icon="📊" label="Daily Avg" value={fmt(Math.round(totE / 30))} changeType="neutral" color="#6366f1" />
                 <KPICard icon="📈" label="Savings Rate" value={`${Math.round((savings / totI) * 100)}%`} changeType="up" color="#22c55e" />
             </div>
-            <TransactionList transactions={expenseData} title="All Expenses" showFilter={false} />
+            <TransactionList transactions={ledger.expenses} title="All Expenses" showFilter={false} />
         </div>
     );
 

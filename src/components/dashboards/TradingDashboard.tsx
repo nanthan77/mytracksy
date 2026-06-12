@@ -3,6 +3,8 @@ import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
 import { useRouteNav } from '../../hooks/useRouteNav';
+import { useProfessionLedger } from '../../hooks/useProfessionLedger';
+import QuickLedgerCard from './QuickLedgerCard';
 
 interface Props { userName: string; onChangeProfession: () => void; onLogout: () => void; }
 
@@ -69,6 +71,7 @@ const ct: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontW
 const TradingDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogout }) => {
     const validNavIds = useMemo(() => navItems.map(n => n.id), []);
     const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
+    const ledger = useProfessionLedger();
     const portfolioValue = holdings.reduce((s, h) => s + h.qty * h.currentPrice, 0);
     const portfolioCost = holdings.reduce((s, h) => s + h.qty * h.avgPrice, 0);
     const unrealizedPL = portfolioValue - portfolioCost;
@@ -117,6 +120,7 @@ const TradingDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLog
                     ))}
                 </div>
             </div>
+            <QuickLedgerCard ledger={ledger} accent="#0ea5e9" incomeCategories={['Trading Gains', 'Dividends', 'Other']} expenseCategories={['Brokerage Fees', 'Data Subscriptions', 'Other']} />
             <TransactionList transactions={trades.slice(0, 5)} title="Recent Trades" />
         </div>
     );

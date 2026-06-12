@@ -3,6 +3,8 @@ import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
 import { useRouteNav } from '../../hooks/useRouteNav';
+import { useProfessionLedger } from '../../hooks/useProfessionLedger';
+import QuickLedgerCard from './QuickLedgerCard';
 
 interface Props { userName: string; onChangeProfession: () => void; onLogout: () => void; }
 
@@ -68,6 +70,7 @@ const ct: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontW
 const RetailDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogout }) => {
     const validNavIds = useMemo(() => navItems.map(n => n.id), []);
     const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
+    const ledger = useProfessionLedger();
     const totSales = salesData.reduce((s, t) => s + t.amount, 0);
     const totE = expenseData.reduce((s, t) => s + t.amount, 0);
 
@@ -112,6 +115,7 @@ const RetailDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogo
                 ))}
             </div>
         </div>
+        <QuickLedgerCard ledger={ledger} accent="#16a34a" incomeCategories={['Daily Sales', 'Online Orders', 'Other']} expenseCategories={['Stock Purchase', 'Rent', 'Staff', 'Utilities', 'Other']} />
         <TransactionList transactions={[...salesData, ...expenseData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
     </div>);
 
@@ -184,7 +188,7 @@ const RetailDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogo
             <KPICard icon="👷" label="Staff" value={fmt(65000)} changeType="neutral" color="#3b82f6" />
             <KPICard icon="🏠" label="Rent+Utils" value={fmt(47000)} changeType="neutral" color="#ef4444" />
         </div>
-        <TransactionList transactions={expenseData} title="All Expenses" showFilter={false} />
+        <TransactionList transactions={ledger.expenses} title="All Expenses" showFilter={false} />
     </div>);
 
     const renderBanking = () => (<div>

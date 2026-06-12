@@ -3,6 +3,8 @@ import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
 import { useRouteNav } from '../../hooks/useRouteNav';
+import { useProfessionLedger } from '../../hooks/useProfessionLedger';
+import QuickLedgerCard from './QuickLedgerCard';
 
 interface Props { userName: string; onChangeProfession: () => void; onLogout: () => void; }
 
@@ -68,6 +70,7 @@ const ct: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontW
 const MarketingDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogout }) => {
     const validNavIds = useMemo(() => navItems.map(n => n.id), []);
     const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
+    const ledger = useProfessionLedger();
     const totI = incomeData.reduce((s, t) => s + t.amount, 0);
     const totE = expenseData.reduce((s, t) => s + t.amount, 0);
 
@@ -120,7 +123,8 @@ const MarketingDashboard: React.FC<Props> = ({ userName, onChangeProfession, onL
                     ))}
                 </div>
             </div>
-            <TransactionList transactions={[...incomeData, ...expenseData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
+            <QuickLedgerCard ledger={ledger} accent="#a855f7" incomeCategories={['Client Retainer', 'Campaign Fee', 'Other']} expenseCategories={['Ad Spend', 'Tools/SaaS', 'Freelancers', 'Other']} />
+            <TransactionList transactions={[...ledger.invoices, ...ledger.expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
         </div>
     );
 
@@ -198,7 +202,7 @@ const MarketingDashboard: React.FC<Props> = ({ userName, onChangeProfession, onL
                 <KPICard icon="⏳" label="Pending" value={String(incomeData.filter((i) => i.status === 'pending').length)} changeType="neutral" color="#f59e0b" />
                 <KPICard icon="👥" label="Clients" value="4" changeType="neutral" color="#6366f1" />
             </div>
-            <TransactionList transactions={incomeData} title="Client Billing" showFilter={false} />
+            <TransactionList transactions={ledger.invoices} title="Client Billing" showFilter={false} />
         </div>
     );
 
@@ -209,7 +213,7 @@ const MarketingDashboard: React.FC<Props> = ({ userName, onChangeProfession, onL
                 <KPICard icon="📣" label="Ad Spend" value={fmt(35000)} changeType="neutral" color="#6366f1" />
                 <KPICard icon="💻" label="Software" value={fmt(25000)} changeType="neutral" color="#8b5cf6" />
             </div>
-            <TransactionList transactions={expenseData} title="All Expenses" showFilter={false} />
+            <TransactionList transactions={ledger.expenses} title="All Expenses" showFilter={false} />
         </div>
     );
 

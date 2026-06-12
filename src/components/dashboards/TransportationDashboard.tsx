@@ -3,6 +3,8 @@ import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
 import { useRouteNav } from '../../hooks/useRouteNav';
+import { useProfessionLedger } from '../../hooks/useProfessionLedger';
+import QuickLedgerCard from './QuickLedgerCard';
 
 interface Props { userName: string; onChangeProfession: () => void; onLogout: () => void; }
 
@@ -73,6 +75,7 @@ const ct: React.CSSProperties = { margin: '0 0 0.75rem', fontSize: '1rem', fontW
 const TransportationDashboard: React.FC<Props> = ({ userName, onChangeProfession, onLogout }) => {
     const validNavIds = useMemo(() => navItems.map(n => n.id), []);
     const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
+    const ledger = useProfessionLedger();
     const totI = incomeData.reduce((s, t) => s + t.amount, 0);
     const totE = expenseData.reduce((s, t) => s + t.amount, 0);
 
@@ -114,7 +117,8 @@ const TransportationDashboard: React.FC<Props> = ({ userName, onChangeProfession
                 </div>))}
             </div>
         </div>
-        <TransactionList transactions={[...incomeData, ...expenseData].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
+        <QuickLedgerCard ledger={ledger} accent="#f59e0b" incomeCategories={['Trip Income', 'Hires', 'Other']} expenseCategories={['Fuel', 'Maintenance', 'Insurance', 'Leasing', 'Other']} />
+        <TransactionList transactions={[...ledger.invoices, ...ledger.expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 6)} title="Recent Transactions" />
     </div>);
 
     const renderFleet = () => (<div style={cs}><h3 style={ct}>🚛 Fleet</h3>
@@ -191,7 +195,7 @@ const TransportationDashboard: React.FC<Props> = ({ userName, onChangeProfession
             <KPICard icon="👷" label="Salaries" value={fmt(120000)} changeType="neutral" color="#6366f1" />
             <KPICard icon="🔧" label="Maintenance" value={fmt(35000)} changeType="neutral" color="#ef4444" />
         </div>
-        <TransactionList transactions={expenseData} title="All Expenses" showFilter={false} />
+        <TransactionList transactions={ledger.expenses} title="All Expenses" showFilter={false} />
     </div>);
 
     const renderBanking = () => (<div>

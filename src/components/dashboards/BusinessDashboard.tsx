@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo } from 'react';
 import { useRouteNav } from '../../hooks/useRouteNav';
+import { useProfessionLedger } from '../../hooks/useProfessionLedger';
+import QuickLedgerCard from './QuickLedgerCard';
 import DashboardLayout from './DashboardLayout';
 import KPICard from './KPICard';
 import TransactionList, { Transaction } from './TransactionList';
@@ -167,6 +169,7 @@ const BusinessDashboard: React.FC<Props> = ({
 }) => {
     const validNavIds = useMemo(() => navItems.map((item) => item.id), []);
     const [activeNav, setActiveNav] = useRouteNav(validNavIds, 'overview');
+    const ledger = useProfessionLedger();
     const isCompactMobile = useIsCompactMobile();
 
     const activeMobileTab = useMemo(() => getBusinessMobileTab(activeNav as BusinessNavId), [activeNav]);
@@ -391,8 +394,9 @@ const BusinessDashboard: React.FC<Props> = ({
                 </div>
             </div>
 
+            <QuickLedgerCard ledger={ledger} accent="#047857" incomeCategories={['Sales', 'B2B Invoice', 'Other']} expenseCategories={['Inventory', 'Payroll', 'Rent', 'Utilities', 'Other']} />
             <TransactionList
-                transactions={businessTransactions}
+                transactions={[...ledger.invoices, ...ledger.expenses].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8)}
                 title="Cash movements"
                 showFilter={!isCompactMobile}
                 compact={isCompactMobile}
